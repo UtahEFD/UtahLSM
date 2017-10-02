@@ -1,0 +1,54 @@
+! LESinputs.txt lists the parameters for LARGE EDDY SIMULATION in fortran
+! les_conv_scalar.f reads these parameters to initialize the simulation
+! read dimen.info for more information on parameters and LES functionality
+!
+!
+! constants
+0.4d0			= Von Karmon constant
+3.14159265358979d0	= pi
+!
+!
+! space and time parameters
+3240			= nsteps, number of timesteps (records)
+10.0d0        	        = dtr, timestep in seconds, converted to nondimensional by dt = dtr/(z_i/u_star) 
+10.0d0		    	= z_i, normalization height (arbitrary should probably be set = to measurement hieght)
+1.0d0			= u_star, normalization velocity scale (arbitrary)
+!
+!
+! Scalar parameters
+2			= scalarcount, number of scalars to compute (ie  0...N)
+1.0d0			= scalarScales, scale of scalar - used for non-dimensional computation
+1.0d0
+!
+!
+! soil type parameters
+13	    		= soilLevels (= 0 for no soil BC)
+0.0015d0		= zt (scalar surface roughness)
+1024.0d0		= pressureScale,  [mbar]
+1.204d0			= densityAir, [kg/m^3]
+1005.0d0		= Cp_air, [J/kg-K]
+1000.0d0		= densityWater [kg/m^3]
+2.45e6			= latentHeatWater [J/kg]
+4186000.0d0		= heatCapWater [J/kg-K]
+461.0d0			= waterGasConst [J/kg-K]
+0.0001d0		= moistureCriteria
+0.000001d0		= temperatureCriteria
+1e-8			= tempFluxCriteria
+50			= maxFluxIterations
+50			= maxTempIterations
+0.5			= convFactor
+10			= endConstSEB
+1			= updateFreqSEB
+1			= integrateSoilDiffFreq
+1			= albedoFlag, a value of 1 uses a functional form based on Sun angle and moisture a value of 0 uses a constant
+!
+!
+! radiation parameters
+0			= radiationFlag
+750			= stepsPerRadVal
+5.67040e-8		= SB_constant [W/m^2-k^4]
+1.127d0			= solarIrradiance
+51.9711d0		= latitude
+4.9267d0		= longitude
+183			= day
+0.99d0			= emissivity
