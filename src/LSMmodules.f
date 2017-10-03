@@ -12,7 +12,7 @@
       real*8 dt
       integer*4 t
       integer*4 nsteps,scalarCount
-      real*8 Pi,g_hat,u_star,vonk,z_i
+      real*8 Pi,g_hat,uScale,vonk,z_i, z_m, z_s
       real*8 UTC,startUTC,UTC_hrs
       integer*4 temperatureIndex,moistureIndex
       real*8,allocatable,dimension(:)::surfaceFluxes,scalarScales
@@ -26,10 +26,10 @@
       integer*4 soilLevels,maxFluxIterations,maxTempIterations,
      +     endConstSEB,updateFreqSEB,integrateSoilDiffFreq,
      +     radiationFlag,stepsPerRadVal,day,albedoFlag
-      real*8 zt,pressureScale,densityAir,Cp_air,densityWater,
+      real*8 zo,zt,pressureScale,densityAir,Cp_air,densityWater,
      +     latentHeatWater,heatCapWater,waterGasConst,moistureCriteria,
      +     temperatureCriteria,tempFluxCriteria,convFactor,SB_constant,
-     +     solarIrradiance,lat,long,emissivity
+     +     solarIrradiance,lat,long,emissivity,albedo, albedoMin
 
       END MODULE
 

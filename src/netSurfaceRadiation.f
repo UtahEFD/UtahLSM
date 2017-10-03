@@ -1,6 +1,5 @@
-      subroutine netSurfaceRadiation(surfaceTemperature,albedo,
-     +     minAlbedo,porosity,refTemp,surfaceMoisture,
-     +     measRad,netRad,flag)
+      subroutine netSurfaceRadiation(surfaceTemperature,porosity,
+     +     refTemp,surfaceMoisture,measRad,netRad,flag)
 ! computes the net surface radiation
 !  = incoming long - outgoing long + incoming short - outgoing short
 ! Incoming short wave radiation is all due to solar radiation and is computed by solarRadiation fcn
@@ -33,8 +32,7 @@
       end interface
 
       integer*4 flag
-      real*8 surfaceTemperature,refTemp,surfaceMoisture,netRad,
-     +     albedo,minAlbedo
+      real*8 surfaceTemperature,refTemp,surfaceMoisture,netRad
       real*8,dimension(:) :: measRad,porosity
 
       integer*4 i,j
@@ -70,7 +68,7 @@
 !     >        **(1/(airGasConst/Cp_air))
 !!         deltaP    = 100*pressureScale*(pressCorrection-1) ! in kPa
 !         deltaP = press1 - press0
-!         precWater = -(1.0/(g_hat*((u_star**2.0)/z_i)))*
+!         precWater = -(1.0/(g_hat*((uScale**2.0)/z_i)))*
 !     >        aq(i)*deltaP
 !         totalPrecWater = totalPrecWater + precWater ! 0 for a completely dry atmosphere
 !      enddo
@@ -92,7 +90,7 @@
 !      Dilley and O'Brien (1998) model
       longIn =59.38d0+113.7d0*(refTemp/(273.16d0/scalarScales(1)))**6+ 
      >     96.96d0*sqrt(totalPrecWater/(25.d0)) ! *** COMPUTE precipitable water ****
-      longIn  = longIn/(Cp_air*densityAir*scalarScales(1)*u_star) ! non-dimensionalize
+      longIn  = longIn/(Cp_air*densityAir*scalarScales(1)*uScale) ! non-dimensionalize
 
 !     Prata (1996) model
 !      longIn  = (1-(1+totalPrecWater)*
@@ -100,7 +98,7 @@
 !     >     *SB_Constant*temperature(1)**4
 
 
-      longNet = -0.04d0/(scalarScales(1)*u_star) ! NET longwave
+      longNet = -0.04d0/(scalarScales(1)*uScale) ! NET longwave
 
 !!!!!!!!!
 !      rapid and accurate radiative transfer model (RRTM) (ref: Mlawer 1997)
@@ -110,8 +108,7 @@
 !      netSurfaceRadiation = (longIn - longOut) +
 !     >     solarRadiation(UTC)
 
-      call solarRadiation(shortNet,surfaceMoisture,
-     +     albedo,minAlbedo,porosity)
+      call solarRadiation(shortNet,surfaceMoisture,porosity)
 !      shortNet = (1-albedo)*shortIn
       netRad = shortNet + longNet
 
@@ -122,8 +119,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      subroutine solarRadiation(shortNet,surfaceMoisture,
-     +     albedo,minAlbedo,porosity)
+      subroutine solarRadiation(shortNet,surfaceMoisture,porosity)
 ! solarRadiation approximates the incoming solar radiation 
 ! based on the latitude, longitude, day of year and time of day
 ! neglects attenuation due to cloud cover (ie assumes clear sky)
@@ -147,7 +143,7 @@
       use SEBmodule
       implicit none
 
-      real*8 shortNet,surfaceMoisture,albedo,minAlbedo
+      real*8 shortNet,surfaceMoisture
       real*8,dimension(:) :: porosity
 
       real*8 Az, As, A, E, Z, declination, sinElevation,
@@ -157,7 +153,7 @@
      
       sinElevation = sin(lat)*sin(declination) - 
      >     cos(lat)*cos(declination)*
-     >     cos( (2*pi*UTC/(24.d0*3600.d0/(z_i/u_star))) - long )
+     >     cos( (2*pi*UTC/(24.d0*3600.d0/(z_i/uScale))) - long )
 
 
       if(sinElevation > 0)then
@@ -172,11 +168,11 @@
                As = albedo*
      >              (1 - surfaceMoisture/porosity(1))
             else
-               As = minAlbedo
+               As = albedoMin
             endif
             A  = As + Az
             !for gables3 (from PILPS paper, online say albedo = 0.23 ??)
-!            A = albedo - minAlbedo*sinElevation 
+!            A = albedo - albedoMin*sinElevation 
          else
             A = albedo
          endif

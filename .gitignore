@@ -1,4 +1,6 @@
 LSM
+inputs/*ini
+inputs/*timeseries*
 outputs/*
 src/*o
 src/*mod

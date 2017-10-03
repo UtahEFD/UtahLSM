@@ -10,9 +10,9 @@
 
 !     READ in parameters 
                                                        
-      open(unit=1,file='inputs/LSMinputs.txt',status='old')
+      open(unit=1,file='./inputs/LSMinputs.txt',status='old')
 
-      do i = 1,6
+      do i = 1,3
          read(1,*)
       enddo
       read(1,*) vonk
@@ -22,8 +22,10 @@
       enddo
       read(1,*) nsteps
       read(1,*) dtr
+      read(1,*) z_m
+      read(1,*) z_s
       read(1,*) z_i
-      read(1,*) u_star
+      read(1,*) uScale
       do i = 1,3
          read(1,*)
       enddo
@@ -36,15 +38,13 @@
          read(1,*) scalarScales(i)
       enddo
       endif
-!     divide by scalarScales for temperature                            
       do i = 1,3
          read(1,*)
       enddo
 
 !     READ soil type parameters
-
       read(1,*) soilLevels
-
+	  read(1,*) zo
       read(1,*) zt
       read(1,*) pressureScale
       read(1,*) densityAir
@@ -63,12 +63,13 @@
       read(1,*) updateFreqSEB
       read(1,*) integrateSoilDiffFreq
       read(1,*) albedoFlag
+      read(1,*) albedo
+      read(1,*) albedoMin
       do i = 1,3
          read(1,*) 
       enddo
 
 !     READ radiation parameters
-
       read(1,*) radiationFlag
       read(1,*) stepsPerRadVal
       read(1,*) SB_constant
@@ -81,17 +82,15 @@
       close(1)
 
 !     calculated grid parameters
-      dt = dtr/(z_i/u_star)
-      startUTC = 0.d0*3600/(z_i/u_star)
+      dt = dtr/(z_i/uScale)
+      startUTC = 0.d0*3600/(z_i/uScale)
 
 !     scalar parameters, note these two could be assumed and 
-   
       temperatureIndex=1
       moistureIndex=2
 
 !     nondimensionalizations
-
-      g_hat=9.81d0*(z_i/(u_star**2))
+      g_hat=9.81d0*(z_i/(uScale**2))
 
       if(soilLevels.gt.0)then
       densityWater = densityWater/densityAir
@@ -99,11 +98,11 @@
      +     latentHeatWater/Cp_air*scalarScales(temperatureIndex)
       heatCapWater = heatCapWater/(densityAir*Cp_air)
       waterGasConst = 
-     +     waterGasConst*scalarScales(temperatureIndex)/u_star**2
+     +     waterGasConst*scalarScales(temperatureIndex)/uScale**2
       SB_constant=SB_constant*scalarScales(temperatureIndex)**3/
-     +     (Cp_air*densityAir*u_star)
+     +     (Cp_air*densityAir*uScale)
       solarIrradiance = 
-     +     solarIrradiance/(scalarScales(temperatureIndex)*u_star)
+     +     solarIrradiance/(scalarScales(temperatureIndex)*uScale)
       lat = lat*pi/180.d0
       long = long*pi/180.d0   
       endif

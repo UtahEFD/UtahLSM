@@ -33,10 +33,10 @@
          heatCap = (1-porosity(:))*heatCapSoil(:)
      >        + moisture*heatCapWater
          thermalTransfer = thermalTransfer
-     >        /(heatCap*densityAir*Cp_air*z_i*u_star)
+     >        /(heatCap*densityAir*Cp_air*z_i*uScale)
       else
          thermalTransfer = thermalTransfer
-     >        /(densityAir*Cp_air*z_i*u_star)
+     >        /(densityAir*Cp_air*z_i*uScale)
       endif
 
       end subroutine getSoilThermalTransfer

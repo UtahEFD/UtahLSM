@@ -1,7 +1,7 @@
       subroutine solveGroundBC(Uref,scalarRef, 
      +     gndScalars,ustar,scalarFlux,soilHeatFlux,porosity,
-     +     satPotential,satHydrCond,soilExponent,heatCapSoil,albedo,
-     +     minAlbedo,measRad,netRad,Psi,Psi0,fi,fiH,zlevel,zo,zGnd)
+     +     satPotential,satHydrCond,soilExponent,heatCapSoil,
+     +     measRad,netRad,Psi,Psi0,fi,fiH,zGnd)
       
       use globals
       use SEBmodule
@@ -16,8 +16,8 @@
          include './interfaces/netSurfaceRadiation.f'
       end interface
 
-      real*8 Uref,ustar,soilHeatFlux,albedo,minAlbedo,zlevel,
-     +     netRad,zo,Psi,Psi0,fi,fiH,PsiH,PsiH0
+      real*8 Uref,ustar,soilHeatFlux,
+     +     netRad,Psi,Psi0,fi,fiH,PsiH,PsiH0
       real*8,dimension(:) :: scalarRef,scalarFlux,measRad,
      +     zGnd,porosity,satPotential,satHydrCond,soilExponent,
      +     heatCapSoil
@@ -77,11 +77,13 @@
          PsiH0=0.d0
 
          do i=1,4
-            denom = dlog( (zlevel) / (zo/z_i) ) + Psi - Psi0
+
+!           momentum
+            denom = dlog( z_m / zo ) + Psi - Psi0
             ustar = Uref*vonk/denom
             
-! scalar flux
-            denomH = dlog( (zlevel) / (zt/z_i) ) + PsiH - PsiH0 
+!           scalar flux
+            denomH = dlog( z_s / zt ) + PsiH - PsiH0 
                    
             scalarFlux(temperatureIndex) = 
      >           ( gndScalars( 1,temperatureIndex )
@@ -89,7 +91,7 @@
             
             call getSurfaceMixingRatio(gndScalars,q_gnd,measPress,
      >           porosity,satPotential,soilExponent)    
-            if(computeLH == 1)then
+            if(computeLH == 1) then
                scalarFlux(moistureIndex) = ( q_gnd 
      >              - scalarRef(moistureIndex) )*ustar*vonk/denomH
                
@@ -97,7 +99,7 @@
 
 ! compute Psi and fi values for momentum and scalars from computed flux
 
-            call getStabilityCorrections(zlevel,ustar,
+            call getStabilityCorrections(ustar,
      >           scalarRef(temperatureIndex),
      >           scalarRef(moistureIndex),scalarFlux,
      >           Psi,Psi0,fi,PsiH,PsiH0,fiH)
@@ -120,7 +122,7 @@
 !     solve surface energy budget 
                   
                   call netSurfaceRadiation(gndScalars(1,
-     >                 temperatureIndex),albedo,minAlbedo,porosity,
+     >                 temperatureIndex),porosity,
      >                 scalarRef(temperatureIndex),
      >                 gndScalars(1,moistureIndex),measRad,
      >                 netRad,iterateFlux*iterateTemp)
@@ -198,12 +200,13 @@
             lastTemperature = gndScalars(1,temperatureIndex)
             
             do i=1,4
-               
-               denom = dlog( (zlevel) / (zo/z_i) ) + Psi - Psi0
+
+!              momentum 
+               denom = dlog( z_m / zo ) + Psi - Psi0
                ustar = Uref*vonk/denom
                
-!     scalar flux
-               denomH = dlog( (zlevel) / (zt/z_i) ) + PsiH - PsiH0               
+!              scalar flux
+               denomH = dlog( z_s / zt ) + PsiH - PsiH0               
                
                scalarFlux(temperatureIndex) = ( 
      >              gndScalars(1,temperatureIndex)
@@ -218,7 +221,7 @@
          
 !     compute Psi and fi values for momentum and scalars from computed flux
 
-               call getStabilityCorrections(zlevel,ustar,
+               call getStabilityCorrections(ustar,
      >              scalarRef(temperatureIndex),scalarRef(moistureIndex)
      >              ,scalarFlux,Psi,Psi0,fi,PsiH,PsiH0,fiH) 
            
