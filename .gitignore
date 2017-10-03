@@ -1,3 +1,4 @@
+outputs/*
 src/*o
 src/*mod
 *.DS_Store
