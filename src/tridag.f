@@ -5,16 +5,16 @@
       INTEGER*4 j
       REAL*8 bet,gam(NMAX)
 
-      if(b(1).eq.0.)pause 'tridag: rewrite equations'
+      if(b(1).eq.0.) STOP 'tridag: rewrite equations'
       bet=b(1)
       u(1)=r(1)/bet
       do 11 j=2,n
         gam(j)=c(j-1)/bet
         bet=b(j)-a(j)*gam(j)
         if(bet.eq.0.) then
-           print *, 'tridag failed at k=',j  
-           print *,'a, b, c, gam, and bet=',a(j),b(j),c(j),gam(j),bet
-           pause                        
+           print *,'tridag failed at k=',j
+           print *,'a, b, c, gam, and bet=',a(j),b(j),c(j),gam(j),bet     
+           STOP                   
         end if   
         u(j)=(r(j)-a(j)*u(j-1))/bet
 11    continue
