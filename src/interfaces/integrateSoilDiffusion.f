@@ -1,8 +1,4 @@
-      subroutine integrateSoilDiffusion(gndScalars,lastSurfScalars,ind,
-     +     zGnd,porosity,satPotential,soilExponent,heatCapSoil,
-     +     satHydrCond)
+      subroutine integrateSoilDiffusion(lastSurfScalars,ind)
       integer*4 ind
-      real*8,dimension(:) :: lastSurfScalars,zGnd,porosity,satPotential,
-     +     soilExponent,heatCapSoil,satHydrCond
-      real*8,dimension(:,:) :: gndScalars
+      real*8,dimension(:) :: lastSurfScalars
       end subroutine integrateSoilDiffusion

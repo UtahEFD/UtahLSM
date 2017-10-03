@@ -6,9 +6,11 @@
       implicit none
 
       integer*4 i
-      real*8 dtr
-
-!     READ in parameters 
+      real*8 dtr,w,tkesgs,time
+      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     READ in parameters from LESinputs !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                        
       open(unit=1,file='./inputs/LSMinputs.txt',status='old')
 
@@ -30,7 +32,7 @@
          read(1,*)
       enddo
 
-! READ scalar parameters               
+!     READ scalar parameters               
       read(1,*) scalarCount
       if(scalarCount.gt.0)then
       ALLOCATE( scalarScales(scalarCount))
@@ -80,6 +82,61 @@
       read(1,*) emissivity
 
       close(1)
+      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     READ in external soil and atmospheric data !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+      allocate(zGnd(soilLevels),porosity(soilLevels),
+     +     satPotential(soilLevels),satHydrCond(soilLevels),
+     +     soilExponent(soilLevels),heatCapSoil(soilLevels),
+     +     u(nsteps),v(nsteps))
+      allocate(gndScalars(soilLevels,2),scalar(nsteps,scalarcount))
+
+!     soil
+      write(*,*) 'reading in soil property data'
+      Open (unit=1,file='inputs/soilTypeParams.ini')
+      read(1,*) porosity(1:soilLevels)
+      read(1,*) satPotential(1:soilLevels)
+      read(1,*) satHydrCond(1:soilLevels)
+      read(1,*) soilExponent(1:soilLevels)
+      read(1,*) heatCapSoil(1:soilLevels)
+      close(1)
+      
+      write(*,*) 'reading in LSM parameter info'
+      Open (unit=1,file='inputs/soilLevels.ini')
+      read(1,*) zGnd(1:soilLevels)
+      close(1)
+
+      write(*,*) 'reading in initial soil state'
+      Open (unit=1,file='inputs/soilTemperature.ini')
+      read(1,*) gndScalars(1:soilLevels,1)
+      close(1)
+      Open (unit=1,file='inputs/soilMoisture.ini')
+      read(1,*) gndScalars(1:soilLevels,2)
+      close(1)
+      
+!     atmosphere    
+      write(*,*) 'reading in external atmospheric data'      
+      Open (unit=1,file='inputs/timeseries_10.dat')
+      do i=1,nsteps
+         read(1,*) time,u(i),v(i),w,scalar(i,1),
+     +        scalar(i,2),tkesgs
+      enddo
+      
+!     nondimensionalization
+      satPotential=satPotential/z_i
+      satHydrCond=satHydrCond/uScale
+      heatCapSoil=heatCapSoil/(densityAir*Cp_air)
+      zGnd=zGnd/z_i
+      u=u/uScale
+      v=v/uScale
+      do i=1,scalarcount
+         scalar(:,i)=scalar(:,i)/scalarScales(i)
+      enddo
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     Compute other parameters !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !     calculated grid parameters
       dt = dtr/(z_i/uScale)
@@ -89,7 +146,7 @@
       temperatureIndex=1
       moistureIndex=2
 
-!     nondimensionalizations
+!     nondimensionalization
       g_hat=9.81d0*(z_i/(uScale**2))
 
       if(soilLevels.gt.0)then

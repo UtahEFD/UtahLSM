@@ -1,5 +1,4 @@
-      subroutine netSurfaceRadiation(surfaceTemperature,porosity,
-     +     refTemp,surfaceMoisture,measRad,netRad,flag)
+      subroutine netSurfaceRadiation(refTemp,netRad,flag)
 ! computes the net surface radiation
 !  = incoming long - outgoing long + incoming short - outgoing short
 ! Incoming short wave radiation is all due to solar radiation and is computed by solarRadiation fcn
@@ -30,28 +29,16 @@
       interface
          include './interfaces/solarRadiation.f'
       end interface
-
+     
       integer*4 flag
-      real*8 surfaceTemperature,refTemp,surfaceMoisture,netRad
-      real*8,dimension(:) :: measRad,porosity
-
+      real*8 refTemp,netRad
+      
       integer*4 i,j
       real*8  longOut, longIn, shortIn, shortNet, longNet, solar,
-     +     precWater, totalPrecWater, z,
-     +     pressCorrection, deltaP,
-     +     press0,press1, vaporPress
+     +     precWater, totalPrecWater, z, pressCorrection, deltaP,
+     +     press0,press1, vaporPress,
+     +     surfaceTemperature,surfaceMoisture
 
-!     if using measured radiation, interpolate and return                          
-      if( radiationFlag > 0 )then
-
-         i = mod(t-1,stepsPerRadVal)
-         j = int( (t - i)/stepsPerRadVal ) + 1
-
-         netRad = measRad(j) + i*( measRad(j+1) - measRad(j) )
-     >        / stepsPerRadVal
-
-         return
-      endif
 ! precWater will be input from LES (precipitable water is the total amount of water in the atmos above when condensed)
 !      totalPrecWater = 0
 !      do i = 1,size(aq)
@@ -72,6 +59,9 @@
 !     >        aq(i)*deltaP
 !         totalPrecWater = totalPrecWater + precWater ! 0 for a completely dry atmosphere
 !      enddo
+      
+      surfaceTemperature = gndScalars(1,temperatureIndex)
+      surfaceMoisture = gndScalars(1,moistureIndex)
       totalPrecWater = 80.d0
 
       ! precipitable water computed using Prata (1996) (documented in Niemela 2001)
@@ -97,7 +87,6 @@
 !     >     exp(-(1.2+3.0*totalPrecWater)**(1.0/2.0)))
 !     >     *SB_Constant*temperature(1)**4
 
-
       longNet = -0.04d0/(scalarScales(1)*uScale) ! NET longwave
 
 !!!!!!!!!
@@ -108,7 +97,7 @@
 !      netSurfaceRadiation = (longIn - longOut) +
 !     >     solarRadiation(UTC)
 
-      call solarRadiation(shortNet,surfaceMoisture,porosity)
+      call solarRadiation(shortNet,surfaceMoisture)
 !      shortNet = (1-albedo)*shortIn
       netRad = shortNet + longNet
 
@@ -119,7 +108,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      subroutine solarRadiation(shortNet,surfaceMoisture,porosity)
+      subroutine solarRadiation(shortNet,surfaceMoisture)
 ! solarRadiation approximates the incoming solar radiation 
 ! based on the latitude, longitude, day of year and time of day
 ! neglects attenuation due to cloud cover (ie assumes clear sky)
@@ -144,7 +133,6 @@
       implicit none
 
       real*8 shortNet,surfaceMoisture
-      real*8,dimension(:) :: porosity
 
       real*8 Az, As, A, E, Z, declination, sinElevation,
      +     transmissivity

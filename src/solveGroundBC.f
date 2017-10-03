@@ -1,7 +1,5 @@
-      subroutine solveGroundBC(Uref,scalarRef, 
-     +     gndScalars,ustar,scalarFlux,soilHeatFlux,porosity,
-     +     satPotential,satHydrCond,soilExponent,heatCapSoil,
-     +     measRad,netRad,Psi,Psi0,fi,fiH,zGnd)
+      subroutine solveGroundBC(Uref,scalarRef,ustar,scalarFlux,
+     +     soilHeatFlux,netRad)
       
       use globals
       use SEBmodule
@@ -16,13 +14,9 @@
          include './interfaces/netSurfaceRadiation.f'
       end interface
 
-      real*8 Uref,ustar,soilHeatFlux,
-     +     netRad,Psi,Psi0,fi,fiH,PsiH,PsiH0
-      real*8,dimension(:) :: scalarRef,scalarFlux,measRad,
-     +     zGnd,porosity,satPotential,satHydrCond,soilExponent,
-     +     heatCapSoil
-      real*8,dimension(:,:) :: gndScalars
-
+      real*8 Uref,ustar,soilHeatFlux,netRad,Psi,Psi0,fi,fiH,PsiH,PsiH0
+      real*8,dimension(:) :: scalarRef,scalarFlux
+      
       integer*4 bisectFlag,iterateFlux,iterateTemp,
      +     i,k,tempConvFlag ,sepFlag,computeLH,
      +     skipSEBFlag,skipIntegrationFlag
@@ -89,8 +83,7 @@
      >           ( gndScalars( 1,temperatureIndex )
      >           - scalarRef(temperatureIndex) ) * ustar*vonk/denomH
             
-            call getSurfaceMixingRatio(gndScalars,q_gnd,measPress,
-     >           porosity,satPotential,soilExponent)    
+            call getSurfaceMixingRatio(q_gnd)    
             if(computeLH == 1) then
                scalarFlux(moistureIndex) = ( q_gnd 
      >              - scalarRef(moistureIndex) )*ustar*vonk/denomH
@@ -121,10 +114,7 @@
 !     SURFACE ENERGY BUDGET
 !     solve surface energy budget 
                   
-                  call netSurfaceRadiation(gndScalars(1,
-     >                 temperatureIndex),porosity,
-     >                 scalarRef(temperatureIndex),
-     >                 gndScalars(1,moistureIndex),measRad,
+                  call netSurfaceRadiation(scalarRef(temperatureIndex),
      >                 netRad,iterateFlux*iterateTemp)
 
                   call getSoilThermalTransfer(
@@ -212,8 +202,7 @@
      >              gndScalars(1,temperatureIndex)
      >              - scalarRef(temperatureIndex) ) * ustar*vonk/denomH
          
-               call getSurfaceMixingRatio(gndScalars,q_gnd,measPress,
-     >              porosity,satPotential,soilExponent)      
+               call getSurfaceMixingRatio(q_gnd)      
                if(computeLH == 1 )then
                   scalarFlux(moistureIndex) = ( q_gnd 
      >                 - scalarRef(moistureIndex) )*ustar*vonk/denomH
@@ -241,8 +230,7 @@
             if( sepFlag == 1 )then
                do i = 1,200     !maxTempIterations
 
-                  call getSurfaceMixingRatio(gndScalars,q_gnd,measPress,
-     >                 porosity,satPotential,soilExponent)      
+                  call getSurfaceMixingRatio(q_gnd)      
                   if(computeLH == 1 )then
                      scalarFlux(moistureIndex) = ( q_gnd 
      >                    - scalarRef(moistureIndex) )*ustar*vonk/denomH
@@ -294,15 +282,11 @@
 !     heat diffusion equation and soil moisture equation in time
       if( skipIntegrationFlag == 0 )then
          if (temperatureIndex /= 0)then
-            call integrateSoilDiffusion(gndScalars,
-     >           lastSurfScalars,1,zGnd,porosity,satPotential,
-     >           soilExponent,heatCapSoil,satHydrCond)
+            call integrateSoilDiffusion(lastSurfScalars,1)
          endif
          
          if (moistureIndex /= 0)then
-            call integrateSoilDiffusion(gndScalars,
-     >           lastSurfScalars,2,zGnd,porosity,satPotential,
-     >           soilExponent,heatCapSoil,satHydrCond)
+            call integrateSoilDiffusion(lastSurfScalars,2)
          endif
       endif
       

@@ -1,13 +1,13 @@
       subroutine getSoilThermalTransfer(moisture,thermalTransfer,flag,
-     +     porosity,satPotential,soilExponent,heatCapSoil)
+     +     por,satPot,soilEx,hCapSoil)
       
       use globals
       use SEBmodule
       implicit none
       
       integer*4 flag
-      real*8, dimension(:):: moisture,thermalTransfer,porosity,
-     +     satPotential,soilExponent,heatCapSoil
+      real*8, dimension(:):: moisture,thermalTransfer,por,
+     +     satPot,soilEx,hCapSoil
       
       real*8, dimension(size(moisture)):: Pf, heatCap
       integer i
@@ -16,7 +16,7 @@
 
 !     compute soil conductivity from emperical formula (McCumber 1980)                 
       Pf = log10( abs(100.d0*z_i*satPotential(:)*
-     >     (porosity(:)/moisture)**soilExponent(:) ) )
+     >     (por(:)/moisture)**soilEx(:) ) )
       
       do i=1,size(Pf)
          if ( Pf(i).le.(5.1) )then
@@ -30,7 +30,7 @@
 !     non-dimensionalize the conductivity 
                                     
       if(flag==1)then
-         heatCap = (1-porosity(:))*heatCapSoil(:)
+         heatCap = (1-por(:))*hCapSoil(:)
      >        + moisture*heatCapWater
          thermalTransfer = thermalTransfer
      >        /(heatCap*densityAir*Cp_air*z_i*uScale)

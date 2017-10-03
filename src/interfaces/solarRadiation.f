@@ -1,4 +1,3 @@
-      subroutine solarRadiation(shortNet,surfaceMoisture,porosity)
+      subroutine solarRadiation(shortNet,surfaceMoisture)
       real*8 shortNet,surfaceMoisture
-      real*8,dimension(:) :: porosity
       end subroutine solarRadiation

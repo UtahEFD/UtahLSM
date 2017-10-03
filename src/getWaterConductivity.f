@@ -1,19 +1,18 @@
       subroutine getWaterConductivity(moisture,diffCond,hydrCond,
-     +     porosity,satPotential,satHydrCond,soilExponent)
+     +     por,satPot,satHCond,soilEx)
       
       implicit none
       
-      real*8, dimension(:):: moisture,diffCond,hydrCond,porosity,
-     +     satPotential,satHydrCond,soilExponent
+      real*8, dimension(:):: moisture,diffCond,hydrCond,por,
+     +     satPot,satHCond,soilEx
 
 !     Emperical relationships from Clapp and Hornberger (1978)                                                                                                 
 !     need to be non-dimensionalized                                
 
-      diffCond = -(soilExponent(:)*satHydrCond(:)*
-     >     satPotential(:)/moisture(:))
-     >     *(moisture(:)/porosity(:))**(soilExponent(:)+3.d0)
-      
-      hydrCond  = satHydrCond(:)*(moisture(:)/porosity(:))**
-     >     (2.d0*soilExponent(:) + 3.d0)
+      diffCond = -(soilEx(:)*satHCond(:)*satPot(:)/moisture(:))
+     >     *(moisture(:)/por(:))**(soilEx(:)+3.d0)
+     
+      hydrCond  = satHCond(:)*(moisture(:)/por(:))**
+     >     (2.d0*soilEx(:) + 3.d0)
 
       end subroutine getWaterConductivity

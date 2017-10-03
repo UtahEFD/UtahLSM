@@ -1,11 +1,7 @@
-      subroutine solveGroundBC(Uref,scalarRef, 
-     +     gndScalars,ustar,scalarFlux,soilHeatFlux,porosity,
-     +     satPotential,satHydrCond,soilExponent,heatCapSoil,
-     +     measRad,netRad,Psi,Psi0,fi,fiH,zGnd)
+      subroutine solveGroundBC(Uref,scalarRef,ustar,scalarFlux,
+     +     soilHeatFlux,netRad)
       
-      real*8 Uref,ustar,soilHeatFlux,netRad,Psi,Psi0,fi,fiH
-      real*8,dimension(:) :: scalarRef,scalarFlux,measRad,
-     +     zGnd,porosity,satPotential,satHydrCond,soilExponent,
-     +     heatCapSoil
-      real*8,dimension(:,:) :: gndScalars
+      real*8 Uref,ustar,soilHeatFlux,netRad
+      real*8,dimension(:) :: scalarRef,scalarFlux
+
       end subroutine solveGroundBC

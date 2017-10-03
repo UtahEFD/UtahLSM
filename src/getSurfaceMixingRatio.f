@@ -1,13 +1,10 @@
-      subroutine getSurfaceMixingRatio(gndScalars,q_gnd,measPress,
-     +     porosity,satPotential,soilExponent)
+      subroutine getSurfaceMixingRatio(q_gnd)
+      
       use globals
       use SEBmodule
       implicit none
       
-      real*8 q_gnd,measPress
-      real*8,dimension(:) :: porosity,satPotential,soilExponent
-      real*8,dimension(:,:) :: gndScalars
-
+      real*8 q_gnd
       real*8 moistPotential(2), h, partialPressure, satHum, specHum_gnd
       
 !     from McCumber (documented in Pielke, Mesoscale Meteorological Modeling (page 420)                                                             

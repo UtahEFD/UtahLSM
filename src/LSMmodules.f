@@ -6,7 +6,6 @@
 !              SEBmodule
 !
       MODULE globals
-!     ALL program units will 'use globals'
       implicit none
 
       real*8 dt
@@ -15,7 +14,10 @@
       real*8 Pi,g_hat,uScale,vonk,z_i, z_m, z_s
       real*8 UTC,startUTC,UTC_hrs
       integer*4 temperatureIndex,moistureIndex
-      real*8,allocatable,dimension(:)::surfaceFluxes,scalarScales
+      real*8,allocatable,dimension(:)::surfaceFluxes,scalarScales,
+     +     zGnd,porosity,satPotential,satHydrCond,soilExponent,
+     +     heatCapSoil,u,v
+      real*8,allocatable,dimension(:,:) :: gndScalars,scalar
       
       END MODULE
 
