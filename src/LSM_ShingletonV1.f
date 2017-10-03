@@ -22,12 +22,23 @@
       integer*4 i,j
       real*8 M,soilHeatFlux,netRad,ustar
       real*8,allocatable,dimension(:) :: S, scalarFlux
+      character(:),allocatable :: inputDir
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     Parse command line for inputDir
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !call get_command_argument(1, inputDir)
+      !if (len_trim(inputDir) == 0) then
+      !  inputDir = 'inputs/'
+      !end if      
+      inputDir = 'inputs/lable/'
+      inputDir = trim(inputDir)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     Read inputs from LSMinputs and external soil/atm data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(*,*) 'reading inputs'
-      call readInputs()
+      call readInputs(inputDir)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     Allocate arrays

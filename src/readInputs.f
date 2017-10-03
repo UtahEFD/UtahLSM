@@ -1,4 +1,4 @@
-      subroutine readInputs()
+      subroutine readInputs(inputDir)
 
       use globals
       use SEBmodule
@@ -7,12 +7,13 @@
 
       integer*4 i
       real*8 dtr,w,tkesgs,time
-      
+      character(len=*) inputDir
+            
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     READ in parameters from LESinputs !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                        
-      open(unit=1,file='./inputs/LSMinputs.txt',status='old')
+      open(unit=1,file=inputDir//'/LSMinputs.txt',status='old')
 
       do i = 1,3
          read(1,*)
@@ -22,6 +23,7 @@
       do i=1,3
          read(1,*)
       enddo
+      read(1,*) startUTC
       read(1,*) nsteps
       read(1,*) dtr
       read(1,*) z_m
@@ -94,7 +96,7 @@
 
 !     soil
       write(*,*) 'reading in soil property data'
-      Open (unit=1,file='inputs/soilTypeParams.ini')
+      Open (unit=1,file=inputDir//'soilTypeParams.ini')
       read(1,*) porosity(1:soilLevels)
       read(1,*) satPotential(1:soilLevels)
       read(1,*) satHydrCond(1:soilLevels)
@@ -103,21 +105,21 @@
       close(1)
       
       write(*,*) 'reading in LSM parameter info'
-      Open (unit=1,file='inputs/soilLevels.ini')
+      Open (unit=1,file=inputDir//'soilLevels.ini')
       read(1,*) zGnd(1:soilLevels)
       close(1)
 
       write(*,*) 'reading in initial soil state'
-      Open (unit=1,file='inputs/soilTemperature.ini')
+      Open (unit=1,file=inputDir//'soilTemperature.ini')
       read(1,*) gndScalars(1:soilLevels,1)
       close(1)
-      Open (unit=1,file='inputs/soilMoisture.ini')
+      Open (unit=1,file=inputDir//'soilMoisture.ini')
       read(1,*) gndScalars(1:soilLevels,2)
       close(1)
       
 !     atmosphere    
       write(*,*) 'reading in external atmospheric data'      
-      Open (unit=1,file='inputs/timeseries_10.dat')
+      Open (unit=1,file=inputDir//'timeseries_10.dat')
       do i=1,nsteps
          read(1,*) time,u(i),v(i),w,scalar(i,1),
      +        scalar(i,2),tkesgs
@@ -140,13 +142,14 @@
 
 !     calculated grid parameters
       dt = dtr/(z_i/uScale)
-      startUTC = 0.d0*3600/(z_i/uScale)
 
 !     scalar parameters, note these two could be assumed and 
       temperatureIndex=1
       moistureIndex=2
 
 !     nondimensionalization
+      startUTC=startUTC*3600/(z_i/uScale)
+      
       g_hat=9.81d0*(z_i/(uScale**2))
 
       if(soilLevels.gt.0)then

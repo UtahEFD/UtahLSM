@@ -7,7 +7,6 @@
 !
       MODULE globals
       implicit none
-
       real*8 dt
       integer*4 t
       integer*4 nsteps,scalarCount
