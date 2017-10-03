@@ -10,7 +10,7 @@
 
 !     READ in parameters 
                                                        
-      open(unit=1,file='LSMinputs.txt',status='old')
+      open(unit=1,file='inputs/LSMinputs.txt',status='old')
 
       do i = 1,6
          read(1,*)
