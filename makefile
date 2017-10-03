@@ -1,21 +1,33 @@
-COMP = gfortran
+# --------------------------------------
+# Makefile for UtahLSM
+#
+# Author: Jeremy Gibbs
+# Date: 2017-10-02
+#
+# UtahLSM developed by Shingleton 2012
+# --------------------------------------
 
-VPATH = src:src/modules:src/interfaces:
+TARGET  = LSM
+FC      = gfortran
+SRCDIR  = src
 
-OBJ  = 	LSMmodules.o LSM_ShingletonV1.o readInputs.o \
-	solveGroundBC.o netSurfaceRadiation.o integrateSoilDiffusion.o tridag.o \
-        getSoilThermalTransfer.o getWaterConductivity.o \
-        getStabilityCorrections.o getSurfaceMixingRatio.o
+SOURCES := $(wildcard $(SRCDIR)/*f)
+OBJECTS := $(SOURCES:$(SRCDIR)/%.f=$(SRCDIR)/%.o)
+OBJECTS := $(SRCDIR)/LSMmodules.o $(SRCDIR)/LSM_ShingletonV1.o \
+           $(SRCDIR)/readInputs.o $(SRCDIR)/solveGroundBC.o \
+           $(SRCDIR)/netSurfaceRadiation.o $(SRCDIR)/integrateSoilDiffusion.o \
+           $(SRCDIR)/tridag.o $(SRCDIR)/getSoilThermalTransfer.o \
+           $(SRCDIR)/getWaterConductivity.o $(SRCDIR)/getStabilityCorrections.o \
+           $(SRCDIR)/getSurfaceMixingRatio.o
 
-# general gnu compiler
-LSM:    $(OBJ)
-	$(COMP) $(OBJ) -o LSM
+$(TARGET): $(OBJECTS)
+	@$(FC) $(OBJECTS) -o $@
+	@echo "Linking complete!"
 
-trace:	$(OBJ1)
-	$(COMP) -trace $(OBJ) -o LSM
-
-.f.o:
-	$(COMP) -c $?
+$(OBJECTS): $(SRCDIR)/%.o : $(SRCDIR)/%.f
+	@$(FC) -J$(SRCDIR) -c $< -o $@
+	@echo "Compiled "$<" successfully!"
 
 clean:
-	rm -f *.o *.mod LSM
+	rm -rf $(OBJECTS) $(SRCDIR)/*mod $(TARGET)
+	@echo "Cleanup complete!" 
