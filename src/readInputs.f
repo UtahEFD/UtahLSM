@@ -1,4 +1,4 @@
-      subroutine readInputs(inputDir)
+      subroutine readInputs(caseName)
 
       use globals
       use SEBmodule
@@ -7,13 +7,15 @@
 
       integer*4 i
       real*8 dtr,w,tkesgs,time
-      character(len=*) inputDir
+      character(len=32) :: caseName
+      character(len=64) :: inputDir
             
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     READ in parameters from LESinputs !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                                       
-      open(unit=1,file=inputDir//'/LSMinputs.txt',status='old')
+      inputDir = 'inputs/' // caseName
+                                          
+      open(unit=1,file=trim(inputDir) // '/LSMinputs.txt',status='old')
 
       do i = 1,3
          read(1,*)
@@ -34,7 +36,7 @@
          read(1,*)
       enddo
 
-!     READ scalar parameters               
+      ! READ scalar parameters               
       read(1,*) scalarCount
       if(scalarCount.gt.0)then
       ALLOCATE( scalarScales(scalarCount))
@@ -46,7 +48,7 @@
          read(1,*)
       enddo
 
-!     READ soil type parameters
+      ! READ soil type parameters
       read(1,*) soilLevels
 	  read(1,*) zo
       read(1,*) zt
@@ -73,7 +75,7 @@
          read(1,*) 
       enddo
 
-!     READ radiation parameters
+      ! READ radiation parameters
       read(1,*) radiationFlag
       read(1,*) stepsPerRadVal
       read(1,*) SB_constant
@@ -94,9 +96,9 @@
      +     u(nsteps),v(nsteps))
       allocate(gndScalars(soilLevels,2),scalar(nsteps,scalarcount))
 
-!     soil
+      ! soil
       write(*,*) 'reading in soil property data'
-      Open (unit=1,file=inputDir//'soilTypeParams.ini')
+      Open (unit=1,file=trim(inputDir) // '/soilTypeParams.ini')
       read(1,*) porosity(1:soilLevels)
       read(1,*) satPotential(1:soilLevels)
       read(1,*) satHydrCond(1:soilLevels)
@@ -105,27 +107,27 @@
       close(1)
       
       write(*,*) 'reading in LSM parameter info'
-      Open (unit=1,file=inputDir//'soilLevels.ini')
+      Open (unit=1,file=trim(inputDir) // '/soilLevels.ini')
       read(1,*) zGnd(1:soilLevels)
       close(1)
 
       write(*,*) 'reading in initial soil state'
-      Open (unit=1,file=inputDir//'soilTemperature.ini')
+      Open (unit=1,file=trim(inputDir) // '/soilTemperature.ini')
       read(1,*) gndScalars(1:soilLevels,1)
       close(1)
-      Open (unit=1,file=inputDir//'soilMoisture.ini')
+      Open (unit=1,file=trim(inputDir) // '/soilMoisture.ini')
       read(1,*) gndScalars(1:soilLevels,2)
       close(1)
       
-!     atmosphere    
+      ! atmosphere    
       write(*,*) 'reading in external atmospheric data'      
-      Open (unit=1,file=inputDir//'timeseries_10.dat')
+      Open (unit=1,file=trim(inputDir) // '/timeseries_10.dat')
       do i=1,nsteps
          read(1,*) time,u(i),v(i),w,scalar(i,1),
      +        scalar(i,2),tkesgs
       enddo
       
-!     nondimensionalization
+      ! nondimensionalization
       satPotential=satPotential/z_i
       satHydrCond=satHydrCond/uScale
       heatCapSoil=heatCapSoil/(densityAir*Cp_air)
@@ -140,14 +142,14 @@
 !     Compute other parameters !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!     calculated grid parameters
+      ! calculated grid parameters
       dt = dtr/(z_i/uScale)
 
-!     scalar parameters, note these two could be assumed and 
+      ! scalar parameters, note these two could be assumed and 
       temperatureIndex=1
       moistureIndex=2
 
-!     nondimensionalization
+      !  nondimensionalization
       startUTC=startUTC*3600/(z_i/uScale)
       
       g_hat=9.81d0*(z_i/(uScale**2))

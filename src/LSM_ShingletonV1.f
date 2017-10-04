@@ -22,23 +22,24 @@
       integer*4 i,j
       real*8 M,soilHeatFlux,netRad,ustar
       real*8,allocatable,dimension(:) :: S, scalarFlux
-      character(:),allocatable :: inputDir
+      character(len=32) :: caseName
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Parse command line for inputDir
+!     Parse command line for input case name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !call get_command_argument(1, inputDir)
-      !if (len_trim(inputDir) == 0) then
-      !  inputDir = 'inputs/'
-      !end if      
-      inputDir = 'inputs/lable/'
-      inputDir = trim(inputDir)
-
+      if (command_argument_count().ne.1) then
+        write(*,*) "Usage: ./LSM case_name"
+        write(*,*) "where case_name is subfolder in inputs/"
+        stop
+      end if
+	  
+	  call get_command_argument(1, caseName)
+	  	  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     Read inputs from LSMinputs and external soil/atm data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(*,*) 'reading inputs'
-      call readInputs(inputDir)
+      call readInputs(caseName)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !     Allocate arrays
