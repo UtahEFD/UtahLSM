@@ -125,49 +125,61 @@
       do i=1,nsteps
          read(1,*) time,u(i),v(i),w,scalar(i,1),
      +        scalar(i,2),tkesgs
-      enddo
-      
-      ! nondimensionalization
-      satPotential=satPotential/z_i
-      satHydrCond=satHydrCond/uScale
-      heatCapSoil=heatCapSoil/(densityAir*Cp_air)
-      zGnd=zGnd/z_i
-      u=u/uScale
-      v=v/uScale
-      do i=1,scalarcount
-         scalar(:,i)=scalar(:,i)/scalarScales(i)
-      enddo
+      enddo      
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Compute other parameters !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      ! calculated grid parameters
-      dt = dtr/(z_i/uScale)
+!!!!!!!!!!!!!!!!!!!!!!!!!
+!     scalar parameters !
+!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! scalar parameters, note these two could be assumed and 
       temperatureIndex=1
       moistureIndex=2
 
-      !  nondimensionalization
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     nondimensionalization !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
+      ! time
+      dt = dtr/(z_i/uScale)
       startUTC=startUTC*3600/(z_i/uScale)
       
+      ! gravity
       g_hat=9.81d0*(z_i/(uScale**2))
-
-      if(soilLevels.gt.0)then
+      
+      ! soil properties
+      satPotential=satPotential/z_i
+      satHydrCond=satHydrCond/uScale
+      heatCapSoil=heatCapSoil/(densityAir*Cp_air)
+      zGnd=zGnd/z_i
+      
+      ! atm length scales
+      zo=zo/z_i
+      zt=zt/z_i 
+      z_m=z_m/z_i
+      z_s=z_s/z_s
+      
+      ! atm velocity and scalars
+      u=u/uScale
+      v=v/uScale
+      do i=1,scalarcount
+         scalar(:,i)=scalar(:,i)/scalarScales(i)
+      enddo
+      
+      ! water properties
       densityWater = densityWater/densityAir
       latentHeatWater = 
-     +     latentHeatWater/Cp_air*scalarScales(temperatureIndex)
+     +     latentHeatWater/(Cp_air*scalarScales(temperatureIndex))
       heatCapWater = heatCapWater/(densityAir*Cp_air)
       waterGasConst = 
      +     waterGasConst*scalarScales(temperatureIndex)/uScale**2
+      
+      ! radiation model
       SB_constant=SB_constant*scalarScales(temperatureIndex)**3/
      +     (Cp_air*densityAir*uScale)
       solarIrradiance = 
      +     solarIrradiance/(scalarScales(temperatureIndex)*uScale)
       lat = lat*pi/180.d0
       long = long*pi/180.d0   
-      endif
-
+      
       return
       end
