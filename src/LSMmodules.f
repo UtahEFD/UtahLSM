@@ -27,10 +27,10 @@
       integer*4 soilLevels,maxFluxIterations,maxTempIterations,
      +     endConstSEB,updateFreqSEB,integrateSoilDiffFreq,
      +     radiationFlag,stepsPerRadVal,day,albedoFlag
-      real*8 zo,zt,pressureScale,densityAir,Cp_air,densityWater,
+      real*8 z_o,z_t,pressureScale,densityAir,Cp_air,densityWater,
      +     latentHeatWater,heatCapWater,waterGasConst,moistureCriteria,
      +     temperatureCriteria,tempFluxCriteria,convFactor,SB_constant,
-     +     solarIrradiance,lat,long,emissivity,albedo, albedoMin
+     +     solarIrradiance,lat,long,emissivity,albedo,albedoMin
 
       END MODULE
 

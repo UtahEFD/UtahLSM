@@ -50,8 +50,8 @@
 
       ! READ soil type parameters
       read(1,*) soilLevels
-	  read(1,*) zo
-      read(1,*) zt
+	  read(1,*) z_o
+      read(1,*) z_t
       read(1,*) pressureScale
       read(1,*) densityAir
       read(1,*) Cp_air
@@ -153,8 +153,8 @@
       zGnd=zGnd/z_i
       
       ! atm length scales
-      zo=zo/z_i
-      zt=zt/z_i 
+      z_o=z_o/z_i
+      z_t=z_t/z_i 
       z_m=z_m/z_i
       z_s=z_s/z_s
       

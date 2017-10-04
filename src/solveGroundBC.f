@@ -73,11 +73,11 @@
          do i=1,4
 
 !           momentum
-            denom = dlog( z_m / zo ) + Psi - Psi0
+            denom = dlog( z_m / z_o ) + Psi - Psi0
             ustar = Uref*vonk/denom
             
 !           scalar flux
-            denomH = dlog( z_s / zt ) + PsiH - PsiH0 
+            denomH = dlog( z_s / z_t ) + PsiH - PsiH0 
                    
             scalarFlux(temperatureIndex) = 
      >           ( gndScalars( 1,temperatureIndex )
@@ -192,11 +192,11 @@
             do i=1,4
 
 !              momentum 
-               denom = dlog( z_m / zo ) + Psi - Psi0
+               denom = dlog( z_m / z_o ) + Psi - Psi0
                ustar = Uref*vonk/denom
                
 !              scalar flux
-               denomH = dlog( z_s / zt ) + PsiH - PsiH0               
+               denomH = dlog( z_s / z_t ) + PsiH - PsiH0               
                
                scalarFlux(temperatureIndex) = ( 
      >              gndScalars(1,temperatureIndex)
