@@ -1,5 +1,5 @@
       subroutine getWaterConductivity(moisture,diffCond,hydrCond,
-     +     por,satPot,satHCond,soilEx)
-      real*8, dimension(:):: moisture,diffCond,hydrCond,por,
-     +     satPot,satHCond,soilEx
+     +     porosity1,satPotential1,satHydrCond1,soilExponent1)
+      real*8, dimension(:):: moisture,diffCond,hydrCond,porosity1,
+     +     satPotential1,satHydrCond1,soilExponent1
       end subroutine getWaterConductivity

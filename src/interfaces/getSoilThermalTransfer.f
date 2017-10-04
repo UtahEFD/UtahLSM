@@ -1,6 +1,6 @@
       subroutine getSoilThermalTransfer(moisture,thermalTransfer,flag,
-     +     por,satPot,soilEx,hCapSoil)
+     +     porosity1,satPotential1,soilExponent1,heatCapSoil1)
       integer*4 flag
-      real*8, dimension(:):: moisture,thermalTransfer,por,
-     +     satPot,soilEx,hCapSoil
+      real*8, dimension(:):: moisture,thermalTransfer,porosity1,
+     +     satPotential1,soilExponent1,heatCapSoil1
       end subroutine getSoilThermalTransfer
