@@ -4,7 +4,7 @@
 # Author: Jeremy Gibbs
 # Date: 2017-10-02
 #
-# UtahLSM developed by Shingleton 2012
+# UtahLSM version 1 by Shingleton (2010)
 # --------------------------------------
 
 TARGET  = LSM
@@ -13,11 +13,11 @@ SRCDIR  = src
 
 SOURCES := $(wildcard $(SRCDIR)/*f)
 OBJECTS := $(SOURCES:$(SRCDIR)/%.f=$(SRCDIR)/%.o)
-OBJECTS := $(SRCDIR)/LSMmodules.o $(SRCDIR)/LSM_ShingletonV1.o \
+OBJECTS := $(SRCDIR)/LSMmodules.o $(SRCDIR)/utahLSM.o \
            $(SRCDIR)/readInputs.o $(SRCDIR)/solveGroundBC.o \
            $(SRCDIR)/netSurfaceRadiation.o $(SRCDIR)/integrateSoilDiffusion.o \
            $(SRCDIR)/tridag.o $(SRCDIR)/getSoilThermalTransfer.o \
-           $(SRCDIR)/getWaterConductivity.o $(SRCDIR)/getStabilityCorrections.o \
+           $(SRCDIR)/getWaterConductivity.o $(SRCDIR)/getFluxesMOST.o \
            $(SRCDIR)/getSurfaceMixingRatio.o
 
 $(TARGET): $(OBJECTS)

@@ -6,7 +6,7 @@
 !         v2.0: developed by Gibbs and Stoll 2017           !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      Program LSM_ShingletonV1
+      Program utahLSM
 
       use globals
       use SEBmodule

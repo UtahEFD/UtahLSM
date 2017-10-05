@@ -6,7 +6,7 @@
       implicit none
       
       interface
-         include './interfaces/getStabilityCorrections.f'
+         include './interfaces/getFluxesMOST.f'
          include './interfaces/getSurfaceMixingRatio.f'
          include './interfaces/integrateSoilDiffusion.f'
          include './interfaces/getSoilThermalTransfer.f'
@@ -23,7 +23,7 @@
       real*8, dimension(2)::moistPotential,
      +     conductivity,diffusConduct,hydrConduct,lastSurfScalars,
      +     lastScalarFlux
-      real*8 denom,denomH,x y,z,deta_dz,h,partialPressure,qs,q_gnd,
+      real*8 x y,z,deta_dz,h,partialPressure,qs,q_gnd,
      +     specHum,specHum_gnd,shortIn,shortNet,longNet,longIn,longOut,
      +     soilMoistureFlux,mFluxConvergence,TsConvergence,
      +     tFluxConvergence,measResidual,measPress,lastTemperature,
@@ -69,35 +69,9 @@
          Psi0=0.d0
          PsiH=0.d0
          PsiH0=0.d0
-
-         do i=1,4
-
-!           momentum
-            denom = dlog( z_m / z_o ) + Psi - Psi0
-            ustar = Uref*vonk/denom
-            
-!           scalar flux
-            denomH = dlog( z_s / z_t ) + PsiH - PsiH0 
-                   
-            scalarFlux(temperatureIndex) = 
-     >           ( gndScalars( 1,temperatureIndex )
-     >           - scalarRef(temperatureIndex) ) * ustar*vonk/denomH
-            
-            call getSurfaceMixingRatio(q_gnd)    
-            if(computeLH == 1) then
-               scalarFlux(moistureIndex) = ( q_gnd 
-     >              - scalarRef(moistureIndex) )*ustar*vonk/denomH
-               
-            endif
-
-! compute Psi and fi values for momentum and scalars from computed flux
-
-            call getStabilityCorrections(ustar,
-     >           scalarRef(temperatureIndex),
-     >           scalarRef(moistureIndex),scalarFlux,
-     >           Psi,Psi0,fi,PsiH,PsiH0,fiH)
-            
-         enddo
+         
+         call getFluxesMOST(ustar,Uref,scalarFlux,scalarRef,
+     >        Psi,Psi0,fi,PsiH,PsiH0,fiH,computeLH)
 
       endif   
       
@@ -129,10 +103,11 @@
                   SEB = soilHeatFlux + scalarFlux(temperatureIndex)
      >                 + scalarFlux(moistureIndex)*latentHeatWater
      >                 - netRad !- shortNet - longNet
-!     netRad = shortNet + longNet
+                  ! netRad = shortNet + longNet
                  
-!     compute dSEB_dT              
-                  dFluxT_dT = ustar*vonk/denomH 
+                  ! compute dSEB_dT              
+                  dFluxT_dT = ustar*vonk / ( dlog( z_s / z_t )
+     >                      + PsiH - PsiH0 )
                   
                   dSEB_dT = 4.d0*emissivity*SB_Constant*
      >                 gndScalars(1,temperatureIndex)**3
@@ -170,7 +145,8 @@
             
             scalarFlux(temperatureIndex) = ( 
      >           gndScalars( 1,temperatureIndex )
-     >           - scalarRef(temperatureIndex) ) * ustar*vonk/denomH
+     >           - scalarRef(temperatureIndex) ) 
+     >           * ustar*vonk/(dlog( z_s / z_t ) + PsiH - PsiH0 )
             tFluxConvergence = 
      >           abs( scalarFlux(temperatureIndex)-lastTempFlux)
             
@@ -189,32 +165,9 @@
             
             lastTemperature = gndScalars(1,temperatureIndex)
             
-            do i=1,4
-
-!              momentum 
-               denom = dlog( z_m / z_o ) + Psi - Psi0
-               ustar = Uref*vonk/denom
-               
-!              scalar flux
-               denomH = dlog( z_s / z_t ) + PsiH - PsiH0               
-               
-               scalarFlux(temperatureIndex) = ( 
-     >              gndScalars(1,temperatureIndex)
-     >              - scalarRef(temperatureIndex) ) * ustar*vonk/denomH
-         
-               call getSurfaceMixingRatio(q_gnd)      
-               if(computeLH == 1 )then
-                  scalarFlux(moistureIndex) = ( q_gnd 
-     >                 - scalarRef(moistureIndex) )*ustar*vonk/denomH
-               endif
-         
-!     compute Psi and fi values for momentum and scalars from computed flux
-
-               call getStabilityCorrections(ustar,
-     >              scalarRef(temperatureIndex),scalarRef(moistureIndex)
-     >              ,scalarFlux,Psi,Psi0,fi,PsiH,PsiH0,fiH) 
+            call getFluxesMOST(ustar,Uref,scalarFlux,scalarRef,
+     >           Psi,Psi0,fi,PsiH,PsiH0,fiH,computeLH)
            
-            enddo
          enddo                  ! iterate=1,maxFluxIterations   
  
 !    compute first soil moisture flux
@@ -233,7 +186,8 @@
                   call getSurfaceMixingRatio(q_gnd)      
                   if(computeLH == 1 )then
                      scalarFlux(moistureIndex) = ( q_gnd 
-     >                    - scalarRef(moistureIndex) )*ustar*vonk/denomH
+     >                    - scalarRef(moistureIndex) )* ustar
+     >                    * vonk/( dlog( z_s / z_t ) + PsiH - PsiH0 )
                   endif
 
                   call getWaterConductivity(
@@ -269,7 +223,6 @@
                enddo
             endif
          endif
-         
       endif                     ! if( skipSEBFlag == 0 )
 
       skipIntegrationFlag = 0
