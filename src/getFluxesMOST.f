@@ -26,14 +26,14 @@
          
          ! scalar flux
          denom = dlog( z_s / z_t ) + PsiH - PsiH0 
-         scalarFlux(temperatureIndex) = 
+         (temperatureIndex) = 
      >        ( gndScalars( 1,temperatureIndex )
-     >        - scalarRef(temperatureIndex) ) * ustar*vonk/denom
+     >        - atmTemp) ) * ustar*vonk/denom
          
          if(computeLH == 1) then
            call getSurfaceMixingRatio(q_gnd)
            scalarFlux(moistureIndex) = ( q_gnd 
-     >     - scalarRef(moistureIndex) )*ustar*vonk/denom   
+     >     - mixingRatio )*ustar*vonk/denom   
          endif
 
          ! compute Psi and fi values for momentum and scalars from computed flux

@@ -24,7 +24,7 @@
 ! soil type parameters
 6					= soilLevels (= 0 for no soil BC)
 0.0500d0			= z_o (aerodynamic roughness)
-0.005d0				= z_t (scalar surface roughness recommend zo/100)
+0.0005d0			= z_t (scalar surface roughness recommend zo/100)
 971.0d0				= pressureScale, [mbar]
 1.204d0				= densityAir, [kg/m^3]
 1005.0d0			= Cp_air, [J/kg-K]
