@@ -5,7 +5,7 @@
       
       implicit none
 
-      integer*4 i
+      integer*4 i, j
       real*8 dtr,w,tkesgs,time
       character(len=32) :: caseName
       character(len=64) :: inputDir
@@ -171,11 +171,14 @@
       z_m=z_m/z_i
       z_s=z_s/z_s
       
-      ! atm velocity and scalars
+      ! soil/atm velocity and scalars
       u=u/uScale
       v=v/uScale
       do i=1,scalarcount
          scalar(:,i)=scalar(:,i)/scalarScales(i)
+         do j=1,soilLevels
+            gndScalars(j,i)=gndScalars(j,i)/scalarScales(i)
+         enddo
       enddo
       
       ! water properties
