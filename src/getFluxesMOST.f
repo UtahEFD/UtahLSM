@@ -1,11 +1,10 @@
       subroutine getFluxesMOST(ustar,Uref,scalarFlux,scalarRef,
-     +     Psi,Psi0,fi,PsiH,PsiH0,fiH,computeLH)     
+     +     Psi,Psi0,fi,PsiH,PsiH0,fiH)     
       
       use globals
       use SEBmodule
       implicit none
       
-      integer*4 computeLH
       real*8  ustar,Uref,Psi,Psi0,fi,PsiH,PsiH0,fiH
       real*8, dimension(:) :: scalarFlux, scalarRef
       
@@ -14,26 +13,26 @@
      +     x,y,denom,q_gnd
       
       ! atmospheric scalars
-      atmTemp = scalarRef(temperatureIndex)
+      atmTemp     = scalarRef(temperatureIndex)
       mixingRatio = scalarRef(moistureIndex)
       
       ! iterate to solve for u* and scalar fluxes
       do i=1,4
-
+                  
          ! momentum
          denom = dlog( z_m / z_o ) + Psi - Psi0
          ustar = Uref*vonk/denom
-         
+                  
          ! scalar flux
          denom = dlog( z_s / z_t ) + PsiH - PsiH0 
-         (temperatureIndex) = 
+         scalarFlux(temperatureIndex) = 
      >        ( gndScalars( 1,temperatureIndex )
-     >        - atmTemp) ) * ustar*vonk/denom
-         
+     >        - scalarRef(temperatureIndex) ) * ustar*vonk/denom
+                    
          if(computeLH == 1) then
            call getSurfaceMixingRatio(q_gnd)
            scalarFlux(moistureIndex) = ( q_gnd 
-     >     - mixingRatio )*ustar*vonk/denom   
+     >     - scalarRef(moistureIndex) )*ustar*vonk/denom   
          endif
 
          ! compute Psi and fi values for momentum and scalars from computed flux
@@ -51,7 +50,6 @@
         
          ! unstable 
          if( tempFlux.gt.0.0 )then
-            
             ! momentum         
             x=(1.d0-(15.d0*z_m/obukhovLength))**0.25d0
             y=(1.d0-(15.d0*z_o/obukhovLength))**0.25d0           

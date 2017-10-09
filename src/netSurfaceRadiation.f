@@ -80,7 +80,7 @@
 !      Dilley and O'Brien (1998) model
       longIn =59.38d0+113.7d0*(refTemp/(273.16d0/scalarScales(1)))**6+ 
      >     96.96d0*sqrt(totalPrecWater/(25.d0)) ! *** COMPUTE precipitable water ****
-      longIn  = longIn/(Cp_air*densityAir*scalarScales(1)*uScale) ! non-dimensionalize
+      !longIn  = longIn/(Cp_air*densityAir*scalarScales(1)*uScale) ! non-dimensionalize
 
 !     Prata (1996) model
 !      longIn  = (1-(1+totalPrecWater)*

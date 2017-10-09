@@ -64,7 +64,7 @@
          PsiH0=0.d0
          
          call getFluxesMOST(ustar,Uref,scalarFlux,scalarRef,
-     >        Psi,Psi0,fi,PsiH,PsiH0,fiH,computeLH)
+     >        Psi,Psi0,fi,PsiH,PsiH0,fiH)
 
       endif   
       
@@ -107,6 +107,12 @@
                   
                   gndScalars(1,temperatureIndex) = 
      >                 gndScalars(1,temperatureIndex) - dTs
+                  
+                  if (t<2) then 
+                     print*,SEB
+                  else    
+                     call abort
+                  endif 
 
                   TsConvergence = 
      >                 abs(dTs)/gndScalars(1,temperatureIndex)
@@ -156,7 +162,7 @@
             lastTemperature = gndScalars(1,temperatureIndex)
             
             call getFluxesMOST(ustar,Uref,scalarFlux,scalarRef,
-     >           Psi,Psi0,fi,PsiH,PsiH0,fiH,computeLH)
+     >           Psi,Psi0,fi,PsiH,PsiH0,fiH)
            
          enddo                  ! iterate=1,maxFluxIterations   
  
