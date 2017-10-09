@@ -17,9 +17,8 @@
       real*8 Uref,ustar,soilHeatFlux,netRad,Psi,Psi0,fi,fiH,PsiH,PsiH0
       real*8,dimension(:) :: scalarRef,scalarFlux
       
-      integer*4 bisectFlag,iterateFlux,iterateTemp,
-     +     i,k,tempConvFlag ,sepFlag,computeLH,
-     +     skipSEBFlag,skipIntegrationFlag
+      integer*4 iterateFlux,iterateTemp,
+     +     i,k,skipSEBFlag,skipIntegrationFlag
       real*8, dimension(2)::moistPotential,
      +     conductivity,diffusConduct,hydrConduct,lastSurfScalars,
      +     lastScalarFlux
@@ -31,38 +30,35 @@
      +     lastTempFlux,lowT,highT,dTs_Old,dTs,dFluxM_dT, dFluxT_dT
       real*8, dimension(size(gndScalars,1)) :: tempT, tempM
       
-!!! These flags control some of the iteration and methods (example computeLH turns off
-!!! the latent heat calc
+      ! These flags control some of the iteration and methods
+      ! example computeLH turns off the latent heat calc
 
-      tempConvFlag = 1
-      bisectFlag   = 0
-      sepFlag      = 1
-      computeLH    = 1
 
       lastSurfScalars(:) = gndScalars(1,:)
       lastTemperature    = gndScalars(1,temperatureIndex)
-
-      if ( UTC.eq.(startUTC + dt).or.t==1 )then ! first timeStep
-         lowT    = gndScalars(1,temperatureIndex) - 5/scalarScales(1) ! set bounds on temperature 
-         highT   = gndScalars(1,temperatureIndex) + 5/scalarScales(1) ! for convergence
+     
+      ! set convergence bounds on temperature 
+      ! if solution converged 1st time step, it shouldn't change much there after
+      if ( UTC.eq.(startUTC + dt).or.t==1 )then
+         lowT    = gndScalars(1,temperatureIndex) - 5/scalarScales(1)
+         highT   = gndScalars(1,temperatureIndex) + 5/scalarScales(1)
       else
-!     if solution converged 1st time step, it shouldn't change much there after
-         lowT    = gndScalars(1,temperatureIndex) - 0.25/scalarScales(1) ! set bounds on temperature 
-         highT   = gndScalars(1,temperatureIndex) + 0.25/scalarScales(1) ! for convergence
+         lowT    = gndScalars(1,temperatureIndex) - 0.25/scalarScales(1) 
+         highT   = gndScalars(1,temperatureIndex) + 0.25/scalarScales(1)
       endif
+      
       dTs_Old = highT - lowT
       dTs     = dTs_Old
-
+      
+      ! determine whether to compute SEB 
       skipSEBFlag = 0
       if( t > endConstSEB .and.
      >     mod(t-endConstSEB,updateFreqSEB) /= 0 )then
          skipSEBFlag = 1
-      endif
-
-      if(skipSEBFlag.eq.1)then
          write(*,*)'skipping SEB, t=',t
       endif
       
+      ! if first time step or in-between SEB calls, just use MOST
       if ( UTC == (startUTC + dt).or.t==1 .or. skipSEBFlag == 1 )then
 
          Psi=0.d0
@@ -75,9 +71,8 @@
 
       endif   
       
-! solve ground budget iteratively for temperature and moisture
-!     with solution of PsiH and PsiH0, compute flux of other scalars (if any). 
-      
+      ! solve SEB iteratively for temperature and moisture
+      ! with solution of PsiH and PsiH0, compute flux of other scalars (if any).  
       if(skipSEBFlag == 0)then
          do iterateFlux = 1,maxFluxIterations
             if( computeLH==1 ) then

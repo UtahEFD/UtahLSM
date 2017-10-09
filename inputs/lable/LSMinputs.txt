@@ -11,20 +11,20 @@
 60.0d0				= dtr, timestep in seconds, converted to nondimensional by dt = dtr/(z_i/u_star)
 10.0d0				= z_m, measurement height of momentum
 2.0d0				= z_s, measurement height of scalars
-10.0d0				= z_i, normalization height (arbitrary should probably be set = to measurement hieght)
+10.0d0				= z_i, normalization height (arbitrary should probably be set = to measurement height)
 1.0d0				= uScale, normalization velocity scale (arbitrary)
 !
 !
-! Scalar parameters
+! scalar parameters
 2					= scalarcount, number of scalars to compute (ie  0...N)
 1.0d0				= scalarScales, scale of scalar - used for non-dimensional computation
 1.0d0
 !
 !
-! soil type parameters
+! atm and soil type parameters
 6					= soilLevels (= 0 for no soil BC)
 0.0500d0			= z_o (aerodynamic roughness)
-0.005d0				= z_t (scalar surface roughness recommend zo/100)
+0.0005d0		    = z_t (scalar surface roughness recommend zo/100)
 971.0d0				= pressureScale, [mbar]
 1.204d0				= densityAir, [kg/m^3]
 1005.0d0			= Cp_air, [J/kg-K]
@@ -32,6 +32,21 @@
 2.45e6				= latentHeatWater [J/kg]
 4186000.0d0			= heatCapWater [J/m^3-K]
 461.0d0				= waterGasConst [J/kg-K]
+0.25d0				= albedo
+0.20d0				= albedoMin (only used if albedoFlag=1)
+!
+!
+! radiation parameters
+750					= stepsPerRadVal
+5.67040e-8			= SB_constant [W/m^2-k^4]
+1.127d0				= solarIrradiance [K-m/s]
+36.6906d0			= latitude [deg]
+-97.5564d0			= longitude [deg]
+298					= day
+0.99d0				= emissivity
+!
+!
+! flags and convergence parameters
 0.0001d0			= moistureCriteria
 0.000001d0			= temperatureCriteria
 1e-8				= tempFluxCriteria
@@ -42,16 +57,8 @@
 1					= updateFreqSEB
 1					= integrateSoilDiffFreq
 1					= albedoFlag, a value of 1 uses a functional form based on Sun angle and moisture a value of 0 uses a constant
-0.25d0				= albedo
-0.20d0				= albedoMin (only used if albedoFlag=1)
-!
-!
-! radiation parameters
-0				= radiationFlag
-750				= stepsPerRadVal
-5.67040e-8		= SB_constant [W/m^2-k^4]
-1.127d0			= solarIrradiance [K-m/s]
-36.6906d0		= latitude [deg]
--97.5564d0		= longitude [deg]
-298				= day
-0.99d0			= emissivity
+1					= tempConvFlag
+0					= bisectFlag
+1					= sepFlag
+1					= computeLH
+0					= radiationFlag

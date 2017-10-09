@@ -38,6 +38,6 @@
          thermalTransfer = thermalTransfer
      >        /(densityAir*Cp_air*z_i*uScale)
       endif
-
+      
       end subroutine getSoilThermalTransfer
 

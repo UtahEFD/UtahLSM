@@ -26,7 +26,8 @@
 
       integer*4 soilLevels,maxFluxIterations,maxTempIterations,
      +     endConstSEB,updateFreqSEB,integrateSoilDiffFreq,
-     +     radiationFlag,stepsPerRadVal,day,albedoFlag
+     +     radiationFlag,stepsPerRadVal,day,albedoFlag,
+     +     tempConvFlag,bisectFlag,sepFlag,computeLH
       real*8 z_o,z_t,pressureScale,densityAir,Cp_air,densityWater,
      +     latentHeatWater,heatCapWater,waterGasConst,moistureCriteria,
      +     temperatureCriteria,tempFluxCriteria,convFactor,SB_constant,
