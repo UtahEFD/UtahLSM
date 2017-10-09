@@ -1,4 +1,4 @@
-      subroutine netSurfaceRadiation(refTemp,netRad,flag)
+      subroutine netSurfaceRadiation(refTemp,netRad)
 ! computes the net surface radiation
 !  = incoming long - outgoing long + incoming short - outgoing short
 ! Incoming short wave radiation is all due to solar radiation and is computed by solarRadiation fcn

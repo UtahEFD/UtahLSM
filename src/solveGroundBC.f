@@ -30,13 +30,6 @@
      +     lastTempFlux,lowT,highT,dTs_Old,dTs,dFluxM_dT, dFluxT_dT
       real*8, dimension(size(gndScalars,1)) :: tempT, tempM
       
-      ! These flags control some of the iteration and methods
-      ! example computeLH turns off the latent heat calc
-
-
-      lastSurfScalars(:) = gndScalars(1,:)
-      lastTemperature    = gndScalars(1,temperatureIndex)
-     
       ! set convergence bounds on temperature 
       ! if solution converged 1st time step, it shouldn't change much there after
       if ( UTC.eq.(startUTC + dt).or.t==1 )then
@@ -49,6 +42,10 @@
       
       dTs_Old = highT - lowT
       dTs     = dTs_Old
+      
+      ! store previous scalars for convergence tests
+      lastSurfScalars(:) = gndScalars(1,:)
+      lastTemperature    = gndScalars(1,temperatureIndex)
       
       ! determine whether to compute SEB 
       skipSEBFlag = 0
@@ -76,15 +73,13 @@
       if(skipSEBFlag == 0)then
          do iterateFlux = 1,maxFluxIterations
             if( computeLH==1 ) then
-!     assume surface fluxes are constant and converge to surface temperature
-!     using Newton-Raphson, where SEB = f(Ts)         
+               ! assume surface fluxes are constant and converge to surface temperature
+               ! using Newton-Raphson, where SEB = f(Ts)         
                do iterateTemp = 1, maxTempIterations
 
-!     SURFACE ENERGY BUDGET
-!     solve surface energy budget 
-                  
+                  ! solve surface energy budget                   
                   call netSurfaceRadiation(scalarRef(temperatureIndex),
-     >                 netRad,iterateFlux*iterateTemp)
+     >                 netRad)
 
                   call getSoilThermalTransfer(
      >                 gndScalars(1:2,moistureIndex),
@@ -95,10 +90,10 @@
      >                 gndScalars(2,temperatureIndex) )*
      >                 (sum(conductivity)/2.d0)/ (zGnd(2) - zGnd(1))
                   
+                  ! netRad = shortNet + longNet
                   SEB = soilHeatFlux + scalarFlux(temperatureIndex)
      >                 + scalarFlux(moistureIndex)*latentHeatWater
-     >                 - netRad !- shortNet - longNet
-                  ! netRad = shortNet + longNet
+     >                 - netRad
                  
                   ! compute dSEB_dT              
                   dFluxT_dT = ustar*vonk / ( dlog( z_s / z_t )

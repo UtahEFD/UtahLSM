@@ -1,4 +1,4 @@
-      subroutine netSurfaceRadiation(refTemp,netRad,flag)
+      subroutine netSurfaceRadiation(refTemp,netRad)
      
       use globals
       use SEBmodule
