@@ -6,8 +6,8 @@
 !
 !
 ! space and time parameters
-12.0d0				= startUTC (in 24-hour clock)
-1440				= nsteps, number of timesteps (records)
+0.0d0				= startUTC (in 24-hour clock)
+2880				= nsteps, number of timesteps (records)
 60.0d0				= dtr, timestep in seconds, converted to nondimensional by dt = dtr/(z_i/u_star)
 10.0d0				= z_m, measurement height of momentum
 2.0d0				= z_s, measurement height of scalars

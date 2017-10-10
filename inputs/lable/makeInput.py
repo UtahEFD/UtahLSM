@@ -78,8 +78,8 @@ np.savetxt('soilMoisture.ini',     profileMois, fmt='%.7e',  delimiter='\t', new
 met = nc.MFDataset('sgpmetE13.b1.*.cdf')
 
 # time indices (12UTC-12UTC)
-tstart = 720
-tfinal = 2160
+tstart = 0
+tfinal = 2880
 
 # grab variables
 tt = met.variables['time'][tstart:tfinal+1]
@@ -90,7 +90,7 @@ pa = met.variables['atmos_pressure'][tstart:tfinal+1]
 pv = met.variables['vapor_pressure_mean'][tstart:tfinal+1]
 
 # fix times to be continuous across days
-tt[720::] = tt[720::]+tt[719]+60
+tt[1440::] = tt[1440::]+tt[1439]+60
 
 # compute wind components
 uc = -ws*np.sin(wd*np.pi/180)
@@ -130,8 +130,8 @@ of.close()
 data = nc.MFDataset('sgp30co2flx4mmetC1.b1.*')
 
 # time indices
-tstart = 24
-tfinal = 72
+tstart = 0
+tfinal = 96
 
 # grab variables
 tt   = data.variables['time_offset'][tstart:tfinal+1]
@@ -145,11 +145,11 @@ H    = data.variables['h'][tstart:tfinal+1]
 LE   = data.variables['le'][tstart:tfinal+1]
 
 # fix times to be continuous across days
-tt[24::] = tt[24::]+tt[23]+1800
+tt[48::] = tt[48::]+tt[47]+1800
 tt=tt-tt[0]
 
 # interpolate from 30-minute to 1-minute frequency to match MET
-tt1m   = np.arange(tt[0],tt[-1]+1,60)
+tt1m   = np.arange(tt[0],tt[-1]+1800,60)
 lwD1m  = np.interp(tt1m,tt,lwD)
 lwU1m  = np.interp(tt1m,tt,lwU)
 swD1m  = np.interp(tt1m,tt,swD)
