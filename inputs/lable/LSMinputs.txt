@@ -37,7 +37,7 @@
 !
 !
 ! radiation parameters
-750					= stepsPerRadVal
+1					= stepsPerRadVal
 5.67040e-8			= SB_constant [W/m^2-k^4]
 1.127d0				= solarIrradiance [K-m/s]
 36.6906d0			= latitude [deg]
