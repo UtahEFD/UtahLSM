@@ -80,11 +80,11 @@
                   ! solve surface energy budget                   
                   call netSurfaceRadiation(scalarRef(temperatureIndex),
      >                 netRad)
-
+                  
                   call getSoilThermalTransfer(
      >                 gndScalars(1:2,moistureIndex),
-     >                 conductivity,0,porosity(1:2),satPotential(1:2),
-     >                 soilExponent(1:2),heatCapSoil(1:2))
+     >                 conductivity,porosity(1:2),satPotential(1:2),
+     >                 soilExponent(1:2),heatCapSoil(1:2),0)
 
                   soilHeatFlux = ( gndScalars(1,temperatureIndex) - 
      >                 gndScalars(2,temperatureIndex) )*
@@ -129,8 +129,8 @@
             else
             
                call getSoilThermalTransfer(gndScalars(1:2,moistureIndex)
-     >              ,conductivity,0,porosity(1:2),satPotential(1:2),
-     >              soilExponent(1:2),heatCapSoil(1:2))
+     >              ,conductivity,porosity(1:2),satPotential(1:2),
+     >              soilExponent(1:2),heatCapSoil(1:2),0)
                
                soilHeatFlux = ( gndScalars(1,temperatureIndex) - 
      >              gndScalars(2,temperatureIndex) )*(sum(conductivity)/

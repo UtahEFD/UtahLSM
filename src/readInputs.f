@@ -211,6 +211,6 @@
      +     solarIrradiance/(scalarScales(temperatureIndex)*uScale)
       lat = lat*pi/180.d0
       long = long*pi/180.d0   
-      
+
       return
       end
