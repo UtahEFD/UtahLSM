@@ -61,4 +61,4 @@
 0					= bisectFlag
 1					= sepFlag
 1					= computeLH
-0					= radiationFlag
+1					= radiationFlag

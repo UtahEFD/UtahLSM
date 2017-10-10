@@ -38,7 +38,18 @@
      +     precWater, totalPrecWater, z, pressCorrection, deltaP,
      +     press0,press1, vaporPress,
      +     surfaceTemperature,surfaceMoisture
+     
+      ! if using measured radiation, interpolate and return
+      if( radiationFlag == 1 ) then
 
+         i = mod(t-1,stepsPerRadVal)
+         j = int( (t - i)/stepsPerRadVal ) + 1
+
+         netRad = measRad(j) + i*( measRad(j+1) - measRad(j) )
+     >        / stepsPerRadVal
+         return
+      endif
+     
 ! precWater will be input from LES (precipitable water is the total amount of water in the atmos above when condensed)
 !      totalPrecWater = 0
 !      do i = 1,size(aq)

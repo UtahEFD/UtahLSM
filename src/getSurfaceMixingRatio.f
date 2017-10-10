@@ -23,7 +23,7 @@
       
       specHum_gnd = h*satHum/scalarScales(2)
       
-     ! convert from specific humidity to mixing ratio                                                                                                                         
+      ! convert from specific humidity to mixing ratio                                                                                                                         
       q_gnd = specHum_gnd/(1-specHum_gnd)
       
       end subroutine getSurfaceMixingRatio

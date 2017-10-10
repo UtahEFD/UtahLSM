@@ -15,7 +15,7 @@
       integer*4 temperatureIndex,moistureIndex
       real*8,allocatable,dimension(:)::surfaceFluxes,scalarScales,
      +     zGnd,porosity,satPotential,satHydrCond,soilExponent,
-     +     heatCapSoil,u,v
+     +     heatCapSoil,u,v,measRad
       real*8,allocatable,dimension(:,:) :: gndScalars,scalar
       
       END MODULE

@@ -108,11 +108,11 @@
                   gndScalars(1,temperatureIndex) = 
      >                 gndScalars(1,temperatureIndex) - dTs
                   
-                  if (t<2) then 
-                     print*,SEB
-                  else    
-                     call abort
-                  endif 
+!                  if (t<2) then 
+!                     print*,SEB
+!                  else    
+!                     call abort
+!                  endif 
 
                   TsConvergence = 
      >                 abs(dTs)/gndScalars(1,temperatureIndex)

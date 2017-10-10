@@ -116,8 +116,51 @@ vcNew = vc
 qvNew = qv
 ptNew = pt
 
-of = open('timeseries_10.dat','w')
+of = open('timeSeriesMET.dat','w')
 for t in range(len(ttNew)):
 	os = "{0:.6E}\t{1:13.6E}\t{2:2.6E}\t{3:2.6E}\t{4:2.6E}\t{5:2.6E}\t{6:2.6E}\n".format(ttNew[t], ucNew[t], vcNew[t], 0, ptNew[t], qvNew[t],0)
+	of.write(os)
+of.close()
+
+########################################
+# Read net radiation data for 20121024 #
+########################################
+
+# open CO2FLX data
+data = nc.MFDataset('sgp30co2flx4mmetC1.b1.*')
+
+# time indices
+tstart = 24
+tfinal = 72
+
+# grab variables
+tt   = data.variables['time_offset'][tstart:tfinal+1]
+lwD  = data.variables['r_down_long_hemisp'][tstart:tfinal+1]
+lwU  = data.variables['r_up_long_hemisp'][tstart:tfinal+1]
+swD  = data.variables['r_down_short_hemisp'][tstart:tfinal+1]
+swU  = data.variables['r_up_short_hemisp'][tstart:tfinal+1]
+rNet = data.variables['r_net'][tstart:tfinal+1]
+G    = data.variables['mean_g_soil'][tstart:tfinal+1]
+H    = data.variables['h'][tstart:tfinal+1]
+LE   = data.variables['le'][tstart:tfinal+1]
+
+# fix times to be continuous across days
+tt[24::] = tt[24::]+tt[23]+1800
+tt=tt-tt[0]
+
+# interpolate from 30-minute to 1-minute frequency to match MET
+tt1m   = np.arange(tt[0],tt[-1]+1,60)
+lwD1m  = np.interp(tt1m,tt,lwD)
+lwU1m  = np.interp(tt1m,tt,lwU)
+swD1m  = np.interp(tt1m,tt,swD)
+swU1m  = np.interp(tt1m,tt,swU)
+rNet1m = np.interp(tt1m,tt,rNet)
+G1m    = np.interp(tt1m,tt,G)
+H1m    = np.interp(tt1m,tt,H)
+LE1m   = np.interp(tt1m,tt,LE)
+
+of = open('timeSeriesRAD.dat','w')
+for t in range(len(tt1m)):
+	os = "{0:.6E}\t{1:13.6E}\n".format(tt1m[t], rNet1m[t])
 	of.write(os)
 of.close()

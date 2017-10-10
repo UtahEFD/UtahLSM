@@ -106,7 +106,8 @@
      +     satPotential(soilLevels),satHydrCond(soilLevels),
      +     soilExponent(soilLevels),heatCapSoil(soilLevels),
      +     u(nsteps),v(nsteps))
-      allocate(gndScalars(soilLevels,2),scalar(nsteps,scalarcount))
+      allocate(gndScalars(soilLevels,2),scalar(nsteps,scalarcount),
+     +     measRad(nsteps))
 
       ! soil
       write(*,*) 'reading in soil property data'
@@ -134,11 +135,19 @@
       
       ! atmosphere    
       write(*,*) 'reading in external atmospheric data'      
-      Open (unit=1,file=trim(inputDir) // '/timeseries_10.dat')
+      Open (unit=1,file=trim(inputDir) // '/timeSeriesMET.dat')
       do i=1,nsteps
-         read(1,*) time,u(i),v(i),w,scalar(i,1),
-     +        scalar(i,2),tkesgs
-      enddo      
+         read(1,*) time,u(i),v(i),w,scalar(i,1),scalar(i,2),tkesgs
+      enddo
+      
+      ! radiation (radiationFlag=1)
+      if (radiationFlag==1) then
+         write(*,*) 'reading in external radiation data'      
+         Open (unit=1,file=trim(inputDir) // '/timeSeriesRAD.dat')
+         do i=1,nsteps
+            read(1,*) time,measRad(i)
+         enddo
+      endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!
 !     scalar parameters !
@@ -180,6 +189,12 @@
             gndScalars(j,i)=gndScalars(j,i)/scalarScales(i)
          enddo
       enddo
+      
+      ! radiation (radiationFlag=1)
+      if (radiationFlag==1) then
+         measRad = measRad/
+     +     (Cp_air*densityAir*scalarScales(temperatureIndex)*uScale)
+      endif
       
       ! water properties
       densityWater = densityWater/densityAir
