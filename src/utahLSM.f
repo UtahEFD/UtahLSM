@@ -59,8 +59,8 @@
 
          ! calculate time (UTC) to use in the radiation model
          UTC = startUTC + float(t)*dt
-		 
-		 ! compute magnitude of horizontal wind vector
+         
+         ! compute magnitude of horizontal wind vector
          M=sqrt(u(t)**2+v(t)**2)
          
          ! grab atmospheric scalars
@@ -74,7 +74,7 @@
      +        scalarFlux(1)*scalarScales(1)*uScale,
      +        scalarFlux(2)*scalarScales(2)*uScale,
      +        soilHeatFlux*scalarScales(1)*uScale,
-     +	      netRad*scalarScales(1)*uScale
+     +        netRad*scalarScales(1)*uScale
 
         ! write soil scalars in units of K and volum. content
          do i = 1,scalarcount
