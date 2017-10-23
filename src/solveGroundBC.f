@@ -80,7 +80,7 @@
 
                   ! compute net surface radiation                   
                   call netSurfaceRadiation(scalarRef(temperatureIndex),
-     >                 netRad)
+     >                 gndScalars(1,moistureIndex),netRad)
                   
                   ! compute soil conductivity
                   call getSoilThermalTransfer(

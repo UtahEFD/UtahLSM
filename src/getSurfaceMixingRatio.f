@@ -1,5 +1,9 @@
       subroutine getSurfaceMixingRatio(q_gnd)
-      ! solves for surface mixiing ratio following McCumber (1980)
+      ! module: computes surface mixing ratio following McCumber (1980)
+      !
+      ! inputs: q_gnd - surface mixing ratio
+      !
+      ! output: q_gnd - updated surface mixing ratio
       
       use globals
       use SEBmodule
@@ -8,7 +12,6 @@
       real*8 q_gnd
       real*8 moistPotential(2), h, partialPressure, satHum, specHum_gnd
       
-      ! McCumber (1980); see Pielke (2013), page 353                                                             
       moistPotential(1) = satPotential(1)*
      >     (porosity(1)/gndScalars(1,moistureIndex))**soilExponent(1)
       

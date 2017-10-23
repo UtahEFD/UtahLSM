@@ -1,25 +1,23 @@
-      subroutine netSurfaceRadiation(refTemp,netRad)
-      ! computes the net surface radiation
-      !     = in long - out long + in short - out short
-      ! Incoming short radiation is all due to solar radiation and 
-      !     is computed by solarRadiation fcn
-      ! Outgoing short is due to the reflection of the solar radiation
-      !     the amount of short wave radiation that is reflected depends 
-      !     on the surface albedo.  This is included in the 
-      !     solarRadiation fcn since the albedo depends on angle
-      ! Incoming long wave radiation is due to the radiation emitted by 
-      !     the atmosphere and the environment and is currently neglected.
-      ! Outgoing long wave radiation is due to the emittance of the 
-      !     surface and is computed using the Stefan-Boltzmann law and 
-      !     the surface emissivity.
+      subroutine netSurfaceRadiation(refTemp,sfcMois,netRad)
+      ! module: computes the net surface radiation
+      !         = incoming lw - outgoing lw + incoming sw - outgoing sw
+      !         
+      !         incoming sw - entirely due to solar radiation
+      !         outgoing sw - due to reflection of solar radiation
+      !                       dependent on surface albedo
+      !         incoming lw - due to radiation emitted by atm/env
+      !                       currently neglected
+      !         outgoing lw - due to emittence of the surface
+      !                       computed using Stefan-Boltzmann
       !
-      ! inputs:
-      !     UTC  - Coordinated Universal Time (UTC) of day (hours)
-      !     surfaceTemperature - temperature of surface (K)
-      ! outputs:
-      !     netSurfaceRadiation - net radiation flux at the surface.
-      !            (negative is upward flux for all radiation terms)
-      !     
+      !         supports the use of measured net radiation
+      !
+      ! inputs: refTemp - measured near-surface temerature
+      !         sfcMois - measured surface moisture
+      !         measRad - external net radiation (radiationFlag=1)
+      !         
+      ! output: netRad  - net radiation
+      
       use globals
       use SEBmodule
       implicit none
@@ -29,13 +27,10 @@
       end interface
 
       integer*4 flag
-      real*8 refTemp,netRad
+      real*8 refTemp,sfcMois,netRad
       
       integer*4 i,j
-      real*8  longOut, longIn, shortIn, shortNet, longNet, solar,
-     +     precWater, totalPrecWater, z, pressCorrection, deltaP,
-     +     press0,press1, vaporPress,
-     +     surfaceTemperature,surfaceMoisture
+      real*8  shortNet, longNet
      
       ! if using measured radiation, interpolate and return
       if( radiationFlag == 1 ) then
@@ -52,9 +47,9 @@
       longNet = -0.04d0/(scalarScales(1)*uScale)
       
       ! compute net shortwave radiation
-      call solarRadiation(shortNet,surfaceMoisture)
+      call solarRadiation(shortNet,sfcMois)
       
-      ! compuet net radiation
+      ! compute net radiation
       netRad = shortNet + longNet
             
       end subroutine netSurfaceRadiation
@@ -62,7 +57,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      subroutine solarRadiation(shortNet,surfaceMoisture)
+      subroutine solarRadiation(shortNet,sfcMois)
       ! solarRadiation approximates the incoming solar radiation 
       ! based on the latitude, longitude, day of year and time of day
       ! neglects attenuation due to cloud cover (ie assumes clear sky)
@@ -86,7 +81,7 @@
       use SEBmodule
       implicit none
 
-      real*8 shortNet,surfaceMoisture
+      real*8 shortNet,sfcMois
 
       real*8 Az, As, A, E, Z, declination, sinElevation,
      +     transmissivity
@@ -105,8 +100,8 @@
             E  = asin(sinElevation)            
             Z  = (pi/2.d0) - E
             Az = 0.01d0*(exp(0.003286d0*Z**1.5d0) - 1.d0)
-            if( surfaceMoisture/porosity(1) <= 0.5)then
-               As = albedo*(1 - surfaceMoisture/porosity(1))
+            if( sfcMois/porosity(1) <= 0.5)then
+               As = albedo*(1 - sfcMois/porosity(1))
             else
                As = albedoMin
             endif
