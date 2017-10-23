@@ -77,115 +77,122 @@
                ! using Newton-Raphson, where SEB = f(Ts)         
                do iterateTemp = 1, maxTempIterations
 
-                  ! solve surface energy budget                   
+                  ! compute net surface radiation                   
                   call netSurfaceRadiation(scalarRef(temperatureIndex),
      >                 netRad)
                   
+                  ! compute soil conductivity
                   call getSoilThermalTransfer(
      >                 gndScalars(1:2,moistureIndex),
      >                 conductivity,porosity(1:2),satPotential(1:2),
      >                 soilExponent(1:2),heatCapSoil(1:2),0)
-
+                  
+                  ! compute soil heat flux
                   soilHeatFlux = ( gndScalars(1,temperatureIndex) - 
      >                 gndScalars(2,temperatureIndex) )*
      >                 (sum(conductivity)/2.d0)/ (zGnd(2) - zGnd(1))
                   
-                  ! netRad = shortNet + longNet
+                  ! compute surface energy balance
                   SEB = soilHeatFlux + scalarFlux(temperatureIndex)
      >                 + scalarFlux(moistureIndex)*latentHeatWater
      >                 - netRad
                  
-                  ! compute dSEB_dT              
+                  ! compute time derivative of flux              
                   dFluxT_dT = ustar*vonk / ( dlog( z_s / z_t )
      >                      + PsiH - PsiH0 )
                   
+                  ! compute time derivative of SEB
                   dSEB_dT = 4.d0*emissivity*SB_Constant*
      >                 gndScalars(1,temperatureIndex)**3
      >                 + (sum(conductivity)/2)/zGnd(2) + dFluxT_dT
                   
+                  ! compute time change in surface temperature
                   dTs = SEB / dSEB_dT
                   
+                  ! update surface temperature
                   gndScalars(1,temperatureIndex) = 
      >                 gndScalars(1,temperatureIndex) - dTs
                   
-!                  if (t<2) then 
-!                     print*,SEB
-!                  else    
-!                     call abort
-!                  endif 
-
+                  ! check for convergence
                   TsConvergence = 
      >                 abs(dTs)/gndScalars(1,temperatureIndex)
-                  
                   if ( TsConvergence < temperatureCriteria )then
                      exit
                   endif
-            
+                  
+                  ! save current values for next loop
                   SEBlast = SEB        
                   lastScalarFlux = scalarFlux
                   lastSoilFlux   = soilHeatFlux
-               enddo            ! iterateTemp                  
+               enddo                  
              
             else
-            
+               
+               ! compute soil conductivity
                call getSoilThermalTransfer(gndScalars(1:2,moistureIndex)
      >              ,conductivity,porosity(1:2),satPotential(1:2),
      >              soilExponent(1:2),heatCapSoil(1:2),0)
                
+               ! compute soil heat flux
                soilHeatFlux = ( gndScalars(1,temperatureIndex) - 
      >              gndScalars(2,temperatureIndex) )*(sum(conductivity)/
      >              2.d0)/(zGnd(2) - zGnd(1))
             endif
             
+            ! save previous flux for convergence test
             lastTempFlux = scalarFlux(temperatureIndex)
             
+            ! compute heat flux
             scalarFlux(temperatureIndex) = ( 
-     >           gndScalars( 1,temperatureIndex )
+     >           gndScalars(1,temperatureIndex )
      >           - scalarRef(temperatureIndex) ) 
      >           * ustar*vonk/(dlog( z_s / z_t ) + PsiH - PsiH0 )
+            
+            ! check for convergence
             tFluxConvergence = 
      >           abs( scalarFlux(temperatureIndex)-lastTempFlux)
-            
             if( sepFlag == 1 )then
                mFluxConvergence = 0
             endif
-
             if( ((mFluxConvergence < moistureCriteria) .and.
      >           (tFluxConvergence < tempFluxCriteria)).or.
      >           (iterateFlux >= maxFluxIterations) )then
                exit
             endif
             
+            ! update surface temperature
             gndScalars(1,temperatureIndex) = (lastTemperature+
      >           gndScalars(1,temperatureIndex))/2.d0
             
+            ! save current temperature for next loop
             lastTemperature = gndScalars(1,temperatureIndex)
             
+            ! compute new fluxes and stability functions
             call getFluxesMOST(ustar,Uref,scalarFlux,scalarRef,
      >           Psi,Psi0,fi,PsiH,PsiH0,fiH)
            
-         enddo                  ! iterate=1,maxFluxIterations   
+         enddo  
  
-!    compute first soil moisture flux
+         ! compute water conductivity
          call getWaterConductivity(gndScalars(1:2,moistureIndex),
      >        diffusConduct,hydrConduct,porosity(1:2),satPotential(1:2),
      >        satHydrCond(1:2),soilExponent(1:2))
          
+         ! compute soil moisture flux
          soilMoistureFlux = densityWater*(sum(diffusConduct)/2.d0)
      >        *(gndScalars(1,moistureIndex)-gndScalars(2,moistureIndex))
      >        /(zGnd(2)-zGnd(1)) + densityWater*sum(hydrConduct)/2.d0
          
          if( computeLH == 1 )then
             if( sepFlag == 1 )then
-               do i = 1,200     !maxTempIterations
+               do i = 1,maxTempIterations
 
                   call getSurfaceMixingRatio(q_gnd)      
-                  if(computeLH == 1 )then
-                     scalarFlux(moistureIndex) = ( q_gnd 
-     >                    - scalarRef(moistureIndex) )* ustar
-     >                    * vonk/( dlog( z_s / z_t ) + PsiH - PsiH0 )
-                  endif
-
+                  
+                  scalarFlux(moistureIndex) = ( q_gnd 
+     >                 - scalarRef(moistureIndex) )* ustar
+     >                 * vonk/( dlog( z_s / z_t ) + PsiH - PsiH0 )
+     
                   call getWaterConductivity(
      >                 gndScalars(1:2,moistureIndex),
      >                 diffusConduct,hydrConduct,porosity(1:2),
@@ -193,6 +200,7 @@
      >                 soilExponent(1:2))
             
                   lastSoilMoistureFlux = soilMoistureFlux
+                  
                   soilMoistureFlux = convFactor*lastSoilMoistureFlux - 
      >                 (1.d0-convFactor)*scalarFlux(moistureIndex)
             
@@ -219,7 +227,7 @@
                enddo
             endif
          endif
-      endif                     ! if( skipSEBFlag == 0 )
+      endif
 
       skipIntegrationFlag = 0
       if( t > endConstSEB .and.
@@ -227,8 +235,8 @@
          skipIntegrationFlag = 1
       endif
       
-!     use surface fluxes and soil profiles to integrate 
-!     heat diffusion equation and soil moisture equation in time
+      ! use surface fluxes and soil profiles to integrate 
+      ! heat diffusion equation and soil moisture equation in time
       if( skipIntegrationFlag == 0 )then
          if (temperatureIndex /= 0)then
             call integrateSoilDiffusion(lastSurfScalars,1)

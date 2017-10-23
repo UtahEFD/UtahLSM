@@ -1,11 +1,12 @@
       subroutine tridag(a,b,c,r,u,n)
+      ! (C) 1986-92 Numerical Recipes Software
       
-      integer*4 n,nmax
+      integer*4 n
       real*8 a(n),b(n),c(n),r(n),u(n)
       
       integer*4 j
-      real*8 bet,gam(nmax)
       integer*4, parameter :: nmax=500
+      real*8 bet,gam(nmax)
 
       if(b(1).eq.0.) stop 'tridag: rewrite equations'
       bet=b(1)
@@ -25,4 +26,3 @@
       end do
       return
       end
-C  (C) Copr. 1986-92 Numerical Recipes Software

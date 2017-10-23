@@ -16,7 +16,9 @@
       ! flag = 1 if thermal diffusivity is requested (for solving dT/dt = d( k dT/dz)dz                
 
       ! compute soil conductivity from emperical formula (McCumber 1980)                 
-      Pf = log10( abs(satPotential1(:)*
+      ! sat pot is expected in [cm] for Pf, so we re-dimensionalize
+      ! resulting soil conductivity is in [ J/(m*s*K) ]
+      Pf = log10( abs(z_i*100.0d0*satPotential1(:)*
      >     (porosity1(:)/moisture)**soilExponent1(:) ) )
       
       do i=1,size(Pf)
@@ -26,10 +28,8 @@
             thermalTransfer(i) = 0.172d0
          endif
       enddo
-           
-      ! emperical relationship for thermal conductivity is in [ J/(m*s*K) ]   
-      ! non-dimensionalize the conductivity 
-                                    
+              
+      ! non-dimensionalize the conductivity                 
       if(flag==1)then
          heatCap = (1-porosity1(:))*heatCapSoil1(:)
      >        + moisture*heatCapWater

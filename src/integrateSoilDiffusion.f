@@ -18,24 +18,22 @@
      >     K(size(gndScalars,1)),dKdz
       real*8 heatCapacity(size(gndScalars,1)),
      >     k_mid(size(gndScalars,1)-1),z_mid(size(gndScalars,1)-1)
-!     k_mid and z_mid is the value midway between nodes
-
-!     for moisture diffusion
-!     D is diffuse conductivity and K is hydraulic conductivity
+      ! k_mid and z_mid is the value midway between nodes
+      ! for moisture diffusion
+      ! D is diffuse conductivity and K is hydraulic conductivity
       real*8,dimension(size(gndScalars,1)-1) :: b,e,f,g
-!     use e, f, and g to store diagonal 'columns' of data rather than a matrix M
-!     this elimates the unnecessary storage of zeros in M
-!     where M would be a tridiagonal matrix, e, f, and g are:
-!     matrix is of form, M = [f(1), g(1), 0...       ...0;
-!                             e(2), f(2), g(2), 0... ...0;
-!                             ...                     ...;
-!                             0...        ...0, e(end), f(end)]
+      ! use e, f, and g to store diagonal 'columns' of data rather than a matrix M
+      ! this elimates the unnecessary storage of zeros in M
+      ! where M would be a tridiagonal matrix, e, f, and g are:
+      ! matrix is of form, M = [f(1), g(1), 0...       ...0;
+      !                         e(2), f(2), g(2), 0... ...0;
+      !                         ...                     ...;
+      !                         0...        ...0, e(end), f(end)]
 
+      ! actual integration time,
+      ! not == to dt when soil conditions are not updated every timestep
 
-!     actual integration time,
-!     not == to dt when soil conditions are not updated every timestep
-
-!     set by integrateSoilDiffFreq
+      ! set by integrateSoilDiffFreq
       if( t > endConstSEB )then
          dt_ = dt*integrateSoilDiffFreq
       else
@@ -43,12 +41,12 @@
       endif
 
       if( ind == 1)then
-!    compute soil conductivity based on moisture content
+      ! compute soil conductivity based on moisture content
          call getSoilThermalTransfer(gndScalars(:,2),K,porosity,
      >        satPotential,soilExponent,heatCapSoil,1)
                   
-!     interpolate zGnd and k to get values at mid-levels
-!     for z do this once and save z_mid (never changes)
+      !  interpolate zGnd and k to get values at mid-levels
+      !  for z do this once and save z_mid (never changes)
          do i = 1,soilLevels-1
             !print*, K(i:i+1)
             k_mid(i) = sum(K(i:i+1))/2.d0
@@ -57,8 +55,8 @@
 
       else
 
-!     compute diffusive and hydraulic water conductivity of soil
-!     given the soil properties from getGroundParams.f
+      ! compute diffusive and hydraulic water conductivity of soil
+      ! given the soil properties from getGroundParams.f
          call getWaterConductivity(gndScalars(:,2),D,K,porosity,
      >        satPotential,satHydrCond,soilExponent)
 
@@ -69,9 +67,9 @@
          
       endif
 
-!     set coefficients for node 2, the first row of M (top node, surface is solved )
-!     node 2 and soilLevels coefficients have a different form of implicit finite diff.
-!     because of the boundary conditions.
+      ! set coefficients for node 2, the first row of M (top node, surface is solved )
+      ! node 2 and soilLevels coefficients have a different form of implicit finite diff.
+      ! because of the boundary conditions.
       f(1)   = ( dt_/(2.d0*(z_mid(2)-z_mid(1))) ) *
      >     ( k_mid(1)/(zGnd(2)-zGnd(1)) + k_mid(2)/(zGnd(3)-zGnd(2)))+
      >     1.d0
@@ -97,7 +95,7 @@
          b(1) = b(1) + dKdz
       endif
       
-!     set coefficients for node soilLevels (last ground node)
+      ! set coefficients for node soilLevels (last ground node)
       e(soilLevels-1) = -dt_*k_mid(soilLevels-1)
      >     / (2.d0*(zGnd(soilLevels)-zGnd(soilLevels-1))**2)
       f(soilLevels-1) = 1.d0 + dt_*k_mid(soilLevels-1)
@@ -114,8 +112,8 @@
          b(soilLevels-1) = b(soilLevels-1) + dKdz
       endif
 
-!     set matrix coefficients for nodes 3 through soilLevels-1
-!     form of these coefficients is identical, there are no boundary conditions
+      ! set matrix coefficients for nodes 3 through soilLevels-1
+      ! form of these coefficients is identical, there are no boundary conditions
       if( soilLevels > 3)then
          do i = 3,soilLevels-1
             e(i-1) = -dt_*k_mid(i-1)/(2.d0*(z_mid(i)-z_mid(i-1))*
@@ -137,7 +135,7 @@
      >           / (zGnd(i)-zGnd(i-1)))
 
             if( ind == 2)then
-!     explicit finite difference for unevenly spaced data
+               ! explicit finite difference for unevenly spaced data
                dKdz = dt_*(K(i-1)*(zGnd(i)-zGnd(i+1))
      >              / ((zGnd(i-1)-zGnd(i))*(zGnd(i-1)-zGnd(i+1)))
      >              + K(i)*(2.d0*zGnd(i)-zGnd(i-1)-zGnd(i+1))

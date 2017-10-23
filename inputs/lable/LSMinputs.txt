@@ -41,9 +41,9 @@
 5.67040e-8			= SB_constant [W/m^2-k^4]
 1.127d0				= solarIrradiance [K-m/s]
 36.6906d0			= latitude [deg]
--97.5564d0			= longitude [deg]
+97.5564d0			= longitude [deg]
 298					= day
-0.99d0				= emissivity
+0.96d0				= emissivity
 !
 !
 ! flags and convergence parameters

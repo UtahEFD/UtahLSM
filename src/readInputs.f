@@ -153,7 +153,7 @@
 !     scalar parameters !
 !!!!!!!!!!!!!!!!!!!!!!!!!
 
-      ! scalar parameters, note these two could be assumed and 
+      ! scalar parameters, note these two could be assumed 
       temperatureIndex=1
       moistureIndex=2
 
