@@ -12,8 +12,8 @@
       real*8, dimension(size(moisture)):: Pf, heatCap
       integer i
       
-      ! flag = 0 if thermal conductivity is requested (for solving Q = v dT/dz )                  
-      ! flag = 1 if thermal diffusivity is requested (for solving dT/dt = d( k dT/dz)dz                
+      ! flag = 0, thermal conductivity [Q = v dT/dz]                  
+      ! flag = 1, thermal diffusivity [dT/dt = d( kdT/dz)dz]                
 
       ! compute soil conductivity from emperical formula (McCumber 1980)                 
       ! sat pot is expected in [cm] for Pf, so we re-dimensionalize

@@ -35,7 +35,8 @@
      >     - scalarRef(moistureIndex) )*ustar*vonk/denom   
          endif
 
-         ! compute Psi and fi values for momentum and scalars from computed flux
+         ! compute Psi and fi values for momentum and scalars from 
+         ! computed flux
          tempFlux = atmTemp*0.61d0*scalarFlux(2)
      >            + scalarFlux(1)*(1.d0+0.61d0*mixingRatio)
          

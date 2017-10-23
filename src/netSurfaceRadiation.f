@@ -1,19 +1,17 @@
       subroutine netSurfaceRadiation(refTemp,netRad)
       ! computes the net surface radiation
-      !  = incoming long - outgoing long + incoming short - outgoing short
-      ! Incoming short wave radiation is all due to solar radiation and is computed by solarRadiation fcn
+      !     = in long - out long + in short - out short
+      ! Incoming short radiation is all due to solar radiation and 
+      !     is computed by solarRadiation fcn
       ! Outgoing short is due to the reflection of the solar radiation
-      !     the amount of short wave radiation that is reflected depends on the
-      !     surface albedo.  This is included in the solarRadiation fcn since 
-      !     the albedo depends on angle.
-      ! Incoming long wave radiation is due to the radiation emitted by the atmosphere
-      !     and the environment and is currently neglected.
-      ! Outgoing long wave radiation is due to the emittance of the surface.
-      !
-      ! Outgoing long wave radiation emitted by the surface is computed 
-      !     in this function using the Stefan-Boltzmann law and the surface emissivity
-      !     The result is added to the net short wave
-      !     radiation to obtain the net surface radiation.
+      !     the amount of short wave radiation that is reflected depends 
+      !     on the surface albedo.  This is included in the 
+      !     solarRadiation fcn since the albedo depends on angle
+      ! Incoming long wave radiation is due to the radiation emitted by 
+      !     the atmosphere and the environment and is currently neglected.
+      ! Outgoing long wave radiation is due to the emittance of the 
+      !     surface and is computed using the Stefan-Boltzmann law and 
+      !     the surface emissivity.
       !
       ! inputs:
       !     UTC  - Coordinated Universal Time (UTC) of day (hours)

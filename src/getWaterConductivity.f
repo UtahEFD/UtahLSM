@@ -6,8 +6,8 @@
       real*8, dimension(:):: moisture,diffCond,hydrCond,porosity1,
      +     satPotential1,satHydrCond1,soilExponent1
 
-!     Emperical relationships from Clapp and Hornberger (1978)                                                                                                 
-!     need to be non-dimensionalized                                
+      ! Emperical relationships from Clapp and Hornberger (1978)                                                                                                 
+      ! need to be non-dimensionalized                                
 
       diffCond = -(soilExponent1(:)*satHydrCond1(:)*
      >     satPotential1(:)/moisture(:))

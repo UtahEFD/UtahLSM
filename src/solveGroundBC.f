@@ -31,7 +31,8 @@
       real*8, dimension(size(gndScalars,1)) :: tempT, tempM
       
       ! set convergence bounds on temperature 
-      ! if solution converged 1st time step, it shouldn't change much there after
+      ! if solution converged on 1st time step, it shouldn't change 
+      ! much thereafter
       if ( UTC.eq.(startUTC + dt).or.t==1 )then
          lowT    = gndScalars(1,temperatureIndex) - 5/scalarScales(1)
          highT   = gndScalars(1,temperatureIndex) + 5/scalarScales(1)
@@ -69,11 +70,11 @@
       endif   
       
       ! solve SEB iteratively for temperature and moisture
-      ! with solution of PsiH and PsiH0, compute flux of other scalars (if any).  
+      ! with solution of PsiH and PsiH0, compute flux of other scalars  
       if(skipSEBFlag == 0)then
          do iterateFlux = 1,maxFluxIterations
             if( computeLH==1 ) then
-               ! assume surface fluxes are constant and converge to surface temperature
+               ! assume surface fluxes are constant and converge to Ts
                ! using Newton-Raphson, where SEB = f(Ts)         
                do iterateTemp = 1, maxTempIterations
 

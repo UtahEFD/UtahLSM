@@ -1,4 +1,4 @@
-!     LSMmodules.f contains all the required modules for LSM_ShingletonV1.f
+!     LSMmodules.f contains all the required modules for utahLSM.f
 !     Each module declares the variables required for a specific set of 
 !     All subroutines use globals
 !     The modules in this file include: 

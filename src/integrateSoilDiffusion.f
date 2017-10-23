@@ -6,7 +6,6 @@
       interface
          include './interfaces/getSoilThermalTransfer.f'
          include './interfaces/getWaterConductivity.f'
-         include './interfaces/solveTridiagonalSystem.f'
       end interface
 
       integer*4 ind
@@ -22,13 +21,6 @@
       ! for moisture diffusion
       ! D is diffuse conductivity and K is hydraulic conductivity
       real*8,dimension(size(gndScalars,1)-1) :: b,e,f,g
-      ! use e, f, and g to store diagonal 'columns' of data rather than a matrix M
-      ! this elimates the unnecessary storage of zeros in M
-      ! where M would be a tridiagonal matrix, e, f, and g are:
-      ! matrix is of form, M = [f(1), g(1), 0...       ...0;
-      !                         e(2), f(2), g(2), 0... ...0;
-      !                         ...                     ...;
-      !                         0...        ...0, e(end), f(end)]
 
       ! actual integration time,
       ! not == to dt when soil conditions are not updated every timestep
@@ -67,9 +59,10 @@
          
       endif
 
-      ! set coefficients for node 2, the first row of M (top node, surface is solved )
-      ! node 2 and soilLevels coefficients have a different form of implicit finite diff.
-      ! because of the boundary conditions.
+      ! set coefficients for node 2, the first row of M (top node, 
+      ! surface is solved ). Node 2 and soilLevels coefficients have a 
+      ! different form of implicit finite diff. because of the boundary 
+      ! conditions
       f(1)   = ( dt_/(2.d0*(z_mid(2)-z_mid(1))) ) *
      >     ( k_mid(1)/(zGnd(2)-zGnd(1)) + k_mid(2)/(zGnd(3)-zGnd(2)))+
      >     1.d0
@@ -113,7 +106,8 @@
       endif
 
       ! set matrix coefficients for nodes 3 through soilLevels-1
-      ! form of these coefficients is identical, there are no boundary conditions
+      ! form of these coefficients is identical, there are no boundary
+      ! conditions
       if( soilLevels > 3)then
          do i = 3,soilLevels-1
             e(i-1) = -dt_*k_mid(i-1)/(2.d0*(z_mid(i)-z_mid(i-1))*
@@ -122,10 +116,10 @@
             f(i-1) = 1.d0 + dt_*k_mid(i-1)
      >           / (2.d0*(z_mid(i)-z_mid(i-1))*(zGnd(i)-zGnd(i-1)))
      >           +dt_*k_mid(i)
-     >           / (2.d0*(z_mid(i)-z_mid(i-1))*(zGnd(i+1)-zGnd(i))) !M(i-1,i-1)
+     >           / (2.d0*(z_mid(i)-z_mid(i-1))*(zGnd(i+1)-zGnd(i)))
 
             g(i-1)   = -dt_*k_mid(i) /
-     >           (2.d0*(z_mid(i)-z_mid(i-1))*(zGnd(i+1)-zGnd(i))) !M(i-1,i)
+     >           (2.d0*(z_mid(i)-z_mid(i-1))*(zGnd(i+1)-zGnd(i)))
 
             b(i-1)     = gndScalars(i,ind)
      >           + (dt_/(2.d0*(z_mid(i)-z_mid(i-1))))*
@@ -150,8 +144,6 @@
          enddo
       endif
       
-c     call solveTridiagonalSystem(e,f,g,b,
-c     >     gndScalars(2:size(gndScalars,1),ind))
       call tridag(e,f,g,b,gndScalars(2:soilLevels,ind),soilLevels-1)
       
       end subroutine integrateSoilDiffusion
