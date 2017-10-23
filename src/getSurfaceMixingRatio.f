@@ -1,4 +1,5 @@
       subroutine getSurfaceMixingRatio(q_gnd)
+      ! solves for surface mixiing ratio following McCumber (1980)
       
       use globals
       use SEBmodule

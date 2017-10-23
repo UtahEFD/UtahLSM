@@ -1,10 +1,9 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!         This program is developed to run the LSM          !
-!         model developed by Shingleton (2010)              !
-!                                                           !
-!         v1.0: developed by Shingleton and Stoll 2012      !
-!         v2.0: developed by Gibbs and Stoll 2017           !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!     UtahLSM is a land-surface model (Shingleton, 2010)               !
+!                                                                      !
+!         v1.0: developed by Shingleton and Stoll 2010                 !
+!         v2.0: developed by Gibbs and Stoll 2017                      !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       Program utahLSM
 
@@ -16,17 +15,13 @@
          include './interfaces/solveGroundBC.f'
       end interface
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Variable definition
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Variable definition
       integer*4 i,j
       real*8 M,soilHeatFlux,netRad,ustar
       real*8,allocatable,dimension(:) :: S, scalarFlux
       character(len=32) :: caseName
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Parse command line for input case name
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Parse command line for input case name
       if (command_argument_count().ne.1) then
         write(*,*) "Usage: ./LSM case_name"
         write(*,*) "where case_name is subfolder in inputs/"
@@ -35,26 +30,18 @@
 	  
 	  call get_command_argument(1, caseName)
 	  	  
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Read inputs from LSMinputs and external soil/atm data
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Read inputs from LSMinputs and external soil/atm data
       write(*,*) 'reading inputs'
       call readInputs(caseName)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Allocate arrays
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Allocate arrays
       allocate(S(scalarcount), scalarFlux(scalarcount))
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Open output files
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Open output files
       Open (unit=1,file='outputs/surfaceFlux.out', status='UNKNOWN')
       Open (unit=2,file='outputs/groundScalar.out',status='UNKNOWN')
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     Solve SEB in time
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Solve SEB in time
       do t = 1,nsteps
 
          ! calculate time (UTC) to use in the radiation model

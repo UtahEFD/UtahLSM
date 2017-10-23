@@ -10,9 +10,7 @@
       character(len=32) :: caseName
       character(len=64) :: inputDir
             
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     READ in parameters from LESinputs !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! open LESinputs to read parameters
       inputDir = 'inputs/' // caseName
                                           
       open(unit=1,file=trim(inputDir) // '/LSMinputs.txt',status='old')
@@ -21,14 +19,14 @@
          read(1,*)
       enddo
       
-      ! READ constants
+      ! read constants
       read(1,*) vonk
       read(1,*) pi
       do i=1,3
          read(1,*)
       enddo
       
-      ! READ space and time parameters
+      ! read space and time parameters
       read(1,*) startUTC
       read(1,*) nsteps
       read(1,*) dtr
@@ -40,7 +38,7 @@
          read(1,*)
       enddo
 
-      ! READ scalar parameters               
+      ! read scalar parameters               
       read(1,*) scalarCount
       if(scalarCount.gt.0)then
       ALLOCATE( scalarScales(scalarCount))
@@ -52,7 +50,7 @@
          read(1,*)
       enddo
 
-      ! READ atm and soil type parameters
+      ! read soil and atmospheric type parameters
       read(1,*) soilLevels
 	  read(1,*) z_o
       read(1,*) z_t
@@ -69,7 +67,7 @@
          read(1,*) 
       enddo
 
-      ! READ radiation parameters
+      ! read radiation parameters
       read(1,*) stepsPerRadVal
       read(1,*) SB_constant
       read(1,*) solarIrradiance
@@ -81,7 +79,7 @@
          read(1,*)
       enddo
       
-      ! READ flags and convergence parameters
+      ! read flags and convergence parameters
       read(1,*) moistureCriteria
       read(1,*) temperatureCriteria
       read(1,*) tempFluxCriteria
@@ -99,9 +97,7 @@
       read(1,*) radiationFlag
       close(1)
       
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     READ in external soil and atmospheric data !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+      ! allocate arrays for external soil and atmospheric data
       allocate(zGnd(soilLevels),porosity(soilLevels),
      +     satPotential(soilLevels),satHydrCond(soilLevels),
      +     soilExponent(soilLevels),heatCapSoil(soilLevels),
@@ -109,7 +105,7 @@
       allocate(gndScalars(soilLevels,2),scalar(nsteps,scalarcount),
      +     measRad(nsteps))
 
-      ! soil
+      ! read external soil data
       write(*,*) 'reading in soil property data'
       Open (unit=1,file=trim(inputDir) // '/soilTypeParams.ini')
       read(1,*) porosity(1:soilLevels)
@@ -133,14 +129,14 @@
       read(1,*) gndScalars(1:soilLevels,2)
       close(1)
       
-      ! atmosphere    
+      ! read external atmospheric data   
       write(*,*) 'reading in external atmospheric data'      
       Open (unit=1,file=trim(inputDir) // '/timeSeriesMET.dat')
       do i=1,nsteps
          read(1,*) time,u(i),v(i),w,scalar(i,1),scalar(i,2),tkesgs
       enddo
       
-      ! radiation (radiationFlag=1)
+      ! read external radiation data (radiationFlag=1)
       if (radiationFlag==1) then
          write(*,*) 'reading in external radiation data'      
          Open (unit=1,file=trim(inputDir) // '/timeSeriesRAD.dat')
@@ -149,38 +145,30 @@
          enddo
       endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!
-!     scalar parameters !
-!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      ! scalar parameters, note these two could be assumed 
+      ! set scalar parameters (these two could be assumed)
       temperatureIndex=1
       moistureIndex=2
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     nondimensionalization !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
-      ! time
+      ! nondimensionalize time
       dt = dtr/(z_i/uScale)
       startUTC=startUTC*3600/(z_i/uScale)
       
-      ! gravity
+      ! nondimensionalize gravity
       g_hat=9.81d0*(z_i/(uScale**2))
       
-      ! soil properties
+      ! nondimensionalize soil properties
       satPotential=satPotential/z_i
       satHydrCond=satHydrCond/uScale
       heatCapSoil=heatCapSoil/(densityAir*Cp_air)
       zGnd=zGnd/z_i
       
-      ! atm length scales
+      ! nondimensionalize atmospheric length scales
       z_o=z_o/z_i
       z_t=z_t/z_i 
       z_m=z_m/z_i
       z_s=z_s/z_s
       
-      ! soil/atm velocity and scalars
+      ! nondimensionalize soil and atmospheric velocity/scalars
       u=u/uScale
       v=v/uScale
       do i=1,scalarcount
@@ -190,13 +178,13 @@
          enddo
       enddo
       
-      ! radiation (radiationFlag=1)
+      ! nondimensionalize radiation (radiationFlag=1)
       if (radiationFlag==1) then
          measRad = measRad/
      +     (Cp_air*densityAir*scalarScales(temperatureIndex)*uScale)
       endif
       
-      ! water properties
+      ! nondimensionalize water properties
       densityWater = densityWater/densityAir
       latentHeatWater = 
      +     latentHeatWater/(Cp_air*scalarScales(temperatureIndex))
@@ -204,7 +192,7 @@
       waterGasConst = 
      +     waterGasConst*scalarScales(temperatureIndex)/uScale**2
       
-      ! radiation model
+      ! nondimensionalize radiation model parameters
       SB_constant=SB_constant*scalarScales(temperatureIndex)**3/
      +     (Cp_air*densityAir*uScale)
       solarIrradiance = 
