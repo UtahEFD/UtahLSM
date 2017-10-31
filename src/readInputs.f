@@ -22,6 +22,7 @@
       ! read constants
       read(1,*) vonk
       read(1,*) pi
+      read(1,*) grav
       do i=1,3
          read(1,*)
       enddo
@@ -29,11 +30,10 @@
       ! read space and time parameters
       read(1,*) startUTC
       read(1,*) nsteps
-      read(1,*) dtr
+      read(1,*) dt
       read(1,*) z_m
       read(1,*) z_s
       read(1,*) z_i
-      read(1,*) uScale
       do i = 1,3
          read(1,*)
       enddo
@@ -149,54 +149,7 @@
       temperatureIndex=1
       moistureIndex=2
       
-      ! nondimensionalize time
-      dt = dtr/(z_i/uScale)
-      startUTC=startUTC*3600/(z_i/uScale)
-      
-      ! nondimensionalize gravity
-      g_hat=9.81d0*(z_i/(uScale**2))
-      
-      ! nondimensionalize soil properties
-      satPotential=satPotential/z_i
-      satHydrCond=satHydrCond/uScale
-      heatCapSoil=heatCapSoil/(densityAir*Cp_air)
-      zGnd=zGnd/z_i
-      
-      ! nondimensionalize atmospheric length scales
-      z_o=z_o/z_i
-      z_t=z_t/z_i 
-      z_m=z_m/z_i
-      z_s=z_s/z_s
-      
-      ! nondimensionalize soil and atmospheric velocity/scalars
-      u=u/uScale
-      v=v/uScale
-      do i=1,scalarcount
-         scalar(:,i)=scalar(:,i)/scalarScales(i)
-         do j=1,soilLevels
-            gndScalars(j,i)=gndScalars(j,i)/scalarScales(i)
-         enddo
-      enddo
-      
-      ! nondimensionalize radiation (radiationFlag=1)
-      if (radiationFlag==1) then
-         measRad = measRad/
-     +     (Cp_air*densityAir*scalarScales(temperatureIndex)*uScale)
-      endif
-      
-      ! nondimensionalize water properties
-      densityWater = densityWater/densityAir
-      latentHeatWater = 
-     +     latentHeatWater/(Cp_air*scalarScales(temperatureIndex))
-      heatCapWater = heatCapWater/(densityAir*Cp_air)
-      waterGasConst = 
-     +     waterGasConst*scalarScales(temperatureIndex)/uScale**2
-      
-      ! nondimensionalize radiation model parameters
-      SB_constant=SB_constant*scalarScales(temperatureIndex)**3/
-     +     (Cp_air*densityAir*uScale)
-      solarIrradiance = 
-     +     solarIrradiance/(scalarScales(temperatureIndex)*uScale)
+      ! convert latitude and longitude into radians
       lat = lat*pi/180.d0
       long = long*pi/180.d0   
 

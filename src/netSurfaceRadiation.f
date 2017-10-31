@@ -44,7 +44,7 @@
       endif
       
       ! estimate for net longwave
-      longNet = -0.04d0/(scalarScales(1)*uScale)
+      longNet = -0.04d0
       
       ! compute net shortwave radiation
       call solarRadiation(shortNet,sfcMois)
@@ -90,7 +90,7 @@
 
       sinElevation = sin(lat)*sin(declination) - 
      >     cos(lat)*cos(declination)*
-     >     cos( (2*pi*UTC/(24.d0*3600.d0/(z_i/uScale))) - long )
+     >     cos( (2*pi*UTC/(24.d0*3600.d0)) - long )
 
       if(sinElevation > 0)then
          transmissivity = (0.6d0 + 0.2d0*sinElevation)

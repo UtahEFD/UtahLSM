@@ -3,6 +3,7 @@
 ! constants
 0.4d0				= von Karman constant
 3.14159265358979d0	= pi
+9.81d0              = grav
 !
 !
 ! space and time parameters
@@ -12,7 +13,6 @@
 10.0d0				= z_m, measurement height of momentum
 10.0d0				= z_s, measurement height of scalars
 10.0d0				= z_i, normalization height (arbitrary should probably be set = to measurement hieght)
-1.0d0				= uScale, normalization velocity scale (arbitrary)
 !
 !
 ! scalar parameters

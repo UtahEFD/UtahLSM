@@ -34,8 +34,8 @@
 
       if( ind == 1)then
       ! compute soil conductivity based on moisture content
-         call getSoilThermalTransfer(gndScalars(:,2),K,porosity,
-     >        satPotential,soilExponent,heatCapSoil,1)
+         call getSoilThermalTransfer(1,gndScalars(:,2),porosity,
+     >        satPotential,soilExponent,heatCapSoil,K)
                   
       !  interpolate zGnd and k to get values at mid-levels
       !  for z do this once and save z_mid (never changes)

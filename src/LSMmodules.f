@@ -10,7 +10,7 @@
       real*8 dt
       integer*4 t
       integer*4 nsteps,scalarCount
-      real*8 Pi,g_hat,uScale,vonk,z_i, z_m, z_s
+      real*8 Pi,grav,vonk,z_i, z_m, z_s
       real*8 UTC,startUTC,UTC_hrs
       integer*4 temperatureIndex,moistureIndex
       real*8,allocatable,dimension(:)::surfaceFluxes,scalarScales,

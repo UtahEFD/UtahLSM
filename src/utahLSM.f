@@ -43,25 +43,29 @@
 
       ! Solve SEB in time
       do t = 1,nsteps
-
+         
+         print*,"Solving t= ",t
+         print*, "======================"
+         if (t==3) then 
+            call abort
+         endif
+         
          ! calculate time (UTC) to use in the radiation model
          UTC = startUTC + float(t)*dt
-         
+                  
          ! compute magnitude of horizontal wind vector
          M=sqrt(u(t)**2+v(t)**2)
-         
+                  
          ! grab atmospheric scalars
          S=scalar(t,:)
-         
+                  
          ! call the model
          call solveGroundBC(M,S,ustar,scalarFlux,soilHeatFlux,netRad)
      
          ! write fluxes in dimensional kinematic units
-         write(1,*) UTC*(z_i/uScale),ustar*uScale,
-     +        scalarFlux(1)*scalarScales(1)*uScale,
-     +        scalarFlux(2)*scalarScales(2)*uScale,
-     +        soilHeatFlux*scalarScales(1)*uScale,
-     +        netRad*scalarScales(1)*uScale
+         write(1,*) UTC,ustar,scalarFlux(1)*densityAir*Cp_air,
+     +        scalarFlux(2)*densityAir*latentHeatWater,
+     +        soilHeatFlux,netRad
 
         ! write soil scalars in units of K and volum. content
          do i = 1,scalarcount
