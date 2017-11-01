@@ -19,6 +19,12 @@
 //using namespace netCDF::exceptions;
 
 UtahLSM::UtahLSM() {
+    
+    // set constants
+    vonk = 0.4;
+    grav = 9.81;
+    pi   = 3.14159265358979;
+    
 }
 
 // Initialize UtahLSM elements using input data

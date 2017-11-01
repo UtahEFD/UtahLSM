@@ -18,7 +18,9 @@
 class UtahLSM {
     
     private:
-        int test;       
+        float vonk;
+        float grav;
+        float pi;       
         
     public :
         UtahLSM();
