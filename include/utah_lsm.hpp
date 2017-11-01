@@ -20,7 +20,13 @@ class UtahLSM {
     private:
         float vonk;
         float grav;
-        float pi;       
+        float pi;
+        double sb;
+        float sc;
+        float rhoA;
+        float rhoW;
+        float Rv;
+        double Lv;      
         
     public :
         UtahLSM();
