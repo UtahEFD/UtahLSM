@@ -18,6 +18,13 @@ int main () {
     double z_t;
     double z_m;
     double z_s;
+    
+    // namelist radiation section
+    double albedo;    
+    double emissivity;
+    double latitude;  
+    double longitude;
+    int julianday;
         
     // Print a nice little welcome message
     std::cout << std::endl;
@@ -32,11 +39,18 @@ int main () {
     // Initialize the input class
     Input input;
             
-    // read in input section
+    // read length section
     nError += input.getItem(&z_o, "length", "z_o", "");
     nError += input.getItem(&z_t, "length", "z_t", "");
     nError += input.getItem(&z_m, "length", "z_m", "");
     nError += input.getItem(&z_s, "length", "z_s", "");
+    
+    // read radiation section
+    nError += input.getItem(&albedo,     "radiation", "albedo",     "");
+    nError += input.getItem(&emissivity, "radiation", "emissivity", "");
+    nError += input.getItem(&latitude,   "radiation", "latitude",   "");
+    nError += input.getItem(&longitude,  "radiation", "longitude",  "");
+    nError += input.getItem(&julianday,  "radiation", "julianday",  "");
     
     if (nError) throw "There was an error reading the input file";
     
