@@ -24,6 +24,7 @@ class Input {
         template <class valuetype>
         int parseItem(valuetype*, std::string, std::string, std::string, bool, valuetype);
         int checkItem(int*, std::string, std::string, std::string el="default");
+        int checkItem(double*     , std::string, std::string, std::string el="default");
         int checkItem(std::string*, std::string, std::string, std::string el="default");
         
         template <class valuetype>
@@ -47,6 +48,8 @@ class Input {
         // Item retrieval functions
         int getItem(int*, std::string, std::string, std::string);
         int getItem(int*, std::string, std::string, std::string, int);
+        int getItem(double*, std::string, std::string, std::string);
+        int getItem(double*, std::string, std::string, std::string, double);
         int getItem(std::string*, std::string, std::string, std::string);
         int getItem(std::string*, std::string, std::string, std::string, std::string);
         

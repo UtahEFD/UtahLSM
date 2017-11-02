@@ -242,6 +242,51 @@ int Input::checkItem(int* value, std::string cat, std::string item, std::string 
     return 0;
 }
 
+// double functions
+int Input::getItem(double* value, std::string cat, std::string item, std::string el) {
+    bool optional = false;
+    double dummy = 0.;
+
+    if (parseItem(value, cat, item, el, optional, dummy))
+        return 1;
+
+    return 0;
+}
+
+int Input::getItem(double* value, std::string cat, std::string item, std::string el, double def) {
+    bool optional = true;
+
+    if (parseItem(value, cat, item, el, optional, def))
+        return 1;
+
+    return 0;
+}
+
+int Input::checkItem(double* value, std::string cat, std::string item, std::string el) {
+    char inputstring[256], temp[256];
+    std::strcpy(inputstring, inputList[cat][item][el].data.c_str());
+
+    double inputdouble;
+    int n = std::sscanf(inputstring, " %lf %[^\n] ", &inputdouble, temp);
+    // catch the situation where a double is closed with a ".", which is not read by sscanf's %f
+    if (n == 1 || (n == 2 && !std::strcmp(".", temp)))
+        *value = inputdouble;
+    else {
+        if (std::strcmp(inputstring,"")) {
+            if (el == "default") {
+                std::printf("ERROR [%s][%s] = \"%s\" is not of type DOUBLE\n", cat.c_str(), item.c_str(), inputstring);
+            }
+            else {
+                std::printf("ERROR [%s][%s][%s] = \"%s\" is not of type DOUBLE\n", cat.c_str(), item.c_str(), el.c_str(), inputstring);
+            }
+            return 1;
+        }
+    }
+    inputList[cat][item][el].isused = true;
+
+    return 0;
+}
+
 // strings
 int Input::getItem(std::string* value, std::string cat, std::string item, std::string el) {
     bool optional = false;
