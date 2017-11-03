@@ -19,11 +19,12 @@ class Input {
 
     private:
         int readNamelist();
+        int readDataFile(dataMap*, std::string, bool);
         int checkItemExists(std::string, std::string, std::string el="default");
         
         template <class valuetype>
-        int parseItem(valuetype*, std::string, std::string, std::string, bool, valuetype);
-        int checkItem(int*, std::string, std::string, std::string el="default");
+        int parseItem(valuetype*,   std::string, std::string, std::string, bool, valuetype);
+        int checkItem(int*,         std::string, std::string, std::string el="default");
         int checkItem(double*     , std::string, std::string, std::string el="default");
         int checkItem(std::string*, std::string, std::string, std::string el="default");
         
@@ -41,20 +42,24 @@ class Input {
         typedef std::map<std::string, inputMap2d> inputMap;
     
         inputMap inputList;
+        dataMap inputMetr;
+        dataMap inputSoil;
     
     public:
         Input();
         
         // Item retrieval functions
-        int getItem(int*, std::string, std::string, std::string);
-        int getItem(int*, std::string, std::string, std::string, int);
-        int getItem(double*, std::string, std::string, std::string);
-        int getItem(double*, std::string, std::string, std::string, double);
+        int getItem(int*,         std::string, std::string, std::string);
+        int getItem(int*,         std::string, std::string, std::string, int);
+        int getItem(double*,      std::string, std::string, std::string);
+        int getItem(double*,      std::string, std::string, std::string, double);
         int getItem(std::string*, std::string, std::string, std::string);
         int getItem(std::string*, std::string, std::string, std::string, std::string);
-        
+                
         // List retrieval function
-        int getList(std::vector<std::string> *, std::string, std::string, std::string); 
+        int getList(std::vector<std::string> *, std::string, std::string, std::string);
+        int getProf(double*, std::string, std::string, int size);        
+
 };
 
 #endif

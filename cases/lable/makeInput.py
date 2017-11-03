@@ -19,37 +19,27 @@ measSoilMois = [0.078, 0.135, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
 
 # soil properties
 # Lamont - 0-19: silty loam, 20-34: clay, 35-60: clay loam
-porosity     = np.zeros((nSoil,1))
-satPotential = np.zeros((nSoil,1))
-satHydrCond  = np.zeros((nSoil,1))
-soilExponent = np.zeros((nSoil,1))
-heatCapSoil  = np.zeros((nSoil,1))
-profileTemp  = np.zeros((nSoil,1))
-profileMois  = np.zeros((nSoil,1))
-
-porosity[:,0]     =  [0.485,0.485,0.485,0.485,0.482,0.476,0.476]
-satPotential[:,0] =  [0.786,0.786,0.786,0.786,0.405,0.630,0.630]
-satHydrCond[:,0]  =  [7.2,7.2,7.2,7.2,1.3,2.5,2.5]
-soilExponent[:,0] =  [5.3,5.3,5.3,5.3,11.4,8.52,8.52]
-heatCapSoil[:,0]  =  [1.27,1.27,1.27,1.27,1.09,1.23,1.23]
-
-profileTemp[:,0]  = measSoilTemp
-profileMois[:,0]  = measSoilMois
-
+porosity     =  np.array([0.485,0.485,0.485,0.485,0.482,0.476,0.476])
+satPotential =  np.array([0.786,0.786,0.786,0.786,0.405,0.630,0.630])
+satHydrCond  =  np.array([7.2,7.2,7.2,7.2,1.3,2.5,2.5])
+soilExponent =  np.array([5.3,5.3,5.3,5.3,11.4,8.52,8.52])
+heatCapSoil  =  np.array([1.27,1.27,1.27,1.27,1.09,1.23,1.23])
 
 # proper units and sign
 satPotential = -satPotential
 satHydrCond  = satHydrCond * 1e-6
 heatCapSoil  = heatCapSoil * 1e6
 
-# soil properties array
-soilOut = np.r_[porosity.T, satPotential.T, satHydrCond.T, soilExponent.T, heatCapSoil.T]
-
-# write input files
-np.savetxt('soilLevels.ini',       measZ,       fmt='%.7e',  delimiter='\t', newline='\n')
-np.savetxt('soilTypeParams.ini',   soilOut,     fmt='%14.7e',delimiter='\t', newline='\n')
-np.savetxt('soilTemperature.ini',  profileTemp, fmt='%.7e',  delimiter='\t', newline='\n')
-np.savetxt('soilMoisture.ini',     profileMois, fmt='%.7e',  delimiter='\t', newline='\n')
+# write output
+of = open('inputSoil.dat','w')
+os = '{0:^15} {1:^15s} {2:^15s} {3:^15s} {4:^19s} {5:^11s} {6:^16s} {7:^15s}\n'
+os = os.format('zSoil','tempSoil','moisSoil','porosity','moisPotSat','hydCondSat','b','Ci')
+of.write(os)
+for z in range(nSoil):
+	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}  {5:2.8E}  {6:2.8E}  {7:2.8E}\n"
+	os = os.format(measZ[z],measSoilTemp[z],measSoilMois[z],porosity[z],satPotential[z],satHydrCond[z],soilExponent[z],heatCapSoil[z])
+	of.write(os)
+of.close()
 
 ################################################
 # Read met tower data for u,v,T,q for 20121024 #
@@ -75,12 +65,6 @@ vc = -ws*np.cos(wd*np.pi/180)
 
 # compute water vapor mixing ratio
 qv = 0.622 * pv / (pa-pv)
-
-of = open('timeSeriesMET.dat','w')
-for t in range(len(tt)):
-	os = "{0:.6E}\t{1:13.6E}\t{2:2.6E}\t{3:2.6E}\t{4:2.6E}\t{5:2.6E}\t{6:2.6E}\n".format(tt[t], uc[t], vc[t], 0, pt[t], qv[t],0)
-	of.write(os)
-of.close()
 
 ########################################
 # Read net radiation data for 20121024 #
@@ -115,8 +99,13 @@ G1m    = np.interp(tt1m,tt,G)
 H1m    = np.interp(tt1m,tt,H)
 LE1m   = np.interp(tt1m,tt,LE)
 
-of = open('timeSeriesRAD.dat','w')
+##############################
+# Write all time series data #
+##############################
+of = open('inputMetr.dat','w')
+os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('uComp','vComp','pTemp','wvMix', 'rNet')
+of.write(os)
 for t in range(len(tt1m)):
-	os = "{0:.6E}\t{1:13.6E}\n".format(tt1m[t], rNet1m[t])
+	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qv[t], rNet1m[t])
 	of.write(os)
 of.close()

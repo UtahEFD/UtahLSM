@@ -20,11 +20,19 @@
 
 Input :: Input() {
     
-    int nError = 0;
+    int nError          = 0;
+    const bool required = false;
+    const bool optional = true;
+    
+    std::cout<<"Reading namelist.ini"<<std::endl;
     nError += readNamelist();
-
-    if (nError)
-        throw 1;
+    std::cout<<"Reading inputMetr.dat"<<std::endl;
+    nError += readDataFile(&inputMetr, + "inputMetr.dat", required);
+    std::cout<<"Reading inputSoil.dat"<<std::endl;
+    nError += readDataFile(&inputSoil, + "inputSoil.dat", required);
+    std::cout<<"##############################################################"<<std::endl;
+    
+    if (nError) throw 1;
 }
 
 // Read in the namelist file
@@ -48,8 +56,6 @@ int Input :: readNamelist() {
     int nLines  = 0;
     int nLine;
 
-    std::cout<<"Processing ini file "<< inputfilename << std::endl;
-    std::cout<<"##############################################################"<<std::endl;
     while (std::fgets(inputline, 256, inputfile) != NULL) {
         nLines++;
     }
@@ -210,9 +216,9 @@ int Input::parseItem(valuetype* value, std::string cat, std::string item, std::s
                 return 1;
         }
     }
-    std::cout << std::left  << std::setw(30) << itemout << "= "
-        << std::right << std::setw(30) << std::setprecision(5) << std::boolalpha << *value
-        << "   " << std::endl;
+    //std::cout << std::left  << std::setw(30) << itemout << "= "
+    //    << std::right << std::setw(30) << std::setprecision(5) << std::boolalpha << *value
+    //    << "   " << std::endl;
 
     return 0;
 }
@@ -400,6 +406,176 @@ int Input::checkList(std::vector<std::string>* value, std::string cat, std::stri
         temp2 = std::strtok(NULL, ",");
     }
     inputList[cat][item][el].isused = true;
+
+    return 0;
+}
+
+// read timeseries data
+int Input::readDataFile(dataMap* series, std::string inputname, bool optional) {
+    int nerror = 0;
+    char inputline[256], temp1[256];
+    char* substring;
+    int n;
+
+    // read the input file
+    FILE* inputfile = 0;
+    std::string inputfilename = inputname;
+
+    int doreturn = 0;
+    inputfile = fopen(inputfilename.c_str(), "r");
+    if (inputfile == NULL) {
+        if (optional)
+            doreturn = true;
+        else {
+            std::printf("ERROR \"%s\" does not exist\n", inputfilename.c_str());
+            nerror++;
+        }
+    }
+
+    // broadcast the error count
+    if (nerror) return 1;
+    if (doreturn) return 0;
+
+    int nlines = 0;
+    int nline;
+    int nvar = 0;
+    std::vector<std::string> varnames;
+
+    while (std::fgets(inputline, 256, inputfile) != NULL)
+        nlines++;
+    rewind(inputfile);
+    int nn;
+
+    // first find the header
+    for (nn=0; nn<nlines; nn++) {
+        nline = nn+1;
+        // fetch a line and broadcast it
+        std::fgets(inputline, 256, inputfile);
+
+        // check for empty line
+        n = std::sscanf(inputline, " %s ", temp1);
+        if (n == 0) continue;
+
+        // check for comments
+        n = std::sscanf(inputline, " #%[^\n]", temp1);
+        if (n > 0) continue;
+
+        // read the header
+        // read the first substring
+        substring = std::strtok(inputline, " ,;\t\n");
+        while (substring != NULL) {
+            nvar++;
+
+            // temporarily store the variable name
+            varnames.push_back(std::string(substring));
+
+            // read the next substring
+            substring = std::strtok(NULL, " ,;\t\n");
+        }
+
+        if (nvar == 0) {
+            std::printf("ERROR no variable names in header\n");
+            fclose(inputfile);
+            return 1;
+        }
+
+        // step out of the fgets loop
+        break;
+    }
+
+    // second read the data, continue reading
+    int ncols;
+    double datavalue;
+
+    std::vector<double> varvalues;
+
+    // continue the loop from the exit value of nn
+    for (nn++; nn<nlines; nn++) {
+        nline = nn+1;
+        
+        // fetch a line and broadcast it
+        std::fgets(inputline, 256, inputfile);
+
+        // check for empty line
+        n = std::sscanf(inputline, " %s ", temp1);
+        if (n == 0) continue;
+
+        // check for comments
+        n = std::sscanf(inputline, " #%[^\n]", temp1);
+        if (n > 0) continue;
+
+        // read the data
+        ncols = 0;
+        varvalues.clear();
+        
+        // read the first substring
+        substring = std::strtok(inputline, " ,;\t\n");
+        while (substring != NULL) {
+            ncols++;
+
+            // scan the line, while checking that the whole string has been read
+            n = std::sscanf(substring, " %lf %[^\n]", &datavalue, temp1);
+
+            if (n != 1) {
+                std::printf("ERROR line %d: \"%s\" is not a correct data value\n", nline, substring);
+                fclose(inputfile);
+                return 1;
+            }
+
+            // temporarily store the data
+            varvalues.push_back(datavalue);
+
+            // read the next substring
+            substring = std::strtok(NULL, " ,;\t\n");
+        }
+
+        if (ncols != nvar) {
+            std::printf("ERROR line %d: %d data columns, but %d defined variables\n", nline, ncols, nvar);
+            fclose(inputfile);
+            return 1;
+        }
+
+        // store the data
+        for (n=0; n<nvar; n++)
+            (*series)[varnames[n]].push_back(varvalues[n]);
+    }
+
+    fclose(inputfile);
+    return 0;
+}
+
+// read input data
+int Input::getProf(double* data, std::string inputType, std::string varname, int kmaxin) {
+    
+    dataMap::const_iterator it;
+    dataMap inputData;
+    
+    if (inputType=="soil") {
+        it = inputSoil.find(varname);
+        inputData = inputSoil;
+    }
+    if (inputType=="metr") {
+        it = inputMetr.find(varname);
+        inputData = inputMetr;
+    }
+        
+    if (it != inputData.end()) {
+        int profsize = inputData[varname].size();
+        if (profsize < kmaxin) {
+            std::printf("ERROR only %d of %d levels can be read for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
+            return 1;
+        }
+        if (profsize > kmaxin)
+           std::printf("WARNING %d is larger than the number of grid points %d for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
+
+        for (int k=0; k<kmaxin; k++)
+            data[k] = inputData[varname][k];
+    }
+    else {
+        std::printf("WARNING no profile data for variable \"%s\", values set to zero\n", varname.c_str());
+        for (int k=0; k<kmaxin; k++)
+            data[k] = 0.;
+    }
 
     return 0;
 }
