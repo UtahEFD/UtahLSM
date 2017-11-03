@@ -7,6 +7,7 @@
 //
 
 #include "utah_lsm.hpp"
+#include "constants.hpp"
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -18,23 +19,15 @@
 //using namespace netCDF;
 //using namespace netCDF::exceptions;
 
-UtahLSM::UtahLSM() {
+UtahLSM::UtahLSM(double z_o,double z_t,double z_m,double z_s, 
+                 double air_u,double air_T,double air_q, 
+                 int nsoilz,double* soil_z,double* soil_T,double* soil_q,
+                 double* porosity,double* psi_nsat,double* K_nsat,double* b,double* Ci,
+                 int julian_day, double utc, double latitude, double longitude,
+                 double albedo, double emissivity, double R_net,
+                 double* phi, double* psi, double* psi0,
+                 double* phiH, double* psiH, double* psiH0,
+                 double* ustar, double* flux_wT, double* flux_wq) {
     
-    // set constants
-    vonk = 0.4;               // von Karman constant
-    grav = 9.81;              // gravity
-    pi   = 3.14159265358979;  // pi
-    sb   = 5.6697e-8;         // Stefan-Boltzmann constant
-    sc   = 1.127;             // solar constant [K-m/s]
-    rhoA = 1.204;             // density of air [kg/m^3]
-    rhoW = 1000.0;            // density of water [kg/m^3]
-    Rv   = 461.4;             // gas constant for water vapor [J/kg-K]
-    Lv   = 2.45e6;            // latent heat of vaporization [J/kg]
-}
-
-// Initialize UtahLSM elements using input data
-void UtahLSM :: init() {
-    
-    std::cout<<"Initializing UtahLSM";
-    std::cout<<"##############################################################"<<std::endl;
+        
 }

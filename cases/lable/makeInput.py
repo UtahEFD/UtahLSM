@@ -33,7 +33,7 @@ heatCapSoil  = heatCapSoil * 1e6
 # write output
 of = open('inputSoil.dat','w')
 os = '{0:^15} {1:^15s} {2:^15s} {3:^15s} {4:^19s} {5:^11s} {6:^16s} {7:^15s}\n'
-os = os.format('zSoil','tempSoil','moisSoil','porosity','moisPotSat','hydCondSat','b','Ci')
+os = os.format('soil_z','soil_T','soil_q','porosity','psi_nsat','K_nsat','b','Ci')
 of.write(os)
 for z in range(nSoil):
 	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}  {5:2.8E}  {6:2.8E}  {7:2.8E}\n"
@@ -103,7 +103,7 @@ LE1m   = np.interp(tt1m,tt,LE)
 # Write all time series data #
 ##############################
 of = open('inputMetr.dat','w')
-os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('uComp','vComp','pTemp','wvMix', 'rNet')
+os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('atm_u','atm_v','atm_T','atm_q', 'R_net')
 of.write(os)
 for t in range(len(tt1m)):
 	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qv[t], rNet1m[t])

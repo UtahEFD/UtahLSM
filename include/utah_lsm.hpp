@@ -18,21 +18,20 @@
 class UtahLSM {
     
     private:
-        float vonk;
-        float grav;
-        float pi;
-        double sb;
-        float sc;
-        float rhoA;
-        float rhoW;
-        float Rv;
-        double Lv;      
+              
         
     public :
-        UtahLSM();
+        UtahLSM(double, double, double, 
+                double, double, double, double,
+                int, double*, double*, double*,
+                double*, double*, double*, double*, double*,
+                int, double, double, double,
+                double, double, double,
+                double*,double*,double*,
+                double*,double*,double*,
+                double*,double*,double*);
                 
         // Functions
-        void init();
 };
 
 #endif
