@@ -8,7 +8,6 @@
 #include "utah_lsm.hpp"
 #include "constants.hpp"
 #include <iostream>
-#include <array>
 #include <cmath>
 
 int main () {
@@ -76,14 +75,14 @@ int main () {
         
     // read in external soil data
     std::cout<<"Processing inputSoil.dat" << std::endl;
-    double* soil_z   = new double[nsoilz];
-    double* soil_T   = new double[nsoilz];
-    double* soil_q   = new double[nsoilz];
-    double* porosity = new double[nsoilz];
-    double* psi_nsat = new double[nsoilz];
-    double* K_nsat   = new double[nsoilz];
-    double* b        = new double[nsoilz];
-    double* Ci       = new double[nsoilz];
+    double soil_z[nsoilz];
+    double soil_T[nsoilz];
+    double soil_q[nsoilz];
+    double porosity[nsoilz];
+    double psi_nsat[nsoilz];
+    double K_nsat[nsoilz];
+    double b[nsoilz];
+    double Ci[nsoilz];
     
     nError += input.getProf(soil_z,   "soil", "soil_z",   nsoilz);
     nError += input.getProf(soil_T,   "soil", "soil_T",   nsoilz);
@@ -98,18 +97,18 @@ int main () {
         
     // read in external atmospheric data
     std::cout<<"Processing inputMetr.dat" << std::endl;
-    double* atm_u = new double[nsteps];
-    double* atm_v = new double[nsteps];
-    double* atm_T = new double[nsteps];
-    double* atm_q = new double[nsteps];
-    double* R_net = new double[nsteps];
+    double atm_u[nsteps];
+    double atm_v[nsteps];
+    double atm_T[nsteps];
+    double atm_q[nsteps];
+    double R_net[nsteps];
     
     nError += input.getProf(atm_u, "metr", "atm_u", nsteps);
     nError += input.getProf(atm_v, "metr", "atm_v", nsteps);
     nError += input.getProf(atm_T, "metr", "atm_T", nsteps);
     nError += input.getProf(atm_q, "metr", "atm_q", nsteps);
     nError += input.getProf(R_net, "metr", "R_net",nsteps);
-        
+    
     std::cout<<"##############################################################"<<std::endl;
     
     if (nError) throw "There was an error reading the input file";
@@ -129,9 +128,8 @@ int main () {
                         porosity,psi_nsat,K_nsat,b,Ci,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,R_net[t],
-                        &phiM,&psiM,&psiM0,&phiH,&psiH,&psiH0,
-                        &ustar,&flux_wT,&flux_wq);
-    }
-        
+                        phiM,psiM,psiM0,phiH,psiH,psiH0,
+                        ustar,flux_wT,flux_wq);
+    } 
     return 0;
 }

@@ -11,6 +11,7 @@
 #include "soil.hpp"
 #include "most.hpp"
 #include <cmath>
+#include <iostream>
 //#include <netcdf>
 //using namespace netCDF;
 //using namespace netCDF::exceptions;
@@ -21,9 +22,9 @@ UtahLSM::UtahLSM(double z_o,double z_t,double z_m,double z_s,
                 double* porosity,double* psi_nsat,double* K_nsat,double* b,double* Ci,
                 int julian_day, double utc, double latitude, double longitude,
                 double albedo, double emissivity, double R_net,
-                double* phiM, double* psiM, double* psiM0,
-                double* phiH, double* psiH, double* psiH0,
-                double* ustar, double* flux_wT, double* flux_wq) : 
+                double& phiM, double& psiM, double& psiM0,
+                double& phiH, double& psiH, double& psiH0,
+                double& ustar, double& flux_wT, double& flux_wq) : 
                 z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
                 atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
                 nsoilz(nsoilz),julian_day(nsoilz),utc(utc),latitude(latitude), 
@@ -32,7 +33,7 @@ UtahLSM::UtahLSM(double z_o,double z_t,double z_m,double z_s,
                 porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
                 phiM(phiM),psiM(psiM),psiM0(psiM0),phiH(phiH), psiH(psiH),psiH0(psiH0),
                 ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
-    
+
     computeFluxes();
 }
 
@@ -44,27 +45,27 @@ void UtahLSM :: computeFluxes() {
     for (int i=0; i<4; ++i) {
         
         // compute friction velocity
-        *ustar   = atm_ws * Constants::vonk / (std::log(z_m/z_o) - (*psiM) + (*psiM0) );
+        ustar   = atm_ws * Constants::vonk / (std::log(z_m/z_o) - psiM + psiM0 );
         
         // compute heat flux
-        *flux_wT = (soil_T[0]-atm_T)* (*ustar)*Constants::vonk/(std::log(z_m/z_o)- (*psiH)+(*psiH0));
+        flux_wT = (soil_T[0]-atm_T)*ustar*Constants::vonk/(std::log(z_m/z_o)- psiH + psiH0);
 
         // compute latent heat flux
         sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
                                          soil_T[0],soil_q[0],atm_p);
-        *flux_wq = (sfc_q-atm_q)*(*ustar)*Constants::vonk/(std::log(z_s/z_t)- (*psiH) + (*psiH0));
+        flux_wq = (sfc_q-atm_q)*ustar*Constants::vonk/(std::log(z_s/z_t)- psiH + psiH0);
         
         // compute virtual heat flux
-        flux_wTv = atm_T*0.61*(*flux_wq) + (*flux_wT)*(1+0.61*sfc_q);
+        flux_wTv = atm_T*0.61*flux_wq + flux_wT*(1+0.61*sfc_q);
         
         // compute L
-        L = std::pow(-(*ustar),3.) * atm_T/(Constants::vonk*Constants::grav*flux_wTv);
+        L = std::pow(-ustar,3.)*atm_T/(Constants::vonk*Constants::grav*flux_wTv);
         
         // compute stability correction functions
-        *psiM  = most::psim(z_m/L);
-        *psiM0 = most::psim(z_o/L);
-        *psiH  = most::psih(z_s/L);
-        *psiH0 = most::psih(z_t/L);
+        psiM  = most::psim(z_m/L);
+        psiM0 = most::psim(z_o/L);
+        psiH  = most::psih(z_s/L);
+        psiH0 = most::psih(z_t/L);
         
     }
 }
