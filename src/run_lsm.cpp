@@ -18,8 +18,8 @@ int main () {
     const bool required = false;
     const bool optional = true;
     double utc, atm_ws;
-    double* phi,*psi,*psi0,*phiH,*psiH,*psiH0;
-    double* ustar,*flux_wT,*flux_wq;
+    double phiM=0,psiM=0,psiM0=0,phiH=0,psiH=0,psiH0=0;
+    double ustar,flux_wT,flux_wq;
     
     // declare namelist time section
     double dt, utc_start;
@@ -28,6 +28,9 @@ int main () {
     // namelist space section
     double z_o, z_t, z_m, z_s;
     int nsoilz;
+    
+    //namelist pressure section
+    double atm_p;
     
     // namelist radiation section
     double albedo, emissivity, latitude, longitude;
@@ -51,6 +54,9 @@ int main () {
     nError += input.getItem(&dt,        "time", "dt",        "");
     nError += input.getItem(&utc_start, "time", "utc_start", "");
     nError += input.getItem(&nsteps,    "time", "nsteps",    "");
+    
+    // grab values from pressure section
+    nError += input.getItem(&atm_p, "pressure", "p_o", "");
     
     // grab values from space section
     nError += input.getItem(&z_o,    "length", "z_o",    "");
@@ -110,22 +116,21 @@ int main () {
     
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-        
+    nsteps=2;
     for (int t=0; t<nsteps; ++t) {
         
         utc = utc_start + float(t+1)*dt;
         atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
-        
+                
         // Initialize the UtahLSM class
         UtahLSM utahlsm(z_o,z_t,z_s,z_m,
-                        atm_ws,atm_T[t],atm_q[t],
+                        atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_T,soil_q,
                         porosity,psi_nsat,K_nsat,b,Ci,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,R_net[t],
-                        phi,psi,psi0,phiH,psiH,psiH0,
-                        ustar,flux_wT,flux_wq);
-        
+                        &phiM,&psiM,&psiM0,&phiH,&psiH,&psiH0,
+                        &ustar,&flux_wT,&flux_wq);
     }
         
     return 0;

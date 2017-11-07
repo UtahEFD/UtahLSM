@@ -1,5 +1,5 @@
 # system specific settings for joinwrf
-
+set(ENV{CC} icc)
 set(ENV{CXX} mpicxx)
 
 set(USER_CXX_FLAGS "-restrict") 
