@@ -17,7 +17,7 @@ int main () {
     const bool required = false;
     const bool optional = true;
     double utc, atm_ws;
-    double phiM=0,psiM=0,psiM0=0,phiH=0,psiH=0,psiH0=0;
+    double zeta_m=0,zeta_s=0,zeta_o=0,zeta_t=0;
     double ustar,flux_wT,flux_wq;
     
     // declare namelist time section
@@ -115,7 +115,7 @@ int main () {
     
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    nsteps=2;
+    nsteps=1;
     for (int t=0; t<nsteps; ++t) {
         
         utc = utc_start + float(t+1)*dt;
@@ -128,7 +128,7 @@ int main () {
                         porosity,psi_nsat,K_nsat,b,Ci,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,R_net[t],
-                        phiM,psiM,psiM0,phiH,psiH,psiH0,
+                        zeta_m,zeta_s,zeta_o,zeta_t,
                         ustar,flux_wT,flux_wq);
     } 
     return 0;
