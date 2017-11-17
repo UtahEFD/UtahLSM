@@ -13,7 +13,7 @@
 int main () {
     
     // declare local variables
-    int nError          = 0;
+    int n_error         = 0;
     const bool required = false;
     const bool optional = true;
     double utc, atm_ws;
@@ -50,28 +50,28 @@ int main () {
     
     // grab values from length section
     std::cout<<"Processing namelist.ini" << std::endl;
-    nError += input.getItem(&dt,        "time", "dt",        "");
-    nError += input.getItem(&utc_start, "time", "utc_start", "");
-    nError += input.getItem(&nsteps,    "time", "nsteps",    "");
+    n_error += input.getItem(&dt,        "time", "dt",        "");
+    n_error += input.getItem(&utc_start, "time", "utc_start", "");
+    n_error += input.getItem(&nsteps,    "time", "nsteps",    "");
     
     // grab values from pressure section
-    nError += input.getItem(&atm_p, "pressure", "p_o", "");
+    n_error += input.getItem(&atm_p, "pressure", "p_o", "");
     
     // grab values from space section
-    nError += input.getItem(&z_o,    "length", "z_o",    "");
-    nError += input.getItem(&z_t,    "length", "z_t",    "");
-    nError += input.getItem(&z_m,    "length", "z_m",    "");
-    nError += input.getItem(&z_s,    "length", "z_s",    "");
-    nError += input.getItem(&nsoilz, "length", "nsoilz", "");
+    n_error += input.getItem(&z_o,    "length", "z_o",    "");
+    n_error += input.getItem(&z_t,    "length", "z_t",    "");
+    n_error += input.getItem(&z_m,    "length", "z_m",    "");
+    n_error += input.getItem(&z_s,    "length", "z_s",    "");
+    n_error += input.getItem(&nsoilz, "length", "nsoilz", "");
     
     // grab values from radiation section
-    nError += input.getItem(&albedo,     "radiation", "albedo",     "");
-    nError += input.getItem(&emissivity, "radiation", "emissivity", "");
-    nError += input.getItem(&latitude,   "radiation", "latitude",   "");
-    nError += input.getItem(&longitude,  "radiation", "longitude",  "");
-    nError += input.getItem(&julian_day, "radiation", "julian_day", "");
+    n_error += input.getItem(&albedo,     "radiation", "albedo",     "");
+    n_error += input.getItem(&emissivity, "radiation", "emissivity", "");
+    n_error += input.getItem(&latitude,   "radiation", "latitude",   "");
+    n_error += input.getItem(&longitude,  "radiation", "longitude",  "");
+    n_error += input.getItem(&julian_day, "radiation", "julian_day", "");
     
-    if (nError) throw "There was an error reading the input file";
+    if (n_error) throw "There was an error reading the input file";
         
     // read in external soil data
     std::cout<<"Processing inputSoil.dat" << std::endl;
@@ -84,16 +84,16 @@ int main () {
     double b[nsoilz];
     double Ci[nsoilz];
     
-    nError += input.getProf(soil_z,   "soil", "soil_z",   nsoilz);
-    nError += input.getProf(soil_T,   "soil", "soil_T",   nsoilz);
-    nError += input.getProf(soil_q,   "soil", "soil_q",   nsoilz);
-    nError += input.getProf(porosity, "soil", "porosity", nsoilz);
-    nError += input.getProf(psi_nsat, "soil", "psi_nsat", nsoilz);
-    nError += input.getProf(K_nsat,   "soil", "K_nsat",   nsoilz);
-    nError += input.getProf(b,        "soil", "b",        nsoilz);
-    nError += input.getProf(Ci,       "soil", "Ci",       nsoilz);
+    n_error += input.getProf(soil_z,   "soil", "soil_z",   nsoilz);
+    n_error += input.getProf(soil_T,   "soil", "soil_T",   nsoilz);
+    n_error += input.getProf(soil_q,   "soil", "soil_q",   nsoilz);
+    n_error += input.getProf(porosity, "soil", "porosity", nsoilz);
+    n_error += input.getProf(psi_nsat, "soil", "psi_nsat", nsoilz);
+    n_error += input.getProf(K_nsat,   "soil", "K_nsat",   nsoilz);
+    n_error += input.getProf(b,        "soil", "b",        nsoilz);
+    n_error += input.getProf(Ci,       "soil", "Ci",       nsoilz);
     
-    if (nError) throw "There was an error reading the input file";
+    if (n_error) throw "There was an error reading the input file";
         
     // read in external atmospheric data
     std::cout<<"Processing inputMetr.dat" << std::endl;
@@ -103,15 +103,15 @@ int main () {
     double atm_q[nsteps];
     double R_net[nsteps];
     
-    nError += input.getProf(atm_u, "metr", "atm_u", nsteps);
-    nError += input.getProf(atm_v, "metr", "atm_v", nsteps);
-    nError += input.getProf(atm_T, "metr", "atm_T", nsteps);
-    nError += input.getProf(atm_q, "metr", "atm_q", nsteps);
-    nError += input.getProf(R_net, "metr", "R_net",nsteps);
+    n_error += input.getProf(atm_u, "metr", "atm_u", nsteps);
+    n_error += input.getProf(atm_v, "metr", "atm_v", nsteps);
+    n_error += input.getProf(atm_T, "metr", "atm_T", nsteps);
+    n_error += input.getProf(atm_q, "metr", "atm_q", nsteps);
+    n_error += input.getProf(R_net, "metr", "R_net",nsteps);
     
     std::cout<<"##############################################################"<<std::endl;
     
-    if (nError) throw "There was an error reading the input file";
+    if (n_error) throw "There was an error reading the input file";
     
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
@@ -120,9 +120,11 @@ int main () {
         
         utc = utc_start + float(t+1)*dt;
         atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
-                
+        
+        std::cout<<"Processing time: "<<utc<<std::endl;
+             
         // Initialize the UtahLSM class
-        UtahLSM utahlsm(z_o,z_t,z_s,z_m,
+        UtahLSM utahlsm(z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_T,soil_q,
                         porosity,psi_nsat,K_nsat,b,Ci,

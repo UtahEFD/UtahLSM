@@ -14,10 +14,6 @@
 class UtahLSM {
     
     private:
-    
-        // local variables
-        double lastFlux, lastTemp;
-        double tempConverged, fluxConverged;
         
         // input variables
         int nsoilz, julian_day;
@@ -31,8 +27,9 @@ class UtahLSM {
         // functions
         void computeFluxes();
         void solveSEB();
-        bool convergeTemp();
-        bool convergeFlux();   
+        void solveMoisture();
+        double computeSEB(double);
+        double computeDSEB(double);
         
     public :
         UtahLSM(double, double, double, double,

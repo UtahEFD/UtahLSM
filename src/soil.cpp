@@ -9,6 +9,7 @@
 #include "soil.hpp"
 #include "constants.hpp"
 #include <cmath> 
+#include <tuple>
 
 namespace soil {
     
@@ -53,5 +54,21 @@ namespace soil {
         }
         
         return transfer/depth;
+    }
+    
+    // compute average soil moisture transfer
+    std::tuple<double, double> soilMoistureTransfer(const double *psi_nsat, const double *K_nsat, 
+                                                    const double *porosity, const double *soil_q, 
+                                                    const double *b, const int depth) {
+        
+        double transfer_h=0, transfer_d=0;
+        
+        // loop through each depth
+        for (int d=0; d<depth; ++d) {
+            transfer_d += -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])*std::pow(soil_q[d]/porosity[d],b[d]+3.);
+            transfer_h += K_nsat[d]*std::pow(soil_q[d]/porosity[d],2*b[d]+3.);
+        }
+        
+        return std::make_tuple(transfer_d/depth, transfer_h/depth); 
     }
 };

@@ -2,7 +2,7 @@
 set(ENV{CC} icc)
 set(ENV{CXX} mpicxx)
 
-set(USER_CXX_FLAGS "-restrict") 
+set(USER_CXX_FLAGS "-restrict -std=c++11") 
 set(USER_CXX_FLAGS_RELEASE "-xHOST -O3")
 set(USER_CXX_FLAGS_DEBUG "-debug -g -check=conversions,stack,uninit -fp-stack-check -fp-trap=common -fp-trap-all=common ") 
 
