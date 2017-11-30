@@ -115,7 +115,7 @@ int main () {
     
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    nsteps=1;
+    //nsteps=3;
     for (int t=0; t<nsteps; ++t) {
         
         utc = utc_start + float(t+1)*dt;
