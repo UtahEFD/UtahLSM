@@ -17,22 +17,25 @@ class UtahLSM {
         
         // input variables
         int nsoilz, julian_day;
-        double z_o, z_t, z_m, z_s, atm_ws, atm_T, atm_q, atm_p;
+        double dt, z_o, z_t, z_m, z_s, atm_ws, atm_T, atm_q, atm_p;
         double utc, latitude, longitude, albedo, emissivity, R_net;
         double *soil_z, *soil_T, *soil_q;
         double *porosity, *psi_nsat, *K_nsat, *b, *Ci;
         double &zeta_m,&zeta_s,&zeta_o,&zeta_t;
         double &ustar, &flux_wT, &flux_wq;
+        
+        double surf_T_last;
     
         // functions
         void computeFluxes();
         void solveSEB();
         void solveMoisture();
+        void solveDiffusion(int);
         double computeSEB(double);
         double computeDSEB(double);
         
     public :
-        UtahLSM(double, double, double, double,
+        UtahLSM(double, double, double, double, double,
                 double, double, double, double,
                 int, double*, double*, double*,
                 double*, double*, double*, double*, double*,

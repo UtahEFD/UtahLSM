@@ -10,6 +10,7 @@
 #include "constants.hpp"
 #include "soil.hpp"
 #include "most.hpp"
+#include "matrix.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -17,7 +18,7 @@ namespace {
     namespace c = Constants;
 }
 
-UtahLSM::UtahLSM(double z_o,double z_t,double z_m,double z_s, 
+UtahLSM::UtahLSM(double dt, double z_o,double z_t,double z_m,double z_s, 
                 double atm_p,double atm_ws,double atm_T,double atm_q, 
                 int nsoilz,double* soil_z,double* soil_T,double* soil_q,
                 double* porosity,double* psi_nsat,double* K_nsat,double* b,double* Ci,
@@ -25,7 +26,7 @@ UtahLSM::UtahLSM(double z_o,double z_t,double z_m,double z_s,
                 double albedo, double emissivity, double R_net,
                 double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
                 double& ustar, double& flux_wT, double& flux_wq) : 
-                z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
+                dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
                 atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
                 nsoilz(nsoilz),julian_day(nsoilz),utc(utc),latitude(latitude), 
                 longitude(longitude), albedo(albedo),emissivity(emissivity),R_net(R_net),
@@ -33,11 +34,16 @@ UtahLSM::UtahLSM(double z_o,double z_t,double z_m,double z_s,
                 porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
                 zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                 ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
+                    
+    // local variables
+    surf_T_last = soil_T[0];
     
     // run the model    
     computeFluxes();
     solveSEB();
     solveMoisture();
+    solveDiffusion(1);
+    solveDiffusion(2);
 }
 
 // compute surface fluxes using Monin-Obukhov w/Dyer-Hicks
@@ -298,4 +304,110 @@ void UtahLSM :: solveMoisture() {
                         
     }
     std::cout<<"--- Converged with mois flux = "<<flux_wq<<std::endl;
+}
+
+// integrate soil heat diffusion equation
+void UtahLSM :: solveDiffusion(int type) {
+    
+    // local variables
+    double dKdz;
+    double D_n[nsoilz];
+    double K_n[nsoilz];
+    double K_mid[nsoilz-1];
+    double z_mid[nsoilz-1];
+    double b[nsoilz-1];
+    double e[nsoilz-1];
+    double f[nsoilz-1];
+    double g[nsoilz-1];
+    
+    if (type==1) std::cout<<"Solving heat diffusion"<<std::endl;
+    if (type==2) std::cout<<"Solving moisture diffusion"<<std::endl;
+    
+    // compute soil conductivity
+    std::tie(D_n[:],K_n[:]) = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,nsoilz);
+    
+    // interpolate soil_z and K_n to mid-points between 
+    if (type==1) {
+        for (int i=0; i<nsoilz-1; i++) {
+            K_mid[i] = 0.5*(K_n[i]+K_n[i+1]);
+            z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
+        }
+    } else {
+        for (int i=0; i<nsoilz-1; i++) {
+            K_mid[i] = 0.5*(D_n[i]+D_n[i+1]);
+            z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
+        }
+    }
+    
+    // set coefficients for node 2
+    f[0] = (dt/(2*(z_mid[1]-z_mid[0])))
+         * (K_mid[0]/(soil_z[1]-soil_z[0]) 
+           +K_mid[1]/(soil_z[2]-soil_z[1])) + 1;
+    
+    g[0] = -dt*K_mid[1]/(2*(z_mid[1]-z_mid[0])
+                          *(soil_z[2]-soil_z[1]));
+
+    b[0] = (dt/(2*(z_mid[1]-z_mid[0])))
+          *( (K_mid[1]*(soil_T[2]-soil_T[1])/(soil_z[2]-soil_z[1])) 
+            -(K_mid[0]*(soil_T[1]-surf_T_last)/(soil_z[1]-soil_z[0]))) + soil_T[1] 
+          + soil_T[0]*dt*K_mid[0]/(2*(z_mid[1]-z_mid[0])*(soil_z[1]-soil_z[0]));
+    
+    if (type==2) {
+        
+        dKdz = dt*(K_n[0]*(soil_z[1]-soil_z[2])
+               / ((soil_z[0]-soil_z[1])*(soil_z[0]-soil_z[2]))
+             + K_n[1]*(2*soil_z[1]-soil_z[0]-soil_z[2])
+               / ((soil_z[1]-soil_z[0])*(soil_z[1]-soil_z[2]))
+             + K_n[2]*(soil_z[1]-soil_z[0])
+               / ((soil_z[2]-soil_z[0])*(soil_z[2]-soil_z[1])));
+        b[0] = b[0] + dKdz;
+    }
+    
+    // set coefficients for bottom node
+    e[nsoilz-2] = dt*K_mid[nsoilz-2]/(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
+    
+    f[nsoilz-2] = 1 + dt*K_mid[nsoilz-2]/(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
+    
+    b[nsoilz-2] = soil_T[nsoilz-1]-(soil_T[nsoilz-1]-soil_T[nsoilz-2])*dt*K_mid[nsoilz-2]
+                                   /(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
+    
+    if (type==2) {
+        
+        dKdz = dt*(K_n[nsoilz-1]-K_n[nsoilz-2])/(soil_z[nsoilz-1]-soil_z[nsoilz-2]);
+        b[nsoilz-2] = b[nsoilz-2] + dKdz;
+    }
+        
+    // set coefficients for nodes 3 to the bottom
+    if (nsoilz>3) {
+        for (int i=2; i<nsoilz-2; i++) {
+            
+            e[i-1] = -dt*K_mid[i-1]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i]-soil_z[i-1]));
+            
+            f[i-1] = 1 + dt*K_mid[i-1]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i]-soil_z[i-1]))
+                       + dt*K_mid[i]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i+1]-soil_z[i]));
+            
+            g[i-1] = -dt*K_mid[i]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i+1]-soil_z[i]));
+            
+            b[i-1] = soil_T[i]+(dt/(2*(z_mid[i]-z_mid[i-1])))
+                              *(K_mid[i]*(soil_T[i+1]-soil_T[i])/(soil_z[i+1]-soil_z[i])
+                               -K_mid[i-1]*(soil_T[i]-soil_T[i-1])/(soil_z[i]-soil_z[i-1]));
+            
+            if (type==2) {
+                
+                dKdz = dt*(K_n[i-1]*(soil_z[i]-soil_z[i+1])
+                       / ((soil_z[i-1]-soil_z[i])*(soil_z[i-1]-soil_z[i+1]))
+                     + K_n[i]*(2*soil_z[i]-soil_z[i-1]-soil_z[i+1])
+                       / ((soil_z[i]-soil_z[i-1])*(soil_z[i]-soil_z[i+1]))
+                     + K_n[i+1]*(soil_z[i]-soil_z[i-1])
+                       / ((soil_z[i+1]-soil_z[i-1])*(soil_z[i+1]-soil_z[i])));
+                
+                b[i-1] = b[i-1] + dKdz;
+            }
+        }
+    }
+    
+    // solve the tridiagonal system
+    std::cout<<"Before "<<soil_T[1]<<std::endl;
+    matrix::tridiagonal(e,f,g,b,&soil_T[1:nsoilz],nsoilz-1);
+    std::cout<<"After "<<soil_T[1]<<std::endl;
 }

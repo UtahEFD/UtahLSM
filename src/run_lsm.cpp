@@ -115,7 +115,7 @@ int main () {
     
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    //nsteps=3;
+    nsteps=1;
     for (int t=0; t<nsteps; ++t) {
         
         utc = utc_start + float(t+1)*dt;
@@ -124,7 +124,7 @@ int main () {
         std::cout<<"Processing time: "<<utc<<std::endl;
              
         // Initialize the UtahLSM class
-        UtahLSM utahlsm(z_o,z_t,z_m,z_s,
+        UtahLSM utahlsm(dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_T,soil_q,
                         porosity,psi_nsat,K_nsat,b,Ci,
