@@ -339,7 +339,7 @@ void UtahLSM :: solveDiffusion(int type) {
         }
     }
     
-    // set coefficients for node 2
+    // matrix coefficients for first level below surface
     f[0] = (dt/(2*(z_mid[1]-z_mid[0])))
          * (K_mid[0]/(soil_z[1]-soil_z[0]) 
            +K_mid[1]/(soil_z[2]-soil_z[1])) + 1;
@@ -363,7 +363,7 @@ void UtahLSM :: solveDiffusion(int type) {
         b[0] = b[0] + dKdz;
     }
     
-    // set coefficients for bottom node
+    // matrix coefficients for bottom level
     e[nsoilz-2] = dt*K_mid[nsoilz-2]/(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
     
     f[nsoilz-2] = 1 + dt*K_mid[nsoilz-2]/(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
@@ -377,7 +377,7 @@ void UtahLSM :: solveDiffusion(int type) {
         b[nsoilz-2] = b[nsoilz-2] + dKdz;
     }
         
-    // set coefficients for nodes 3 to the bottom
+    // matrix coefficients for the middle levels
     if (nsoilz>3) {
         for (int i=2; i<nsoilz-2; i++) {
             
