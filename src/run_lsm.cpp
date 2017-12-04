@@ -93,7 +93,7 @@ int main () {
     n_error += input.getProf(&K_nsat,   "soil", "K_nsat",   nsoilz);
     n_error += input.getProf(&b,        "soil", "b",        nsoilz);
     n_error += input.getProf(&Ci,       "soil", "Ci",       nsoilz);
-    
+        
     if (n_error) throw "There was an error reading the input file";
         
     // read in external atmospheric data

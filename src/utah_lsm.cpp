@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <numeric>
+#include <functional>
 #include "utah_lsm.hpp"
 #include "constants.hpp"
 #include "soil.hpp"
@@ -38,7 +39,11 @@ UtahLSM::UtahLSM(double dt, double z_o,double z_t,double z_m,double z_s,
                 porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
                 zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                 ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
-                        
+        
+    // convert soil depth to negative
+    std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
+          bind2nd(std::multiplies<double>(), -1.0));
+        
     // local variables
     surf_T_last = soil_T[0];
     
@@ -220,7 +225,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     // compute soil heat flux
     K_soil     = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,2,0);
     K_soil_avg = std::accumulate(K_soil.begin(), K_soil.end(), 0.0)/K_soil.size();
-    Qg         = -K_soil_avg*(soil_T[1]-sfc_T)/(soil_z[1]-soil_z[0]);
+    Qg         = K_soil_avg*(soil_T[1]-sfc_T)/(soil_z[1]-soil_z[0]);
     
     // write sensible and latent heat fluxes in [W/m^2]
     Qh = Constants::rho_air*c::Cp_air*flux_wT;
@@ -255,7 +260,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     
     //compute derivative of SEB wrt temperature
     dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
-              +K_soil_avg/(soil_z[1]-soil_z[0]) + dQh_dT;
+              -K_soil_avg/(soil_z[1]-soil_z[0]) + dQh_dT;
     
     return dSEB_dT;
 }
@@ -265,11 +270,11 @@ void UtahLSM :: solveMoisture() {
     
     // local variables
     bool fluxConverged = false;
-    int max_iter_flux = 7;
+    int max_iter_flux = 100;
     double flux_sm_last, flux_sm;
     double psi_n0, psi_n1, sfc_q;
     double D_n_avg, K_n_avg;
-    double delta = .75, flux_criteria = 0.001;
+    double delta = .7, flux_criteria = 0.001;
     std::vector<double> D_n;
     std::vector<double> K_n;
     
@@ -284,14 +289,14 @@ void UtahLSM :: solveMoisture() {
     
     //flux_sm = -c::rho_wat*D_n*(soil_q[0]-soil_q[1])/(soil_z[1]-soil_z[0]) 
                      //+ c::rho_wat*K_n;
-    flux_sm = c::rho_wat*K_n_avg*(1 -(psi_n1 - psi_n0)/(soil_z[1]-soil_z[0]));
-    
+    flux_sm = c::rho_wat*K_n_avg*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
+        
     // convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
         
         // compute surface mixing ratio
         sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
-                                     soil_T[0],soil_q[0],atm_p);
+                                         soil_T[0],soil_q[0],atm_p);
                        
         // compute atm moisture flux
         flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
@@ -307,14 +312,14 @@ void UtahLSM :: solveMoisture() {
         
         // update soil moisture flux
         flux_sm = delta*flux_sm_last - (1.-delta)*c::rho_air*flux_wq;
-        
+
         // update soil moisture transfer
         std::tie(D_n, K_n) = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,2);
         D_n_avg = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
         K_n_avg = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
           
         // update surface moisture
-        psi_n0    = psi_n1 + (soil_z[1]-soil_z[0])*((flux_sm/(c::rho_wat*K_n_avg))-1);
+        psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
         soil_q[0] = porosity[0]*std::pow(psi_n0/psi_nsat[0],-(1./b[0]));
                         
     }
