@@ -10,17 +10,20 @@
 #define SOIL_HPP
 
 #include <tuple>
+#include <vector>
 
 namespace soil {
     
     double surfaceMixingRatio(const double,const double, const double,
                               const double,const double, const double);
                               
-    double soilThermalTransfer(const double*, const double*, const double*,
-                               const double*, const double*, const int, const int);
-                      
-    std::tuple<double, double> soilMoistureTransfer(const double*, const double*, const double*,
-                                const double*, const double*, const int);
+    std::vector<double> soilThermalTransfer(const std::vector<double>&, const std::vector<double>&, 
+                                            const std::vector<double>&, const std::vector<double>&, 
+                                            const std::vector<double>&, const int, const int);
+                       
+    std::tuple<std::vector<double>, std::vector<double>> soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&, 
+                                                    const std::vector<double>&, const std::vector<double>&,
+                                                    const std::vector<double>&, const int);
 };
 
 #endif

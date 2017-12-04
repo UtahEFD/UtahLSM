@@ -9,6 +9,7 @@
 #include "constants.hpp"
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 int main () {
     
@@ -72,42 +73,42 @@ int main () {
     n_error += input.getItem(&julian_day, "radiation", "julian_day", "");
     
     if (n_error) throw "There was an error reading the input file";
-        
+    
     // read in external soil data
     std::cout<<"Processing inputSoil.dat" << std::endl;
-    double soil_z[nsoilz];
-    double soil_T[nsoilz];
-    double soil_q[nsoilz];
-    double porosity[nsoilz];
-    double psi_nsat[nsoilz];
-    double K_nsat[nsoilz];
-    double b[nsoilz];
-    double Ci[nsoilz];
-    
-    n_error += input.getProf(soil_z,   "soil", "soil_z",   nsoilz);
-    n_error += input.getProf(soil_T,   "soil", "soil_T",   nsoilz);
-    n_error += input.getProf(soil_q,   "soil", "soil_q",   nsoilz);
-    n_error += input.getProf(porosity, "soil", "porosity", nsoilz);
-    n_error += input.getProf(psi_nsat, "soil", "psi_nsat", nsoilz);
-    n_error += input.getProf(K_nsat,   "soil", "K_nsat",   nsoilz);
-    n_error += input.getProf(b,        "soil", "b",        nsoilz);
-    n_error += input.getProf(Ci,       "soil", "Ci",       nsoilz);
+    std::vector<double> soil_z;
+    std::vector<double> soil_T;
+    std::vector<double> soil_q;
+    std::vector<double> porosity;
+    std::vector<double> psi_nsat;
+    std::vector<double> K_nsat;
+    std::vector<double> b;
+    std::vector<double> Ci;
+        
+    n_error += input.getProf(&soil_z,   "soil", "soil_z",   nsoilz);
+    n_error += input.getProf(&soil_T,   "soil", "soil_T",   nsoilz);
+    n_error += input.getProf(&soil_q,   "soil", "soil_q",   nsoilz);
+    n_error += input.getProf(&porosity, "soil", "porosity", nsoilz);
+    n_error += input.getProf(&psi_nsat, "soil", "psi_nsat", nsoilz);
+    n_error += input.getProf(&K_nsat,   "soil", "K_nsat",   nsoilz);
+    n_error += input.getProf(&b,        "soil", "b",        nsoilz);
+    n_error += input.getProf(&Ci,       "soil", "Ci",       nsoilz);
     
     if (n_error) throw "There was an error reading the input file";
         
     // read in external atmospheric data
     std::cout<<"Processing inputMetr.dat" << std::endl;
-    double atm_u[nsteps];
-    double atm_v[nsteps];
-    double atm_T[nsteps];
-    double atm_q[nsteps];
-    double R_net[nsteps];
+    std::vector<double> atm_u;
+    std::vector<double> atm_v;
+    std::vector<double> atm_T;
+    std::vector<double> atm_q;
+    std::vector<double> R_net;
     
-    n_error += input.getProf(atm_u, "metr", "atm_u", nsteps);
-    n_error += input.getProf(atm_v, "metr", "atm_v", nsteps);
-    n_error += input.getProf(atm_T, "metr", "atm_T", nsteps);
-    n_error += input.getProf(atm_q, "metr", "atm_q", nsteps);
-    n_error += input.getProf(R_net, "metr", "R_net",nsteps);
+    n_error += input.getProf(&atm_u, "metr", "atm_u", nsteps);
+    n_error += input.getProf(&atm_v, "metr", "atm_v", nsteps);
+    n_error += input.getProf(&atm_T, "metr", "atm_T", nsteps);
+    n_error += input.getProf(&atm_q, "metr", "atm_q", nsteps);
+    n_error += input.getProf(&R_net, "metr", "R_net", nsteps);
     
     std::cout<<"##############################################################"<<std::endl;
     

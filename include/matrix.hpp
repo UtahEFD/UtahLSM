@@ -9,10 +9,13 @@
 #ifndef MATRIX_HPP
 #define MATRIX_HPP
 
+#include <vector>
+
 namespace matrix {
 
-    void tridiagonal(double*,double*,double*,double*,double*,int);
-
+    void tridiagonal(const std::vector<double>&,const std::vector<double>&,
+                     const std::vector<double>&,const std::vector<double>&,
+                     std::vector<double>&,int);
 };
 
 #endif

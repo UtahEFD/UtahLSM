@@ -19,8 +19,14 @@ class UtahLSM {
         int nsoilz, julian_day;
         double dt, z_o, z_t, z_m, z_s, atm_ws, atm_T, atm_q, atm_p;
         double utc, latitude, longitude, albedo, emissivity, R_net;
-        double *soil_z, *soil_T, *soil_q;
-        double *porosity, *psi_nsat, *K_nsat, *b, *Ci;
+        std::vector<double> &soil_z; 
+        std::vector<double> &soil_T; 
+        std::vector<double> &soil_q;
+        std::vector<double> &porosity; 
+        std::vector<double> &psi_nsat; 
+        std::vector<double> &K_nsat; 
+        std::vector<double> &b; 
+        std::vector<double> &Ci;
         double &zeta_m,&zeta_s,&zeta_o,&zeta_t;
         double &ustar, &flux_wT, &flux_wq;
         
@@ -37,8 +43,10 @@ class UtahLSM {
     public :
         UtahLSM(double, double, double, double, double,
                 double, double, double, double,
-                int, double*, double*, double*,
-                double*, double*, double*, double*, double*,
+                int, std::vector<double>&, std::vector<double>&, 
+                std::vector<double>&, std::vector<double>&, 
+                std::vector<double>&, std::vector<double>&, 
+                std::vector<double>&, std::vector<double>&,
                 int, double, double, double,
                 double, double, double,
                 double&,double&,double&,double&,
