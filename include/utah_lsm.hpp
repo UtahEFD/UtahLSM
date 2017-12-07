@@ -31,6 +31,7 @@ class UtahLSM {
         double &ustar, &flux_wT, &flux_wq;
         
         double surf_T_last;
+        double surf_q_last;
     
         // functions
         void computeFluxes();

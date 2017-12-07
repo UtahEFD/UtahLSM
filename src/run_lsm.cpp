@@ -10,6 +10,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <functional>
 
 int main () {
     
@@ -110,13 +111,17 @@ int main () {
     n_error += input.getProf(&atm_q, "metr", "atm_q", nsteps);
     n_error += input.getProf(&R_net, "metr", "R_net", nsteps);
     
+    // modify soil levels to be negative
+    std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
+          bind2nd(std::multiplies<double>(), -1.0));
+    
     std::cout<<"##############################################################"<<std::endl;
     
     if (n_error) throw "There was an error reading the input file";
     
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    nsteps=1;
+    //nsteps=10;
     for (int t=0; t<nsteps; ++t) {
         
         utc = utc_start + float(t+1)*dt;

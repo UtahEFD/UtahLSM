@@ -40,12 +40,9 @@ UtahLSM::UtahLSM(double dt, double z_o,double z_t,double z_m,double z_s,
                 zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                 ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
         
-    // convert soil depth to negative
-    std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
-          bind2nd(std::multiplies<double>(), -1.0));
-        
     // local variables
     surf_T_last = soil_T[0];
+    surf_q_last = soil_q[0];
     
     // run the model    
     computeFluxes();
@@ -99,15 +96,15 @@ void UtahLSM :: computeFluxes() {
 void UtahLSM :: solveSEB() {
     
     // local variables
+    int max_iter_temp = 100;
+    int max_iter_flux = 100; 
     double dTs, dTs_old;
     double SEB, dSEB_dT, temp_l, temp_h;
     double SEB_l, SEB_h, last_T, last_F;
-    double temp_1 = soil_T[0] - 25;
-    double temp_2 = soil_T[0] + 25;
+    double temp_1 = soil_T[0] - 30;
+    double temp_2 = soil_T[0] + 30;
     double temp_criteria = 0.001;
     double flux_criteria = 0.001;
-    int max_iter_temp = 100;
-    int max_iter_flux = 100; 
         
     // compute SEB with bracketed temperatures
     SEB_l = computeSEB(temp_1);
@@ -320,8 +317,7 @@ void UtahLSM :: solveMoisture() {
           
         // update surface moisture
         psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
-        soil_q[0] = porosity[0]*std::pow(psi_n0/psi_nsat[0],-(1./b[0]));
-                        
+        soil_q[0] = porosity[0]*std::pow(psi_n0/psi_nsat[0],-(1./b[0]));                   
     }
     std::cout<<"--- Converged with mois flux = "<<flux_wq<<std::endl;
 }
@@ -330,21 +326,34 @@ void UtahLSM :: solveMoisture() {
 void UtahLSM :: solveDiffusion(int type) {
     
     // local variables
-    double dKdz;
-    std::vector<double> K_mid(nsoilz-1);
-    std::vector<double> z_mid(nsoilz-1);
-    std::vector<double> bb(nsoilz-1);
-    std::vector<double> e(nsoilz-1);
-    std::vector<double> f(nsoilz-1);
-    std::vector<double> g(nsoilz-1);
-    std::vector<double> D_n(nsoilz);
-    std::vector<double> K_n(nsoilz);
+    double surf_scalar_last;
+    double dKdz, C_tp, C_tm, C_p, C_m;
+    double dz_p, dz_m, a_m, a_p, a_o;
+    std::vector<double> D_n(nsoilz,0.0);
+    std::vector<double> K_n(nsoilz,0.0);
+    std::vector<double> K_mid(nsoilz-1,0.0);
+    std::vector<double> z_mid(nsoilz-1,0.0);
+    std::vector<double> r(nsoilz-1,0.0);
+    std::vector<double> e(nsoilz-1,0.0);
+    std::vector<double> f(nsoilz-1,0.0);
+    std::vector<double> g(nsoilz-1,0.0);
+    std::vector<double> scalar(nsoilz);
     
-    if (type==1) std::cout<<"Solving heat diffusion"<<std::endl;
-    if (type==2) std::cout<<"Solving moisture diffusion"<<std::endl;
+    // compute soil or moisture conductivity
+    if (type==1) {
+        std::cout<<"Solving heat diffusion"<<std::endl;
+        K_n = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,nsoilz,1);
+    }
+    if (type==2) {
+        std::cout<<"Solving moisture diffusion"<<std::endl;
+        std::tie(D_n,K_n) = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,nsoilz);    
+    }
     
-    // compute soil conductivity
-    std::tie(D_n,K_n) = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,nsoilz);
+    // here we set up and solve a tridiagonal matrix
+    // AT(n+1) = r(n), where n denotes the time level
+    // e, f, g the components of A matrix
+    // T(n+1)  the soil temperature vector at t=n+1
+    // r(n)    the soil temperature vector at t=n multiplied by coefficients         
     
     // interpolate soil_z and K_n to mid-points between 
     if (type==1) {
@@ -352,82 +361,105 @@ void UtahLSM :: solveDiffusion(int type) {
             K_mid[i] = 0.5*(K_n[i]+K_n[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
         }
+        scalar = soil_T;
+        surf_scalar_last = surf_T_last;
+        
     } else {
         for (int i=0; i<nsoilz-1; i++) {
             K_mid[i] = 0.5*(D_n[i]+D_n[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
         }
+        scalar = soil_q;
+        surf_scalar_last = surf_q_last;
     }
     
     // matrix coefficients for first level below surface
-    f[0] = (dt/(2*(z_mid[1]-z_mid[0])))
-         * (K_mid[0]/(soil_z[1]-soil_z[0]) 
-           +K_mid[1]/(soil_z[2]-soil_z[1])) + 1;
+    C_p  = dt*K_mid[0]/(2*(z_mid[0]-z_mid[1])*(soil_z[0]-soil_z[1]));
+    C_m  = dt*K_mid[1]/(2*(z_mid[0]-z_mid[1])*(soil_z[1]-soil_z[2]));
+    C_tp = (1.0 + C_p + C_m);
+    C_tm = (1.0 - C_p - C_m);
     
-    g[0] = -dt*K_mid[1]/(2*(z_mid[1]-z_mid[0])
-                          *(soil_z[2]-soil_z[1]));
-
-    bb[0] = (dt/(2*(z_mid[1]-z_mid[0])))
-          *( (K_mid[1]*(soil_T[2]-soil_T[1])/(soil_z[2]-soil_z[1])) 
-            -(K_mid[0]*(soil_T[1]-surf_T_last)/(soil_z[1]-soil_z[0]))) + soil_T[1] 
-          + soil_T[0]*dt*K_mid[0]/(2*(z_mid[1]-z_mid[0])*(soil_z[1]-soil_z[0]));
+    f[0] =  C_tp;
+    g[0] = -C_m;
+    r[0] =  C_p*surf_scalar_last + C_tm*scalar[1] + C_m*scalar[2] + C_p*scalar[0];
     
     if (type==2) {
         
-        dKdz = dt*(K_n[0]*(soil_z[1]-soil_z[2])
-               / ((soil_z[0]-soil_z[1])*(soil_z[0]-soil_z[2]))
-             + K_n[1]*(2*soil_z[1]-soil_z[0]-soil_z[2])
-               / ((soil_z[1]-soil_z[0])*(soil_z[1]-soil_z[2]))
-             + K_n[2]*(soil_z[1]-soil_z[0])
-               / ((soil_z[2]-soil_z[0])*(soil_z[2]-soil_z[1])));
-        bb[0] = bb[0] + dKdz;
+        dz_p = soil_z[0] - soil_z[1];
+        dz_m = soil_z[1] - soil_z[2];
+        a_m  = -dz_p / (dz_m * (dz_p + dz_m));
+        a_o  = (dz_p - dz_m) / (dz_p * dz_m);
+        a_p  = dz_m / (dz_p * (dz_p + dz_m) );
+        
+        dKdz = dt*(K_n[0]*a_p + K_n[1]*a_o + K_n[2]*a_m);
+        r[0] = r[0] + dKdz;          
     }
     
-    // matrix coefficients for bottom level
-    e[nsoilz-2] = dt*K_mid[nsoilz-2]/(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
-    
-    f[nsoilz-2] = 1 + dt*K_mid[nsoilz-2]/(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
-    
-    bb[nsoilz-2] = soil_T[nsoilz-1]-(soil_T[nsoilz-1]-soil_T[nsoilz-2])*dt*K_mid[nsoilz-2]
-                                   /(2*std::pow(soil_z[nsoilz-1]-soil_z[nsoilz-2],2));
-    
-    if (type==2) {
-        
-        dKdz = dt*(K_n[nsoilz-1]-K_n[nsoilz-2])/(soil_z[nsoilz-1]-soil_z[nsoilz-2]);
-        bb[nsoilz-2] = bb[nsoilz-2] + dKdz;
-    }
-        
-    // matrix coefficients for the middle levels
-    if (nsoilz>3) {
-        for (int i=2; i<nsoilz-2; i++) {
+    // matrix coefficients for the interior levels        
+    for (int i=1; i<nsoilz-2; i++) {
+        C_p  = dt*K_mid[i]  / (2*(z_mid[i]-z_mid[i+1])*(soil_z[i]  -soil_z[i+1]));
+        C_m  = dt*K_mid[i+1]/ (2*(z_mid[i]-z_mid[i+1])*(soil_z[i+1]-soil_z[i+2]));
+        C_tp = (1 + C_p + C_m);
+        C_tm = (1 - C_p - C_m);
+                    
+        e[i] = -C_p;
+        f[i] =  C_tp;
+        g[i] = -C_m;
+        r[i] =  C_p*scalar[i] + C_tm*scalar[i+1] + C_m*scalar[i+2];
             
-            e[i-1] = -dt*K_mid[i-1]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i]-soil_z[i-1]));
+        if (type==2) {
             
-            f[i-1] = 1 + dt*K_mid[i-1]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i]-soil_z[i-1]))
-                       + dt*K_mid[i]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i+1]-soil_z[i]));
+            dz_p = soil_z[i] - soil_z[i+1];
+            dz_m = soil_z[i+1] - soil_z[i+2];
+            a_m  = -dz_p / (dz_m * (dz_p + dz_m));
+            a_o  = (dz_p - dz_m) / (dz_p * dz_m);
+            a_p  = dz_m / (dz_p * (dz_p + dz_m) );
             
-            g[i-1] = -dt*K_mid[i]/(2*(z_mid[i]-z_mid[i-1])*(soil_z[i+1]-soil_z[i]));
+            dKdz = dt*(K_n[i]*a_p + K_n[i+1]*a_o + K_n[i+2]*a_m);
+                     
+//            dKdz = dt*(K_n[i]*(soil_z[i+1]-soil_z[i+2])
+//                   / ((soil_z[i]-soil_z[i+1])*(soil_z[i]-soil_z[i+2]))
+//                 + K_n[i+1]*(2*soil_z[i+1]-soil_z[i]-soil_z[i+2])
+//                   / ((soil_z[i+1]-soil_z[i])*(soil_z[i+1]-soil_z[i+2]))
+//                 + K_n[i+2]*(soil_z[i+1]-soil_z[i])
+//                   / ((soil_z[i+2]-soil_z[i])*(soil_z[i+2]-soil_z[i+1])));
             
-            bb[i-1] = soil_T[i]+(dt/(2*(z_mid[i]-z_mid[i-1])))
-                              *(K_mid[i]*(soil_T[i+1]-soil_T[i])/(soil_z[i+1]-soil_z[i])
-                               -K_mid[i-1]*(soil_T[i]-soil_T[i-1])/(soil_z[i]-soil_z[i-1]));
-            
-            if (type==2) {
-                
-                dKdz = dt*(K_n[i-1]*(soil_z[i]-soil_z[i+1])
-                       / ((soil_z[i-1]-soil_z[i])*(soil_z[i-1]-soil_z[i+1]))
-                     + K_n[i]*(2*soil_z[i]-soil_z[i-1]-soil_z[i+1])
-                       / ((soil_z[i]-soil_z[i-1])*(soil_z[i]-soil_z[i+1]))
-                     + K_n[i+1]*(soil_z[i]-soil_z[i-1])
-                       / ((soil_z[i+1]-soil_z[i-1])*(soil_z[i+1]-soil_z[i])));
-                
-                bb[i-1] = bb[i-1] + dKdz;
-            }
+            r[i] = r[i] + dKdz;
         }
     }
     
+    // matrix coefficients for bottom level
+    // first, construct ghost values
+    int j       = nsoilz-2;
+    double z_g  = 2*soil_z[j+1] - soil_z[j];
+    double z_mg = (soil_z[j+1] + z_g) / 2.;
+    
+    C_p  = dt*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j+1]-soil_z[j]));
+    C_m  = dt*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j]-z_g));
+    C_tp = (1 + C_p + C_m);
+    C_tm = (1 - C_p - C_m);
+    
+    e[j] = C_m  - C_p;
+    f[j] = C_tp - C_m;
+    r[j] = (C_p - C_m)*scalar[j] + (C_tm+C_m)*scalar[j+1];
+    
+    //scalar[nsoilz-2]-(scalar[nsoilz-2]-scalar[nsoilz-1])*dt*K_mid[nsoilz-2]
+    //                               /(2*std::pow(soil_z[nsoilz-2]-soil_z[nsoilz-1],2));
+    if (type==2) {
+        dKdz = dt*(K_n[nsoilz-2]-K_n[nsoilz-1])/(soil_z[nsoilz-2]-soil_z[nsoilz-1]);
+        r[nsoilz-2] = r[nsoilz-2] + dKdz;
+    }
+    
     // solve the tridiagonal system
-    std::cout<<"Before "<<soil_T[1]<<std::endl;
-    matrix::tridiagonal(e,f,g,bb,soil_T,nsoilz-1);
-    std::cout<<"After "<<soil_T[1]<<std::endl;
+    for (int kk=0; kk<nsoilz; kk++)
+        std::cout<<"Before "<<scalar[kk]<<std::endl;
+    try {
+        if (type==1) matrix::tridiagonal(e,f,g,r,soil_T);
+        if (type==2) matrix::tridiagonal(e,f,g,r,soil_q);
+    } catch(std::string &e) {
+        std::cout<<e<<std::endl;
+        std::exit(0);
+    }
+    for (int kk=0; kk<nsoilz; kk++)
+        std::cout<<"After "<<scalar[kk]<<std::endl;
 }
