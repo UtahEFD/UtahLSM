@@ -11,6 +11,10 @@
 #include <cmath>
 #include <vector>
 #include <functional>
+#include <netcdf>
+
+using namespace netCDF;
+using namespace netCDF::exceptions;
 
 int main () {
     
@@ -21,6 +25,9 @@ int main () {
     double utc, atm_ws;
     double zeta_m=0,zeta_s=0,zeta_o=0,zeta_t=0;
     double ustar,flux_wT,flux_wq;
+    NcVar t_var, z_var, ustar_var;
+    NcVar flux_wT_var, flux_wq_var;
+    NcVar soil_T_var, soil_q_var;
     
     // declare namelist time section
     double dt, utc_start;
@@ -114,11 +121,32 @@ int main () {
     // modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
           bind2nd(std::multiplies<double>(), -1.0));
-    
-    std::cout<<"##############################################################"<<std::endl;
-    
+        
     if (n_error) throw "There was an error reading the input file";
     
+    // create output file
+    std::cout<<"##############################################################"<<std::endl;
+    std::cout<<"Creating output file"<<std::endl;
+    NcFile outFile("lsm.nc", NcFile::replace);
+    
+    // define dimensions
+    NcDim t_dim = outFile.addDim("t");
+    NcDim z_dim = outFile.addDim("z",nsoilz);
+    
+    // define variables
+    std::vector<NcDim> dim_vector;
+    dim_vector.push_back(t_dim);
+    dim_vector.push_back(z_dim);
+    
+    t_var       = outFile.addVar("time",    ncInt,   t_dim);
+    z_var       = outFile.addVar("soil_z",  ncFloat, z_dim);
+    ustar_var   = outFile.addVar("ustar",   ncFloat, t_dim);
+    flux_wT_var = outFile.addVar("flux_wT", ncFloat, t_dim);
+    flux_wq_var = outFile.addVar("flux_wq", ncFloat, t_dim);
+    soil_T_var  = outFile.addVar("soil_T",  ncFloat, dim_vector);
+    soil_q_var  = outFile.addVar("soil_q",  ncFloat, dim_vector);
+    
+    std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
     //nsteps=10;
@@ -127,7 +155,7 @@ int main () {
         utc = utc_start + float(t+1)*dt;
         atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
         
-        std::cout<<"Processing time: "<<utc<<std::endl;
+        std::cout<<"\rProcessing time: "<<utc<<std::flush;
              
         // Initialize the UtahLSM class
         UtahLSM utahlsm(dt,z_o,z_t,z_m,z_s,
@@ -138,6 +166,21 @@ int main () {
                         albedo,emissivity,R_net[t],
                         zeta_m,zeta_s,zeta_o,zeta_t,
                         ustar,flux_wT,flux_wq);
-    } 
+        
+        const std::vector<size_t> index = {t};
+        const std::vector<size_t> time_height_index = {static_cast<size_t>(t), 0};
+        std::vector<size_t> time_height_size  = {1, nsoilz};
+        t_var.putVar(index, &t);
+        z_var.putVar(&soil_z[0]);
+        ustar_var.putVar(index, ustar);
+        flux_wT_var.putVar(index, flux_wT);
+        flux_wq_var.putVar(index, flux_wq);
+        soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
+        soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
+    }
+    // write output
+    std::cout<<std::endl;
+    std::cout<<"Finished!"<<std::endl;
+    std::cout<<"##############################################################"<<std::endl;
     return 0;
 }

@@ -11,6 +11,10 @@
 #include "soil.hpp"
 #include "constants.hpp"
 
+namespace {
+    namespace c = Constants;
+}
+
 namespace soil {
     
     // compute surface mixing ratio
@@ -19,7 +23,7 @@ namespace soil {
                               const double sfc_q, const double atm_p) {
         
         double psi_n = psi_nsat*std::pow((porosity/sfc_q),b);
-        double h = std::exp(Constants::grav*psi_n/(Constants::Rv*sfc_T));
+        double h = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
         double e = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double satHum = 0.622*(e/(atm_p-0.378*e));
         double specHum = h*satHum;
@@ -27,7 +31,7 @@ namespace soil {
         return specHum/(1-specHum);
     }
     
-    // compute average soil conductivity/diffusivity
+    // compute average soil thermal conductivity/diffusivity
     std::vector<double> soilThermalTransfer(const std::vector<double> &psi_nsat, 
                                             const std::vector<double> &porosity, 
                                             const std::vector<double> &soil_q, 
@@ -49,9 +53,9 @@ namespace soil {
                 transfer[d] = 0.172;
             }
                         
-            // convert to diffusivity if flag==1
+            // convert to thermal diffusivity if flag==1
             if (flag==1) {
-                double heatCap = (1-porosity[d])*Ci[d] + soil_q[d]*Constants::Ci_wat;
+                double heatCap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat;
                 transfer[d] = transfer[d] / heatCap;
             }
         }
@@ -72,8 +76,8 @@ namespace soil {
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {
-            transfer_d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])*std::pow(soil_q[d]/porosity[d],b[d]+3.);
-            transfer_h[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],2*b[d]+3.);
+            transfer_d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])*std::pow(soil_q[d]/porosity[d],(b[d]+3.));
+            transfer_h[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
         }
         
         return std::make_tuple(transfer_d, transfer_h); 

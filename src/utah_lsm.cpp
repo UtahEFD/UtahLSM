@@ -56,11 +56,15 @@ UtahLSM::UtahLSM(double dt, double z_o,double z_t,double z_m,double z_s,
 void UtahLSM :: computeFluxes() {
     
     // local variables
-    double L, sfc_q, flux_wTv;
+    double L=0, sfc_q=0, flux_wTv=0;
     
     // compute surface mixing ratio
     sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
                                      soil_T[0],soil_q[0],atm_p);
+    
+    //std::cout<<sfc_q<<std::endl;
+    //sfc_q = sfc_q + (atm_q-sfc_q)*std::log(z_o/z_t)/std::log(z_s/z_t);
+    //std::cout<<sfc_q<<std::endl;
     
     // iterate for convergence
     for (int i=0; i<4; ++i) {
@@ -167,7 +171,7 @@ void UtahLSM :: solveSEB() {
             
             // check for convergence
             if (std::abs(dTs) <= temp_criteria) {
-                std::cout<<"Found Temp!"<<std::endl;
+                //std::cout<<"Found Temp!"<<std::endl;
                 break;
             }
             
@@ -306,7 +310,7 @@ void UtahLSM :: solveMoisture() {
         psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
         soil_q[0] = porosity[0]*std::pow(psi_n0/psi_nsat[0],-(1./b[0]));                   
     }
-    if (flux_wT>0) std::cout<<"--- Converged with mois flux = "<<flux_wq<<std::endl;
+    std::cout<<"--- Converged with mois flux = "<<flux_wq<<std::endl;
 }
 
 // integrate soil heat diffusion equation
