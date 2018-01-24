@@ -6,8 +6,6 @@
 //  Created by Jeremy Gibbs on 10/31/17.
 //
 #include <cmath> 
-#include <tuple>
-#include <vector>
 #include "soil.hpp"
 #include "constants.hpp"
 
@@ -64,23 +62,25 @@ namespace soil {
     }
     
     // compute average soil moisture transfer
-    std::tuple<std::vector<double>, std::vector<double>> soilMoistureTransfer(const std::vector<double>& psi_nsat, 
-                                                                              const std::vector<double>& K_nsat, 
-                                                                              const std::vector<double>& porosity, 
-                                                                              const std::vector<double>& soil_q, 
-                                                                              const std::vector<double>& b, 
-                                                                              const int depth) {
+    soilTransfer soilMoistureTransfer(const std::vector<double>& psi_nsat, 
+                                      const std::vector<double>& K_nsat, 
+                                      const std::vector<double>& porosity, 
+                                      const std::vector<double>& soil_q, 
+                                      const std::vector<double>& b, 
+                                      const int depth) {
         
-        std::vector<double> transfer_h(depth); 
-        std::vector<double> transfer_d(depth);
+        // declare struct to hold transfer coefficients
+        soilTransfer transfer;
+        transfer.transfer_d.resize(depth);
+        transfer.transfer_h.resize(depth);
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {
-            transfer_d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])*std::pow(soil_q[d]/porosity[d],(b[d]+3.));
-            transfer_h[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
+            transfer.transfer_d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])*std::pow(soil_q[d]/porosity[d],(b[d]+3.));
+            transfer.transfer_h[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
         }
-        
-        return std::make_tuple(transfer_d, transfer_h); 
+                
+        return transfer;
     }
     
 };

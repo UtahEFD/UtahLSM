@@ -11,7 +11,7 @@ set(NETCDF_LIB_C       "/usr/local/netcdf/lib/libnetcdf.a")
 set(NETCDF_LIB_CPP     "/usr/local/netcdf/lib/libnetcdf-cxx4.dylib")
 set(HDF5_LIB_1         "/usr/local/hdf5/lib/libhdf5.a")
 set(HDF5_LIB_2         "/usr/local/hdf5/lib/libhdf5_hl.a")
-set(SZIP_LIB           "/usr/local/szip/lib/libsz.a")
+set(SZIP_LIB           "/usr/local/szlib/lib/libsz.a")
 
 set(LIBS ${NETCDF_LIB_CPP} ${NETCDF_LIB_C} ${HDF5_LIB_2} ${HDF5_LIB_1} ${SZIP_LIB} m z)
 set(INCLUDE_DIRS ${NETCDF_INCLUDE_DIR})

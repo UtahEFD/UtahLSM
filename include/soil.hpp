@@ -20,10 +20,15 @@ namespace soil {
     std::vector<double> soilThermalTransfer(const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const int, const int);
-                       
-    std::tuple<std::vector<double>, std::vector<double>> soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&, 
-                                                    const std::vector<double>&, const std::vector<double>&,
-                                                    const std::vector<double>&, const int);
+    
+    struct soilTransfer {
+        std::vector<double> transfer_d;
+        std::vector<double> transfer_h;
+    };
+    
+    soilTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&, 
+                                      const std::vector<double>&, const std::vector<double>&,
+                                      const std::vector<double>&, const int);
 };
 
 #endif
