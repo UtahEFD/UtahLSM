@@ -16,6 +16,7 @@ class UtahLSM {
     private:
         
         // input variables
+        bool first;
         int nsoilz, julian_day;
         double dt, z_o, z_t, z_m, z_s, atm_ws, atm_T, atm_q, atm_p;
         double utc, latitude, longitude, albedo, emissivity, R_net;
@@ -49,7 +50,7 @@ class UtahLSM {
                 std::vector<double>&, std::vector<double>&, 
                 std::vector<double>&, std::vector<double>&,
                 int, double, double, double,
-                double, double, double,
+                double, double, double, bool,
                 double&,double&,double&,double&,
                 double&,double&,double&);                
 };

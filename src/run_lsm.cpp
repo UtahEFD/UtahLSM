@@ -22,6 +22,7 @@ int main () {
     int n_error         = 0;
     const bool required = false;
     const bool optional = true;
+    bool first = true;
     double utc, atm_ws;
     double zeta_m=0,zeta_s=0,zeta_o=0,zeta_t=0;
     double ustar,flux_wT,flux_wq;
@@ -149,21 +150,23 @@ int main () {
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    //nsteps=10;
+    //nsteps = 5;
     for (int t=0; t<nsteps; ++t) {
+        
+        if (t>0) first = false;
         
         utc = utc_start + float(t+1)*dt;
         atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
         
         std::cout<<"\rProcessing time: "<<utc<<std::flush;
-             
+        
         // Initialize the UtahLSM class
         UtahLSM utahlsm(dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_T,soil_q,
                         porosity,psi_nsat,K_nsat,b,Ci,
                         julian_day,utc,latitude,longitude,
-                        albedo,emissivity,R_net[t],
+                        albedo,emissivity,R_net[t],first,
                         zeta_m,zeta_s,zeta_o,zeta_t,
                         ustar,flux_wT,flux_wq);
         

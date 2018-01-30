@@ -22,49 +22,45 @@ namespace {
 }
 
 UtahLSM::UtahLSM(double dt, double z_o,double z_t,double z_m,double z_s, 
-                double atm_p,double atm_ws,double atm_T,double atm_q, 
-                int nsoilz,std::vector<double>& soil_z,std::vector<double>& soil_T,
-                std::vector<double>& soil_q,std::vector<double>& porosity,
-                std::vector<double>& psi_nsat,std::vector<double>& K_nsat,
-                std::vector<double>& b,std::vector<double>& Ci,
-                int julian_day, double utc, double latitude, double longitude,
-                double albedo, double emissivity, double R_net,
-                double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
-                double& ustar, double& flux_wT, double& flux_wq) : 
-                dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
-                atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
-                nsoilz(nsoilz),julian_day(nsoilz),utc(utc),latitude(latitude), 
-                longitude(longitude), albedo(albedo),emissivity(emissivity),R_net(R_net),
-                soil_z(soil_z),soil_T(soil_T),soil_q(soil_q),
-                porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
-                zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
-                ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
+                 double atm_p,double atm_ws,double atm_T,double atm_q, 
+                 int nsoilz,std::vector<double>& soil_z,std::vector<double>& soil_T,
+                 std::vector<double>& soil_q,std::vector<double>& porosity,
+                 std::vector<double>& psi_nsat,std::vector<double>& K_nsat,
+                 std::vector<double>& b,std::vector<double>& Ci,
+                 int julian_day, double utc, double latitude, double longitude,
+                 double albedo, double emissivity, double R_net,bool first,
+                 double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
+                 double& ustar, double& flux_wT, double& flux_wq) : 
+                 dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
+                 atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
+                 nsoilz(nsoilz),julian_day(nsoilz),utc(utc),latitude(latitude), 
+                 longitude(longitude), albedo(albedo),emissivity(emissivity),R_net(R_net),
+                 first(first),soil_z(soil_z),soil_T(soil_T),soil_q(soil_q),
+                 porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
+                 zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
+                 ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
         
     // local variables
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
         
     // run the model  
-    computeFluxes();  
-    solveMoisture();
-    solveDiffusion(2);
+    if (first==true) computeFluxes(); 
     solveSEB();
+    solveMoisture();
     solveDiffusion(1);
+    solveDiffusion(2);
 }
 
 // compute surface fluxes using Monin-Obukhov w/Dyer-Hicks
 void UtahLSM :: computeFluxes() {
     
     // local variables
-    double L=0, sfc_q=0, flux_wTv=0;
+    double L=0, sfc_q=0, flux_wTv=0, ref_T = 300.0;
     
     // compute surface mixing ratio
     sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
                                      soil_T[0],soil_q[0],atm_p);
-    
-    //std::cout<<sfc_q<<std::endl;
-    //sfc_q = sfc_q + (atm_q-sfc_q)*std::log(z_o/z_t)/std::log(z_s/z_t);
-    //std::cout<<sfc_q<<std::endl;
     
     // iterate for convergence
     for (int i=0; i<4; ++i) {
@@ -79,10 +75,10 @@ void UtahLSM :: computeFluxes() {
         flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // compute virtual heat flux
-        flux_wTv = flux_wT + atm_T*0.61*flux_wq;
+        flux_wTv = flux_wT + ref_T*0.61*flux_wq;
         
         // compute L
-        L = std::pow(-ustar,3.)*atm_T/(c::vonk*c::grav*flux_wTv);
+        L = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
         
         // bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
@@ -98,26 +94,21 @@ void UtahLSM :: computeFluxes() {
 
 // Solve the surface energy balance
 void UtahLSM :: solveSEB() {
-    
-    //std::cout<<soil_T[0]<<std::endl;
-    
+        
     // local variables
-    int max_iter_temp = 100;
-    int max_iter_flux = 100; 
+    int max_iter_temp = 150;
+    int max_iter_flux = 150; 
     double dTs, dTs_old;
     double SEB, dSEB_dT, SEB_l, SEB_h;
     double temp_l, temp_h, last_T, last_F;
-    double temp_1 = soil_T[0] - soil_T[0];
-    double temp_2 = soil_T[0] + soil_T[0];
+    double temp_1 = soil_T[0] - 100;
+    double temp_2 = soil_T[0] + 100;
     double temp_criteria = 0.001;
-    double flux_criteria = 0.001;
+    double flux_criteria = 0.0001;
         
     // compute SEB using current+bracketed temperatures
     SEB_l = computeSEB(temp_1);
     SEB_h = computeSEB(temp_2);
-    
-    //std::cout<<soil_T[0]<<" "<<temp_1<<" "<<temp_2<<std::endl;
-    //std::cout<<SEB_l<<" "<<SEB_h<<std::endl;
     
     // check for improper bracketing
     if ((SEB_l > 0.0 && SEB_h > 0.0) || (SEB_l < 0.0 && SEB_h < 0.0)) {
@@ -140,10 +131,7 @@ void UtahLSM :: solveSEB() {
     }
     
     // prepare for convergence looping
-    dTs     = std::abs(temp_h-temp_l);
-    //dTs_old = dTs;
-    //SEB     = computeSEB(soil_T[0]);
-    //dSEB_dT = computeDSEB(soil_T[0]);
+    dTs = std::abs(temp_h-temp_l);
      
     // convergence loop for flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
@@ -151,7 +139,7 @@ void UtahLSM :: solveSEB() {
         // convergence loop for temperature
         for (int tt = 0; tt < max_iter_temp; tt++) {
             
-            // compute SEB and dSEB_dT since f(Ts)
+            // compute SEB and dSEB_dTs
             SEB     = computeSEB(soil_T[0]);
             dSEB_dT = computeDSEB(soil_T[0]);
             
@@ -164,6 +152,7 @@ void UtahLSM :: solveSEB() {
                || (std::abs(2*SEB) > std::abs(dTs_old*dSEB_dT))) {
                 dTs_old   = dTs;
                 dTs       = 0.5*(temp_h-temp_l);
+                last_T    = soil_T[0];
                 soil_T[0] = temp_l + dTs;
                 if (temp_l == soil_T[0]) break;
             } else {
@@ -175,67 +164,51 @@ void UtahLSM :: solveSEB() {
             }
             
             // check for convergence
-            if (std::abs(dTs) <= temp_criteria) {
-                //std::cout<<"Found Temp!"<<std::endl;
-                break;
-            }
+            if (std::abs(dTs) <= temp_criteria) break;
             
             // if convergence fails, recompute flux
-            flux_wT = (soil_T[0]-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
-            //computeFluxes();
+            computeFluxes();
         }
         
         // save current flux for convergence criteria
         last_F = flux_wT;
         
         // recompute heat flux using new temperature
-        //flux_wT = (soil_T[0]-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         computeFluxes();
         
         // check for convergence
         if (std::abs(flux_wT-last_F) <= flux_criteria) break;
                 
         // if flux fails to converge, split temperature
-        //soil_T[0] = 0.5*(soil_T[0] + last_T);
+        soil_T[0] = 0.5*(soil_T[0] + last_T);
         
-        // recompute SEB, dSEB_dT with new temperature
-        SEB     = computeSEB(soil_T[0]);
-        dSEB_dT = computeDSEB(soil_T[0]);
-        
-        // adjust brackets
-        if (SEB<0.) temp_l = soil_T[0];
-        if (SEB>0.) temp_h = soil_T[0];
+        // recompute stability corrections and fluxes
+        computeFluxes();
     }
-    //std::cout<<"--- Converged with heat flux = "<<flux_wT<<" and temp = "<<soil_T[0]<<std::endl;
 }
 
 // computes SEB and dSEB_dTs
 double UtahLSM :: computeSEB(double sfc_T) {
     
     // local variables
+    int depth = 2;
     double K_soil_avg, Qg, Qh, Ql, SEB, C;
     double dQh_dT, dSEB_dT, dTs, Rl_up;
-    std::vector<double> K_soil;
+    std::vector<double> K_soil(depth);
     
     // compute soil heat flux
-    K_soil     = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,1,0);
+    K_soil     = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,depth,0);
     K_soil_avg = std::accumulate(K_soil.begin(), K_soil.end(), 0.0)/K_soil.size();
     Qg         = K_soil_avg*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
-    
+     
     // write sensible and latent heat fluxes in [W/m^2]
-    Qh = Constants::rho_air*c::Cp_air*flux_wT;
-    Ql = Constants::rho_air*c::Lv*flux_wq;
-    
-    // Rnet is from measurements, separate lw up
-    Rl_up = emissivity*c::sb*std::pow(sfc_T,4.);
-    
-    // add together terms that are not f(Ts)
-    C = Ql -(R_net + Rl_up);
+    Qh = c::rho_air*c::Cp_air*flux_wT;
+    Ql = c::rho_air*c::Lv*flux_wq;
     
     // compute surface energy balance
-    SEB = Qg + Qh + Rl_up + C;
+    SEB = Qg + Qh + Ql - R_net;
     //std::cout<<Qg<<" "<<Qh<<" "<<Ql<<" "<<R_net<<std::endl;
-    
+    //std::cout<<SEB<<std::endl;
     return SEB;
 }
 
@@ -243,11 +216,12 @@ double UtahLSM :: computeSEB(double sfc_T) {
 double UtahLSM :: computeDSEB(double sfc_T) {
     
     // local variables
+    int depth = 2;
     double K_soil_avg, dSEB_dT;
     std::vector<double> K_soil;
     
     // compute soil heat transfer
-    K_soil     = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,2,0);
+    K_soil     = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,depth,0);
     K_soil_avg = std::accumulate(K_soil.begin(), K_soil.end(), 0.0)/K_soil.size();
     
     //compute derivative of SEB wrt temperature
@@ -263,11 +237,11 @@ void UtahLSM :: solveMoisture() {
     
     // local variables
     bool fluxConverged = false;
-    int max_iter_flux = 100;
+    int max_iter_flux = 150;
     double flux_sm_last, flux_sm;
     double psi_n0, psi_n1, sfc_q;
     double D_n_avg, K_n_avg;
-    double delta = .7, flux_criteria = 0.001;
+    double delta = .85, flux_criteria = 0.001;
     std::vector<double> D_n;
     std::vector<double> K_n;
     soil::soilTransfer transfer;
@@ -301,16 +275,19 @@ void UtahLSM :: solveMoisture() {
         D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
         K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
         
+        // compute fluxes
+        computeFluxes();
+        
         // compute surface mixing ratio
-        sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
-                                         soil_T[0],soil_q[0],atm_p);
+        //sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
+        //                               soil_T[0],soil_q[0],atm_p);
                        
         // compute atm moisture flux
-        flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        //flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // check for convergence
-        if (std::abs((c::rho_air*flux_wq + flux_sm)
-           / (c::rho_air*flux_wq)) <=flux_criteria) {
+        if (std::abs((-c::rho_air*flux_wq - flux_sm)
+           / (-c::rho_air*flux_wq)) <=flux_criteria) {
              break;  
         }
         
@@ -320,7 +297,7 @@ void UtahLSM :: solveMoisture() {
         // update soil moisture flux
         flux_sm = delta*flux_sm_last - (1.-delta)*c::rho_air*flux_wq;                   
     }
-    //std::cout<<"--- Converged with mois flux = "<<flux_wq<<std::endl;
+    std::cout<<"--- Converged with heat flux = "<<flux_wT<<", mois flux = "<<flux_wq<<", and temp = "<<soil_T[0]<<std::endl;
 }
 
 // integrate soil heat diffusion equation
@@ -352,12 +329,11 @@ void UtahLSM :: solveDiffusion(int type) {
         //std::cout<<"Solving heat diffusion"<<std::endl;
         D_n = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,nsoilz,1);
         for (int i=0; i<nsoilz-1; i++) {
-            K_mid[i] = 0.5*(K_n[i]+K_n[i+1]);
+            K_mid[i] = 0.5*(D_n[i]+D_n[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
         }
         scalar = soil_T;
         surf_scalar_last = surf_T_last;
-        
     } else {
         //std::cout<<"Solving moisture diffusion"<<std::endl;
         transfer = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,nsoilz);
@@ -441,6 +417,7 @@ void UtahLSM :: solveDiffusion(int type) {
     // solve the tridiagonal system
     //for (int kk=0; kk<nsoilz; kk++)
     //    std::cout<<"Before "<<scalar[kk]<<std::endl;
+    
     try {
         if (type==1) matrix::tridiagonal(e,f,g,r,soil_T);
         if (type==2) matrix::tridiagonal(e,f,g,r,soil_q);
@@ -448,6 +425,7 @@ void UtahLSM :: solveDiffusion(int type) {
         std::cout<<e<<std::endl;
         std::exit(0);
     }
+    
     //for (int kk=0; kk<nsoilz; kk++) {
     //   if (type==1) std::cout<<"After "<<soil_T[kk]<<std::endl;
     //   if (type==2) std::cout<<"After "<<soil_q[kk]<<std::endl;
