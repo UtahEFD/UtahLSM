@@ -322,7 +322,7 @@ void UtahLSM :: solveDiffusion(int type) {
     // T(n+1)  the soil temperature vector at t=n+1
     // r(n)    the soil temperature vector at t=n multiplied by coefficients         
     
-    // interpolate soil_z and D_n to mid-points between 
+    // interpolate soil_z and D_n to mid-points 
     if (type==1) {
         D_n = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,nsoilz,1);
         for (int i=0; i<nsoilz-1; i++) {
@@ -353,6 +353,8 @@ void UtahLSM :: solveDiffusion(int type) {
     g[0] = -C_m;
     r[0] =  C_p*surf_scalar_last + C_tm*scalar[1] + C_m*scalar[2] + C_p*scalar[0];
     
+    // for moisture, we need additional dKn/dz term
+    // use 3-pt stencil that allows non-unform spacing 
     if (type==2) {
         
         dz_p = soil_z[0] - soil_z[1];
@@ -376,7 +378,9 @@ void UtahLSM :: solveDiffusion(int type) {
         f[i] =  C_tp;
         g[i] = -C_m;
         r[i] =  C_p*scalar[i] + C_tm*scalar[i+1] + C_m*scalar[i+2];
-            
+        
+        // for moisture, we need additional dKn/dz term
+        // use 3-pt stencil that allows non-unform spacing 
         if (type==2) {
             dz_p = soil_z[i] - soil_z[i+1];
             dz_m = soil_z[i+1] - soil_z[i+2];
@@ -403,17 +407,14 @@ void UtahLSM :: solveDiffusion(int type) {
     f[j] = C_tp - 2* C_m;
     r[j] = (C_p - C_m)*scalar[j] + (C_tm+2*C_m)*scalar[j+1];
     
-    //scalar[nsoilz-2]-(scalar[nsoilz-2]-scalar[nsoilz-1])*dt*K_mid[nsoilz-2]
-    //                               /(2*std::pow(soil_z[nsoilz-2]-soil_z[nsoilz-1],2));
+    // for moisture, we need additional dKn/dz term
+    // use simple 2-pt backward Euler approximation 
     if (type==2) {
         dKdz = dt*(K_n[nsoilz-2]-K_n[nsoilz-1])/(soil_z[nsoilz-2]-soil_z[nsoilz-1]);
         r[nsoilz-2] = r[nsoilz-2] + dKdz;
     }
     
-    // solve the tridiagonal system
-    //for (int kk=0; kk<nsoilz; kk++)
-    //    std::cout<<"Before "<<scalar[kk]<<std::endl;
-    
+    // solve the tridiagonal system    
     try {
         if (type==1) matrix::tridiagonal(e,f,g,r,soil_T);
         if (type==2) matrix::tridiagonal(e,f,g,r,soil_q);
@@ -421,9 +422,4 @@ void UtahLSM :: solveDiffusion(int type) {
         std::cout<<e<<std::endl;
         std::exit(0);
     }
-    
-    //for (int kk=0; kk<nsoilz; kk++) {
-    //   if (type==1) std::cout<<"After "<<soil_T[kk]<<std::endl;
-    //   if (type==2) std::cout<<"After "<<soil_q[kk]<<std::endl;
-    //}
 }
