@@ -159,15 +159,16 @@ int main () {
         std::cout<<"\rProcessing time: "<<utc<<std::flush;
         
         // Initialize the UtahLSM class
-        UtahLSM utahlsm(dt,z_o,z_t,z_m,z_s,
+        UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_T,soil_q,
                         porosity,psi_nsat,K_nsat,b,Ci,
                         julian_day,utc,latitude,longitude,
-                        albedo,emissivity,R_net[t],first,
+                        albedo,emissivity,R_net[t],
                         zeta_m,zeta_s,zeta_o,zeta_t,
                         ustar,flux_wT,flux_wq);
         
+        // write output data
         const std::vector<size_t> index = {t};
         const std::vector<size_t> time_height_index = {static_cast<size_t>(t), 0};
         std::vector<size_t> time_height_size  = {1, nsoilz};

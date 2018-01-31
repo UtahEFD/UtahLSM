@@ -43,14 +43,14 @@ class UtahLSM {
         double computeDSEB(double);
         
     public :
-        UtahLSM(double, double, double, double, double,
+        UtahLSM(bool, double, double, double, double, double,
                 double, double, double, double,
                 int, std::vector<double>&, std::vector<double>&, 
                 std::vector<double>&, std::vector<double>&, 
                 std::vector<double>&, std::vector<double>&, 
                 std::vector<double>&, std::vector<double>&,
                 int, double, double, double,
-                double, double, double, bool,
+                double, double, double,
                 double&,double&,double&,double&,
                 double&,double&,double&);                
 };

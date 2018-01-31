@@ -21,22 +21,22 @@ namespace {
     namespace c = Constants;
 }
 
-UtahLSM::UtahLSM(double dt, double z_o,double z_t,double z_m,double z_s, 
+UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double z_s, 
                  double atm_p,double atm_ws,double atm_T,double atm_q, 
                  int nsoilz,std::vector<double>& soil_z,std::vector<double>& soil_T,
                  std::vector<double>& soil_q,std::vector<double>& porosity,
                  std::vector<double>& psi_nsat,std::vector<double>& K_nsat,
                  std::vector<double>& b,std::vector<double>& Ci,
                  int julian_day, double utc, double latitude, double longitude,
-                 double albedo, double emissivity, double R_net,bool first,
+                 double albedo, double emissivity, double R_net,
                  double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
                  double& ustar, double& flux_wT, double& flux_wq) : 
-                 dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
+                 first(first),dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
                  atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
-                 nsoilz(nsoilz),julian_day(nsoilz),utc(utc),latitude(latitude), 
-                 longitude(longitude), albedo(albedo),emissivity(emissivity),R_net(R_net),
-                 first(first),soil_z(soil_z),soil_T(soil_T),soil_q(soil_q),
+                 nsoilz(nsoilz),soil_z(soil_z),soil_T(soil_T),soil_q(soil_q),
                  porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
+                 julian_day(julian_day),utc(utc),latitude(latitude),longitude(longitude), 
+                 albedo(albedo),emissivity(emissivity),R_net(R_net),
                  zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                  ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
         
