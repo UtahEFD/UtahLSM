@@ -19,10 +19,8 @@ using namespace netCDF::exceptions;
 int main () {
     
     // declare local variables
-    int n_error         = 0;
-    const bool required = false;
-    const bool optional = true;
     bool first = true;
+    int n_error = 0;
     double utc, atm_ws;
     double zeta_m=0,zeta_s=0,zeta_o=0,zeta_t=0;
     double ustar,flux_wT,flux_wq;
@@ -30,7 +28,7 @@ int main () {
     NcVar flux_wT_var, flux_wq_var;
     NcVar soil_T_var, soil_q_var;
     
-    // declare namelist time section
+    // namelist time section
     double dt, utc_start;
     int nsteps;
     
@@ -122,7 +120,7 @@ int main () {
     // modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
           bind2nd(std::multiplies<double>(), -1.0));
-        
+    
     if (n_error) throw "There was an error reading the input file";
     
     // create output file

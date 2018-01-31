@@ -23,10 +23,10 @@ namespace soil {
         double psi_n   = psi_nsat*std::pow((porosity/sfc_q),b);
         double h       = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
         double e       = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
-        double satHum  = 0.622*(e/(atm_p-0.378*e));
-        double specHum = h*satHum;
+        double hum_sat  = 0.622*(e/(atm_p-0.378*e));
+        double hum_spec = h*hum_sat;
         
-        return specHum/(1-specHum);
+        return hum_spec/(1-hum_spec);
     }
     
     // compute average soil thermal conductivity/diffusivity
@@ -53,8 +53,8 @@ namespace soil {
                         
             // convert to thermal diffusivity if flag==1
             if (flag==1) {
-                double heatCap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat;
-                transfer[d] = transfer[d] / heatCap;
+                double heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat;
+                transfer[d] = transfer[d] / heat_cap;
             }
         }
         

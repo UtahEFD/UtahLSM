@@ -207,8 +207,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     
     // compute surface energy balance
     SEB = Qg + Qh + Ql - R_net;
-    //std::cout<<Qg<<" "<<Qh<<" "<<Ql<<" "<<R_net<<std::endl;
-    //std::cout<<SEB<<std::endl;
+    
     return SEB;
 }
 
@@ -236,7 +235,6 @@ double UtahLSM :: computeDSEB(double sfc_T) {
 void UtahLSM :: solveMoisture() {
     
     // local variables
-    bool fluxConverged = false;
     int max_iter_flux = 150;
     double flux_sm_last, flux_sm;
     double psi_n0, psi_n1, sfc_q;

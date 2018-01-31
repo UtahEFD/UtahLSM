@@ -2,6 +2,7 @@
 //  input.cpp
 //  
 //  This class handles reading in user options
+//  This is modified from version in MicroHH
 //
 //  Created by Jeremy Gibbs on 6/29/17.
 //
