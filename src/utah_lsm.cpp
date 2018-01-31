@@ -324,7 +324,6 @@ void UtahLSM :: solveDiffusion(int type) {
     
     // interpolate soil_z and D_n to mid-points between 
     if (type==1) {
-        //std::cout<<"Solving heat diffusion"<<std::endl;
         D_n = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,nsoilz,1);
         for (int i=0; i<nsoilz-1; i++) {
             K_mid[i] = 0.5*(D_n[i]+D_n[i+1]);
@@ -333,7 +332,6 @@ void UtahLSM :: solveDiffusion(int type) {
         scalar = soil_T;
         surf_scalar_last = surf_T_last;
     } else {
-        //std::cout<<"Solving moisture diffusion"<<std::endl;
         transfer = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,nsoilz);
         D_n      = transfer.transfer_d;
         K_n      = transfer.transfer_h;
@@ -396,14 +394,14 @@ void UtahLSM :: solveDiffusion(int type) {
     double z_g  = 2*soil_z[j+1] - soil_z[j];
     double z_mg = (soil_z[j+1] + z_g) / 2.;
     
-    C_p  = dt*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j+1]-soil_z[j]));
-    C_m  = dt*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j]-z_g));
+    C_p  = dt*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j]-soil_z[j+1]));
+    C_m  = dt*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j+1]-z_g));
     C_tp = (1 + C_p + C_m);
     C_tm = (1 - C_p - C_m);
     
     e[j] = C_m  - C_p;
-    f[j] = C_tp - C_m;
-    r[j] = (C_p - C_m)*scalar[j] + (C_tm+C_m)*scalar[j+1];
+    f[j] = C_tp - 2* C_m;
+    r[j] = (C_p - C_m)*scalar[j] + (C_tm+2*C_m)*scalar[j+1];
     
     //scalar[nsoilz-2]-(scalar[nsoilz-2]-scalar[nsoilz-1])*dt*K_mid[nsoilz-2]
     //                               /(2*std::pow(soil_z[nsoilz-2]-soil_z[nsoilz-1],2));
