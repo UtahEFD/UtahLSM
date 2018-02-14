@@ -16,12 +16,16 @@
 using namespace netCDF;
 using namespace netCDF::exceptions;
 
+namespace {
+    namespace c = Constants;
+}
+
 int main () {
     
     // declare local variables
     bool first = true;
     int n_error = 0;
-    double utc, atm_ws;
+    double utc, atm_ws, net_r;
     double zeta_m=0,zeta_s=0,zeta_o=0,zeta_t=0;
     double ustar,flux_wT,flux_wq;
     NcVar t_var, z_var, ustar_var;
@@ -41,7 +45,7 @@ int main () {
     
     // namelist radiation section
     double albedo, emissivity, latitude, longitude;
-    int julian_day;
+    int julian_day, comp_rad;
         
     // print a nice little welcome message
     std::cout << std::endl;
@@ -78,6 +82,11 @@ int main () {
     n_error += input.getItem(&latitude,   "radiation", "latitude",   "");
     n_error += input.getItem(&longitude,  "radiation", "longitude",  "");
     n_error += input.getItem(&julian_day, "radiation", "julian_day", "");
+    n_error += input.getItem(&comp_rad,   "radiation", "comp_rad",   "");
+    
+    // convert latitude and longitude into radians
+    latitude  = latitude * c::pi / 180.0;
+    longitude = longitude * c::pi / 180.0; 
     
     if (n_error) throw "There was an error reading the input file";
     
@@ -115,7 +124,7 @@ int main () {
     n_error += input.getProf(&atm_v, "metr", "atm_v", nsteps);
     n_error += input.getProf(&atm_T, "metr", "atm_T", nsteps);
     n_error += input.getProf(&atm_q, "metr", "atm_q", nsteps);
-    n_error += input.getProf(&R_net, "metr", "R_net", nsteps);
+    if (!comp_rad) n_error += input.getProf(&R_net, "metr", "R_net", nsteps);
     
     // modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
@@ -158,13 +167,19 @@ int main () {
         
         std::cout<<"\rProcessing time: "<<utc<<std::flush;
         
+        if (comp_rad) {
+            net_r = 0;
+        } else {
+            net_r = R_net[t];
+        }
+        
         // Initialize the UtahLSM class
         UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_T,soil_q,
                         porosity,psi_nsat,K_nsat,b,Ci,
                         julian_day,utc,latitude,longitude,
-                        albedo,emissivity,R_net[t],
+                        albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,
                         ustar,flux_wT,flux_wq);
         
@@ -172,11 +187,11 @@ int main () {
         const std::vector<size_t> index = {t};
         const std::vector<size_t> time_height_index = {static_cast<size_t>(t), 0};
         std::vector<size_t> time_height_size  = {1, nsoilz};
-        t_var.putVar(index, &t);
+        t_var.putVar(index, utc);
         z_var.putVar(&soil_z[0]);
         ustar_var.putVar(index, ustar);
-        flux_wT_var.putVar(index, flux_wT);
-        flux_wq_var.putVar(index, flux_wq);
+        flux_wT_var.putVar(index, c::rho_air*c::Cp_air*flux_wT);
+        flux_wq_var.putVar(index, c::rho_air*c::Lv*flux_wq);
         soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
         soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
     }

@@ -17,7 +17,7 @@ class UtahLSM {
         
         // input variables
         bool first;
-        int nsoilz, julian_day;
+        int nsoilz, julian_day, comp_rad;
         double dt, z_o, z_t, z_m, z_s, atm_ws, atm_T, atm_q, atm_p;
         double utc, latitude, longitude, albedo, emissivity, R_net;
         std::vector<double> &soil_z; 
@@ -36,6 +36,7 @@ class UtahLSM {
     
         // functions
         void computeFluxes();
+        void computeRadiation();
         void solveSEB();
         void solveMoisture();
         void solveDiffusion(int);
@@ -50,7 +51,7 @@ class UtahLSM {
                 std::vector<double>&, std::vector<double>&, 
                 std::vector<double>&, std::vector<double>&,
                 int, double, double, double,
-                double, double, double,
+                double, double, double,int,
                 double&,double&,double&,double&,
                 double&,double&,double&);                
 };

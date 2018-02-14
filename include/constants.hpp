@@ -14,7 +14,7 @@ namespace Constants {
     const double grav    = 9.81;             // gravity
     const double pi      = 3.14159265358979; // pi
     const double sb      = 5.6697e-8;        // Stefan-Boltzmann constant
-    const double sc      = 1.127;            // solar constant [K-m/s]
+    const double sc      = 1367;             // solar constant [K-m/s]
     const double rho_air = 1.204;            // density of air [kg/m^3]
     const double rho_wat = 1000.0;           // density of water [kg/m^3]
     const double Rv      = 461.4;            // gas constant for water vapor [J/kg-K]

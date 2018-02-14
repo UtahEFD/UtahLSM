@@ -14,6 +14,7 @@
 #include "utah_lsm.hpp"
 #include "constants.hpp"
 #include "soil.hpp"
+#include "radiation.hpp"
 #include "most.hpp"
 #include "matrix.hpp"
 
@@ -28,7 +29,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  std::vector<double>& psi_nsat,std::vector<double>& K_nsat,
                  std::vector<double>& b,std::vector<double>& Ci,
                  int julian_day, double utc, double latitude, double longitude,
-                 double albedo, double emissivity, double R_net,
+                 double albedo, double emissivity, double R_net, int comp_rad,
                  double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
                  double& ustar, double& flux_wT, double& flux_wq) : 
                  first(first),dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
@@ -36,7 +37,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  nsoilz(nsoilz),soil_z(soil_z),soil_T(soil_T),soil_q(soil_q),
                  porosity(porosity),psi_nsat(psi_nsat), K_nsat(K_nsat),b(b),Ci(Ci),
                  julian_day(julian_day),utc(utc),latitude(latitude),longitude(longitude), 
-                 albedo(albedo),emissivity(emissivity),R_net(R_net),
+                 albedo(albedo),emissivity(emissivity),R_net(R_net),comp_rad(comp_rad),
                  zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                  ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq) {
         
@@ -46,6 +47,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
         
     // run the model  
     if (first==true) computeFluxes(); 
+    if (comp_rad==true) computeRadiation();
     solveSEB();
     solveMoisture();
     solveDiffusion(1);
@@ -90,6 +92,13 @@ void UtahLSM :: computeFluxes() {
         zeta_o = z_o/L;
         zeta_t = z_t/L; 
     }
+}
+
+// compute net radiation using simple model
+void UtahLSM :: computeRadiation() {
+
+    R_net = radiation::net(soil_T[0],emissivity,julian_day,utc,
+                           latitude,longitude,albedo);
 }
 
 // Solve the surface energy balance
@@ -200,7 +209,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     K_soil     = soil::soilThermalTransfer(psi_nsat,porosity,soil_q,b,Ci,depth,0);
     K_soil_avg = std::accumulate(K_soil.begin(), K_soil.end(), 0.0)/K_soil.size();
     Qg         = K_soil_avg*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
-     
+    
     // write sensible and latent heat fluxes in [W/m^2]
     Qh = c::rho_air*c::Cp_air*flux_wT;
     Ql = c::rho_air*c::Lv*flux_wq;
