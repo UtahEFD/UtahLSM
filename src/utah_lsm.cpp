@@ -46,7 +46,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     surf_q_last = soil_q[0];
         
     // run the model  
-    computeFluxes(3); 
+    if (first) computeFluxes(3); 
     if (comp_rad==true) computeRadiation();
     solveSEB();
     solveMoisture();
@@ -61,14 +61,19 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
 void UtahLSM :: computeFluxes(int flux) {
     
     // local variables
-    double L=0, sfc_q=0, flux_wTv=0, ref_T = 300.0;
+    int max_iterations = 200;
+    bool converged = false;
+    double L=0, sfc_q=0, flux_wTv=0, atm_Tv;
+    double last_L, criteria = 0.01, ref_T = 300.;
     
     // compute surface mixing ratio
     sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
                                      soil_T[0],soil_q[0],atm_p);
     
+    atm_Tv = atm_T * (1 + 0.61*atm_q);
+    
     // iterate for convergence
-    for (int i=0; i<4; ++i) {
+    for (int i=0; i<max_iterations; ++i) {
         
         // compute friction velocity
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
@@ -76,18 +81,24 @@ void UtahLSM :: computeFluxes(int flux) {
         // compute heat flux
         if ( flux==1 || flux==3 ){
             flux_wT = (soil_T[0]-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+            std::cout<<"Computed heat flux: "<<flux_wT<<std::endl;
         }
         
         // compute latent heat flux
         if ( flux==2 || flux==3 ){
             flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+            std::cout<<"Computed latent flux: "<<flux_wq<<std::endl;
         }
         
         // compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
         
+        std::cout<<"Computed virtual flux: "<<flux_wTv<<std::endl;
+        
         // compute L
+        last_L = L;
         L = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
+        std::cout<<"Computed L: "<<L<<std::endl;
         
         // bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
@@ -98,7 +109,16 @@ void UtahLSM :: computeFluxes(int flux) {
         zeta_s = z_s/L;
         zeta_o = z_o/L;
         zeta_t = z_t/L; 
+        
+        // check for convergence
+        converged = std::abs(last_L-L) <= criteria;
+        if (converged) break;
     }
+    
+    if (!converged) {
+	    std::cout<<"Shit didn't converge"<<std::endl;
+	    throw(1);
+	}
 }
 
 // compute net radiation using simple model

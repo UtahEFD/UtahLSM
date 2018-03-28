@@ -9,7 +9,7 @@
 #include "most.hpp"
 #include "constants.hpp"
 #include <cmath>
-
+#include <iostream>
 namespace most {
     
     // gradient momentum functions
@@ -42,6 +42,7 @@ namespace most {
         return -5.*zeta;
     }
     double psimUnstable(const double zeta) {
+	    std::cout<<"Unstable momentum yo! "<<zeta<<std::endl;
         double x = std::pow( (1.-(16.*zeta)), 0.25);
         return 2.*std::log((1.+x)/2.)+std::log((1+std::pow(x,2.))/2.)-2*std::atan(x)+Constants::pi/2.;
     }
@@ -54,6 +55,7 @@ namespace most {
         return -5.*zeta;
     }
     double psihUnstable(const double zeta) {
+	    std::cout<<"Unstable heat yo! "<<zeta<<std::endl;
         double x = std::pow( (1.-(16.*zeta)), 0.25);
         return 2.*std::log(1+std::pow(x,2)/2.);
     }
