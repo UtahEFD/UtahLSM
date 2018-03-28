@@ -54,7 +54,6 @@ else()
 endif()
 
 file(GLOB_RECURSE SOURCES "src/*")
-include_directories(${INCLUDE_DIRS} "include")
-
+include_directories("include" SYSTEM ${INCLUDE_DIRS})
+link_libraries(${LIBS})
 add_executable(utahlsm ${SOURCES})
-target_link_libraries(utahlsm ${LIBS} m)

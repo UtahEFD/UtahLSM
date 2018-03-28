@@ -46,7 +46,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     surf_q_last = soil_q[0];
         
     // run the model  
-    if (first==true) computeFluxes(3); 
+    computeFluxes(3); 
     if (comp_rad==true) computeRadiation();
     solveSEB();
     solveMoisture();
@@ -79,7 +79,7 @@ void UtahLSM :: computeFluxes(int flux) {
         }
         
         // compute latent heat flux
-        if (flux==2 || flux==3){
+        if ( flux==2 || flux==3 ){
             flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
         
