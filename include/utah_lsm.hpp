@@ -35,7 +35,7 @@ class UtahLSM {
         double surf_q_last;
     
         // functions
-        void computeFluxes();
+        void computeFluxes(int);
         void computeRadiation();
         void solveSEB();
         void solveMoisture();

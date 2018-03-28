@@ -157,7 +157,7 @@ int main () {
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    //nsteps = 5;
+    //nsteps = 1;
     for (int t=0; t<nsteps; ++t) {
         
         if (t>0) first = false;
@@ -195,7 +195,6 @@ int main () {
         soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
         soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
     }
-    // write output
     std::cout<<std::endl;
     std::cout<<"Finished!"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;

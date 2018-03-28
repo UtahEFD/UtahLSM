@@ -46,7 +46,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     surf_q_last = soil_q[0];
         
     // run the model  
-    if (first==true) computeFluxes(); 
+    if (first==true) computeFluxes(3); 
     if (comp_rad==true) computeRadiation();
     solveSEB();
     solveMoisture();
@@ -55,7 +55,10 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
 }
 
 // compute surface fluxes using Monin-Obukhov w/Dyer-Hicks
-void UtahLSM :: computeFluxes() {
+// flux = 1: update sensible heat flux
+// flux = 2: update latent heat flux
+// flux = 3: update both fluxes
+void UtahLSM :: computeFluxes(int flux) {
     
     // local variables
     double L=0, sfc_q=0, flux_wTv=0, ref_T = 300.0;
@@ -71,10 +74,14 @@ void UtahLSM :: computeFluxes() {
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
         
         // compute heat flux
-        flux_wT = (soil_T[0]-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
-
+        if ( flux==1 || flux==3 ){
+            flux_wT = (soil_T[0]-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        }
+        
         // compute latent heat flux
-        flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        if (flux==2 || flux==3){
+            flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        }
         
         // compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
@@ -176,14 +183,14 @@ void UtahLSM :: solveSEB() {
             if (std::abs(dTs) <= temp_criteria) break;
             
             // if convergence fails, recompute flux
-            computeFluxes();
+            computeFluxes(3);
         }
         
         // save current flux for convergence criteria
         last_F = flux_wT;
         
         // recompute heat flux using new temperature
-        computeFluxes();
+        computeFluxes(3);
         
         // check for convergence
         if (std::abs(flux_wT-last_F) <= flux_criteria) break;
@@ -192,7 +199,7 @@ void UtahLSM :: solveSEB() {
         soil_T[0] = 0.5*(soil_T[0] + last_T);
         
         // recompute stability corrections and fluxes
-        computeFluxes();
+        computeFluxes(3);
     }
 }
 
@@ -283,7 +290,7 @@ void UtahLSM :: solveMoisture() {
         K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
         
         // compute fluxes
-        computeFluxes();
+        computeFluxes(2);
         
         // compute surface mixing ratio
         //sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
