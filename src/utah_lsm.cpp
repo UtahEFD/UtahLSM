@@ -63,11 +63,11 @@ void UtahLSM :: computeFluxes(int flux) {
     // local variables
     int max_iterations = 200;
     bool converged = false;
-    double L=0, sfc_q=0, flux_wTv=0, atm_Tv;
+    double L, q_gnd, q_zot, T_gnd, T_zot,flux_wTv, atm_Tv;
     double last_L, criteria = 0.1, ref_T = 300.;
     
     // compute surface mixing ratio
-    sfc_q = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
+    q_gnd = soil::surfaceMixingRatio(psi_nsat[0],porosity[0],b[0],
                                      soil_T[0],soil_q[0],atm_p);
     
     atm_Tv = atm_T * (1 + 0.61*atm_q);
@@ -75,17 +75,24 @@ void UtahLSM :: computeFluxes(int flux) {
     // iterate for convergence
     for (int i=0; i<max_iterations; ++i) {
         
+        // approximate ground temperature/moisture to roughness height
+        T_zot = soil_T[0] + (atm_T-soil_T[0])*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
+        q_zot = q_gnd + (atm_q-q_gnd)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
+         
+        //T_zot = soil_T[0];
+        //q_zot = q_gnd;
+              
         // compute friction velocity
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
-        
+         
         // compute heat flux
         if ( flux==1 || flux==3 ){
-            flux_wT = (soil_T[0]-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+            flux_wT = (T_zot-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
         
         // compute latent heat flux
         if ( flux==2 || flux==3 ){
-            flux_wq = (sfc_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+            flux_wq = (q_zot-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
         
         // compute virtual heat flux
@@ -111,7 +118,7 @@ void UtahLSM :: computeFluxes(int flux) {
     }
     
     if (!converged) {
-	    std::cout<<"Shit didn't converge"<<std::endl;
+	    std::cout<<"Something is wrong: L didn't converge"<<std::endl;
 	    throw(1);
 	}
 }
@@ -268,9 +275,8 @@ void UtahLSM :: solveMoisture() {
     // local variables
     int max_iter_flux = 150;
     double flux_sm_last, flux_sm;
-    double psi_n0, psi_n1, sfc_q;
-    double D_n_avg, K_n_avg;
-    double delta = 0.9, flux_criteria = .000001;
+    double psi_n0, psi_n1, sfc_q, K_n_avg;
+    double delta = 0.5, flux_criteria = .000001;
     std::vector<double> D_n;
     std::vector<double> K_n;
     soil::soilTransfer transfer;
@@ -281,9 +287,7 @@ void UtahLSM :: solveMoisture() {
     
     // compute initial soil moisture flux
     transfer = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,2);
-    D_n      = transfer.transfer_d;
     K_n      = transfer.transfer_h;
-    D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
     flux_sm  = c::rho_wat*K_n_avg*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
     
@@ -300,8 +304,8 @@ void UtahLSM :: solveMoisture() {
         flux_sm = delta*flux_sm_last - (1.-delta)*c::rho_air*flux_wq;
         
         // check for convergence
-        if (std::abs((-c::rho_air*flux_wq*c::Lv - flux_sm*c::Lv)
-           / (-c::rho_air*flux_wq*c::Lv)) <=flux_criteria) {
+        if (std::abs((-c::rho_air*flux_wq - flux_sm)
+           / (-c::rho_air*flux_wq)) <=flux_criteria) {
              break;  
         }
         
@@ -311,9 +315,7 @@ void UtahLSM :: solveMoisture() {
         
         // update soil moisture transfer
         transfer = soil::soilMoistureTransfer(psi_nsat,K_nsat,porosity,soil_q,b,2);
-        D_n      = transfer.transfer_d;
         K_n      = transfer.transfer_h;
-        D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
         K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();            
     }
     std::cout<<"--- Converged with heat flux = "<<flux_wT<<", mois flux = "<<flux_wq<<", and temp = "<<soil_T[0]<<std::endl;
