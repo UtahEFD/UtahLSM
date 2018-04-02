@@ -92,23 +92,15 @@ int main () {
     
     // read in external soil data
     std::cout<<"Processing inputSoil.dat" << std::endl;
+    std::vector<int> soil_type;
     std::vector<double> soil_z;
     std::vector<double> soil_T;
     std::vector<double> soil_q;
-    std::vector<double> porosity;
-    std::vector<double> psi_nsat;
-    std::vector<double> K_nsat;
-    std::vector<double> b;
-    std::vector<double> Ci;
         
     n_error += input.getProf(&soil_z,   "soil", "soil_z",   nsoilz);
+    n_error += input.getProf(&soil_type,"soil", "soil_type",nsoilz);
     n_error += input.getProf(&soil_T,   "soil", "soil_T",   nsoilz);
     n_error += input.getProf(&soil_q,   "soil", "soil_q",   nsoilz);
-    n_error += input.getProf(&porosity, "soil", "porosity", nsoilz);
-    n_error += input.getProf(&psi_nsat, "soil", "psi_nsat", nsoilz);
-    n_error += input.getProf(&K_nsat,   "soil", "K_nsat",   nsoilz);
-    n_error += input.getProf(&b,        "soil", "b",        nsoilz);
-    n_error += input.getProf(&Ci,       "soil", "Ci",       nsoilz);
         
     if (n_error) throw "There was an error reading the input file";
         
@@ -157,7 +149,7 @@ int main () {
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    //nsteps = 1;
+    //nsteps = 10;
     for (int t=0; t<nsteps; ++t) {
         
         if (t>0) first = false;
@@ -176,8 +168,7 @@ int main () {
         // Initialize the UtahLSM class
         UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
-                        nsoilz,soil_z,soil_T,soil_q,
-                        porosity,psi_nsat,K_nsat,b,Ci,
+                        nsoilz,soil_z,soil_type,soil_T,soil_q,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,

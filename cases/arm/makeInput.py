@@ -20,32 +20,36 @@ measZ = [0.0, 0.05, 0.10, 0.20, 0.50, 0.75, 1.0]
 nSoil = len(measZ)
 
 # soil temperature
-measSoilTemp = [301.03,301.95,300.45,297.52,293.52,291.90,291.95]
+measSoilTemp = [301.95,301.95,300.45,297.52,293.52,291.90,291.95]
 
 # soil moisture
-measSoilMois = [0.074,0.1115,0.1707,0.3603,0.3276,0.1549,20.8900]
+measSoilMois = [0.1115,0.1115,0.1707,0.3603,0.3276,0.1549,20.8900]
 
-# soil properties
-# Lamont - 0-19: silty loam, 20-34: clay, 35+: clay loam
-porosity     =  np.array([0.485,0.485,0.485,0.482,0.476,0.476,0.476])
-satPotential =  np.array([0.786,0.786,0.786,0.405,0.630,0.630,0.630])
-satHydrCond  =  np.array([7.2,7.2,7.2,1.3,2.5,2.5,2.5])
-soilExponent =  np.array([5.3,5.3,5.3,11.4,8.52,8.52,8.52])
-heatCapSoil  =  np.array([1.27,1.27,1.27,1.09,1.23,1.23,1.23])
+# soil type from USDA 11-category + peat
+# Lamont - 0-19: silty loam, 20-34: clay, 35-60: clay loam
+#  1 = sand
+#  2 = loamy sand
+#  3 = sandy loam
+#  4 = silty loam
+#  5 = loam
+#  6 = sandy clay loam
+#  7 = silty clay loam
+#  8 = clay loam
+#  9 = sandy clay
+# 10 = silty clay
+# 11 = clay
+# 12 = peat
 
-# proper units and sign
-satPotential = -satPotential
-satHydrCond  = satHydrCond * 1e-6
-heatCapSoil  = heatCapSoil * 1e6
+soilType     = [4,4,4,4,11,8,8,8]
 
 # write output
 of = open('inputSoil.dat','w')
-os = '{0:^15} {1:^15s} {2:^15s} {3:^15s} {4:^19s} {5:^11s} {6:^16s} {7:^15s}\n'
-os = os.format('soil_z','soil_T','soil_q','porosity','psi_nsat','K_nsat','b','Ci')
+os = '{0:^15} {1:^15s} {2:^15s} {3:^15s}\n'
+os = os.format('soil_z','soil_type','soil_T','soil_q')
 of.write(os)
 for z in range(nSoil):
-	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}  {5:2.8E}  {6:2.8E}  {7:2.8E}\n"
-	os = os.format(measZ[z],measSoilTemp[z],measSoilMois[z],porosity[z],satPotential[z],satHydrCond[z],soilExponent[z],heatCapSoil[z])
+	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}\n"
+	os = os.format(measZ[z],soilType[z],measSoilTemp[z],measSoilMois[z])
 	of.write(os)
 of.close()
 

@@ -13,6 +13,20 @@
 #include <vector>
 
 namespace soil {
+	
+	struct soilTransfer {
+        std::vector<double> transfer_d;
+        std::vector<double> transfer_h;
+    };
+    
+    struct soilProperties {
+	    
+	    std::vector<double> b;
+	    std::vector<double> psi_sat;
+	    std::vector<double> porosity;
+	    std::vector<double> K_sat;
+	    std::vector<double> Ci;
+    };
     
     double surfaceMixingRatio(const double,const double, const double,
                               const double,const double, const double);
@@ -21,14 +35,11 @@ namespace soil {
                                             const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const int, const int);
     
-    struct soilTransfer {
-        std::vector<double> transfer_d;
-        std::vector<double> transfer_h;
-    };
-    
     soilTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&, 
                                       const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const int);
+    
+    soilProperties soilTypeProperties(const std::vector<int>&, const int);
 };
 
 #endif

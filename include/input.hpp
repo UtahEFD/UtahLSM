@@ -58,9 +58,9 @@ class Input {
                 
         // List retrieval function
         int getList(std::vector<std::string> *, std::string, std::string, std::string);
-        int getProf(double*, std::string, std::string, int size);  
+        int getProf(double*, std::string, std::string, int size);
+        int getProf(std::vector<int>*, std::string, std::string, int size);
         int getProf(std::vector<double>*, std::string, std::string, int size);        
-
 };
 
 #endif

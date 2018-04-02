@@ -618,3 +618,40 @@ int Input::getProf(std::vector<double>* data, std::string inputType, std::string
 
     return 0;
 }
+
+int Input::getProf(std::vector<int>* data, std::string inputType, std::string varname, int kmaxin) {
+    
+    dataMap::const_iterator it;
+    dataMap inputData;
+    
+    if (inputType=="soil") {
+        it = inputSoil.find(varname);
+        inputData = inputSoil;
+    }
+    if (inputType=="metr") {
+        it = inputMetr.find(varname);
+        inputData = inputMetr;
+    }
+        
+    if (it != inputData.end()) {
+        int profsize = inputData[varname].size();
+        if (profsize < kmaxin) {
+            std::printf("ERROR only %d of %d levels can be read for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
+            return 1;
+        }
+        if (profsize > kmaxin)
+           std::printf("WARNING %d is larger than the number of grid points %d for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
+
+        for (int k=0; k<kmaxin; k++)
+            data->push_back(inputData[varname][k]);
+        data->resize(kmaxin);
+    }
+    else {
+        std::printf("WARNING no profile data for variable \"%s\", values set to zero\n", varname.c_str());
+        for (int k=0; k<kmaxin; k++)
+            data->push_back(0.);
+        data->resize(kmaxin);
+    }
+
+    return 0;
+}

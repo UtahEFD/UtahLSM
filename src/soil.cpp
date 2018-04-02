@@ -83,4 +83,39 @@ namespace soil {
         return transfer;
     }
     
+    // return soil type properties at each depth
+    soilProperties soilTypeProperties(const std::vector<int>& soil_type, const int depth) {
+        
+        // declare struct to hold soil properties
+        soilProperties properties;
+        properties.b.resize(depth);
+        properties.psi_sat.resize(depth);
+        properties.porosity.resize(depth);
+        properties.K_sat.resize(depth);
+        properties.Ci.resize(depth);
+        
+        // soil type properties (original units)
+        const std::vector<double>b_list   = {4.05,4.38,4.90,5.30,5.39,7.12,7.75,8.52,10.4,10.4,11.4,7.75};
+        const std::vector<double>psi_list = {-12.1,-9.0,-21.8,-78.6,-47.8,-29.9,-35.6,-63.0,-15.3,-49.0,-40.5,-35.6};
+        const std::vector<double>por_list = {.395,.410,.435,.485,.451,.420,.477,.476,.426,.492,.482,.863};
+        const std::vector<double>K_list   = {.0176,.01563,.00341,.00072,.00070,.00063,.00017,.00025,.00022,.00010,.00013,.00080};
+        const std::vector<double>Ci_list  = {1.47,1.41,1.34,1.27,1.21,1.18,1.32,1.23,1.18,1.15,1.09,.84};
+        
+        
+        // loop through each depth to assign soil type properties
+        int soil;
+        for (int d=0; d<depth; ++d) {
+	        
+	        soil = soil_type[d] - 1;
+	        
+            properties.b[d]        = b_list[soil];             // unitless
+            properties.psi_sat[d]  = psi_list[soil] / 100.;    // from cm to m
+            properties.porosity[d] = por_list[soil];           // unitless
+            properties.K_sat[d]    = K_list[soil] / 100.;      // from cm/s to m/s
+            properties.Ci[d]       = Ci_list[soil] * 1000000.; // from J/cm^3/K to J/m^3/K
+        }
+                
+        return properties;
+    }
+    
 };
