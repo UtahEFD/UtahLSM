@@ -15,8 +15,8 @@
 namespace soil {
 	
 	struct soilTransfer {
-        std::vector<double> transfer_d;
-        std::vector<double> transfer_h;
+        std::vector<double> d;
+        std::vector<double> k;
     };
     
     struct soilProperties {

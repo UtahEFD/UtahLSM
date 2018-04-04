@@ -149,7 +149,7 @@ int main () {
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    //nsteps = 10;
+    //nsteps = 1;
     for (int t=0; t<nsteps; ++t) {
         
         if (t>0) first = false;

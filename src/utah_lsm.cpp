@@ -77,10 +77,7 @@ void UtahLSM :: computeFluxes(int flux) {
     
     // compute surface mixing ratio
     q_gnd = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],
-                                     soil_T[0],soil_q[0],atm_p);
-    
-    //std::cout<<soil_q[0]<<std::endl;
-    
+                                     soil_T[0],soil_q[0],atm_p);    
     atm_Tv = atm_T * (1 + 0.61*atm_q);
     
     //zeta_s = 0, zeta_t = 0, zeta_o = 0, zeta_m = 0;
@@ -289,7 +286,7 @@ void UtahLSM :: solveMoisture() {
     int max_iter_flux = 150;
     double flux_sm_last, flux_sm, flux_sm2;
     double psi_n0, psi_n1, sfc_q, K_n_avg, D_n_avg;
-    double delta = 0.85, flux_criteria = .000001;
+    double delta = 0.85, flux_criteria = .1;
     std::vector<double> D_n;
     std::vector<double> K_n;
     soil::soilTransfer transfer;
@@ -300,8 +297,8 @@ void UtahLSM :: solveMoisture() {
     
     // compute initial soil moisture flux
     transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
-    K_n      = transfer.transfer_h;
-    D_n      = transfer.transfer_d;
+    K_n      = transfer.k;
+    D_n      = transfer.d;
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
     D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
     flux_sm  = c::rho_wat*K_n_avg*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
@@ -319,7 +316,7 @@ void UtahLSM :: solveMoisture() {
     std::cout<<"---------------------------------"<<std::endl;
     //std::cout<<psi_sat[0]<<" "<<psi_n0<<" "<<psi_n1<<" "<<soil_q[0]<<" "<<soil_q[1]<<std::endl;
     //std::cout<<K_n_avg<<" "<<flux_sm<<" "<<(psi_n0-psi_n1)/(soil_z[0]-soil_z[1])<<std::endl;    
-    
+    //flux_sm = flux_sm2;
     // convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
         
@@ -355,14 +352,19 @@ void UtahLSM :: solveMoisture() {
         
         // update soil moisture transfer
         transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
-        K_n      = transfer.transfer_h;
+        K_n      = transfer.k;
         K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size(); 
         
         // check for convergence
-        if (std::abs((-c::rho_air*flux_wq - flux_sm)
-           / (-c::rho_air*flux_wq)) <=flux_criteria) {
-             break;  
-        }           
+        //if (std::abs((-c::rho_air*flux_wq*c::Lv - c::Lv*flux_sm)
+        //   / (-c::rho_air*c::Lv*flux_wq)) <=flux_criteria) {
+        //     break;  
+        //}
+        
+        // check for convergence
+        if (std::abs(-c::rho_air*flux_wq*c::Lv - c::Lv*flux_sm) <=flux_criteria) {
+            break;
+        }        
     }
     std::cout<<"--- Converged with heat flux = "<<flux_wT<<", mois flux = "<<flux_wq<<", and temp = "<<soil_T[0]<<std::endl;
 }
@@ -402,8 +404,8 @@ void UtahLSM :: solveDiffusion(int type) {
         surf_scalar_last = surf_T_last;
     } else {
         transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,nsoilz);
-        D_n      = transfer.transfer_d;
-        K_n      = transfer.transfer_h;
+        D_n      = transfer.d;
+        K_n      = transfer.k;
         for (int i=0; i<nsoilz-1; i++) {
             K_mid[i] = 0.5*(D_n[i]+D_n[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
