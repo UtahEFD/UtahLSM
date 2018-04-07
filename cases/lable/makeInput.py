@@ -2,6 +2,7 @@
 
 import netCDF4 as nc
 import numpy as np
+import pylab as pl
 
 ##########################################
 # Manual entry of soil data for 20121024 #
@@ -12,7 +13,7 @@ measZ = [0.0, 0.025, 0.05, 0.15, 0.25, 0.35, 0.60]
 nSoil = len(measZ)
 
 # soil temperature
-measSoilTemp = [295.68, 295.68, 295.52, 294.75, 293.69, 293.35, 292.66]
+measSoilTemp = [297.18, 295.68, 295.52, 294.75, 293.69, 293.35, 292.66]
 
 # soil moisture
 measSoilMois = [0.135, 0.135, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
@@ -49,32 +50,40 @@ of.close()
 ################################################
 
 # open MET data
-met = nc.MFDataset('sgpmetE13.b1.*.cdf')
+met = nc.MFDataset('observations/sgpmetE13.b1.*.cdf')
 
 # grab variables
 tt = met.variables['time'][:]
 ws = met.variables['wspd_vec_mean'][:]
 wd = met.variables['wdir_vec_mean'][:]
 pt = met.variables['temp_mean'][:] + 273.15
-pa = met.variables['atmos_pressure'][:]
-pv = met.variables['vapor_pressure_mean'][:]
-
-# fix times to be continuous across days
-tt[1440::] = tt[1440::]+tt[1439]+60
+pa = met.variables['atmos_pressure'][:]*10
+pv = met.variables['vapor_pressure_mean'][:]*10
+rh = met.variables['rh_mean'][:]
 
 # compute wind components
 uc = -ws*np.sin(wd*np.pi/180)
 vc = -ws*np.cos(wd*np.pi/180)
-
+print(len(uc))
 # compute water vapor mixing ratio
 qv = 0.622 * pv / (pa-pv)
+es = 6.1078 * np.exp(17.269*(pt-273.15)/(pt-35.86))
+qs = 0.622 * (es / (pa-0.378*es))
+
+qv2 = rh/100 * qs
+
+sl = np.arange(0,0.031,0.001)
+
+pl.plot(qv,qv2,ls='None',marker='o')
+pl.plot(sl,sl,color='k')
+pl.show()
 
 ########################################
 # Read net radiation data for 20121024 #
 ########################################
 
 # open CO2FLX data
-data = nc.MFDataset('sgp30co2flx4mmetC1.b1.*')
+data = nc.MFDataset('observations/sgp30co2flx4mmetC1.b1.*')
 
 # grab variables
 tt   = data.variables['time_offset'][:]
@@ -87,12 +96,12 @@ G    = data.variables['mean_g_soil'][:]
 H    = data.variables['h'][:]
 LE   = data.variables['le'][:]
 
-# fix times to be continuous across days
-tt[48::] = tt[48::]+tt[47]+1800
-tt=tt-tt[0]
+# construct time
+nt   = len(tt)
+tt   = np.arange(0,nt*1800,1800)
+tt1m = np.arange(0,2*86400,60)
 
 # interpolate from 30-minute to 1-minute frequency to match MET
-tt1m   = np.arange(tt[0],tt[-1]+1800,60)
 lwD1m  = np.interp(tt1m,tt,lwD)
 lwU1m  = np.interp(tt1m,tt,lwU)
 swD1m  = np.interp(tt1m,tt,swD)
@@ -101,6 +110,25 @@ rNet1m = np.interp(tt1m,tt,rNet)
 G1m    = np.interp(tt1m,tt,G)
 H1m    = np.interp(tt1m,tt,H)
 LE1m   = np.interp(tt1m,tt,LE)
+
+tc = 0
+badT = []
+for r in pt:
+	if (str(r)=='--'):
+		badT.append(tc)
+	tc+=1
+for b in badT:
+	pt[b] = pt[badT[0]-1]
+
+tc = 0
+badQ = []
+for r in qv:
+	if (str(r)=='--'):
+		badQ.append(tc)
+	tc+=1
+
+for b in badQ:
+	qv[b] = qv[badQ[0]-1]
 
 ##############################
 # Write all time series data #

@@ -30,6 +30,9 @@ namespace soil {
     
     double surfaceMixingRatio(const double,const double, const double,
                               const double,const double, const double);
+    
+    double surfaceSoilMoisture(const double,const double, const double,
+                              const double,const double, const double);
                               
     std::vector<double> soilThermalTransfer(const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const std::vector<double>&, 

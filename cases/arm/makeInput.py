@@ -65,8 +65,8 @@ tt = met.variables['time'][:]
 ws = met.variables['wspd_vec_mean'][:]
 wd = met.variables['wdir_vec_mean'][:]
 pt = met.variables['temp_mean'][:] + 273.15
-pa = met.variables['atmos_pressure'][:]
-pv = met.variables['vapor_pressure_mean'][:]
+pa = met.variables['atmos_pressure'][:]*10
+pv = met.variables['vapor_pressure_mean'][:]*10
 
 # fix times to be continuous across days
 #for ttt in range(1,31):

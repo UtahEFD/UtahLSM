@@ -27,10 +27,10 @@ int main () {
     int n_error = 0;
     double utc, atm_ws, net_r;
     double zeta_m=0,zeta_s=0,zeta_o=0,zeta_t=0;
-    double ustar,flux_wT,flux_wq;
+    double ustar,flux_wT,flux_wq,flux_gr;
     NcVar t_var, z_var, ustar_var;
-    NcVar flux_wT_var, flux_wq_var;
-    NcVar soil_T_var, soil_q_var;
+    NcVar flux_wT_var, flux_wq_var, Rnet_var;
+    NcVar soil_T_var, soil_q_var, flux_gr_var;
     
     // namelist time section
     double dt, utc_start;
@@ -143,6 +143,8 @@ int main () {
     ustar_var   = outFile.addVar("ustar",   ncFloat, t_dim);
     flux_wT_var = outFile.addVar("flux_wT", ncFloat, t_dim);
     flux_wq_var = outFile.addVar("flux_wq", ncFloat, t_dim);
+    flux_gr_var = outFile.addVar("flux_gr", ncFloat, t_dim);
+    Rnet_var    = outFile.addVar("Rnet",    ncFloat, t_dim);
     soil_T_var  = outFile.addVar("soil_T",  ncFloat, dim_vector);
     soil_q_var  = outFile.addVar("soil_q",  ncFloat, dim_vector);
     
@@ -152,27 +154,31 @@ int main () {
     //nsteps = 1;
     for (int t=0; t<nsteps; ++t) {
         
+        // check if first time through
         if (t>0) first = false;
         
+        // set time
         utc = utc_start + float(t+1)*dt;
-        atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
-        
         std::cout<<"\rProcessing time: "<<utc<<std::flush;
         
+        // compute wind speed
+        atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
+        
+        // check whether radiation model is needed
         if (comp_rad) {
             net_r = 0;
         } else {
             net_r = R_net[t];
         }
         
-        // Initialize the UtahLSM class
+        // Call the model
         UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_type,soil_T,soil_q,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,
-                        ustar,flux_wT,flux_wq);
+                        ustar,flux_wT,flux_wq,flux_gr);
         
         // write output data
         const std::vector<size_t> index = {t};
@@ -183,6 +189,8 @@ int main () {
         ustar_var.putVar(index, ustar);
         flux_wT_var.putVar(index, c::rho_air*c::Cp_air*flux_wT);
         flux_wq_var.putVar(index, c::rho_air*c::Lv*flux_wq);
+        flux_gr_var.putVar(index, flux_gr);
+        Rnet_var.putVar(index, net_r);
         soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
         soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
     }

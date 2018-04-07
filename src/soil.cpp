@@ -20,13 +20,25 @@ namespace soil {
                               const double b, const double sfc_T, 
                               const double sfc_q, const double atm_p) {
         
-        double psi_n   = psi_nsat*std::pow((porosity/sfc_q),b);
-        double h       = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
-        double e       = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
+        double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
+        double h        = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
+        double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
         double hum_spec = h*hum_sat;
         
         return hum_spec/(1-hum_spec);
+    }
+    
+    // compute soil surface moisture from surface mixing ratio
+    double surfaceSoilMoisture(const double psi_nsat, const double porosity, 
+                              const double b, const double sfc_T, 
+                              const double sfc_r, const double atm_p) {
+        
+        double es     = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
+        double qs     = 0.622*(es/(atm_p-0.378*es));
+        double ln     = std::log(sfc_r / (qs*(sfc_r+1)));
+        
+        return porosity*std::pow((c::grav*psi_nsat)/(c::Rv*sfc_T*ln),(1./b));
     }
     
     // compute average soil thermal conductivity/diffusivity
@@ -76,14 +88,15 @@ namespace soil {
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {
-            transfer.d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])*std::pow(soil_q[d]/porosity[d],(b[d]+3.));
+            transfer.d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])
+                            *std::pow(soil_q[d]/porosity[d],(b[d]+3.));
             transfer.k[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
         }
                 
         return transfer;
     }
     
-    // return soil type properties at each depth
+    // set soil type properties at each depth
     soilProperties soilTypeProperties(const std::vector<int>& soil_type, const int depth) {
         
         // struct to hold soil properties

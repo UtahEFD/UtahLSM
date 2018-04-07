@@ -25,7 +25,7 @@ class UtahLSM {
         std::vector<double> &soil_T; 
         std::vector<double> &soil_q;
         double &zeta_m,&zeta_s,&zeta_o,&zeta_t;
-        double &ustar, &flux_wT, &flux_wq;
+        double &ustar, &flux_wT, &flux_wq, &flux_gr;
         
         // local variables
         double surf_T_last;
@@ -37,7 +37,7 @@ class UtahLSM {
 		std::vector<double> Ci;
         
         // functions
-        void defineSoil();
+        void setSoilProperties();
         void computeFluxes(int);
         void computeRadiation();
         void solveSEB();
@@ -54,7 +54,7 @@ class UtahLSM {
                 int, double, double, double,
                 double, double, double,int,
                 double&,double&,double&,double&,
-                double&,double&,double&);                
+                double&,double&,double&,double&);                
 };
 
 #endif
