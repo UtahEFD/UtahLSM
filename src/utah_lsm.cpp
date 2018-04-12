@@ -68,6 +68,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
 void UtahLSM :: setSoilProperties() {
 	
 	soil::soilProperties soilProperties = soil::soilTypeProperties(soil_type,nsoilz);
+
 	b        = soilProperties.b;
 	psi_sat  = soilProperties.psi_sat;
 	porosity = soilProperties.porosity;
@@ -317,8 +318,8 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     
     //compute derivative of SEB wrt temperature
     dSEB_dT = - 4.*emissivity*c::sb*std::pow(sfc_T,3.) 
-              - c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);;
-    //- K_soil_avg/(soil_z[0]-soil_z[1])
+              - c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
+              - K_soil_avg/(soil_z[0]-soil_z[1]);
     return dSEB_dT;
 }
 
@@ -351,7 +352,7 @@ void UtahLSM :: solveMoisture() {
                      + c::rho_wat*K_n_avg;         
     
     // compute evaporation                 
-    E = - c::rho_air*flux_wq;
+    E = c::rho_air*flux_wq;
     
     // compute moisture potential
     //psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((E/(c::rho_wat*K_n_avg))-1);
@@ -366,7 +367,7 @@ void UtahLSM :: solveMoisture() {
         flux_sm_last = flux_sm;
 	
         // compute new weighted soil moisture flux 
-        flux_sm = delta*flux_sm_last + (1.-delta)*E;
+        flux_sm = delta*flux_sm_last - (1.-delta)*E;
         
         // update soil moisture potential
         psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
@@ -383,13 +384,13 @@ void UtahLSM :: solveMoisture() {
         // computeFluxes(2);
         //E = -c::rho_air*flux_wq;
         gnd_q = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],soil_T[0],soil_q[0],atm_p); 
-        E     = -c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        E     = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // check for convergence
-        converged = std::abs((E - flux_sm)/E) <=flux_criteria;
+        converged = std::abs((-E - flux_sm)/-E) <=flux_criteria;
          
         if (converged) {
-	        flux_wq = -E/c::rho_air;
+	        flux_wq = E/c::rho_air;
             break;  
         }       
     }

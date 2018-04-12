@@ -8,6 +8,7 @@
 #include <cmath> 
 #include "soil.hpp"
 #include "constants.hpp"
+#include <iostream>
 
 namespace {
     namespace c = Constants;
@@ -26,7 +27,8 @@ namespace soil {
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
         double hum_spec = h*hum_sat;
         
-        return hum_spec/(1-hum_spec);
+        //return hum_spec/(1-hum_spec);
+        return hum_spec;
     }
     
     // compute soil surface moisture from surface mixing ratio
@@ -65,7 +67,7 @@ namespace soil {
                         
             // convert to thermal diffusivity if flag==1
             if (flag==1) {
-                double heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat;
+                double heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
                 transfer[d] = transfer[d] / heat_cap;
             }
         }
@@ -107,6 +109,8 @@ namespace soil {
         properties.K_sat.resize(depth);
         properties.Ci.resize(depth);
         
+        
+        
         // exponent (unitless)
         const std::vector<double>b_list   = {4.05, 4.38,  4.90,  5.30,  5.39, 7.12, 
                                              7.75, 8.52, 10.40, 10.40, 11.40, 7.75};
@@ -122,7 +126,7 @@ namespace soil {
         // volumetric heat capacity (J/cm^3/K)
         const std::vector<double>Ci_list  = {1.47, 1.41, 1.34, 1.27, 1.21, 1.18, 
                                              1.32, 1.23, 1.18, 1.15, 1.09, 0.84};
-        
+         
         // loop through each depth to assign soil type properties
         int soil;
         for (int d=0; d<depth; ++d) {
@@ -135,7 +139,7 @@ namespace soil {
             properties.K_sat[d]    = K_list[soil] / 100.;      // from cm/s to m/s
             properties.Ci[d]       = Ci_list[soil] * 1000000.; // from J/cm^3/K to J/m^3/K
         }
-                   
+                           
         return properties;
     }  
 };
