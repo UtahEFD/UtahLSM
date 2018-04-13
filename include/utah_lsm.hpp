@@ -43,10 +43,13 @@ class UtahLSM {
         void computeFluxes(int);
         void computeRadiation();
         void solveSEB();
+        void solveSMB();
         void solveMoisture();
         void solveDiffusion(int);
         double computeSEB(double);
         double computeDSEB(double);
+        double computeSMB(double);
+        double computeDSMB(double);
         
     public :
         UtahLSM(bool, double, double, double, double, double,
