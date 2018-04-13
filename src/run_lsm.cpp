@@ -96,12 +96,17 @@ int main () {
     std::vector<double> soil_z;
     std::vector<double> soil_T;
     std::vector<double> soil_q;
+    std::vector<double> soil_T_last;
+    std::vector<double> soil_q_last;
         
     n_error += input.getProf(&soil_z,   "soil", "soil_z",   nsoilz);
     n_error += input.getProf(&soil_type,"soil", "soil_type",nsoilz);
     n_error += input.getProf(&soil_T,   "soil", "soil_T",   nsoilz);
     n_error += input.getProf(&soil_q,   "soil", "soil_q",   nsoilz);
-        
+    
+    soil_T_last = soil_T;
+    soil_q_last = soil_q;
+    
     if (n_error) throw "There was an error reading the input file";
         
     // read in external atmospheric data
@@ -151,7 +156,7 @@ int main () {
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
-    //nsteps = 1;
+    //nsteps = 2;
     for (int t=0; t<nsteps; ++t) {
         
         // check if first time through
@@ -174,7 +179,8 @@ int main () {
         // Call the model
         UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
-                        nsoilz,soil_z,soil_type,soil_T,soil_q,
+                        nsoilz,soil_z,soil_type,soil_T,
+                        soil_T_last,soil_q,soil_q_last,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,
