@@ -99,7 +99,7 @@ LE   = data.variables['le'][:]
 # construct time
 nt   = len(tt)
 tt   = np.arange(0,nt*1800,1800)
-tt1m = np.arange(0,2*86400,60)
+tt1m = np.arange(0,3*86400,60)
 
 # interpolate from 30-minute to 1-minute frequency to match MET
 lwD1m  = np.interp(tt1m,tt,lwD)

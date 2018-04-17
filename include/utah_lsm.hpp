@@ -40,7 +40,7 @@ class UtahLSM {
         
         // functions
         void setSoilProperties();
-        void computeFluxes(int);
+        void computeFluxes(double,double);
         void computeRadiation();
         void solveSEB();
         void solveSMB();
