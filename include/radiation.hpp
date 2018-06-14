@@ -16,7 +16,7 @@ namespace radiation {
     double shortwaveIn(const double,const double,const double,const double);
     double shortwaveOut(const double,const double);
     double net(const double,const double,const double,
-                        const double,const double,const double,const double);
+               const double,const double,const double,const double);
 };
 
 #endif

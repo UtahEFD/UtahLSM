@@ -1,7 +1,7 @@
 //
 //  utah_lsm.cpp
 //  
-//  This class handles the Utah LSM
+//  This class handles the UtahLSM
 //
 //  Created by Jeremy Gibbs on 10/31/17.
 //
@@ -99,11 +99,11 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     for (int i=0; i<max_iterations; ++i) {
         
         // extrapolate ground temperature/moisture to roughness height
-        zot_T = sfc_T + (atm_T-sfc_T)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
-        zot_q = gnd_q + (atm_q-gnd_q)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
+        //zot_T = sfc_T + (atm_T-sfc_T)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
+        //zot_q = gnd_q + (atm_q-gnd_q)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
          
-        //T_zot = soil_T[0];
-        //q_zot = q_gnd;
+        zot_T = sfc_T;
+        zot_q = gnd_q;
         
         // compute friction velocity
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
@@ -117,7 +117,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
 		//    soil_q[0] = soil::surfaceSoilMoisture(psi_sat[0],porosity[0],b[0],
         //                                         sfc_T,gnd_q,atm_p);
 		//} else {
-	     flux_wq = (zot_q-atm_q)*ustar*most::fh(z_s/z_o,zeta_s,zeta_o);
+		flux_wq = (zot_q-atm_q)*ustar*most::fh(z_s/z_o,zeta_s,zeta_o);
 	    //} 
         
         // compute virtual heat flux

@@ -1,6 +1,8 @@
 //
 //  run_lsm.cpp
 //  
+//  This program is an example that runs
+//  UtahLSM in an offline mode
 //
 //  Created by Jeremy Gibbs on 10/30/17
 //
