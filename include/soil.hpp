@@ -12,10 +12,14 @@
 #include <tuple>
 #include <vector>
 
+/**
+ * This class handles tasks associated with soil.
+ */
+
 namespace soil {
 	
 	struct soilTransfer {
-        std::vector<double> d;
+        std::vector<double> d; 
         std::vector<double> k;
     };
     
