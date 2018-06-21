@@ -16,6 +16,19 @@ namespace {
 
 namespace soil {
     
+    // compute soil moisture potential
+    void soilMoisturePotential(const std::vector<double> &psi_nsat, 
+                               const std::vector<double> &porosity, 
+                               const std::vector<double> &soil_q, 
+                               const std::vector<double> &b,
+                               const int depth, std::vector<double> &psi) {
+        
+        // loop through each depth
+        for (int d=0; d<depth; ++d) {
+            psi[d] = psi_nsat[d]*std::pow((porosity[d]/soil_q[d]),b[d]);
+        }
+    }
+    
     // compute surface mixing ratio
     double surfaceMixingRatio(const double psi_nsat, const double porosity, 
                               const double b, const double sfc_T, 
@@ -33,8 +46,8 @@ namespace soil {
     
     // compute soil surface moisture from surface mixing ratio
     double surfaceSoilMoisture(const double psi_nsat, const double porosity, 
-                              const double b, const double sfc_T, 
-                              const double sfc_r, const double atm_p) {
+                               const double b, const double sfc_T, 
+                               const double sfc_r, const double atm_p) {
         
         double es     = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double qs     = 0.622*(es/(atm_p-0.378*es));
@@ -108,9 +121,7 @@ namespace soil {
         properties.porosity.resize(depth);
         properties.K_sat.resize(depth);
         properties.Ci.resize(depth);
-        
-        
-        
+
         // exponent (unitless)
         const std::vector<double>b_list   = {4.05, 4.38,  4.90,  5.30,  5.39, 7.12, 
                                              7.75, 8.52, 10.40, 10.40, 11.40, 7.75};

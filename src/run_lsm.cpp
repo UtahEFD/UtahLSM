@@ -33,6 +33,7 @@ int main () {
     NcVar t_var, z_var, ustar_var;
     NcVar flux_wT_var, flux_wq_var, Rnet_var;
     NcVar soil_T_var, soil_q_var, flux_gr_var;
+    NcVar soil_p_var;
     
     // namelist time section
     double dt, utc_start;
@@ -98,8 +99,10 @@ int main () {
     std::vector<double> soil_z;
     std::vector<double> soil_T;
     std::vector<double> soil_q;
+    std::vector<double> soil_p(nsoilz, 0.0);
     std::vector<double> soil_T_last;
     std::vector<double> soil_q_last;
+    std::vector<double> soil_p_last;
         
     n_error += input.getProf(&soil_z,   "soil", "soil_z",   nsoilz);
     n_error += input.getProf(&soil_type,"soil", "soil_type",nsoilz);
@@ -108,6 +111,8 @@ int main () {
     
     soil_T_last = soil_T;
     soil_q_last = soil_q;
+    soil_p_last = soil_p;
+
     
     if (n_error) throw "There was an error reading the input file";
         
@@ -154,6 +159,7 @@ int main () {
     Rnet_var    = outFile.addVar("Rnet",    ncFloat, t_dim);
     soil_T_var  = outFile.addVar("soil_T",  ncFloat, dim_vector);
     soil_q_var  = outFile.addVar("soil_q",  ncFloat, dim_vector);
+    soil_p_var  = outFile.addVar("soil_p",  ncFloat, dim_vector);
     
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"Running UtahLSM"<<std::endl;;
@@ -183,6 +189,7 @@ int main () {
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_type,soil_T,
                         soil_T_last,soil_q,soil_q_last,
+                        soil_p,soil_p_last,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,
@@ -201,6 +208,7 @@ int main () {
         Rnet_var.putVar(index, net_r);
         soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
         soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
+        soil_p_var.putVar(time_height_index, time_height_size, &soil_p[0]);
     }
     std::cout<<std::endl;
     std::cout<<"Finished!"<<std::endl;

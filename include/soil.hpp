@@ -36,11 +36,15 @@ namespace soil {
                               const double,const double, const double);
     
     double surfaceSoilMoisture(const double,const double, const double,
-                              const double,const double, const double);
+                               const double,const double, const double);
                               
     std::vector<double> soilThermalTransfer(const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const int, const int);
+    
+    void soilMoisturePotential(const std::vector<double>&, const std::vector<double>&, 
+                               const std::vector<double>&, const std::vector<double>&,
+                               const int, std::vector<double>&);
     
     soilTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&, 
                                       const std::vector<double>&, const std::vector<double>&,
