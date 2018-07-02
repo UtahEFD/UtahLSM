@@ -24,7 +24,6 @@ Input :: Input() {
     
     int nError          = 0;
     const bool required = false;
-    const bool optional = true;
     
     std::cout<<"Reading namelist.ini"<<std::endl;
     nError += readNamelist();

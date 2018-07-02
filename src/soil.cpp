@@ -53,7 +53,6 @@ namespace soil {
         
         std::vector<double> transfer(depth);
         double psi_n, pf;
-        double temp;
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {

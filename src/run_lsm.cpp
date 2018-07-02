@@ -189,9 +189,9 @@ int main () {
                         ustar,flux_wT,flux_wq,flux_gr);
         
         // write output data
-        const std::vector<size_t> index = {t};
+        const std::vector<size_t> index = {static_cast<unsigned long>(t)};
         const std::vector<size_t> time_height_index = {static_cast<size_t>(t), 0};
-        std::vector<size_t> time_height_size  = {1, nsoilz};
+        std::vector<size_t> time_height_size  = {1, static_cast<unsigned long>(nsoilz)};
         t_var.putVar(index, utc);
         z_var.putVar(&soil_z[0]);
         ustar_var.putVar(index, ustar);

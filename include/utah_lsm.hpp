@@ -17,15 +17,17 @@ class UtahLSM {
         
         // input variables
         bool first;
-        int nsoilz, julian_day, comp_rad;
-        double dt, z_o, z_t, z_m, z_s, atm_ws, atm_T, atm_q, atm_p;
-        double utc, latitude, longitude, albedo, emissivity, R_net;
+        double dt, z_o, z_t, z_m, z_s, atm_p, atm_ws, atm_T, atm_q;
+        int nsoilz;
+        std::vector<double> &soil_z;
         std::vector<int> &soil_type;
-        std::vector<double> &soil_z; 
-        std::vector<double> &soil_T; 
+        std::vector<double> &soil_T;
+        std::vector<double> &soil_T_last;
         std::vector<double> &soil_q;
-        std::vector<double> &soil_T_last; 
         std::vector<double> &soil_q_last;
+        int julian_day;
+        double utc, latitude, longitude, albedo, emissivity, R_net;
+        int comp_rad;
         double &zeta_m,&zeta_s,&zeta_o,&zeta_t;
         double &ustar, &flux_wT, &flux_wq, &flux_gr;
         

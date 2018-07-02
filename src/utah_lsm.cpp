@@ -88,7 +88,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // local variables
     int max_iterations = 200;
     bool converged = false;
-    double L=0, gnd_q, zot_q, gnd_T, zot_T, flux_wTv, atm_Tv;
+    double L=0, gnd_q, zot_q, zot_T, flux_wTv, atm_Tv;
     double last_L, criteria = 0.1, ref_T = 300.;
     
     // compute surface mixing ratio
@@ -276,8 +276,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     
     // local variables
     int depth = nsoilz;
-    double K_soil_avg, Qg, Qh, Ql, SEB, C;
-    double dQh_dT, dSEB_dT, dTs, Rl_up;
+    double Qg, Qh, Ql, SEB;
     std::vector<double> K_soil(depth);
     
     // compute fluxes using passed in values
@@ -478,8 +477,7 @@ double UtahLSM :: computeSMB(double sfc_q) {
     
     // local variables
     int depth = nsoilz;
-    double W, E, P, SMB, gnd_q;
-    double dQh_dT, dSMB_dT, dTs;
+    double W, E, P, SMB;
     double psi_n0, psi_n1, psi_n2;
     soil::soilTransfer transfer;
     std::vector<double> K_n;

@@ -57,10 +57,11 @@ else()
   message(STATUS "Compiler flags: " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_DEBUG})
 endif()
 
+file(GLOB_RECURSE HEADERS "include/*")
 file(GLOB_RECURSE SOURCES "src/*")
 include_directories("include" SYSTEM ${INCLUDE_DIRS})
 link_libraries(${LIBS})
-add_executable(utahlsm ${SOURCES})
+add_executable(utahlsm ${HEADERS} ${SOURCES})
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)

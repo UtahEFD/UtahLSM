@@ -3,8 +3,8 @@ set(ENV{CC} cc)
 set(ENV{CXX} c++)
 
 set(USER_CXX_FLAGS "--sysroot -restrict -std=c++11") 
-set(USER_CXX_FLAGS_RELEASE "-xHOST -O3")
-set(USER_CXX_FLAGS_DEBUG "-debug -g -check=conversions,stack,uninit -fp-stack-check -fp-trap=common -fp-trap-all=common ") 
+set(USER_CXX_FLAGS_RELEASE "-O3")
+set(USER_CXX_FLAGS_DEBUG "-debug -g -check=conversions,stack,uninit -fp-stack-check -fp-trap=common -fp-trap-all=common") 
 
 set(NETCDF_INCLUDE_DIR "/usr/local/netcdf/include/")
 set(NETCDF_LIB_C       "/usr/local/netcdf/lib/libnetcdf.dylib")
