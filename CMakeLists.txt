@@ -26,6 +26,10 @@ else()
     "Choose the type of build, options are: None Debug Release." FORCE)
 endif()
 
+# set compilers
+set(CMAKE_C_COMPILER "cc")
+set(CMAKE_CXX_COMPILER "c++")
+
 # Start the project only after the system specific settings are loaded.
 project(utahlsm)
 

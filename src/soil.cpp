@@ -21,7 +21,7 @@ namespace soil {
                               const double b, const double sfc_T, 
                               const double sfc_q, const double atm_p) {
         
-        double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
+        double psi_n    = -psi_nsat*std::pow((porosity/sfc_q),b);
         double h        = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
@@ -90,7 +90,7 @@ namespace soil {
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {
-            transfer.d[d] = -(b[d]*K_nsat[d]*psi_nsat[d]/soil_q[d])
+            transfer.d[d] = -(b[d]*K_nsat[d]*std::abs(psi_nsat[d])/soil_q[d])
                             *std::pow(soil_q[d]/porosity[d],(b[d]+3.));
             transfer.k[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
         }
@@ -115,8 +115,12 @@ namespace soil {
         const std::vector<double>b_list   = {4.05, 4.38,  4.90,  5.30,  5.39, 7.12, 
                                              7.75, 8.52, 10.40, 10.40, 11.40, 7.75};
         // saturation moisture potential (cm)
-        const std::vector<double>psi_list = {-12.1,  -9.0, -21.8, -78.6, -47.8, -29.9,
-                                             -35.6, -63.0, -15.3, -49.0, -40.5, -35.6};
+        //const std::vector<double>psi_list = {-12.1,  -9.0, -21.8, -78.6, -47.8, -29.9,
+        //                                     -35.6, -63.0, -15.3, -49.0, -40.5, -35.6};
+        
+        const std::vector<double>psi_list = {12.1,  9.0, 21.8, 78.6, 47.8, 29.9,
+                                             35.6, 63.0, 15.3, 49.0, 40.5, 35.6};
+        
         // porosity (unitless)
         const std::vector<double>por_list = {0.395, 0.410, 0.435, 0.485, 0.451, 0.420,
                                              0.477, 0.476, 0.426, 0.492, 0.482, 0.863};

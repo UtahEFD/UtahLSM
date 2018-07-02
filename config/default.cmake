@@ -1,6 +1,6 @@
 # system specific settings for joinwrf
-set(ENV{CC} icc)
-set(ENV{CXX} icpc)
+set(ENV{CC} cc)
+set(ENV{CXX} c++)
 
 set(USER_CXX_FLAGS "--sysroot -restrict -std=c++11") 
 set(USER_CXX_FLAGS_RELEASE "-xHOST -O3")

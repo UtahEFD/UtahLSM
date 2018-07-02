@@ -99,11 +99,11 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     for (int i=0; i<max_iterations; ++i) {
         
         // extrapolate ground temperature/moisture to roughness height
-        //zot_T = sfc_T + (atm_T-sfc_T)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
-        //zot_q = gnd_q + (atm_q-gnd_q)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
+        zot_T = sfc_T + (atm_T-sfc_T)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
+        zot_q = gnd_q + (atm_q-gnd_q)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
          
-        zot_T = sfc_T;
-        zot_q = gnd_q;
+        //zot_T = sfc_T;
+        //zot_q = gnd_q;
         
         // compute friction velocity
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
@@ -144,6 +144,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
     if (!converged) {
 	    std::cout<<"Something is wrong: L didn't converge"<<std::endl;
+	    std::cout<<flux_wq<<" "<<soil_q[0]<<std::endl;
 	    throw(1);
 	}
 }
@@ -492,9 +493,9 @@ double UtahLSM :: computeSMB(double sfc_q) {
     q_prof[0] = sfc_q;
     
     // moisture potential at first level below ground
-    psi_n0 = psi_sat[0]*std::pow(porosity[0]/sfc_q,b[0]);
-    psi_n1 = psi_sat[1]*std::pow(porosity[1]/soil_q[1],b[1]);
-    psi_n2 = psi_sat[2]*std::pow(porosity[2]/soil_q[2],b[2]);
+    psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/sfc_q,b[0]);
+    psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
+    psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
     
     // compute initial soil moisture flux
     transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,q_prof,b,depth);
@@ -512,9 +513,9 @@ double UtahLSM :: computeSMB(double sfc_q) {
         for (int d=0; d<nsoilz-1; ++d) {
             
             // moisture potential at first level below ground
-			psi_n0 = (d==0) ? psi_sat[d]*std::pow(porosity[d]/sfc_q,    b[d]):
-			                  psi_sat[d]*std::pow(porosity[d]/soil_q[d],b[d]);
-			psi_n1 = psi_sat[d+1]*std::pow(porosity[d+1]/soil_q[d+1],b[d+1]);
+			psi_n0 = (d==0) ? std::abs(psi_sat[d])*std::pow(porosity[d]/sfc_q,    b[d]):
+			                  std::abs(psi_sat[d])*std::pow(porosity[d]/soil_q[d],b[d]);
+			psi_n1 = std::abs(psi_sat[d+1])*std::pow(porosity[d+1]/soil_q[d+1],b[d+1]);
             mfs    = 0.5*c::rho_wat*(K_n[d]+K_n[d+1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
             
             if (std::abs(mfs)<std::abs(min_mflux)) {
@@ -535,9 +536,9 @@ double UtahLSM :: computeSMB(double sfc_q) {
             W = W + 0.5*c::rho_wat*(dq1 + dq2)*(dz/dt);
         }
         
-        psi_n0 = psi_sat[0]*std::pow(porosity[0]/sfc_q,b[0]);
-		psi_n1 = psi_sat[1]*std::pow(porosity[1]/soil_q[1],b[1]);
-		psi_n2 = psi_sat[2]*std::pow(porosity[2]/soil_q[2],b[2]);
+        psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/sfc_q,b[0]);
+		psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
+		psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
         //W = W + c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
         W = W + c::rho_wat*K_n[1]*((psi_n0 - psi_n2)/(soil_z[0]-soil_z[2]) + 1);
     }
