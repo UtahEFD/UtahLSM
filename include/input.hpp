@@ -15,6 +15,10 @@
 
 typedef std::map<std::string, std::vector<double> > dataMap;
 
+/**
+ * This class handles reading input files.
+ */
+
 class Input {
 
     private:

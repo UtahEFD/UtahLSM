@@ -11,6 +11,10 @@
 
 #include <string>
 
+/**
+ * This is the main UtahLSM class.
+ */
+
 class UtahLSM {
     
     private:

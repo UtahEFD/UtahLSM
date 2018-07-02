@@ -11,6 +11,11 @@
 
 #include <vector>
 
+/**
+ * This class solves a tridiagonal matrix using
+ * the Thomas algorithm
+ */
+
 namespace matrix {
 
     void tridiagonal(const std::vector<double>&,const std::vector<double>&,

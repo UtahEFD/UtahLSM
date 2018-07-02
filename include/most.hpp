@@ -9,6 +9,11 @@
 #ifndef MOST_HPP
 #define MOST_HPP
 
+/**
+ * This class computes functions relevant to
+ * Monin-Obukhov similarity theory
+ */
+
 namespace most {
     
     // gradient functions

@@ -9,6 +9,10 @@
 #ifndef RADIATION_HPP
 #define RADIATION_HPP
 
+/**
+ * This class computes the surface radiation.
+ */
+
 namespace radiation {
     
     double longwaveIn();
