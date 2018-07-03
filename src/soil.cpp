@@ -98,6 +98,7 @@ namespace soil {
     }
     
     // set soil type properties at each depth
+    // based on Cosby et al. (1984)
     soilProperties soilTypeProperties(const std::vector<int>& soil_type, const int depth) {
         
         // struct to hold soil properties
@@ -108,27 +109,35 @@ namespace soil {
         properties.K_sat.resize(depth);
         properties.Ci.resize(depth);
         
-        
-        
         // exponent (unitless)
-        const std::vector<double>b_list   = {4.05, 4.38,  4.90,  5.30,  5.39, 7.12, 
-                                             7.75, 8.52, 10.40, 10.40, 11.40, 7.75};
-        // saturation moisture potential (cm)
-        //const std::vector<double>psi_list = {-12.1,  -9.0, -21.8, -78.6, -47.8, -29.9,
-        //                                     -35.6, -63.0, -15.3, -49.0, -40.5, -35.6};
+        const std::vector<double>b_list   = { 2.79,  4.26,  4.74,
+                                              5.33,  5.25,  6.77,
+                                              8.72,  8.17, 10.73,
+                                             10.39, 10.55,  7.75};
         
-        const std::vector<double>psi_list = {12.1,  9.0, 21.8, 78.6, 47.8, 29.9,
-                                             35.6, 63.0, 15.3, 49.0, 40.5, 35.6};
+        // saturation moisture potential (m)
+        const std::vector<double>psi_list = {0.02316, 0.01751, 0.03158,
+                                             0.06554, 0.04711, 0.03096,
+                                             0.05989, 0.04137, 0.02691,
+                                             0.04527, 0.05312, 0.35600};
         
-        // porosity (unitless)
-        const std::vector<double>por_list = {0.395, 0.410, 0.435, 0.485, 0.451, 0.420,
-                                             0.477, 0.476, 0.426, 0.492, 0.482, 0.863};
-        // hydraulic conductivity (cm/s)
-        const std::vector<double>K_list   = {.01760, .01563, .00341, .00072, .00070, .00063,
-                                             .00017, .00025, .00022, .00010, .00013, .00080};
-        // volumetric heat capacity (J/cm^3/K)
-        const std::vector<double>Ci_list  = {1.47, 1.41, 1.34, 1.27, 1.21, 1.18, 
-                                             1.32, 1.23, 1.18, 1.15, 1.09, 0.84};
+        // porosity (volume/volume)
+        const std::vector<double>por_list = {0.339, 0.421, 0.434,
+                                             0.476, 0.439, 0.404,
+                                             0.464, 0.465, 0.406,
+                                             0.468, 0.468, 0.863};
+        
+        // hydraulic conductivity (m/s)
+        const std::vector<double>K_list   = {1.60e-5, 9.52e-6, 6.19e-6,
+                                             4.73e-6, 5.12e-6, 5.78e-6,
+                                             4.11e-6, 4.45e-6, 7.12e-5,
+                                             3.43e-6, 2.99e-6, 8.00e-6};
+        
+        // volumetric heat capacity (J/m^3/K)
+        const std::vector<double>Ci_list  = {1.47e6, 1.41e6, 1.34e6,
+                                             1.27e6, 1.21e6, 1.18e6,
+                                             1.32e6, 1.23e6, 1.18e6,
+                                             1.15e6, 1.09e6, 0.84e6};
          
         // loop through each depth to assign soil type properties
         int soil;
@@ -136,11 +145,11 @@ namespace soil {
 	        
 	        soil = soil_type[d] - 1;
 	        
-            properties.b[d]        = b_list[soil];             // unitless
-            properties.psi_sat[d]  = psi_list[soil] / 100.;    // from cm to m
-            properties.porosity[d] = por_list[soil];           // unitless
-            properties.K_sat[d]    = K_list[soil] / 100.;      // from cm/s to m/s
-            properties.Ci[d]       = Ci_list[soil] * 1000000.; // from J/cm^3/K to J/m^3/K
+            properties.b[d]        = b_list[soil];
+            properties.psi_sat[d]  = psi_list[soil];
+            properties.porosity[d] = por_list[soil];
+            properties.K_sat[d]    = K_list[soil];
+            properties.Ci[d]       = Ci_list[soil];
         }
                            
         return properties;
