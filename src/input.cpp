@@ -561,7 +561,7 @@ int Input::getProf(double* data, std::string inputType, std::string varname, int
     }
         
     if (it != inputData.end()) {
-        int profsize = inputData[varname].size();
+        int profsize = int(inputData[varname].size());
         if (profsize < kmaxin) {
             std::printf("ERROR only %d of %d levels can be read for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
             return 1;
@@ -596,7 +596,7 @@ int Input::getProf(std::vector<double>* data, std::string inputType, std::string
     }
         
     if (it != inputData.end()) {
-        int profsize = inputData[varname].size();
+        int profsize = int(inputData[varname].size());
         if (profsize < kmaxin) {
             std::printf("ERROR only %d of %d levels can be read for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
             return 1;
@@ -633,7 +633,7 @@ int Input::getProf(std::vector<int>* data, std::string inputType, std::string va
     }
         
     if (it != inputData.end()) {
-        int profsize = inputData[varname].size();
+        int profsize = int(inputData[varname].size());
         if (profsize < kmaxin) {
             std::printf("ERROR only %d of %d levels can be read for variable \"%s\"\n", profsize, kmaxin, varname.c_str());
             return 1;

@@ -69,9 +69,11 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     soil_T_last = soil_T;
     soil_q_last = soil_q;
     
+    std::cout<<"Soil Q Lev 1 In: "<<soil_q[1]<<std::endl;
     // solve diffusion equations
     solveDiffusion(1);
     solveDiffusion(2);
+    std::cout<<"Soil Q Lev 1 Out: "<<soil_q[1]<<std::endl;
 }
 
 // Set soil properties at each depth
@@ -283,7 +285,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     if (first) {
     	//Qg =  0.5*(K_soil[0]+K_soil[1])*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
     	//Qg =  K_soil[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2]);
-    	Qg = 0.4*R_net;
+    	Qg = 0.2*R_net;
     } else {
         // compute heat flux within soil and find depth of minimum
         // this is the depth to integrate time change of T		
@@ -527,10 +529,10 @@ double UtahLSM :: computeSMB(double sfc_q) {
             W = W + 0.5*c::rho_wat*dq*dz/dt;
         }
         
-        //psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/sfc_q,b[0]);
-		//psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
-		//psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
-        //W = W + c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
+        psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/sfc_q,b[0]);
+		psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
+		psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
+        W = W + c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
         //W = W + c::rho_wat*K_n[1]*((psi_n0 - psi_n2)/(soil_z[0]-soil_z[2]) + 1);
     }
     
@@ -561,9 +563,16 @@ double UtahLSM :: computeDSMB(double sfc_q) {
     C4 = (c::rho_wat*K_sat[0])/(std::pow(porosity[0],2*b[0]+3));
     
     //compute derivative of SMB wrt surface moisture
-    dSMB_dq = -C1*b[0]*C2*std::pow(sfc_q,-b[0]-1)*std::exp(C2*std::pow(sfc_q,-b[0]))
-              +(b[0]+3)*C3*std::pow(porosity[0],b[0]+2)
-              +(2*b[0]+3)*C4*std::pow(porosity[0],2*b[0]+2);
+    dSMB_dq = -b[0]*C1*C2*std::pow(sfc_q,(-b[0]-1))*std::exp(C2*std::pow(sfc_q,-b[0]))
+              -b[0]*C3*C4*std::pow(sfc_q,(b[0]+2))
+              +(2*b[0]+3)*C3*std::pow(sfc_q,(2*b[0]+2))*(C4*std::pow(sfc_q,-b[0]) + 1);
+    
+//    
+//    
+//    
+//    -C1*b[0]*C2*std::pow(sfc_q,-b[0]-1)*std::exp(C2*std::pow(sfc_q,-b[0]))
+//              +(b[0]+3)*C3*std::pow(porosity[0],b[0]+2)
+//              +(2*b[0]+3)*C4*std::pow(porosity[0],2*b[0]+2);
     
     return dSMB_dq;
 }
@@ -602,9 +611,13 @@ void UtahLSM :: solveDiffusion(int type) {
         scalar = soil_T;
         surf_scalar_last = surf_T_last;
     } else {
+        std::cout<<"Computing soil moisture diffusion: "<<std::endl;
+        std::cout<<"----- soil lev 1: "<<soil_q[1]<<std::endl;
         transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,nsoilz);
         D_n      = transfer.d;
         K_n      = transfer.k;
+        std::cout<<"----- Kn 1: "<<K_n[1]<<std::endl;
+        std::cout<<"----- Dn 1: "<<D_n[1]<<std::endl;
         for (int i=0; i<nsoilz-1; i++) {
             K_mid[i] = 0.5*(D_n[i]+D_n[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
@@ -622,7 +635,7 @@ void UtahLSM :: solveDiffusion(int type) {
     f[0] =  C_tp;
     g[0] = -C_m;
     r[0] =  C_p*surf_scalar_last + C_tm*scalar[1] + C_m*scalar[2] + C_p*scalar[0];
-    
+
     // for moisture, we need additional dKn/dz term
     // use 3-pt stencil that allows non-unform spacing 
     if (type==2) {
@@ -634,7 +647,8 @@ void UtahLSM :: solveDiffusion(int type) {
         a_p  = dz_m / (dz_p * (dz_p + dz_m) );
         
         dKdz = dt*(K_n[0]*a_p + K_n[1]*a_o + K_n[2]*a_m);
-        r[0] = r[0] + dKdz;          
+        r[0] = r[0] + dKdz;
+        std::cout<<"----- Ro 1: "<<r[0]<<std::endl;
     }
     
     // matrix coefficients for the interior levels        
@@ -683,7 +697,7 @@ void UtahLSM :: solveDiffusion(int type) {
         dKdz = dt*(K_n[nsoilz-2]-K_n[nsoilz-1])/(soil_z[nsoilz-2]-soil_z[nsoilz-1]);
         r[nsoilz-2] = r[nsoilz-2] + dKdz;
     }
-    
+    std::cout<<"----- q lev 1: "<<soil_q[1]<<std::endl;
     // solve the tridiagonal system    
     try {
         if (type==1) matrix::tridiagonal(e,f,g,r,soil_T);
