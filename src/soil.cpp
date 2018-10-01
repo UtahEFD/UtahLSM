@@ -21,8 +21,10 @@ namespace soil {
                               const double b, const double sfc_T, 
                               const double sfc_q, const double atm_p) {
         
-        double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
-        double h        = std::exp(-c::grav*psi_n/(c::Rv*sfc_T));
+        //double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
+        //double h        = std::exp(-c::grav*psi_n/(c::Rv*sfc_T));
+        double w        = sfc_q/porosity;
+        double h        = w < 0.75 ? w/0.75 : 1;
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
         double hum_spec = h*hum_sat;

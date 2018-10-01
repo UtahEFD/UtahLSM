@@ -347,7 +347,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
 
 // Solve the surface energy balance
 void UtahLSM :: solveSMB() {
-        
+    
     // local variables
     int max_iter_temp = 200;
     int max_iter_flux = 200; 
@@ -454,7 +454,7 @@ void UtahLSM :: solveSMB() {
             std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
 	        break;
 	    }
-                
+        
         // if flux fails to converge, split moisture
         soil_q[0] = 0.5*(soil_q[0] + last_q);
         
