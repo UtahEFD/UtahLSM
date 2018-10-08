@@ -112,29 +112,29 @@ namespace soil {
         properties.K_sat.resize(depth);
         properties.Ci.resize(depth);
         
-        // exponent (unitless)
-        const std::vector<double>b_list   = { 2.79,  4.26,  4.74,
-                                              5.33,  5.25,  6.77,
-                                              8.72,  8.17, 10.73,
-                                             10.39, 10.55,  7.75};
+       // exponent (unitless)
+        const std::vector<double>b_list   = {  4.05,  4.38,  4.90,
+                                               5.30,  5.39,  7.12,
+                                               7.75,  8.52, 10.40,
+                                              10.40, 11.40,  7.75};
         
         // saturation moisture potential (m)
-        const std::vector<double>psi_list = {0.02316, 0.01751, 0.03158,
-                                             0.06554, 0.04711, 0.03096,
-                                             0.05989, 0.04137, 0.02691,
-                                             0.04527, 0.05312, 0.35600};
+        const std::vector<double>psi_list = { 0.121, 0.090, 0.218,
+                                              0.786, 0.478, 0.299,
+                                              0.356, 0.630, 0.153,
+                                              0.490, 0.405, 0.356};
         
         // porosity (volume/volume)
-        const std::vector<double>por_list = {0.339, 0.421, 0.434,
-                                             0.476, 0.439, 0.404,
-                                             0.464, 0.465, 0.406,
-                                             0.468, 0.468, 0.863};
+        const std::vector<double>por_list = { 0.395, 0.410, 0.435,
+                                              0.485, 0.451, 0.420,
+                                              0.477, 0.476, 0.426,
+                                              0.492, 0.482, 0.863};
         
         // hydraulic conductivity (m/s)
-        const std::vector<double>K_list   = {1.60e-5, 9.52e-6, 6.19e-6,
-                                             4.73e-6, 5.12e-6, 5.78e-6,
-                                             4.11e-6, 4.45e-6, 7.12e-5,
-                                             3.43e-6, 2.99e-6, 8.00e-6};
+        const std::vector<double>K_list   = {0.0001760, 0.0001563, 0.0000341,
+                                             0.0000072, 0.0000070, 0.0000063,
+                                             0.0000017, 0.0000025, 0.0000022,
+                                             0.0000010, 0.0000013, 0.0000080};
         
         // volumetric heat capacity (J/m^3/K)
         const std::vector<double>Ci_list  = {1.47e6, 1.41e6, 1.34e6,
