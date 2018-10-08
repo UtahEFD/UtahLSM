@@ -35,8 +35,8 @@ namespace soil {
     
     // compute soil surface moisture from surface mixing ratio
     double surfaceSoilMoisture(const double psi_nsat, const double porosity, 
-                              const double b, const double sfc_T, 
-                              const double sfc_r, const double atm_p) {
+                               const double b, const double sfc_T, 
+                               const double sfc_r, const double atm_p) {
         
         double es     = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double qs     = 0.622*(es/(atm_p-0.378*es));
@@ -84,7 +84,7 @@ namespace soil {
                                       const std::vector<double>& b, 
                                       const int depth) {
         
-        // struct to hold transfer coefficients
+        // struct to hold transfer coefficientssoilThermalTransfer
         soilTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
