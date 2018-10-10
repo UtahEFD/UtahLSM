@@ -38,41 +38,34 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  albedo(albedo),emissivity(emissivity),R_net(R_net),comp_rad(comp_rad),
                  zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                  ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq),flux_gr(flux_gr) {
-    
-    // set soil properties at each depth
-    setSoilProperties();
 
     // save incoming temp and moisture
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
-    
     std::cout<<"Incoming Temp:"<<soil_T[0]<<std::endl;
     std::cout<<"Incoming Mois: "<<soil_q[0]<<" "<<soil_q[1]<<std::endl;
+    
     // set soil properties at each depth
     setSoilProperties();
     
     // initial time requires estimate of fluxes
-    if (first) {
-        computeFluxes(soil_T[0],soil_q[0]);
-	}
+    if (first) computeFluxes(soil_T[0],soil_q[0]);
     
     // check whether users provide net radiation
     if (comp_rad==true) computeRadiation();
     
     // solve the surface energy balance
     solveSEB();
-    //std::cout<<std::endl;
-    //std::cout<<soil_T[0]<<std::endl;
 	
     // solve the surface moisture balance
 	solveSMB();
-    //std::cout<<soil_q[0]<<std::endl;
+    
     // save current temperature and moisture
     soil_T_last = soil_T;
     soil_q_last = soil_q;
     
-    std::cout<<"Soil Q Lev 1 In: "<<soil_q[1]<<std::endl;
     // solve diffusion equations
+    std::cout<<"Soil Q Lev 1 In: "<<soil_q[1]<<std::endl;
     solveDiffusion(1);
     solveDiffusion(2);
     std::cout<<"Soil Q Lev 1 Out: "<<soil_q[1]<<std::endl;
@@ -102,13 +95,9 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // compute surface mixing ratio
     gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],sfc_T,sfc_q,atm_p);    
     atm_Tv = atm_T * (1 + 0.61*atm_q);
-    //std::cout<<"---- "<<sfc_T<<std::endl;
+    
     // iterate for convergence
     for (int i=0; i<max_iterations; ++i) {
-        
-        // extrapolate ground temperature/moisture to roughness height
-        //zot_T = sfc_T + (atm_T-sfc_T)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
-        //zot_q = gnd_q + (atm_q-gnd_q)*std::log(z_o/z_t)*most::fh(z_s/z_t,zeta_s,zeta_t)/c::vonk;
 
         // compute friction velocity
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
@@ -123,7 +112,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         // compute L
         last_L = L;
         L      = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
-        //std::cout<<"------- "<<L<<std::endl;
+
         // bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
@@ -285,29 +274,26 @@ double UtahLSM :: computeSEB(double sfc_T) {
     K_soil     = soil::soilThermalTransfer(psi_sat,porosity,soil_q,b,Ci,depth,0);
 
     if (first) {
-    	//Qg =  0.5*(K_soil[0]+K_soil[1])*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
-    	//Qg =  K_soil[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2]);
-    	Qg = 0.2*R_net;
+    	Qg =  K_soil[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2]);
     } else {
         // compute heat flux within soil and find depth of minimum
         // this is the depth to integrate time change of T		
-//        double hfs;
-//        double min_sflux = 10000.;
-//        for (int d=0; d<nsoilz-1; ++d) {
-//
-//            hfs = (d==0) ? 0.5*(K_soil[d]+K_soil[d+1]) * (sfc_T     - soil_T[d+1])/(soil_z[d]-soil_z[d+1]):
-//                           0.5*(K_soil[d]+K_soil[d+1]) * (soil_T[d] - soil_T[d+1])/(soil_z[d]-soil_z[d+1]);
-//            if (std::abs(hfs)<std::abs(min_sflux)) {
-//                min_sflux = hfs;
-//                int_depth = d+1;
-//            }
-//        }
+        double hfs;
+        double min_sflux = 10000.;
+        for (int d=0; d<nsoilz-1; ++d) {
+
+            hfs = (d==0) ? 0.5*(K_soil[d]+K_soil[d+1]) * (sfc_T     - soil_T[d+1])/(soil_z[d]-soil_z[d+1]):
+                           0.5*(K_soil[d]+K_soil[d+1]) * (soil_T[d] - soil_T[d+1])/(soil_z[d]-soil_z[d+1]);
+            if (std::abs(hfs)<std::abs(min_sflux)) {
+                min_sflux = hfs;
+                int_depth = d+1;
+            }
+        }
 
         Qg = 0;
         
-        //int_depth = 1;
         // Integrate time change to depth of minimum flux
-        for (int d=0; d<nsoilz; ++d) {
+        for (int d=0; d<int_depth; ++d) {
             
             heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
             dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
@@ -351,175 +337,88 @@ double UtahLSM :: computeDSEB(double sfc_T) {
 void UtahLSM :: solveSMB() {
     
     // local variables
-    int max_iter_temp = 200;
-    int max_iter_flux = 200; 
-    double dqs, dqs_old;
-    double SMB, dSMB_dq, SMB_l, SMB_h;
-    double mois_l, mois_h, last_q, last_F;
-    double mois_1 = soil_q[0] - 0.01;
-    double mois_2 = soil_q[0] + 0.01;
-    double mois_criteria = 0.001;
-    double flux_criteria = 0.000001;
+    bool converged;
+    int max_iter_flux = 200;
+    double E;
+    double flux_sm_last, flux_sm, flux_sm2;
+    double psi_n0, psi_n1, K_n_avg, D_n_avg;
+    double delta = 0.99, flux_criteria = .001;
+    std::vector<double> D_n;
+    std::vector<double> K_n;
+    soil::soilTransfer transfer;
     
-    // compute SMB using current bracketed surface moisture
-    SMB_l = computeSMB(mois_1);
-    SMB_h = computeSMB(mois_2);
-	
-    // dynamic bracket adjustments
-    bool out_of_bracket = (SMB_l > 0.0 && SMB_h > 0.0) || (SMB_l < 0.0 && SMB_h < 0.0);
-	std::cout<<"******** "<<soil_q[0]<<" "<<mois_1<<" "<<mois_2<<std::endl;
-//
-//    bool too_low = (SMB_l < 0.0 && SMB_h < 0.0);
-//    bool too_high = (SMB_l > 0.0 && SMB_h > 0.0);
-//
-//    int cnt = 0;
-//
-//    while (too_low) {
-//
-//        std::cout<<"TOO LOW!!!!"<<std::endl;
-//        std::cout<<"*** "<<mois_1<<" "<<mois_2<<std::endl;
-//        std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-//
-//        if (std::abs(SMB_l) < std::abs(SMB_h)) {
-//            mois_1 = mois_2;
-//            mois_2 = mois_2*1.1;
-//        } else {
-//            mois_2 = mois_2*0.9;
-//        }
-//
-//        // recompute SMB at brackets
-//        SMB_l = computeSMB(mois_1);
-//        SMB_h = computeSMB(mois_2);
-//
-//        too_low = (SMB_l < 0.0 && SMB_h < 0.0);
-//
-//        std::cout<<"*** "<<mois_1<<" "<<mois_2<<std::endl;
-//        std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-//
-//        cnt+=1;
-//        if(cnt>20) throw(1);
-//    }
-//
-//    cnt = 0;
-//    while (too_high) {
-//
-//        std::cout<<"TOO HIGH!!!!"<<std::endl;
-//        std::cout<<"*** "<<mois_1<<" "<<mois_2<<std::endl;
-//        std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-//
-//        mois_2 = mois_1;
-//        mois_1 = mois_1*0.9;
-//
-//        // recompute SMB at brackets
-//        SMB_l = computeSMB(mois_1);
-//        SMB_h = computeSMB(mois_2);
-//
-//        too_high = (SMB_l > 0.0 && SMB_h > 0.0);
-//
-//        std::cout<<"*** "<<mois_1<<" "<<mois_2<<std::endl;
-//        std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-//
-//        cnt+=1;
-//        if(cnt>50) throw(1);
-//    }
+    // moisture potential at first level below ground
+    psi_n0 = psi_sat[0]*std::pow(porosity[0]/soil_q[0],b[0]);
+    psi_n1 = psi_sat[1]*std::pow(porosity[1]/soil_q[1],b[1]);
     
-    while (out_of_bracket) {
-        std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-        // expand brackets by 0.05
-        mois_1 -= mois_1*0.02;
-        mois_2 += mois_2*0.02;
-        std::cout<<"*** "<<mois_1<<" "<<mois_2<<std::endl;
-        //std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-        // recompute SMB at brackets
-        SMB_l = computeSMB(mois_1);
-        SMB_h = computeSMB(mois_2);
-        std::cout<<"*** "<<SMB_l<<" "<<SMB_h<<std::endl;
-        
-        // check for proper brackets
-        out_of_bracket = (SMB_l > 0.0 && SMB_h > 0.0) || (SMB_l < 0.0 && SMB_h < 0.0);
-    }
+    if (psi_n0>psi_sat[0]) psi_n0 = psi_sat[0];
+    if (psi_n1>psi_sat[1]) psi_n1 = psi_sat[1];
     
-    if ((SMB_l > 0.0 && SMB_h > 0.0) || (SMB_l < 0.0 && SMB_h < 0.0)) {
-        throw("Please adjust brackets for qs");
-    }
+    // compute initial soil moisture flux
+    transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
+    K_n      = transfer.k;
+    D_n      = transfer.d;
+    K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
+    D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
+    flux_sm  = c::rho_wat*K_n_avg*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
+    flux_sm2 = c::rho_wat*D_n_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
+    + c::rho_wat*K_n_avg;
     
-    // if SEB from low bracket qs = 0, then that value of qs is solution
-    if (SMB_l == 0.0) soil_q[0] = mois_1;
-
-    // if SEB from high bracket qs = 0, then that value of qs is solution
-    if (SMB_h == 0.0) soil_q[0] = mois_2;
+    // compute evaporation
+    E = c::rho_air*flux_wq;
     
-    // orient the solutions such that SEB(temp_l) < 0;
-    if (SMB_l < 0.0) {
-        mois_l = mois_1;
-        mois_h = mois_2;
-    } else {
-        mois_l = mois_2;
-        mois_h = mois_1; 
-    }
-        
-    // prepare for convergence looping
-    dqs = std::abs(mois_h-mois_l);
-     
-    // convergence loop for flux
+    std::cout<<"-------------------- E = "<<E<<std::endl;
+    std::cout<<"-------------------- W = "<<flux_sm<<std::endl;
+    
+    // compute moisture potential
+    //psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((E/(c::rho_wat*K_n_avg))-1);
+    
+    // compute soil moisture
+    //soil_q[0] = porosity[0]*std::pow( (psi_sat[0]/psi_n0) , (1./b[0]) );
+    
+    // convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
         
-        // convergence loop for moisture
-        for (int tt = 0; tt < max_iter_temp; tt++) {
-            
-            // compute SMB and dSMB_dqscd 
-            SMB     = computeSMB(soil_q[0]);
-            dSMB_dq = computeDSMB(soil_q[0]);
-                   
-            // update brackets
-            if (SMB<0.) mois_l = soil_q[0];
-            if (SMB>0.) mois_h = soil_q[0];
-            
-            // bracket and bisect temperature if Newton out of range
-            if ((((soil_q[0]-mois_h)*dSMB_dq-SMB)*((soil_q[0]-mois_l)*dSMB_dq-SMB)>0.0) 
-               || (std::abs(2*SMB) > std::abs(dqs_old*dSMB_dq))) {
-                dqs_old   = dqs;
-                dqs       = 0.5*(mois_h-mois_l);
-                last_q    = soil_q[0];
-                soil_q[0] = mois_l + dqs;
-                if (mois_l == soil_q[0]) break;
-            } else {
-                dqs_old   = dqs;
-                dqs       = SMB / dSMB_dq;
-                last_q    = soil_q[0];
-                soil_q[0] = soil_q[0] - dqs;
-                if (last_q == soil_q[0]) break;
-            }
-            
-            // check for convergence
-            if (std::abs(dqs) <= mois_criteria) break;
-            
-            // if convergence fails, recompute flux
-            computeFluxes(soil_T[0],soil_q[0]);
-        }
+        // save soil moisture flux for convergence test
+        flux_sm_last = flux_sm;
         
-        // save current flux for convergence criteria
-        last_F = flux_wq;
+        // compute new weighted soil moisture flux
+        flux_sm = delta*flux_sm_last - (1.-delta)*E;
         
-        // recompute heat flux using new temperature
+        // update soil moisture potential
+        psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
+        
+        if (psi_n0>psi_sat[0]) psi_n0 = psi_sat[0];
+        
+        // update soil moisture
+        soil_q[0] = porosity[0]*std::pow(psi_sat[0]/psi_n0,(1./b[0]));
+        
+        // update evaporation
+        // computeFluxes(2);
+        //E = -c::rho_air*flux_wq;
+        //gnd_q = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],soil_T[0],soil_q[0],atm_p);
         computeFluxes(soil_T[0],soil_q[0]);
+        E     = c::rho_air*flux_wq;//(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        
+        // update soil moisture transfer
+        transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
+        K_n      = transfer.k;
+        K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
         
         // check for convergence
-        if (std::abs(flux_wq-last_F) <= flux_criteria) {
-	        SMB = computeSMB(soil_q[0]);
-	        double H = c::rho_air*c::Cp_air*flux_wT;
+        converged = std::abs((E + flux_sm)/E) <=flux_criteria;
+        
+        if (converged) {
+            flux_wq = E/c::rho_air;
+            double H = c::rho_air*c::Cp_air*flux_wT;
             double L = c::rho_air*c::Lv*flux_wq;
             double G = flux_gr;
             std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
-	        break;
-	    }
-        
-        // if flux fails to converge, split moisture
-        soil_q[0] = 0.5*(soil_q[0] + last_q);
-        
-        // recompute stability corrections and fluxes
-        computeFluxes(soil_T[0],soil_q[0]);
+            break;
+        }
     }
+    
+    
 }
 
 // computes SMB

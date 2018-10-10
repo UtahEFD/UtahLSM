@@ -58,6 +58,7 @@ namespace soil {
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {
+            
             psi_n = 100.*psi_nsat[d]*std::pow((porosity[d]/soil_q[d]),b[d]);
             pf = std::log10(std::abs(psi_n));
             if (pf <= 5.1) {
@@ -119,10 +120,10 @@ namespace soil {
                                               10.40, 11.40,  7.75};
         
         // saturation moisture potential (m)
-        const std::vector<double>psi_list = { 0.121, 0.090, 0.218,
-                                              0.786, 0.478, 0.299,
-                                              0.356, 0.630, 0.153,
-                                              0.490, 0.405, 0.356};
+        const std::vector<double>psi_list = { -0.121, -0.090, -0.218,
+                                              -0.786, -0.478, -0.299,
+                                              -0.356, -0.630, -0.153,
+                                              -0.490, -0.405, -0.356};
         
         // porosity (volume/volume)
         const std::vector<double>por_list = { 0.395, 0.410, 0.435,
@@ -131,16 +132,16 @@ namespace soil {
                                               0.492, 0.482, 0.863};
         
         // hydraulic conductivity (m/s)
-        const std::vector<double>K_list   = {0.0001760, 0.0001563, 0.0000341,
-                                             0.0000072, 0.0000070, 0.0000063,
-                                             0.0000017, 0.0000025, 0.0000022,
-                                             0.0000010, 0.0000013, 0.0000080};
+        const std::vector<double>K_list   = { 0.0001760, 0.0001563, 0.0000341,
+                                              0.0000072, 0.0000070, 0.0000063,
+                                              0.0000017, 0.0000025, 0.0000022,
+                                              0.0000010, 0.0000013, 0.0000080};
         
         // volumetric heat capacity (J/m^3/K)
-        const std::vector<double>Ci_list  = {1.47e6, 1.41e6, 1.34e6,
-                                             1.27e6, 1.21e6, 1.18e6,
-                                             1.32e6, 1.23e6, 1.18e6,
-                                             1.15e6, 1.09e6, 0.84e6};
+        const std::vector<double>Ci_list  = { 1.47e6, 1.41e6, 1.34e6,
+                                              1.27e6, 1.21e6, 1.18e6,
+                                              1.32e6, 1.23e6, 1.18e6,
+                                              1.15e6, 1.09e6, 0.84e6};
          
         // loop through each depth to assign soil type properties
         int soil;
