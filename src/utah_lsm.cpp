@@ -89,12 +89,14 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // local variables
     int max_iterations = 200;
     bool converged = false;
-    double L=0, gnd_q, zot_q, zot_T, flux_wTv, atm_Tv;
+    double L=0, gnd_q, flux_wTv, atm_Tv;
     double last_L, criteria = 0.1, ref_T = 300.;
     
     // compute surface mixing ratio
     gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],sfc_T,sfc_q,atm_p);    
     atm_Tv = atm_T * (1 + 0.61*atm_q);
+    
+    if (zeta_m>0) L = z_m/zeta_m;
     
     // iterate for convergence
     for (int i=0; i<max_iterations; ++i) {
@@ -103,8 +105,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
         
         // compute heat flux
-        flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s/z_o,zeta_s,zeta_o);
-		flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_o,zeta_s,zeta_o);
+        flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+		flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
@@ -332,7 +334,6 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     return dSEB_dT;
 }
 
-
 // Solve the surface energy balance
 void UtahLSM :: solveSMB() {
     
@@ -340,8 +341,8 @@ void UtahLSM :: solveSMB() {
     bool converged;
     int max_iter_flux = 200;
     double E;
-    double flux_sm_last, flux_sm, flux_sm2;
-    double psi_n0, psi_n1, K_n_avg, D_n_avg;
+    double flux_sm_last, flux_sm;
+    double psi_n0, psi_n1, psi_n2,K_n_avg, D_n_avg;
     double delta = 0.99, flux_criteria = .001;
     std::vector<double> D_n;
     std::vector<double> K_n;
@@ -360,16 +361,55 @@ void UtahLSM :: solveSMB() {
     D_n      = transfer.d;
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
     D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
-    flux_sm  = c::rho_wat*K_n_avg*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
-    flux_sm2 = c::rho_wat*D_n_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
-    + c::rho_wat*K_n_avg;
-    
+
     // compute evaporation
     E = c::rho_air*flux_wq;
     
+    if (first) {
+        flux_sm = c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
+    } else {
+            // compute moisture flux within soil and find depth of minimum
+            // this is the depth to integrate time change of q
+            int int_depth = 0;
+            double mfs, dz, dq;
+            double min_mflux = 10000.;
+            for (int d=0; d<nsoilz-1; ++d) {
+    
+                // moisture potential at first level below ground
+                psi_n0 = (d==0) ? std::abs(psi_sat[d])*std::pow(porosity[d]/soil_q[0],    b[d]):
+                                  std::abs(psi_sat[d])*std::pow(porosity[d]/soil_q[d],b[d]);
+                psi_n1 = std::abs(psi_sat[d+1])*std::pow(porosity[d+1]/soil_q[d+1],b[d+1]);
+                mfs    = 0.5*c::rho_wat*(K_n[d]+K_n[d+1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
+    
+                if (std::abs(mfs)<std::abs(min_mflux)) {
+                    min_mflux = mfs;
+                    int_depth = d+1;
+                }
+            }
+    
+            flux_sm = 0;
+            int_depth=4;
+            // Integrate time change to depth of minimum flux
+            for (int d=0; d<int_depth; ++d) {
+    
+                dq = (d==0) ? soil_q[0]-soil_q_last[d] : soil_q[d]-soil_q_last[d];
+                if (d==0) {
+                    dz = soil_z[d] - soil_z[d+1];
+                } else if (d==int_depth-1){
+                    dz = soil_z[d-1] - soil_z[d];
+                } else {
+                    dz = soil_z[d-1] - soil_z[d+1];
+                }
+                flux_sm = flux_sm + 0.5*c::rho_wat*dq*dz/dt;
+            }
+            psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/soil_q[0],b[0]);
+            psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
+            psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
+            //W = W + c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
+            flux_sm = flux_sm + c::rho_wat*K_n[1]*((psi_n0 - psi_n2)/(soil_z[0]-soil_z[2]) + 1);
+        }
     std::cout<<"-------------------- E = "<<E<<std::endl;
     std::cout<<"-------------------- W = "<<flux_sm<<std::endl;
-    
     // compute moisture potential
     //psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((E/(c::rho_wat*K_n_avg))-1);
     
@@ -420,6 +460,8 @@ void UtahLSM :: solveSMB() {
     
     
 }
+
+
 
 // computes SMB
 double UtahLSM :: computeSMB(double sfc_q) {
