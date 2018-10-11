@@ -336,118 +336,32 @@ double UtahLSM :: computeDSEB(double sfc_T) {
 
 // Solve the surface energy balance
 void UtahLSM :: solveSMB() {
-    
+
     // local variables
-    bool converged;
-    int max_iter_flux = 200;
-    double E;
-    double flux_sm_last, flux_sm;
-    double psi_n0, psi_n1, psi_n2,K_n_avg, D_n_avg;
-    double delta = 0.99, flux_criteria = .001;
+    int max_iterations = 200;
+    bool converged = false;
+    double E, K, D, q_old, q_new;
     std::vector<double> D_n;
     std::vector<double> K_n;
     soil::soilTransfer transfer;
-    
-    // moisture potential at first level below ground
-    psi_n0 = psi_sat[0]*std::pow(porosity[0]/soil_q[0],b[0]);
-    psi_n1 = psi_sat[1]*std::pow(porosity[1]/soil_q[1],b[1]);
-    
-    if (psi_n0>psi_sat[0]) psi_n0 = psi_sat[0];
-    if (psi_n1>psi_sat[1]) psi_n1 = psi_sat[1];
-    
-    // compute initial soil moisture flux
-    transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
-    K_n      = transfer.k;
-    D_n      = transfer.d;
-    K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
-    D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
 
-    // compute evaporation
+    transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
+    K_n = transfer.k;
+    D_n = transfer.d;
+    K = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
+    D = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
     E = c::rho_air*flux_wq;
-    
-    if (first) {
-        flux_sm = c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
-    } else {
-            // compute moisture flux within soil and find depth of minimum
-            // this is the depth to integrate time change of q
-            int int_depth = 0;
-            double mfs, dz, dq;
-            double min_mflux = 10000.;
-            for (int d=0; d<nsoilz-1; ++d) {
-    
-                // moisture potential at first level below ground
-                psi_n0 = (d==0) ? std::abs(psi_sat[d])*std::pow(porosity[d]/soil_q[0],    b[d]):
-                                  std::abs(psi_sat[d])*std::pow(porosity[d]/soil_q[d],b[d]);
-                psi_n1 = std::abs(psi_sat[d+1])*std::pow(porosity[d+1]/soil_q[d+1],b[d+1]);
-                mfs    = 0.5*c::rho_wat*(K_n[d]+K_n[d+1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
-    
-                if (std::abs(mfs)<std::abs(min_mflux)) {
-                    min_mflux = mfs;
-                    int_depth = d+1;
-                }
-            }
-    
-            flux_sm = 0;
-            int_depth=4;
-            // Integrate time change to depth of minimum flux
-            for (int d=0; d<int_depth; ++d) {
-    
-                dq = (d==0) ? soil_q[0]-soil_q_last[d] : soil_q[d]-soil_q_last[d];
-                if (d==0) {
-                    dz = soil_z[d] - soil_z[d+1];
-                } else if (d==int_depth-1){
-                    dz = soil_z[d-1] - soil_z[d];
-                } else {
-                    dz = soil_z[d-1] - soil_z[d+1];
-                }
-                flux_sm = flux_sm + 0.5*c::rho_wat*dq*dz/dt;
-            }
-            psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/soil_q[0],b[0]);
-            psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
-            psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
-            //W = W + c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
-            flux_sm = flux_sm + c::rho_wat*K_n[1]*((psi_n0 - psi_n2)/(soil_z[0]-soil_z[2]) + 1);
-        }
-    std::cout<<"-------------------- E = "<<E<<std::endl;
-    std::cout<<"-------------------- W = "<<flux_sm<<std::endl;
-    // compute moisture potential
-    //psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((E/(c::rho_wat*K_n_avg))-1);
-    
-    // compute soil moisture
-    //soil_q[0] = porosity[0]*std::pow( (psi_sat[0]/psi_n0) , (1./b[0]) );
-    
-    // convergence loop for moisture flux
-    for (int ff = 0; ff < max_iter_flux; ff++) {
-        
-        // save soil moisture flux for convergence test
-        flux_sm_last = flux_sm;
-        
-        // compute new weighted soil moisture flux
-        flux_sm = delta*flux_sm_last - (1.-delta)*E;
-        
-        // update soil moisture potential
-        psi_n0    = psi_n1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
-        
-        if (psi_n0>psi_sat[0]) psi_n0 = psi_sat[0];
-        
-        // update soil moisture
-        soil_q[0] = porosity[0]*std::pow(psi_sat[0]/psi_n0,(1./b[0]));
-        
-        // update evaporation
-        // computeFluxes(2);
-        //E = -c::rho_air*flux_wq;
-        //gnd_q = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],soil_T[0],soil_q[0],atm_p);
+    q_old = soil_q[0];
+
+    for (int i=0; i<max_iterations; ++i) {
+        q_new  = soil_q[1] - (E + K*c::rho_wat)*(soil_z[0]-soil_z[1]) / (c::rho_wat*D);
+        soil_q[0] = 0.2*q_old + 0.8*q_new;
         computeFluxes(soil_T[0],soil_q[0]);
-        E     = c::rho_air*flux_wq;//(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
-        
-        // update soil moisture transfer
-        transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
-        K_n      = transfer.k;
-        K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
-        
-        // check for convergence
-        converged = std::abs((E + flux_sm)/E) <=flux_criteria;
-        
+
+        E = c::rho_air*flux_wq;
+
+        converged = (q_old-soil_q[0])/q_old <=0.001;
+        q_old = soil_q[0];
         if (converged) {
             flux_wq = E/c::rho_air;
             double H = c::rho_air*c::Cp_air*flux_wT;
@@ -457,9 +371,8 @@ void UtahLSM :: solveSMB() {
             break;
         }
     }
-    
-    
 }
+
 
 
 
