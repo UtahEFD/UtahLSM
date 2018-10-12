@@ -16,7 +16,7 @@ nSoil = len(measZ)
 measSoilTemp = [297.18, 295.68, 295.52, 294.75, 293.69, 293.35, 292.66]
 
 # soil moisture
-measSoilMois = [0.135, 0.135, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
+measSoilMois = [0.244, 0.244, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
 
 # soil type from USDA 11-category + peat
 # Lamont - 0-19: silty loam, 20-34: clay, 35-60: clay loam

@@ -102,7 +102,20 @@ namespace soil {
     }
     
     // set soil type properties at each depth
-    // based on Cosby et al. (1984)
+    // based on Clapp and Hornberger 1978
+    // # soil type from USDA 11-category + peat
+    // 01 = sand
+    // 02 = loamy sand
+    // 03 = sandy loam
+    // 04 = silty loam
+    // 05 = loam
+    // 06 = sandy clay loam
+    // 07 = silty clay loam
+    // 08 = clay loam
+    // 09 = sandy clay
+    // 10 = silty clay
+    // 11 = clay
+    // 12 = peat
     soilProperties soilTypeProperties(const std::vector<int>& soil_type, const int depth) {
         
         // struct to hold soil properties
