@@ -28,6 +28,7 @@ namespace soil {
 	    std::vector<double> b;
 	    std::vector<double> psi_sat;
 	    std::vector<double> porosity;
+        std::vector<double> residual;
 	    std::vector<double> K_sat;
 	    std::vector<double> Ci;
     };
@@ -42,11 +43,11 @@ namespace soil {
                                             const std::vector<double>&, const std::vector<double>&, 
                                             const std::vector<double>&, const int, const int);
     
-    soilTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&, 
+    soilTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const int);
     
-    soilProperties soilTypeProperties(const std::vector<int>&, const int);
+    soilProperties soilTypeProperties(const std::vector<int>&, const int, const int);
 };
 
 #endif
