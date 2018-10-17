@@ -93,6 +93,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     double last_L, criteria = 0.1, ref_T = 300.;
     int depth = nsoilz;
     std::vector<double> K_soil(depth);
+    
     // compute surface mixing ratio
     gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],sfc_T,sfc_q,atm_p);
     
@@ -125,7 +126,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
 //            double rh = gnd_q / q_sat;
 //
 //            if (rh < 0.75) {
-//                soil_q[0] = (0.75*gnd_q*porosity[0])/q_sat;
+//                soil_q[0] = (0.75*gnd_q*porosity[0])/q_sat;h
 //            } else {
 //                std::cout<<"Shit dawg it is moist"<<std::endl;
 //                soil_q[0] = porosity[0];

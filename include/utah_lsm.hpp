@@ -32,16 +32,17 @@ class UtahLSM {
         int julian_day;
         double utc, latitude, longitude, albedo, emissivity, R_net;
         int comp_rad;
-        double &zeta_m,&zeta_s,&zeta_o,&zeta_t;
-        double &ustar, &flux_wT, &flux_wq, &flux_gr;
+        double &zeta_m, &zeta_s,  &zeta_o,  &zeta_t;
+        double &ustar,  &flux_wT, &flux_wq, &flux_gr;
         
         // local variables
         double surf_T_last;
         double surf_q_last;
 
-    std::vector<double> b;
+        std::vector<double> b;
         std::vector<double> psi_sat;
         std::vector<double> porosity;
+		std::vector<double> residual;
 		std::vector<double> K_sat;
 		std::vector<double> Ci;
         
