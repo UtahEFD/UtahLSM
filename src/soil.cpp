@@ -21,10 +21,10 @@ namespace soil {
                               const double b, const double sfc_T, 
                               const double sfc_q, const double atm_p) {
         
-        //double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
-        //double h        = std::exp(-c::grav*psi_n/(c::Rv*sfc_T));
-        double w        = sfc_q/porosity;
-        double h        = w < 0.75 ? w/0.75 : 1;
+        double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
+        double h        = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
+        //double w        = sfc_q/porosity;
+        //double h        = w < 0.75 ? w/0.75 : 1;
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
         double hum_spec = h*hum_sat;
@@ -40,9 +40,9 @@ namespace soil {
         
         double es     = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double qs     = 0.622*(es/(atm_p-0.378*es));
-        double ln     = std::log(sfc_r / (qs*(sfc_r+1)));
+        double ln     = std::log(sfc_r / qs);
         
-        return porosity*std::pow((c::grav*psi_nsat)/(c::Rv*sfc_T*ln),(1./b));
+        return porosity*std::pow((std::abs(c::grav*psi_nsat))/(c::Rv*sfc_T*std::abs(ln)),(1./b));
     }
     
     // compute average soil thermal conductivity/diffusivity
@@ -102,7 +102,20 @@ namespace soil {
     }
     
     // set soil type properties at each depth
-    // based on Cosby et al. (1984)
+    // based on Clapp and Hornberger 1978
+    // # soil type from USDA 11-category + peat
+    // 01 = sand
+    // 02 = loamy sand
+    // 03 = sandy loam
+    // 04 = silty loam
+    // 05 = loam
+    // 06 = sandy clay loam
+    // 07 = silty clay loam
+    // 08 = clay loam
+    // 09 = sandy clay
+    // 10 = silty clay
+    // 11 = clay
+    // 12 = peat
     soilProperties soilTypeProperties(const std::vector<int>& soil_type, const int depth) {
         
         // struct to hold soil properties

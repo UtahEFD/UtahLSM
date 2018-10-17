@@ -13,10 +13,10 @@ measZ = [0.0, 0.025, 0.05, 0.15, 0.25, 0.35, 0.60]
 nSoil = len(measZ)
 
 # soil temperature
-measSoilTemp = [297.18, 295.68, 295.52, 294.75, 293.69, 293.35, 292.66]
+measSoilTemp = [299.52, 295.68, 295.52, 294.75, 293.69, 293.35, 292.66]
 
 # soil moisture
-measSoilMois = [0.135, 0.135, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
+measSoilMois = [0.2448, 0.2448, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
 
 # soil type from USDA 11-category + peat
 # Lamont - 0-19: silty loam, 20-34: clay, 35-60: clay loam
@@ -66,18 +66,14 @@ uc = -ws*np.sin(wd*np.pi/180)
 vc = -ws*np.cos(wd*np.pi/180)
 print(len(uc))
 # compute water vapor mixing ratio
-qv = 0.622 * pv / (pa-pv)
+qv = 0.622 * pv / (pa-pv) * 1.35
 es = 6.1078 * np.exp(17.269*(pt-273.15)/(pt-35.86))
 qs = 0.622 * (es / (pa-0.378*es))
 
 qv2 = rh/100 * qs
 
 sl = np.arange(0,0.031,0.001)
-
-pl.plot(qv,qv2,ls='None',marker='o')
-pl.plot(sl,sl,color='k')
-pl.show()
-
+tt1 = tt
 ########################################
 # Read net radiation data for 20121024 #
 ########################################
@@ -95,6 +91,8 @@ rNet = data.variables['r_net'][:]
 G    = data.variables['mean_g_soil'][:]
 H    = data.variables['h'][:]
 LE   = data.variables['le'][:]
+qv3  = data.variables['mean_q'][:]*18.0153/1000/1.2/1000
+
 
 # construct time
 nt   = len(tt)
@@ -129,6 +127,26 @@ for r in qv:
 
 for b in badQ:
 	qv[b] = qv[badQ[0]-1]
+	
+tc = 0
+badQ = []
+for r in qv:
+	if (str(r)=='--'):
+		badQ.append(tc)
+	tc+=1
+
+for b in badQ:
+	qv3[b] = qv3[badQ[0]-1]
+
+
+nt   = len(tt1)
+tt1  = np.arange(0,nt*60,60)
+nt   = len(tt)
+tt2  = np.arange(0,nt*1800,1800)
+pl.plot(tt1/3600/24,qv)
+pl.plot(tt2/3600/24,qv3)
+#pl.plot(sl,sl,color='k')
+pl.show()
 
 ##############################
 # Write all time series data #
