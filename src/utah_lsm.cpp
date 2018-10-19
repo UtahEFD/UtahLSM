@@ -65,10 +65,8 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     soil_q_last = soil_q;
     
     // solve diffusion equations
-    //std::cout<<"Soil Q Lev 1 In: "<<soil_q[1]<<std::endl;
     solveDiffusion(1);
     solveDiffusion(2);
-    //std::cout<<"Soil Q Lev 1 Out: "<<soil_q[1]<<std::endl;
 }
 
 // Set soil properties at each depth
@@ -92,6 +90,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     double L=0, gnd_q, flux_wTv;
     double last_L, criteria = 0.1, ref_T = 300.;
     int depth = nsoilz;
+    int int_depth;
+    double heat_cap,dT, dz;
     struct soil::soilThermalTransfer transfer;
     std::vector<double> K(depth);
     // compute surface mixing ratio
@@ -101,13 +101,53 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     for (int i=0; i<max_iterations; ++i) {
         
         // compute ground flux
+        // first time through we estimate based on Santanello and Friedl (2003)
         if ( (first)) {
-            flux_gr = 0.4*R_net;
+            float A,B;
+            if (soil_q[0]>=0.4) {
+                A = 0.31;
+                B = 74000;
+            } else if (soil_q[0]<0.4 && soil_q[0] >= 0.25){
+                A = 0.33;
+                B = 85000;
+            } else {
+                A = 0.35;
+                B = 100000;
+            }
+            flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
         } else {
-            #warning TODO: put back in integrated form of ground heat flux
+            // next time we integrate to depth of minimum flux woithin the soil
             transfer   = soil::soilThermalTransfer(psi_sat,porosity,soil_q,b,Ci,depth);
             K = transfer.k;
-            flux_gr = K[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2]);
+            //std::cout<<"+++++ "<<K[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2])<<std::endl;
+            //compute heat flux within soil and find depth of minimum
+            //this is the depth to integrate time change of T
+            double hfs;
+            double min_sflux = 10000.;
+            for (int d=0; d<nsoilz-1; ++d) {
+                hfs = (d==0) ? 0.5*(K[d]+K[d+1]) * (sfc_T     - soil_T[d+1])/(soil_z[d]-soil_z[d+1]):
+                               0.5*(K[d]+K[d+1]) * (soil_T[d] - soil_T[d+1])/(soil_z[d]-soil_z[d+1]);
+                if (std::abs(hfs)<std::abs(min_sflux)) {
+                    min_sflux = hfs;
+                    int_depth = d+1;
+                }
+            }
+            flux_gr = 0;
+            // Integrate time change to depth of minimum flux
+            for (int d=0; d<int_depth; ++d) {
+                
+                heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
+                dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
+                if (d==0) {
+                    dz = soil_z[d] - soil_z[d+1];
+                } else if (d==int_depth-1){
+                    dz = soil_z[d-1] - soil_z[d];
+                } else {
+                    dz = soil_z[d-1] - soil_z[d+1];
+                }
+                flux_gr = flux_gr + 0.5*( heat_cap*dT*dz/dt );
+            }
+            std::cout<<"----- "<<flux_gr<<std::endl;
         }
         
         // compute friction velocity
