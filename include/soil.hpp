@@ -18,8 +18,13 @@
 
 namespace soil {
 	
-	struct soilTransfer {
+	struct soilMoistureTransfer {
         std::vector<double> d; 
+        std::vector<double> k;
+    };
+    
+    struct soilThermalTransfer {
+        std::vector<double> d;
         std::vector<double> k;
     };
     
@@ -39,11 +44,11 @@ namespace soil {
     double surfaceSoilMoisture(const double,const double, const double,
                                const double,const double, const double);
                               
-    std::vector<double> soilThermalTransfer(const std::vector<double>&, const std::vector<double>&, 
+    soilThermalTransfer soilThermalTransfer(const std::vector<double>&, const std::vector<double>&,
                                             const std::vector<double>&, const std::vector<double>&, 
-                                            const std::vector<double>&, const int, const int);
+                                            const std::vector<double>&, const int);
     
-    soilTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&,
+    soilMoistureTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const int);
     

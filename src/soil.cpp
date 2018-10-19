@@ -46,14 +46,16 @@ namespace soil {
     }
     
     // compute soil thermal conductivity/diffusivity
-    std::vector<double> soilThermalTransfer(const std::vector<double> &psi_nsat, 
+    struct soilThermalTransfer soilThermalTransfer(const std::vector<double> &psi_nsat,
                                             const std::vector<double> &porosity, 
                                             const std::vector<double> &soil_q, 
                                             const std::vector<double> &b, 
                                             const std::vector<double> &Ci, 
-                                            const int depth, const int flag) {
+                                            const int depth) {
         
-        std::vector<double> transfer(depth);
+        struct soilThermalTransfer transfer;
+        transfer.d.resize(depth);
+        transfer.k.resize(depth);
         double psi_n, pf;
         
         // loop through each depth
@@ -62,23 +64,21 @@ namespace soil {
             psi_n = 100.*psi_nsat[d]*std::pow((porosity[d]/soil_q[d]),b[d]);
             pf = std::log10(std::abs(psi_n));
             if (pf <= 5.1) {
-                transfer[d] = 418.46*std::exp(-(pf+2.7));
+                transfer.k[d] = 418.46*std::exp(-(pf+2.7));
             } else {
-                transfer[d] = 0.172;
+                transfer.k[d] = 0.172;
             }
                         
-            // convert to thermal diffusivity if flag==1
-            if (flag==1) {
-                double heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
-                transfer[d] = transfer[d] / heat_cap;
-            }
+            // convert to thermal diffusivity
+            double heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
+            transfer.d[d] = transfer.k[d] / heat_cap;
         }
         
         return transfer;
     }
     
     // compute average soil moisture transfer
-    soilTransfer soilMoistureTransfer(const std::vector<double>& psi_nsat, 
+    struct soilMoistureTransfer soilMoistureTransfer(const std::vector<double>& psi_nsat,
                                       const std::vector<double>& K_nsat, 
                                       const std::vector<double>& porosity, 
                                       const std::vector<double>& soil_q, 
@@ -86,7 +86,7 @@ namespace soil {
                                       const int depth) {
         
         // struct to hold transfer coefficientssoilThermalTransfer
-        soilTransfer transfer;
+        struct soilMoistureTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
         
