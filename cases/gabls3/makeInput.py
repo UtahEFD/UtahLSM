@@ -2,20 +2,55 @@
 
 import netCDF4 as nc
 import numpy as np
+import sys
+import pylab as pl
 
 ##########################################
 # Manual entry of soil data for 20121024 #
 ##########################################
 
-# soil sensor depths and interpolation levels
-measZ = [0.0,0.005,0.01,0.02,0.04,0.06,0.08,0.12,0.20,0.30,0.50,1.00,2.00]
-nSoil = len(measZ)
+# measurements are every 10 minutes
+# so there are 144 per day
+date = 2
+tidx = (date-1)*144
 
-# soil temperature
-measSoilTemp = [287.450,287.250,288.677,289.777,290.335,291.340,291.080,291.181,290.520,289.958,288.689,285.350,283.150]
+# soil temperature data
+obs   = nc.Dataset('observations/cesar_soil_heat_lb1_t10_v1.0_200607.nc')
+t_obs = obs.variables['time'][tidx]*3600.
+st_00 = obs.variables['TS00'][tidx]+273.15
+st_02 = obs.variables['TS02'][tidx]+273.15
+st_04 = obs.variables['TS04'][tidx]+273.15
+st_06 = obs.variables['TS06'][tidx]+273.15
+st_08 = obs.variables['TS08'][tidx]+273.15
+st_12 = obs.variables['TS12'][tidx]+273.15
+st_20 = obs.variables['TS20'][tidx]+273.15
+st_30 = obs.variables['TS30'][tidx]+273.15
+st_50 = obs.variables['TS50'][tidx]+273.15
+st_ob = np.array([st_00,st_02,st_04,st_04,st_08,st_12,st_20,st_30,st_50])
+z_obs = np.array([0.00,0.02,0.04,0.06,0.08,0.12,0.20,0.30,0.50])
+nsoil = len(z_obs)
 
-# soil moisture
-measSoilMois = [0.24,0.247,0.269,0.274,0.310,0.330,0.330,0.360,0.450,0.470,0.470,0.570,0.570]
+# soil moisture data (10-minute)
+obs   = nc.Dataset('observations/cesar_soil_water_lb1_t10_v1.1_200607.nc')
+sm_03 = obs.variables['TH03'][tidx]
+sm_08 = obs.variables['TH08'][tidx]
+sm_20 = obs.variables['TH20'][tidx]
+
+# soil moisture data (daily average from prior day)
+# Julian day for July 2, 2006 is 183, so day prior is 182
+jdi   = 181
+obs   = nc.Dataset('observations/cesar_tdr_soilmoisture_la1_t1d_v1.0_2006.nc')
+sm_05 = np.mean([obs.variables['SM1'][jdi],obs.variables['SM7'][jdi], obs.variables['SM13'][jdi],obs.variables['SM19'][jdi]])
+sm_15 = np.mean([obs.variables['SM2'][jdi],obs.variables['SM8'][jdi], obs.variables['SM14'][jdi],obs.variables['SM20'][jdi]])
+sm_30 = np.mean([obs.variables['SM3'][jdi],obs.variables['SM9'][jdi], obs.variables['SM15'][jdi],obs.variables['SM21'][jdi]])
+sm_45 = np.mean([obs.variables['SM4'][jdi],obs.variables['SM10'][jdi],obs.variables['SM16'][jdi],obs.variables['SM22'][jdi]])
+sm_60 = np.mean([obs.variables['SM5'][jdi],obs.variables['SM11'][jdi],obs.variables['SM17'][jdi],obs.variables['SM23'][jdi]])
+sm_73 = np.mean([obs.variables['SM6'][jdi],obs.variables['SM12'][jdi],obs.variables['SM18'][jdi],obs.variables['SM24'][jdi]])					
+sm_ob = np.array([sm_05,sm_05,sm_15,sm_30,sm_45,sm_60,sm_73])
+z_obm = np.array([0.0,0.05,0.15,0.30,0.45,0.60,0.725])
+
+# interpolate soil moisture to temperature grid
+sm_oi = np.interp(z_obs,z_obm,sm_ob)
 
 # soil type from USDA 11-category + peat
 #  1 = sand
@@ -30,40 +65,61 @@ measSoilMois = [0.24,0.247,0.269,0.274,0.310,0.330,0.330,0.360,0.450,0.470,0.470
 # 10 = silty clay
 # 11 = clay
 # 12 = peat
-soilType = np.array([11,11,11,11,11,11,12,12,12,12,12,12,12])
+stype = np.full((nsoil),11)
 
 # write output
 of = open('inputSoil.dat','w')
 os = '{0:^15} {1:^15s} {2:^15s} {3:^15s}\n'
 os = os.format('soil_z','soil_type','soil_T','soil_q')
 of.write(os)
-for z in range(nSoil):
+for z in range(nsoil):
 	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}\n"
-	os = os.format(measZ[z],soilType[z],measSoilTemp[z],measSoilMois[z])
+	os = os.format(z_obs[z],stype[z],st_ob[z],sm_oi[z])
 	of.write(os)
 of.close()
 
-################################################
-# Read met tower data for u,v,T,q for 20121024 #
-################################################
+###################################
+# Read met tower data for u,v,T,q #
+###################################
+
+# end time is 9 hours, so 6*9 = 54
+tend  = tidx+55
 
 # open MET data
-met = np.array([float(d) for d in open('utahLES.dat').read().split()])
+met = nc.MFDataset('observations/cesar_surface_meteo_lc1_t10_v1.0_200607.nc')
 
 # grab variables
-tt = met[0::7]
-uc = met[1::7]
-vc = met[2::7]
-pt = met[4::7]
-qv = met[5::7]
+tm = met.variables['time'][tidx:tend]*3600.
+ws = met.variables['F010'][tidx:tend]
+wd = met.variables['D010'][tidx:tend]
+pt = met.variables['TA002'][tidx:tend]
+pa = met.variables['P0'][tidx:tend]
+qs = met.variables['Q002'][tidx:tend]/1000
+
+# compute wind components
+uc = -ws*np.sin(wd*np.pi/180)
+vc = -ws*np.cos(wd*np.pi/180)
+
+# time dimension
+ntime = len(tm)
+
+#################################
+# Read radiation data for R_net #
+#################################
+rad = nc.MFDataset('observations/cesar_surface_radiation_lc1_t10_v1.0_200607.nc')
+swu = rad.variables['SWU'][tidx:tend]
+swd = rad.variables['SWD'][tidx:tend]
+lwu = rad.variables['LWU'][tidx:tend]
+lwd = rad.variables['LWD'][tidx:tend]
+net = swd-swu+lwd-lwu
 
 ##############################
 # Write all time series data #
 ##############################
 of = open('inputMetr.dat','w')
-os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s}\n'.format('atm_u','atm_v','atm_T','atm_q')
+os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('atm_u','atm_v','atm_T','atm_q', 'R_net')
 of.write(os)
-for t in range(len(tt)):
-	os = "{0:15.8E}  {1:15.8E}  {2:15.8E}  {3:15.8E}\n".format(uc[t], vc[t], pt[t], qv[t])
+for t in range(ntime):
+	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qs[t], net[t])
 	of.write(os)
 of.close()
