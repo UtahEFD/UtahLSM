@@ -183,7 +183,7 @@ int main () {
         UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
                         nsoilz,soil_z,soil_type,soil_T,
-                        soil_T_last,soil_q,soil_q_last,
+                        soil_T_last,soil_q,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,

@@ -47,11 +47,11 @@ namespace soil {
     
     // compute soil thermal conductivity/diffusivity
     struct soilThermalTransfer soilThermalTransfer(const std::vector<double> &psi_nsat,
-                                            const std::vector<double> &porosity, 
-                                            const std::vector<double> &soil_q, 
-                                            const std::vector<double> &b, 
-                                            const std::vector<double> &Ci, 
-                                            const int depth) {
+                                                   const std::vector<double> &porosity,
+                                                   const std::vector<double> &soil_q,
+                                                   const std::vector<double> &b,
+                                                   const std::vector<double> &Ci,
+                                                   const int depth) {
         
         struct soilThermalTransfer transfer;
         transfer.d.resize(depth);
@@ -79,11 +79,11 @@ namespace soil {
     
     // compute average soil moisture transfer
     struct soilMoistureTransfer soilMoistureTransfer(const std::vector<double>& psi_nsat,
-                                      const std::vector<double>& K_nsat, 
-                                      const std::vector<double>& porosity, 
-                                      const std::vector<double>& soil_q, 
-                                      const std::vector<double>& b, 
-                                      const int depth) {
+                                                     const std::vector<double>& K_nsat,
+                                                     const std::vector<double>& porosity,
+                                                     const std::vector<double>& soil_q,
+                                                     const std::vector<double>& b,
+                                                     const int depth) {
         
         // struct to hold transfer coefficientssoilThermalTransfer
         struct soilMoistureTransfer transfer;

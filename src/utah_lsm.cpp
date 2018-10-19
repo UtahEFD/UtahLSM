@@ -26,7 +26,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  double atm_p,double atm_ws,double atm_T,double atm_q, 
                  int nsoilz,std::vector<double>& soil_z,std::vector<int>& soil_type,
                  std::vector<double>& soil_T,std::vector<double>& soil_T_last,
-                 std::vector<double>& soil_q,std::vector<double>& soil_q_last,
+                 std::vector<double>& soil_q,
                  int julian_day, double utc, double latitude, double longitude,
                  double albedo, double emissivity, double R_net, int comp_rad,
                  double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
@@ -34,7 +34,8 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  first(first),dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
                  atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
                  nsoilz(nsoilz),soil_z(soil_z),soil_type(soil_type),soil_T(soil_T),
-                 soil_T_last(soil_T_last),soil_q(soil_q),soil_q_last(soil_q_last),       julian_day(julian_day),utc(utc),latitude(latitude),longitude(longitude),
+                 soil_T_last(soil_T_last),soil_q(soil_q),
+                 julian_day(julian_day),utc(utc),latitude(latitude),longitude(longitude),
                  albedo(albedo),emissivity(emissivity),R_net(R_net),comp_rad(comp_rad),
                  zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                  ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq),flux_gr(flux_gr) {
@@ -48,12 +49,10 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     // set soil properties at each depth
     setSoilProperties();
     
-    // initial time requires estimate of fluxes
-    //if (first) computeFluxes(soil_T[0],soil_q[0]);
-    
     // check whether users provide net radiation
-    if (comp_rad==true) computeRadiation();
-    
+    if (this->comp_rad==1) {
+        computeRadiation();
+    }
     // solve the surface energy balance
     solveSEB();
     
@@ -62,7 +61,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     
     // save current temperature and moisture
     soil_T_last = soil_T;
-    soil_q_last = soil_q;
+    //soil_q_last = soil_q;
     
     // solve diffusion equations
     solveDiffusion(1);
@@ -339,10 +338,8 @@ void UtahLSM :: solveSEB() {
 double UtahLSM :: computeSEB(double sfc_T) {
     
     // local variables
-    int int_depth=0;
     int depth = nsoilz;
     double Qg, Qh, Ql, SEB;
-    double heat_cap, dz, dT;
     std::vector<double> K_soil(depth);
     
     // compute fluxes using passed in values
@@ -473,74 +470,6 @@ void UtahLSM :: solveSMB() {
             break;
         }
     }
-}
-
-
-// computes SMB
-double UtahLSM :: computeSMB(double sfc_q) {
-    
-    // local variables
-    int depth = nsoilz;
-    double W, E, P, SMB;
-    double psi_n0, psi_n1, psi_n2;
-    struct soil::soilMoistureTransfer transfer;
-    std::vector<double> K_n;
-    std::vector<double> q_prof;
-    
-    // Set precipitation to zero for now
-    P = 0;
-    
-    // adjust surface value for transfer calculation
-    q_prof    = soil_q;
-    q_prof[0] = sfc_q;
-    
-    // moisture potential at first level below ground
-    psi_n0 = std::abs(psi_sat[0])*std::pow(porosity[0]/sfc_q,b[0]);
-    psi_n1 = std::abs(psi_sat[1])*std::pow(porosity[1]/soil_q[1],b[1]);
-    psi_n2 = std::abs(psi_sat[2])*std::pow(porosity[2]/soil_q[2],b[2]);
-    
-    // compute initial soil moisture flux
-    transfer = soil::soilMoistureTransfer(psi_sat,K_sat,porosity,q_prof,b,depth);
-    K_n      = transfer.k;
-        
-    //if (first) {
-    W = c::rho_wat*0.5*(K_n[0]+K_n[1])*((psi_n0 - psi_n1)/(soil_z[0]-soil_z[1]) + 1);
-    
-    // update evaporation
-    computeFluxes(soil_T[0],sfc_q);
-    E = c::rho_air*flux_wq;
-    //gnd_q = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],soil_T[0],sfc_q,atm_p); 
-    //E     = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
-    
-    // compute surface energy balance
-    SMB = W + E - P;
-    return SMB;
-}
-
-// computes derivative of SMB wrt surface moisture
-double UtahLSM :: computeDSMB(double sfc_q) {
-	
-    
-    // local variables
-    double C1, C2, C3, C4, dz, es, qs, dSMB_dq;
-    
-    dz = soil_z[0] - soil_z[1];
-    es = 6.1078*std::exp(17.269*(soil_T[0]-273.15)/(soil_T[0]-35.86));
-    qs = 0.622*(es/(atm_p-0.378*es));
-	//C1 = c::rho_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)*qs;
-    bool sat = sfc_q / porosity[0] < 0.75;
-    if (sat) {
-        C1 = c::rho_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)*qs/(0.75*porosity[0]);
-    } else {
-        C1 = 0;
-    }
-    C2 = (c::rho_wat*K_sat[0])/(std::pow(porosity[0],2*b[0]+3));
-    C3 = psi_sat[0]*std::pow(porosity[0],b[0])/dz;
-    C4 = C2*C3;
-
-    dSMB_dq = C1 + (b[0]+3)*C4*std::pow(sfc_q,(b[0]+2)) + (2*b[0]+3)*C2*std::pow(sfc_q,(2*b[0]+2));
-    
-    return dSMB_dq;
 }
 
 // integrate soil heat diffusion equation
