@@ -369,7 +369,6 @@ void UtahLSM :: solveSMB() {
     double flux_sm_last, flux_sm, flux_sm2;
     double K_n_avg, D_n_avg;
     double delta = 0.5, flux_criteria = .001;
-    std::vector<double> psi;
     std::vector<double> D_n;
     std::vector<double> K_n;
     struct soil::moistureTransfer transfer;
