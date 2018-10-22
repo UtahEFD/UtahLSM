@@ -249,7 +249,6 @@ namespace soil {
             properties.K_sat[d]    = K_list[soil];
             properties.Ci[d]       = Ci_list[soil];
         }
-                           
         return properties;
     }  
 };
