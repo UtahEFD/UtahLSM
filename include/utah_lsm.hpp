@@ -39,7 +39,7 @@ class UtahLSM {
         double surf_T_last;
         double surf_q_last;
 
-    std::vector<double> b;
+        std::vector<double> b;
         std::vector<double> psi_sat;
         std::vector<double> porosity;
 		std::vector<double> K_sat;

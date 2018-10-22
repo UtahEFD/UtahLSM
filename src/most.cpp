@@ -10,6 +10,11 @@
 #include "constants.hpp"
 #include <cmath>
 #include <iostream>
+
+namespace {
+    namespace c = Constants;
+}
+
 namespace most {
     
     // gradient momentum functions
@@ -43,7 +48,7 @@ namespace most {
     }
     double psimUnstable(const double zeta) {
         double x = std::pow( (1.-(16.*zeta)), 0.25);
-        return 2.*std::log((1.+x)/2.)+std::log((1+std::pow(x,2.))/2.)-2*std::atan(x)+Constants::pi/2.;
+        return 2.*std::log((1.+x)/2.)+std::log((1+std::pow(x,2.))/2.)-2*std::atan(x)+c::pi/2.;
     }
     
     // integral scalar functions
@@ -60,9 +65,9 @@ namespace most {
     
     // log-law functions
     double fm(const double zm_over_zo, const double zeta_m, const double zeta_o) {
-        return Constants::vonk / (std::log(zm_over_zo) - psim(zeta_m) + psim(zeta_o));
+        return c::vonk / (std::log(zm_over_zo) - psim(zeta_m) + psim(zeta_o));
     }
     double fh(const double zs_over_zt, const double zeta_s, const double zeta_t) {
-        return Constants::vonk / (std::log(zs_over_zt) - psih(zeta_s) + psih(zeta_t));
+        return c::vonk / (std::log(zs_over_zt) - psih(zeta_s) + psih(zeta_t));
     }
 };

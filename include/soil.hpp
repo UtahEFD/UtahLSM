@@ -38,6 +38,8 @@ namespace soil {
 	    std::vector<double> Ci;
     };
     
+    double heatCapacity(const double, const double, const double);
+    
     double surfaceMixingRatio(const double,const double, const double,
                               const double,const double, const double);
     

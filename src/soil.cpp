@@ -16,6 +16,11 @@ namespace {
 
 namespace soil {
     
+    // compute heat capacity
+    double heatCapacity(const double porosity, const double Ci, const double soil_q) {
+        return (1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air;
+    }
+    
     // compute surface mixing ratio
     double surfaceMixingRatio(const double psi_nsat, const double porosity, 
                               const double b, const double sfc_T, 

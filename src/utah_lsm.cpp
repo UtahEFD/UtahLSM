@@ -71,7 +71,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
 // Set soil properties at each depth
 void UtahLSM :: setSoilProperties() {
 	
-	soil::soilProperties soilProperties = soil::soilTypeProperties(soil_type,nsoilz,1);
+    soil::soilProperties soilProperties = soil::soilTypeProperties(soil_type,nsoilz,1);
 
 	b        = soilProperties.b;
 	psi_sat  = soilProperties.psi_sat;
@@ -93,6 +93,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     double heat_cap,dT, dz;
     struct soil::soilThermalTransfer transfer;
     std::vector<double> K(depth);
+    
     // compute surface mixing ratio
     gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],sfc_T,sfc_q,atm_p);
     
@@ -135,7 +136,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             // Integrate time change to depth of minimum flux
             for (int d=0; d<int_depth; ++d) {
                 
-                heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
+                heat_cap = soil::heatCapacity(porosity[d], Ci[d], soil_q[d]);
                 dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
                 if (d==0) {
                     dz = soil_z[d] - soil_z[d+1];
@@ -163,20 +164,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil::surfaceSoilMoisture(psi_sat[0], porosity[0], b[0],
                                                   soil_T[0],gnd_q, atm_p);
-//            double e = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
-//            double q_sat  = 0.622*(e/(atm_p-0.378*e));
-//            double rh = gnd_q / q_sat;
-//
-//            if (rh < 0.75) {
-//                soil_q[0] = (0.75*gnd_q*porosity[0])/q_sat;
-//            } else {
-//                std::cout<<"Shit dawg it is moist"<<std::endl;
-//                soil_q[0] = porosity[0];
-//            }
-//            flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
             std::cout<<"*** "<<atm_q<<" "<<gnd_q<<" "<<soil_q[0]<<" "<<soil_q[1]<<" "<<flux_wq<<" "<<ustar<<std::endl;
-            //if (i>2) throw(1);
-            
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -214,9 +202,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
 
 // compute net radiation
 void UtahLSM :: computeRadiation() {
-
-    R_net = radiation::net(soil_T[0],emissivity,julian_day,utc,
-                           latitude,longitude,albedo);
+    R_net = radiation::net(soil_T[0],emissivity,julian_day,utc,latitude,longitude,albedo);
 }
 
 // Solve the surface energy balance
@@ -363,11 +349,8 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     // local variables
     double heat_cap, dSEB_dT;
     
-    // compute heat capacity of soil surface
-    #warning TODO: Move heat capacity to soil class
-    heat_cap = (1-porosity[0])*Ci[0] + soil_q[0]*c::Ci_wat + (porosity[0]-soil_q[0])*c::Cp_air;
-    
     //compute derivative of SEB wrt temperature
+    heat_cap = soil::heatCapacity(porosity[0], Ci[0], soil_q[0]);
     dSEB_dT = - 4.*emissivity*c::sb*std::pow(sfc_T,3.) 
               - c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
               - heat_cap*(soil_z[0]-soil_z[1])/(2*dt);
@@ -438,7 +421,10 @@ void UtahLSM :: solveSMB() {
 
         // update soil moisture
         soil_q[0] = porosity[0]*std::pow(psi_sat[0]/psi_n0,(1./b[0]));
-
+        
+        double psi_n02 =psi_sat[0]*(std::pow(soil_q[0]/porosity[0],-b[0]));
+        std::cout<<psi_n0<<" "<<psi_n02<<std::endl;
+        
         // update evaporation
         // computeFluxes(2);
         //E = -c::rho_air*flux_wq;
