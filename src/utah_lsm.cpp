@@ -24,16 +24,17 @@ namespace {
 
 UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double z_s, 
                  double atm_p,double atm_ws,double atm_T,double atm_q, 
-                 int nsoilz,std::vector<double>& soil_z,std::vector<int>& soil_type,
-                 std::vector<double>& soil_T,std::vector<double>& soil_T_last,
-                 std::vector<double>& soil_q,
+                 int nsoilz,int soil_param, int soil_model, std::vector<double>& soil_z,
+                 std::vector<int>& soil_type, std::vector<double>& soil_T,
+                 std::vector<double>& soil_T_last,std::vector<double>& soil_q,
                  int julian_day, double utc, double latitude, double longitude,
                  double albedo, double emissivity, double R_net, int comp_rad,
                  double& zeta_m,double& zeta_s,double& zeta_o,double& zeta_t,
                  double& ustar, double& flux_wT, double& flux_wq, double& flux_gr) : 
                  first(first),dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
                  atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
-                 nsoilz(nsoilz),soil_z(soil_z),soil_type(soil_type),soil_T(soil_T),
+                 nsoilz(nsoilz),soil_param(soil_param), soil_model(soil_model),
+                 soil_z(soil_z),soil_type(soil_type),soil_T(soil_T),
                  soil_T_last(soil_T_last),soil_q(soil_q),
                  julian_day(julian_day),utc(utc),latitude(latitude),longitude(longitude),
                  albedo(albedo),emissivity(emissivity),R_net(R_net),comp_rad(comp_rad),
@@ -71,7 +72,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
 // Set soil properties at each depth
 void UtahLSM :: setSoilProperties() {
 	
-    struct soil::properties soilProperties = soil::properties(soil_type,nsoilz,1);
+    struct soil::properties soilProperties = soil::properties(soil_type,nsoilz,soil_param);
 
 	b        = soilProperties.b;
 	psi_sat  = soilProperties.psi_sat;
@@ -374,7 +375,7 @@ void UtahLSM :: solveSMB() {
     struct soil::moistureTransfer transfer;
 
     // moisture potential at first level below ground
-    psi = soil::waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, 2);
+    psi = soil::waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, soil_model);
 
     // compute initial soil moisture flux
     transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);

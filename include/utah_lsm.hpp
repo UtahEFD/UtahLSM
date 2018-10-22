@@ -22,7 +22,7 @@ class UtahLSM {
         // input variables
         bool first;
         double dt, z_o, z_t, z_m, z_s, atm_p, atm_ws, atm_T, atm_q;
-        int nsoilz;
+        int soil_param, soil_model, nsoilz;
         std::vector<double> &soil_z;
         std::vector<int> &soil_type;
         std::vector<double> &soil_T;
@@ -59,9 +59,9 @@ class UtahLSM {
     public :
         UtahLSM(bool, double, double, double, double, double,
                 double, double, double, double,
-                int, std::vector<double>&, std::vector<int>&, 
-                std::vector<double>&, std::vector<double>&,
-                std::vector<double>&,
+                int, int, int, std::vector<double>&,
+                std::vector<int>&, std::vector<double>&,
+                std::vector<double>&,std::vector<double>&,
                 int, double, double, double,
                 double, double, double,int,
                 double&,double&,double&,double&,
