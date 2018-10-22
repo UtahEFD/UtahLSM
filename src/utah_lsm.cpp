@@ -33,7 +33,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  double& ustar, double& flux_wT, double& flux_wq, double& flux_gr) : 
                  first(first),dt(dt),z_o(z_o),z_t(z_t),z_m(z_m),z_s(z_s),
                  atm_p(atm_p),atm_ws(atm_ws),atm_T(atm_T),atm_q(atm_q),
-                 nsoilz(nsoilz),soil_param(soil_param), soil_model(soil_model),
+                 soil_param(soil_param),soil_model(soil_model),nsoilz(nsoilz),
                  soil_z(soil_z),soil_type(soil_type),soil_T(soil_T),
                  soil_T_last(soil_T_last),soil_q(soil_q),
                  julian_day(julian_day),utc(utc),latitude(latitude),longitude(longitude),
