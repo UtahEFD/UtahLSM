@@ -45,7 +45,6 @@ class UtahLSM {
         std::vector<double> residual;
 		std::vector<double> K_sat;
 		std::vector<double> Ci;
-        std::vector<double> psi;
         
         // functions
         void setSoilProperties();

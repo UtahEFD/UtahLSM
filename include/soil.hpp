@@ -40,12 +40,16 @@ namespace soil {
     double heatCapacity(const double, const double, const double);
     
     double surfaceMixingRatio(const double,const double, const double,
-                              const double,const double, const double);
+                              const double,const double, const double,
+                              const double, const int);
     
     double surfaceWaterContent(const double,const double, const double,
                                const double,const double, const double);
     
     double heatCapacity(const double, const double, const double);
+    
+    double waterPotential(const double, const double, const double,
+                          const double, const double, const int);
     
     std::vector<double> waterPotential(const std::vector<double>&, const std::vector<double>&,
                                        const std::vector<double>&, const std::vector<double>&,

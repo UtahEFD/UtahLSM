@@ -22,12 +22,15 @@ namespace soil {
     }
     
     // compute surface mixing ratio
-    double surfaceMixingRatio(const double psi_nsat, const double porosity, 
-                              const double b, const double sfc_T, 
-                              const double sfc_q, const double atm_p) {
-        
-        double psi_n    = psi_nsat*std::pow((porosity/sfc_q),b);
-        double h        = std::exp(c::grav*psi_n/(c::Rv*sfc_T));
+    double surfaceMixingRatio(const double psi_sat, const double porosity,
+                              const double residual,  const double b,
+                              const double sfc_T, const double sfc_q,
+                              const double atm_p, const int model) {
+
+        //double psi      = waterPotential(psi_sat, porosity, residual, sfc_q, b, model);
+        //if (psi>psi_sat) psi = psi_sat;
+        double psi    = psi_sat*std::pow((porosity/sfc_q),b);
+        double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
         //double w        = sfc_q/porosity;
         //double h        = w < 0.75 ? w/0.75 : 1;
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
@@ -52,11 +55,11 @@ namespace soil {
     
     // compute soil thermal conductivity/diffusivity
     struct thermalTransfer thermalTransfer(const std::vector<double> &psi_nsat,
-                                                   const std::vector<double> &porosity,
-                                                   const std::vector<double> &soil_q,
-                                                   const std::vector<double> &b,
-                                                   const std::vector<double> &Ci,
-                                                   const int depth) {
+                                           const std::vector<double> &porosity,
+                                           const std::vector<double> &soil_q,
+                                           const std::vector<double> &b,
+                                           const std::vector<double> &Ci,
+                                           const int depth) {
         
         struct thermalTransfer transfer;
         transfer.d.resize(depth);
@@ -84,11 +87,11 @@ namespace soil {
     
     // compute average soil moisture transfer
     struct moistureTransfer moistureTransfer(const std::vector<double>& psi_nsat,
-                                                     const std::vector<double>& K_nsat,
-                                                     const std::vector<double>& porosity,
-                                                     const std::vector<double>& soil_q,
-                                                     const std::vector<double>& b,
-                                                     const int depth) {
+                                             const std::vector<double>& K_nsat,
+                                             const std::vector<double>& porosity,
+                                             const std::vector<double>& soil_q,
+                                             const std::vector<double>& b,
+                                             const int depth) {
         
         // struct to hold transfer coefficientssoilThermalTransfer
         struct moistureTransfer transfer;
@@ -106,7 +109,31 @@ namespace soil {
         return transfer;
     }
     
-    // compute soil water potential
+    // compute soil water potential (single level)
+    double waterPotential(const double psi_sat, const double porosity,
+                          const double residual, const double soil_q,
+                          const double b, const int model) {
+        
+        // local variables
+        double psi, Se;
+        
+        // compute soil water potential
+        Se = (soil_q-residual)/(porosity-residual);
+        if (model==1 || model==2) {
+            psi = psi_sat*std::pow(Se,-b);
+            if (psi>psi_sat) psi = psi_sat;
+        } else if (model==3) {
+            double m = 1 / (1+b);
+            double n = (1+b)/b;
+            psi = psi_sat*std::pow((std::pow(Se,-1/m)-1), 1/n);
+        } else {
+            std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
+            throw(1);
+        }
+        return psi;
+    }
+    
+    // compute soil water potential (full column)
     std::vector<double> waterPotential(const std::vector<double>& psi_sat,
                                        const std::vector<double>& porosity,
                                        const std::vector<double>& residual,
@@ -158,7 +185,6 @@ namespace soil {
     // 12 = peat
     struct properties properties(const std::vector<int>& soil_type, const int depth, const int src) {
         
-        
         std::vector<double>b_list;   // exponent (unitless)
         std::vector<double>psi_list; // saturation moisture potential (m)
         std::vector<double>por_list; // porosity (volume/volume)
@@ -179,6 +205,7 @@ namespace soil {
             
             // Clapp and Hornberger (1974)
             case 1:
+            {
                 b_list   = { 4.05, 4.38,  4.90,  5.30,  5.39,  7.12,
                              7.75, 8.52, 10.40, 10.40, 11.40,  7.75};
                 
@@ -195,9 +222,11 @@ namespace soil {
                 
                 Ci_list  = { 1.47e6, 1.41e6, 1.34e6, 1.27e6, 1.21e6, 1.18e6,
                              1.32e6, 1.23e6, 1.18e6, 1.15e6, 1.09e6, 0.84e6};
-            
+                break;
+            }
             // Cosby et al. (1984)
             case 2:
+            {
                 b_list   = { 2.79, 4.26,  4.74,  5.33,  5.25, 6.77,
                              8.72, 8.17, 10.73, 10.39, 10.55, 7.75};
                 
@@ -214,9 +243,11 @@ namespace soil {
                 
                 Ci_list  = {1.47e6, 1.41e6, 1.34e6, 1.27e6, 1.21e6, 1.18e6,
                             1.32e6, 1.23e6, 1.18e6, 1.15e6, 1.09e6, 0.84e6};
-            
+                break;
+            }
             // Rawls and Brakensiek (1982) [uses geomtric means for psi and b
             case 3:
+            {
                 b_list   = { 1.69, 2.11, 3.11, 4.55, 4.74, 4.00,
                              5.15, 6.62, 5.95, 7.87, 7.63, 7.75};
                 
@@ -234,6 +265,28 @@ namespace soil {
                 
                 Ci_list  = { 1.47e6, 1.41e6, 1.34e6, 1.27e6, 1.21e6, 1.18e6,
                              1.32e6, 1.23e6, 1.18e6, 1.15e6, 1.09e6, 0.84e6};
+                break;
+            }
+            default:
+            {
+                b_list   = { 4.05, 4.38,  4.90,  5.30,  5.39,  7.12,
+                    7.75, 8.52, 10.40, 10.40, 11.40,  7.75};
+                
+                psi_list = { -0.121, -0.090, -0.218, -0.786, -0.478, -0.299,
+                    -0.356, -0.630, -0.153, -0.490, -0.405, -0.356};
+                
+                por_list = { 0.395, 0.410, 0.435, 0.485, 0.451, 0.420,
+                    0.477, 0.476, 0.426, 0.492, 0.482, 0.863};
+                
+                res_list = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
+                
+                K_list   = { 1.76e-4, 1.56e-4, 3.41e-5, 7.20e-6, 7.00e-6, 6.30e-6,
+                    1.70e-6, 2.50e-6, 2.20e-6, 1.00e-6, 1.30e-6, 8.00e-6};
+                
+                Ci_list  = { 1.47e6, 1.41e6, 1.34e6, 1.27e6, 1.21e6, 1.18e6,
+                    1.32e6, 1.23e6, 1.18e6, 1.15e6, 1.09e6, 0.84e6};
+                break;
+            }
         }
          
         // loop through each depth to assign soil type properties

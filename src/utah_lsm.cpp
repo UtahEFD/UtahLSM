@@ -97,7 +97,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     std::vector<double> K(depth);
     
     // compute surface mixing ratio
-    gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],b[0],sfc_T,sfc_q,atm_p);
+    gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
+                                      sfc_T,sfc_q,atm_p,soil_model);
     
     // sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
@@ -149,7 +150,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
                 }
                 flux_gr = flux_gr + 0.5*( heat_cap*dT*dz/dt );
             }
-            std::cout<<"----- "<<flux_gr<<std::endl;
+            //std::cout<<"----- "<<flux_gr<<std::endl;
         }
         
         // compute friction velocity
@@ -166,7 +167,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil::surfaceWaterContent(psi_sat[0], porosity[0], b[0],
                                                   soil_T[0],gnd_q, atm_p);
-            std::cout<<"*** "<<atm_q<<" "<<gnd_q<<" "<<soil_q[0]<<" "<<soil_q[1]<<" "<<flux_wq<<" "<<ustar<<std::endl;
+            //std::cout<<"*** "<<atm_q<<" "<<gnd_q<<" "<<soil_q[0]<<" "<<soil_q[1]<<" "<<flux_wq<<" "<<ustar<<std::endl;
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -369,6 +370,7 @@ void UtahLSM :: solveSMB() {
     double flux_sm_last, flux_sm, flux_sm2;
     double K_n_avg, D_n_avg;
     double delta = 0.5, flux_criteria = .001;
+    std::vector<double> psi;
     std::vector<double> D_n;
     std::vector<double> K_n;
     struct soil::moistureTransfer transfer;
