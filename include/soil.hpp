@@ -18,18 +18,17 @@
 
 namespace soil {
 	
-	struct soilMoistureTransfer {
+	struct moistureTransfer {
         std::vector<double> d; 
         std::vector<double> k;
     };
     
-    struct soilThermalTransfer {
+    struct thermalTransfer {
         std::vector<double> d;
         std::vector<double> k;
     };
     
-    struct soilProperties {
-	    
+    struct properties {
 	    std::vector<double> b;
 	    std::vector<double> psi_sat;
 	    std::vector<double> porosity;
@@ -43,18 +42,24 @@ namespace soil {
     double surfaceMixingRatio(const double,const double, const double,
                               const double,const double, const double);
     
-    double surfaceSoilMoisture(const double,const double, const double,
+    double surfaceWaterContent(const double,const double, const double,
                                const double,const double, const double);
-                              
-    soilThermalTransfer soilThermalTransfer(const std::vector<double>&, const std::vector<double>&,
-                                            const std::vector<double>&, const std::vector<double>&, 
-                                            const std::vector<double>&, const int);
     
-    soilMoistureTransfer soilMoistureTransfer(const std::vector<double>&, const std::vector<double>&,
+    double heatCapacity(const double, const double, const double);
+    
+    std::vector<double> waterPotential(const std::vector<double>&, const std::vector<double>&,
+                                       const std::vector<double>&, const std::vector<double>&,
+                                       const std::vector<double>&, const int, const int);
+    
+    thermalTransfer thermalTransfer(const std::vector<double>&, const std::vector<double>&,
+                                        const std::vector<double>&, const std::vector<double>&,
+                                        const std::vector<double>&, const int);
+    
+    moistureTransfer moistureTransfer(const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const int);
     
-    soilProperties soilTypeProperties(const std::vector<int>&, const int, const int);
+    properties properties(const std::vector<int>&, const int, const int);
 };
 
 #endif

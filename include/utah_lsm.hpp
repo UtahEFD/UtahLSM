@@ -42,6 +42,7 @@ class UtahLSM {
         std::vector<double> b;
         std::vector<double> psi_sat;
         std::vector<double> porosity;
+        std::vector<double> residual;
 		std::vector<double> K_sat;
 		std::vector<double> Ci;
         

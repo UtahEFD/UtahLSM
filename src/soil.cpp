@@ -39,7 +39,7 @@ namespace soil {
     }
     
     // compute soil surface moisture from surface mixing ratio
-    double surfaceSoilMoisture(const double psi_nsat, const double porosity, 
+    double surfaceWaterContent(const double psi_nsat, const double porosity,
                                const double b, const double sfc_T, 
                                const double sfc_r, const double atm_p) {
         
@@ -51,14 +51,14 @@ namespace soil {
     }
     
     // compute soil thermal conductivity/diffusivity
-    struct soilThermalTransfer soilThermalTransfer(const std::vector<double> &psi_nsat,
+    struct thermalTransfer thermalTransfer(const std::vector<double> &psi_nsat,
                                                    const std::vector<double> &porosity,
                                                    const std::vector<double> &soil_q,
                                                    const std::vector<double> &b,
                                                    const std::vector<double> &Ci,
                                                    const int depth) {
         
-        struct soilThermalTransfer transfer;
+        struct thermalTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
         double psi_n, pf;
@@ -83,7 +83,7 @@ namespace soil {
     }
     
     // compute average soil moisture transfer
-    struct soilMoistureTransfer soilMoistureTransfer(const std::vector<double>& psi_nsat,
+    struct moistureTransfer moistureTransfer(const std::vector<double>& psi_nsat,
                                                      const std::vector<double>& K_nsat,
                                                      const std::vector<double>& porosity,
                                                      const std::vector<double>& soil_q,
@@ -91,7 +91,7 @@ namespace soil {
                                                      const int depth) {
         
         // struct to hold transfer coefficientssoilThermalTransfer
-        struct soilMoistureTransfer transfer;
+        struct moistureTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
         
@@ -104,6 +104,42 @@ namespace soil {
         }
                 
         return transfer;
+    }
+    
+    // compute soil water potential
+    std::vector<double> waterPotential(const std::vector<double>& psi_sat,
+                                       const std::vector<double>& porosity,
+                                       const std::vector<double>& residual,
+                                       const std::vector<double>& soil_q,
+                                       const std::vector<double>& b,
+                                       const int depth, const int model) {
+        
+        // local variables
+        double Se;
+        std::vector<double> psi(depth);
+        
+        // loop through each depth
+        for (int d=0; d<depth; ++d) {
+            
+            Se = (soil_q[d]-residual[d])/(porosity[d]-residual[d]);
+            
+            // model=1: Brooks and Corey (1964)
+            // model=2: Campbell (1974)
+            // formulations are computationally equivalent because
+            //    Campbell sets residual = 0
+            if (model==1 || model==2) {
+                psi[d] = psi_sat[d]*std::pow(Se,-b[d]);
+                if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
+            } else if (model==3) {
+                double m = 1 / (1+b[d]);
+                double n = (1+b[d])/b[d];
+                psi[d] = psi_sat[d]*std::pow((std::pow(Se,-1/m)-1), 1/n);
+            } else {
+                std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
+                throw(1);
+            }
+        }
+        return psi;
     }
     
     // set soil type properties at each depth
@@ -120,7 +156,7 @@ namespace soil {
     // 10 = silty clay
     // 11 = clay
     // 12 = peat
-    soilProperties soilTypeProperties(const std::vector<int>& soil_type, const int depth, const int src) {
+    struct properties properties(const std::vector<int>& soil_type, const int depth, const int src) {
         
         
         std::vector<double>b_list;   // exponent (unitless)
@@ -131,10 +167,11 @@ namespace soil {
         std::vector<double>Ci_list;  // volumetric heat capacity (J/m^3/K)
         
         // struct to hold soil properties
-        soilProperties properties;
+        struct properties properties;
         properties.b.resize(depth);
         properties.psi_sat.resize(depth);
         properties.porosity.resize(depth);
+        properties.residual.resize(depth);
         properties.K_sat.resize(depth);
         properties.Ci.resize(depth);
         
@@ -208,6 +245,7 @@ namespace soil {
             properties.b[d]        = b_list[soil];
             properties.psi_sat[d]  = psi_list[soil];
             properties.porosity[d] = por_list[soil];
+            properties.residual[d] = res_list[soil];
             properties.K_sat[d]    = K_list[soil];
             properties.Ci[d]       = Ci_list[soil];
         }
