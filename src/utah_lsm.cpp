@@ -379,7 +379,7 @@ void UtahLSM :: solveSMB() {
     psi = soil::waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, soil_model);
 
     // compute initial soil moisture flux
-    transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
+    transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
     K_n      = transfer.k;
     D_n      = transfer.d;
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
@@ -419,7 +419,7 @@ void UtahLSM :: solveSMB() {
         E = c::rho_air*flux_wq;//(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // update soil moisture transfer
-        transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,soil_q,b,2);
+        transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
         K_n      = transfer.k;
         K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
         
@@ -477,7 +477,7 @@ void UtahLSM :: solveDiffusion(int type) {
     } else {
         //std::cout<<"Computing soil moisture diffusion: "<<std::endl;
         //std::cout<<"----- soil lev 1: "<<soil_q[1]<<std::endl;
-        transfer_m = soil::moistureTransfer(psi_sat,K_sat,porosity,soil_q,b,nsoilz);
+        transfer_m = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,nsoilz,soil_model);
         D      = transfer_m.d;
         K      = transfer_m.k;
         //std::cout<<"----- Kn 1: "<<K_n[1]<<std::endl;

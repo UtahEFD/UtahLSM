@@ -27,17 +27,11 @@ namespace soil {
                               const double sfc_T, const double sfc_q,
                               const double atm_p, const int model) {
 
-        //double psi      = waterPotential(psi_sat, porosity, residual, sfc_q, b, model);
-        //if (psi>psi_sat) psi = psi_sat;
-        double psi    = psi_sat*std::pow((porosity/sfc_q),b);
+        double psi      = waterPotential(psi_sat, porosity, residual, sfc_q, b, model);
         double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
-        //double w        = sfc_q/porosity;
-        //double h        = w < 0.75 ? w/0.75 : 1;
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
         double hum_spec = h*hum_sat;
-        
-        //return hum_spec/(1-hum_spec);
         return hum_spec;
     }
     
@@ -86,14 +80,16 @@ namespace soil {
     }
     
     // compute average soil moisture transfer
-    struct moistureTransfer moistureTransfer(const std::vector<double>& psi_nsat,
-                                             const std::vector<double>& K_nsat,
+    struct moistureTransfer moistureTransfer(const std::vector<double>& psi_sat,
+                                             const std::vector<double>& K_sat,
                                              const std::vector<double>& porosity,
+                                             const std::vector<double>& residual,
                                              const std::vector<double>& soil_q,
                                              const std::vector<double>& b,
-                                             const int depth) {
+                                             const int depth, const int model) {
         
-        // struct to hold transfer coefficientssoilThermalTransfer
+        // local variables
+        double Se, dpsi_dtheta;
         struct moistureTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
@@ -101,9 +97,24 @@ namespace soil {
         // loop through each depth
         for (int d=0; d<depth; ++d) {
             
-            transfer.d[d] = (b[d]*K_nsat[d]*std::abs(psi_nsat[d])/soil_q[d])
-                            *std::pow(soil_q[d]/porosity[d],(b[d]+3.));
-            transfer.k[d] = K_nsat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
+            Se = (soil_q[d]-residual[d])/(porosity[d]-residual[d]);
+            
+            // model=1: Brooks and Corey (1964)
+            // model=2: Campbell (1974)
+            // model=3: van Genuchten (1980)
+            // formulations are computationally equivalent because
+            //    Campbell sets residual = 0
+            if (model==1 || model==2) {
+                transfer.k[d] = K_sat[d]*std::pow(Se,(2.*b[d]+3.));
+                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-b[d])/(soil_q[d]-residual[d]);
+                transfer.d[d] = transfer.k[d]*dpsi_dtheta;
+            } else if (model==3) {
+                double m = 1 / (1+b[d]);
+                
+                transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow((1 - (std::pow(1 - std::pow(Se,1/m),m))),2);
+                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-1/m)*std::pow(std::pow(Se,-1/m)-1,-m)/(soil_q[d]-residual[d]);
+                transfer.d[d] = transfer.k[d]*dpsi_dtheta;
+            }
         }
                 
         return transfer;
@@ -152,6 +163,7 @@ namespace soil {
             
             // model=1: Brooks and Corey (1964)
             // model=2: Campbell (1974)
+            // model=3: van Genuchten (1980)
             // formulations are computationally equivalent because
             //    Campbell sets residual = 0
             if (model==1 || model==2) {

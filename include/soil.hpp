@@ -61,7 +61,8 @@ namespace soil {
     
     moistureTransfer moistureTransfer(const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,
-                                      const std::vector<double>&, const int);
+                                      const std::vector<double>&, const std::vector<double>&,
+                                      const int, const int);
     
     properties properties(const std::vector<int>&, const int, const int);
 };
