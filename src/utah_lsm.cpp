@@ -192,8 +192,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         if ( (first) && (i == 0)) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
-            soil_q[0] = soil::surfaceWaterContent(psi_sat[0], porosity[0], b[0],
-                                                  soil_T[0],gnd_q, atm_p);
+            soil_q[0] = soil::surfaceWaterContent(psi_sat[0], porosity[0], residual[0],
+                                                  b[0],soil_T[0],gnd_q, atm_p,soil_model);
             //std::cout<<"*** "<<atm_q<<" "<<gnd_q<<" "<<soil_q[0]<<" "<<soil_q[1]<<" "<<flux_wq<<" "<<ustar<<std::endl;
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);

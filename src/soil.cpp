@@ -28,24 +28,40 @@ namespace soil {
                               const double atm_p, const int model) {
 
         double psi      = waterPotential(psi_sat, porosity, residual, sfc_q, b, model);
-        //std::cout<<"-x-x-x-x-x-x-x "<<psi<<std::endl;
         double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
-        double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
-        double hum_sat  = 0.622*(e/(atm_p-0.378*e));
+        double es        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
+        double hum_sat  = 0.622*(es/(atm_p-0.378*es));
         double hum_spec = h*hum_sat;
         return hum_spec;
     }
     
     // compute soil surface moisture from surface mixing ratio
-    double surfaceWaterContent(const double psi_nsat, const double porosity,
-                               const double b, const double sfc_T, 
-                               const double sfc_r, const double atm_p) {
+    double surfaceWaterContent(const double psi_sat, const double porosity,
+                               const double residual, const double b,
+                               const double sfc_T, const double sfc_q,
+                               const double atm_p, const int model) {
         
+        double soil_q;
         double es     = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double qs     = 0.622*(es/(atm_p-0.378*es));
-        double ln     = std::log(sfc_r / qs);
+        double ln     = std::log(sfc_q/qs);
+        double soil_e = porosity-residual;
         
-        return porosity*std::pow((std::abs(c::grav*psi_nsat))/(c::Rv*sfc_T*std::abs(ln)),(1./b));
+        // model=1: Brooks and Corey (1964)
+        // model=2: Campbell (1974)
+        // model=3: van Genuchten (1980)
+        if (model==1) {
+            soil_q = residual+soil_e*std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),-1./b);
+        } else if (model==2) {
+            soil_q = porosity*std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),-1./b);
+        } else if (model==3) {
+            double m = 1 / (1+b);
+            soil_q = residual+soil_e*std::pow(1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m)),-m);
+        } else {
+            std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
+            throw(1);
+        }
+        return soil_q;
     }
     
     // compute soil thermal conductivity/diffusivity

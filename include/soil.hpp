@@ -43,8 +43,9 @@ namespace soil {
                               const double,const double, const double,
                               const double, const int);
     
-    double surfaceWaterContent(const double,const double, const double,
-                               const double,const double, const double);
+    double surfaceWaterContent(const double,const double,const double,
+                               const double,const double,const double,
+                               const double,const int);
     
     double heatCapacity(const double, const double, const double);
     
