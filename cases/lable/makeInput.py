@@ -110,6 +110,17 @@ H1m    = np.interp(tt1m,tt,H)
 LE1m   = np.interp(tt1m,tt,LE)
 
 tc = 0
+badU = []
+for r in ws:
+	if (r==0):
+		badU.append(tc)
+	tc+=1
+
+for b in badU:
+	uc[b] = uc[badU[0]-1]
+	vc[b] = vc[badU[0]-1]
+
+tc = 0
 badT = []
 for r in pt:
 	if (str(r)=='--'):
@@ -143,10 +154,10 @@ nt   = len(tt1)
 tt1  = np.arange(0,nt*60,60)
 nt   = len(tt)
 tt2  = np.arange(0,nt*1800,1800)
-pl.plot(tt1/3600/24,qv)
-pl.plot(tt2/3600/24,qv3)
+#pl.plot(tt1/3600/24,ws)
+#pl.plot(tt2/3600/24,qv3)
 #pl.plot(sl,sl,color='k')
-pl.show()
+#pl.show()
 
 ##############################
 # Write all time series data #

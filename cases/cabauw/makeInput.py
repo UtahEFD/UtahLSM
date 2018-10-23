@@ -92,7 +92,7 @@ ws = met.variables['F010'][:]
 wd = met.variables['D010'][:]
 pt = met.variables['TA002'][:]
 pa = met.variables['P0'][:]
-qs = met.variables['Q002'][:]/1000
+qv = met.variables['Q002'][:]/1000
 
 # compute wind components
 uc = -ws*np.sin(wd*np.pi/180)
@@ -108,6 +108,36 @@ lwu = rad.variables['LWU'][:]
 lwd = rad.variables['LWD'][:]
 net = swd-swu+lwd-lwu
 
+tc = 0
+badU = []
+for r in ws:
+        if (r==0):
+                badU.append(tc)
+        tc+=1
+
+for b in badU:
+        uc[b] = uc[badU[0]-1]
+        vc[b] = vc[badU[0]-1]
+
+tc = 0
+badT = []
+for r in pt:
+        if (str(r)=='--'):
+                badT.append(tc)
+        tc+=1
+for b in badT:
+        pt[b] = pt[badT[0]-1]
+
+tc = 0
+badQ = []
+for r in qv:
+        if (str(r)=='--'):
+                badQ.append(tc)
+        tc+=1
+
+for b in badQ:
+        qv[b] = qv[badQ[0]-1]
+
 ##############################
 # Write all time series data #
 ##############################
@@ -115,6 +145,6 @@ of = open('inputMetr.dat','w')
 os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('atm_u','atm_v','atm_T','atm_q', 'R_net')
 of.write(os)
 for t in range(ntime):
-	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qs[t], net[t])
+	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qv[t], net[t])
 	of.write(os)
 of.close()

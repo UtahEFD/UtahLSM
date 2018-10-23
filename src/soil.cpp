@@ -28,7 +28,7 @@ namespace soil {
                               const double atm_p, const int model) {
 
         double psi      = waterPotential(psi_sat, porosity, residual, sfc_q, b, model);
-        std::cout<<"-x-x-x-x-x-x-x "<<psi<<std::endl;
+        //std::cout<<"-x-x-x-x-x-x-x "<<psi<<std::endl;
         double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
@@ -174,7 +174,7 @@ namespace soil {
                 double m = 1 / (1+b[d]);
                 double n = (1+b[d])/b[d];
                 psi[d] = psi_sat[d]*std::pow((std::pow(Se,-1/m)-1), 1-m);
-                std::cout<<"-x-x-x-x-x-x-x  "<<psi[d]<<" "<<psi_sat[d]<<" "<<soil_q[d]<<" "<<residual[d]<<" "<<porosity[d]<<std::endl;
+                //std::cout<<"-x-x-x-x-x-x-x  "<<psi[d]<<" "<<psi_sat[d]<<" "<<soil_q[d]<<" "<<residual[d]<<" "<<porosity[d]<<std::endl;
                 if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
             } else {
                 std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;

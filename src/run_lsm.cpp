@@ -165,6 +165,11 @@ int main () {
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
     //nsteps = 2;
+    struct timespec start, finish;
+    double elapsed;
+    
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    
     for (int t=0; t<nsteps; ++t) {
         
         // check if first time through
@@ -172,9 +177,9 @@ int main () {
         
         // set time
         utc = utc_start + float(t+1)*dt;
-        std::cout<<"------------------------------------------"<<std::endl;
-        std::cout<<"\rProcessing time: "<<utc<<std::endl;
-        std::cout<<"------------------------------------------"<<std::endl;
+        //std::cout<<"------------------------------------------"<<std::endl;
+        //std::cout<<"\rProcessing time: "<<utc<<std::endl;
+        //std::cout<<"------------------------------------------"<<std::endl;
         // compute wind speed
         atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
         
@@ -210,8 +215,11 @@ int main () {
         soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
         soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
     }
-    std::cout<<std::endl;
-    std::cout<<"Finished!"<<std::endl;
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+    elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    //std::cout<<std::endl;
+    std::cout<<"Finished in "<<elapsed<<" seconds!"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;
     return 0;
 }
