@@ -41,6 +41,9 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
                  zeta_m(zeta_m),zeta_s(zeta_s),zeta_o(zeta_o),zeta_t(zeta_t),
                  ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq),flux_gr(flux_gr) {
 
+    // validate input
+    validateInput();
+    
     // save incoming temp and moisture
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
@@ -68,6 +71,27 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     // solve diffusion equations
     solveDiffusion(1);
     solveDiffusion(2);
+}
+
+// Validate input
+void UtahLSM :: validateInput() {
+    
+    try {
+        // check for zeros
+        if (dt==0)     throw std::invalid_argument("dt cannot equal 0");
+        if (z_o==0)    throw std::invalid_argument("z_o cannot equal 0");
+        if (z_t==0)    throw std::invalid_argument("z_t cannot equal 0");
+        if (z_m==0)    throw std::invalid_argument("z_m cannot equal 0");
+        if (z_s==0)    throw std::invalid_argument("z_s cannot equal 0");
+        if (atm_p==0)  throw std::invalid_argument("atm_p cannot equal 0");
+        if (atm_ws==0) throw std::invalid_argument("atm_ws cannot equal 0");
+        if (atm_T==0)  throw std::invalid_argument("atm_T cannot equal 0");
+        if (atm_q==0)  throw std::invalid_argument("atm_q cannot equal 0");
+        
+    } catch (const std::invalid_argument& ia) {
+        std::cerr << "Invalid argument: " << ia.what() << '\n';
+        std::exit( EXIT_FAILURE );
+    }
 }
 
 // Set soil properties at each depth

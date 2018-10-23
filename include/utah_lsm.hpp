@@ -47,6 +47,7 @@ class UtahLSM {
 		std::vector<double> Ci;
         
         // functions
+        void validateInput();
         void setSoilProperties();
         void computeFluxes(double,double);
         void computeRadiation();
