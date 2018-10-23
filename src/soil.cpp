@@ -103,19 +103,18 @@ namespace soil {
             // model=1: Brooks and Corey (1964)
             // model=2: Campbell (1974)
             // model=3: van Genuchten (1980)
-            // formulations are computationally equivalent because
-            //    Campbell sets residual = 0
-            if (model==1 || model==2) {
+            if (model==1) {
                 transfer.k[d] = K_sat[d]*std::pow(Se,(2.*b[d]+3.));
-                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-b[d])/(soil_q[d]-residual[d]);
-                transfer.d[d] = transfer.k[d]*dpsi_dtheta;
+                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-b[d])/(soil_q[d]);
+            } else if (model==2) {
+                transfer.k[d] = K_sat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
+                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],-b[d])/soil_q[d];
             } else if (model==3) {
                 double m = 1 / (1+b[d]);
-                
                 transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow(1 - (std::pow(1 - std::pow(Se,1/m),m)),2);
                 dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-1/m)*std::pow(std::pow(Se,-1/m)-1,-m)/(soil_q[d]-residual[d]);
-                transfer.d[d] = transfer.k[d]*dpsi_dtheta;
             }
+            transfer.d[d] = transfer.k[d]*dpsi_dtheta;
         }
                 
         return transfer;
@@ -129,15 +128,21 @@ namespace soil {
         // local variables
         double psi, Se;
         
-        // compute soil water potential
         Se = (soil_q-residual)/(porosity-residual);
-        if (model==1 || model==2) {
+        
+        // model=1: Brooks and Corey (1964)
+        // model=2: Campbell (1974)
+        // model=3: van Genuchten (1980)
+        if (model==1) {
             psi = psi_sat*std::pow(Se,-b);
+            if (psi>psi_sat) psi = psi_sat;
+        } else if (model==2) {
+            psi = psi_sat*std::pow(soil_q/porosity,-b);
             if (psi>psi_sat) psi = psi_sat;
         } else if (model==3) {
             double m = 1 / (1+b);
-            double n = (1+b)/b;
             psi = psi_sat*std::pow((std::pow(Se,-1/m)-1), 1-m);
+            if (psi>psi_sat) psi = psi_sat;
         } else {
             std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
             throw(1);
@@ -165,16 +170,14 @@ namespace soil {
             // model=1: Brooks and Corey (1964)
             // model=2: Campbell (1974)
             // model=3: van Genuchten (1980)
-            // formulations are computationally equivalent because
-            //    Campbell sets residual = 0
-            if (model==1 || model==2) {
+            if (model==1) {
                 psi[d] = psi_sat[d]*std::pow(Se,-b[d]);
+            } else if (model==2) {
+                psi[d] = psi_sat[d]*std::pow(soil_q[d]/porosity[d],-b[d]);
                 if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
             } else if (model==3) {
                 double m = 1 / (1+b[d]);
-                double n = (1+b[d])/b[d];
                 psi[d] = psi_sat[d]*std::pow((std::pow(Se,-1/m)-1), 1-m);
-                //std::cout<<"-x-x-x-x-x-x-x  "<<psi[d]<<" "<<psi_sat[d]<<" "<<soil_q[d]<<" "<<residual[d]<<" "<<porosity[d]<<std::endl;
                 if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
             } else {
                 std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
