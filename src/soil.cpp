@@ -28,6 +28,7 @@ namespace soil {
                               const double atm_p, const int model) {
 
         double psi      = waterPotential(psi_sat, porosity, residual, sfc_q, b, model);
+        std::cout<<"-x-x-x-x-x-x-x "<<psi<<std::endl;
         double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
         double e        = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
         double hum_sat  = 0.622*(e/(atm_p-0.378*e));
@@ -93,7 +94,7 @@ namespace soil {
         struct moistureTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
-        
+
         // loop through each depth
         for (int d=0; d<depth; ++d) {
             
@@ -111,7 +112,7 @@ namespace soil {
             } else if (model==3) {
                 double m = 1 / (1+b[d]);
                 
-                transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow((1 - (std::pow(1 - std::pow(Se,1/m),m))),2);
+                transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow(1 - (std::pow(1 - std::pow(Se,1/m),m)),2);
                 dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-1/m)*std::pow(std::pow(Se,-1/m)-1,-m)/(soil_q[d]-residual[d]);
                 transfer.d[d] = transfer.k[d]*dpsi_dtheta;
             }
@@ -136,7 +137,7 @@ namespace soil {
         } else if (model==3) {
             double m = 1 / (1+b);
             double n = (1+b)/b;
-            psi = psi_sat*std::pow((std::pow(Se,-1/m)-1), 1/n);
+            psi = psi_sat*std::pow((std::pow(Se,-1/m)-1), 1-m);
         } else {
             std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
             throw(1);
@@ -172,7 +173,9 @@ namespace soil {
             } else if (model==3) {
                 double m = 1 / (1+b[d]);
                 double n = (1+b[d])/b[d];
-                psi[d] = psi_sat[d]*std::pow((std::pow(Se,-1/m)-1), 1/n);
+                psi[d] = psi_sat[d]*std::pow((std::pow(Se,-1/m)-1), 1-m);
+                std::cout<<"-x-x-x-x-x-x-x  "<<psi[d]<<" "<<psi_sat[d]<<" "<<soil_q[d]<<" "<<residual[d]<<" "<<porosity[d]<<std::endl;
+                if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
             } else {
                 std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
                 throw(1);
@@ -281,22 +284,9 @@ namespace soil {
             }
             default:
             {
-                b_list   = { 4.05, 4.38,  4.90,  5.30,  5.39,  7.12,
-                    7.75, 8.52, 10.40, 10.40, 11.40,  7.75};
-                
-                psi_list = { -0.121, -0.090, -0.218, -0.786, -0.478, -0.299,
-                    -0.356, -0.630, -0.153, -0.490, -0.405, -0.356};
-                
-                por_list = { 0.395, 0.410, 0.435, 0.485, 0.451, 0.420,
-                    0.477, 0.476, 0.426, 0.492, 0.482, 0.863};
-                
-                res_list = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
-                
-                K_list   = { 1.76e-4, 1.56e-4, 3.41e-5, 7.20e-6, 7.00e-6, 6.30e-6,
-                    1.70e-6, 2.50e-6, 2.20e-6, 1.00e-6, 1.30e-6, 8.00e-6};
-                
-                Ci_list  = { 1.47e6, 1.41e6, 1.34e6, 1.27e6, 1.21e6, 1.18e6,
-                    1.32e6, 1.23e6, 1.18e6, 1.15e6, 1.09e6, 0.84e6};
+                throw std::invalid_argument("soil_param must be set to 1, 2, or 3");
+//                std::cout<<"soil_param must be set to 1, 2, or 3"<<std::endl;
+//                throw(1);
                 break;
             }
         }

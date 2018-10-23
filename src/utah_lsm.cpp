@@ -44,6 +44,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     // save incoming temp and moisture
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
+    
     std::cout<<"Incoming Temp:"<<soil_T[0]<<std::endl;
     std::cout<<"Incoming Mois: "<<soil_q[0]<<" "<<soil_q[1]<<std::endl;
     
@@ -95,11 +96,15 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     double heat_cap,dT, dz;
     struct soil::thermalTransfer transfer;
     std::vector<double> K(depth);
-    
+    float A2;
     // compute surface mixing ratio
     gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
                                       sfc_T,sfc_q,atm_p,soil_model);
-    
+//    if (!first) {
+//        std::cout<<"bbbbbbbbbbbbbbbbbbbb "<<gnd_q<<std::endl;
+//        std::cout<<psi_sat[0]<<" "<<porosity[0]<<" "<<residual[0]<<" "<<b[0]<<" "<<sfc_T<<" "<<sfc_q<< " "<<atm_p<< " "<<soil_model;
+//        //throw(1);
+//    }
     // sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
         
@@ -154,7 +159,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         }
         
         // compute friction velocity
-        #warning TODO: velocity check should be done in makeInput.py
         if (atm_ws==0) atm_ws = 0.1;
         ustar = atm_ws*most::fm(z_m/z_o,zeta_m,zeta_o);
         
@@ -192,6 +196,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         // check for convergence
         converged = std::abs(last_L-L) <= criteria;
         if (converged) {
+            std::cout<<"AAAAAAAAAAAAAAAAAAAA:"<<soil_q[0]<<std::endl;
+            throw(1);
             break;
         }
     }
