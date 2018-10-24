@@ -65,7 +65,8 @@ sm_oi = np.interp(z_obs,z_obm,sm_ob)
 # 10 = silty clay
 # 11 = clay
 # 12 = peat
-stype = np.full((nsoil),11)
+stype = np.full((nsoil),1)
+stype[6::] = 2
 
 # write output
 of = open('inputSoil.dat','w')

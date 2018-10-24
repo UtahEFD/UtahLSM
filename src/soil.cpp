@@ -301,6 +301,23 @@ namespace soil {
                              1.32e6, 1.23e6, 1.18e6, 1.15e6, 1.09e6, 0.84e6};
                 break;
             }
+            // Wosten (Cabauw specific)
+            case 4:
+            {
+                b_list   = { 9.09, 6.25, 2.63};
+                
+                psi_list = { -0.513, -1.053, -0.971};
+                
+                por_list = { 0.590, 0.560, 0.890};
+                
+                res_list = { 0.010, 0.010, 0.0};
+                
+                K_list   = { 5.2e-7, 1.2e-7, 1.2e-7};
+                
+                Ci_list  = { 1.2e6, 1.2e6, 1.2e6};
+                
+                break;
+            }
             default:
             {
                 throw std::invalid_argument("soil_param must be set to 1, 2, or 3");
