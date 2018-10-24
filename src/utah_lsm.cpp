@@ -124,11 +124,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // compute surface mixing ratio
     gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
                                       sfc_T,sfc_q,atm_p,soil_model);
-//    if (!first) {
-//        std::cout<<"bbbbbbbbbbbbbbbbbbbb "<<gnd_q<<std::endl;
-//        std::cout<<psi_sat[0]<<" "<<porosity[0]<<" "<<residual[0]<<" "<<b[0]<<" "<<sfc_T<<" "<<sfc_q<< " "<<atm_p<< " "<<soil_model;
-//        //throw(1);
-//    }
+    
     // sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
         
@@ -179,7 +175,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
                 }
                 flux_gr = flux_gr + 0.5*( heat_cap*dT*dz/dt );
             }
-            //std::cout<<"----- "<<flux_gr<<std::endl;
         }
         
         // compute friction velocity
@@ -301,7 +296,7 @@ void UtahLSM :: solveSEB() {
             // compute SEB and dSEB_dTs
             SEB     = computeSEB(soil_T[0]);
             dSEB_dT = computeDSEB(soil_T[0]);
-            //std::cout<<"----------- "<<soil_T[0]<<" "<<SEB<<" "<<dSEB_dT<<std::endl;
+
             // update brackets
             if (SEB<0.) temp_l = soil_T[0];
             if (SEB>0.) temp_h = soil_T[0];
@@ -323,7 +318,6 @@ void UtahLSM :: solveSEB() {
             }
             
             // check for convergence
-            //if (std::abs(dTs) <= temp_criteria) break;
             if (std::abs( (soil_T[0]-last_T)/last_T) <= temp_criteria) break;
             
             // if convergence fails, recompute flux
