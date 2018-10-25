@@ -430,9 +430,10 @@ void UtahLSM :: solveSMB() {
         // update soil moisture potential
         psi[0]    = psi[1] + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
 
-        if (psi[0]>psi_sat[0]) psi[0] = psi_sat[0];
+        //if (psi[0]>psi_sat[0]) psi[0] = psi_sat[0];
         
         // update soil moisture
+# Update this by adding another surfaceWaterContent function
         soil_q[0] = porosity[0]*std::pow(psi_sat[0]/psi[0],(1./b[0]));
         
         // update evaporation

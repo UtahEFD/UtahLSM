@@ -121,16 +121,20 @@ namespace soil {
             // model=3: van Genuchten (1980)
             if (model==1) {
                 transfer.k[d] = K_sat[d]*std::pow(Se,(2.*b[d]+3.));
-                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-b[d])/(soil_q[d]);
+                transfer.d[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(Se,(b[d]+3.))/(porosity[d]-residual[d]);
+                //dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-b[d])/(soil_q[d]);
             } else if (model==2) {
                 transfer.k[d] = K_sat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
-                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],-b[d])/soil_q[d];
+                transfer.d[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],(b[d]+3.))/soil_q[d];
+                //dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],-b[d])/soil_q[d];
             } else if (model==3) {
                 double m = 1 / (1+b[d]);
                 transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow(1 - (std::pow(1 - std::pow(Se,1/m),m)),2);
-                dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-1/m)*std::pow(std::pow(Se,-1/m)-1,-m)/(soil_q[d]-residual[d]);
+                transfer.k[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(Se,0.5-1/m)*
+                (std::pow(1-std::pow(Se,1/m),-m) + std::pow(1-std::pow(Se,1/m),m) -2)/(m*(porosity[d]-residual[d]));
+                //dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-1/m)*std::pow(std::pow(Se,-1/m)-1,-m)/(porosity[d]-residual[d]);
             }
-            transfer.d[d] = transfer.k[d]*dpsi_dtheta;
+            //transfer.d[d] = transfer.k[d]*std::abs(dpsi_dtheta);
         }
                 
         return transfer;
