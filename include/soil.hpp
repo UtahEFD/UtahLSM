@@ -43,9 +43,12 @@ namespace soil {
                               const double,const double, const double,
                               const double, const int);
     
-    double surfaceWaterContent(const double,const double,const double,
-                               const double,const double,const double,
-                               const double,const int);
+    double surfaceWaterContent(const double, const double, const double,
+                               const double, const double, const int);
+    
+    double surfaceWaterContentEstimate(const double,const double,const double,
+                                       const double,const double,const double,
+                                       const double,const int);
     
     double heatCapacity(const double, const double, const double);
     
@@ -57,8 +60,9 @@ namespace soil {
                                        const std::vector<double>&, const int, const int);
     
     thermalTransfer thermalTransfer(const std::vector<double>&, const std::vector<double>&,
-                                        const std::vector<double>&, const std::vector<double>&,
-                                        const std::vector<double>&, const int);
+                                    const std::vector<double>&, const std::vector<double>&,
+                                    const std::vector<double>&, const std::vector<double>&,
+                                    const int, const int);
     
     moistureTransfer moistureTransfer(const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,

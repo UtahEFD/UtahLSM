@@ -48,8 +48,8 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
     
-    //std::cout<<"Incoming Temp:"<<soil_T[0]<<std::endl;
-    //std::cout<<"Incoming Mois: "<<soil_q[0]<<" "<<soil_q[1]<<std::endl;
+    std::cout<<"Incoming Temp:"<<soil_T[0]<<std::endl;
+    std::cout<<"Incoming Mois: "<<soil_q[0]<<" "<<soil_q[1]<<std::endl;
     
     // set soil properties at each depth
     setSoilProperties();
@@ -71,6 +71,7 @@ UtahLSM::UtahLSM(bool first, double dt, double z_o,double z_t,double z_m,double 
     // solve diffusion equations
     solveDiffusion(1);
     solveDiffusion(2);
+                    // throw(1);
 }
 
 // Validate input
@@ -145,8 +146,9 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
         } else {
             // next time we integrate to depth of minimum flux woithin the soil
-            transfer   = soil::thermalTransfer(psi_sat,porosity,soil_q,b,Ci,depth);
+            transfer   = soil::thermalTransfer(psi_sat,porosity,residual,soil_q,b,Ci,depth,soil_model);
             K = transfer.k;
+            //flux_gr = K[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2]);
             //std::cout<<"+++++ "<<K[1]*(sfc_T - soil_T[2])/(soil_z[0]-soil_z[2])<<std::endl;
             //compute heat flux within soil and find depth of minimum
             //this is the depth to integrate time change of T
@@ -163,7 +165,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_gr = 0;
             // Integrate time change to depth of minimum flux
             for (int d=0; d<int_depth; ++d) {
-                
+
                 heat_cap = soil::heatCapacity(porosity[d], Ci[d], soil_q[d]);
                 dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
                 if (d==0) {
@@ -187,9 +189,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         if ( (first) && (i == 0)) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
-            soil_q[0] = soil::surfaceWaterContent(psi_sat[0], porosity[0], residual[0],
-                                                  b[0],soil_T[0],gnd_q, atm_p,soil_model);
-            //std::cout<<"*** "<<atm_q<<" "<<gnd_q<<" "<<soil_q[0]<<" "<<soil_q[1]<<" "<<flux_wq<<" "<<ustar<<std::endl;
+            soil_q[0] = soil::surfaceWaterContentEstimate(psi_sat[0], porosity[0], residual[0],
+                                                          b[0],soil_T[0],gnd_q, atm_p,soil_model);
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -214,6 +215,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         // check for convergence
         converged = std::abs(last_L-L) <= criteria;
         if (converged) {
+            //std::cout<<"*** "<<atm_q<<" "<<gnd_q<<" "<<soil_q[0]<<" "<<soil_q[1]<<" "<<flux_wq<<" "<<ustar<<std::endl;
+            //if (!first) throw(1);
             break;
         }
     }
@@ -333,6 +336,10 @@ void UtahLSM :: solveSEB() {
         // check for convergence
         //if (std::abs(flux_wT-last_F) <= flux_criteria) {
         if (std::abs( (flux_wT-last_F)/last_F)<=flux_criteria ) {
+            double H = c::rho_air*c::Cp_air*flux_wT;
+            double L = c::rho_air*c::Lv*flux_wq;
+            double G = flux_gr;
+            std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
             break;
         }
                 
@@ -398,25 +405,32 @@ void UtahLSM :: solveSMB() {
 
     // moisture potential at first level below ground
     psi = soil::waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, soil_model);
-
+    
+    //std::cout<<"Cccccccccc "<<psi[0]<<std::endl;
+    
     // compute initial soil moisture flux
     transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
     K_n      = transfer.k;
+    std::cout<<K_n[0]<<" "<<K_n[1]<<std::endl;
     D_n      = transfer.d;
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
     D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
     flux_sm  = c::rho_wat*K_n_avg*((psi[0] - psi[1])/(soil_z[0]-soil_z[1]) + 1);
     flux_sm2 = c::rho_wat*D_n_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
     + c::rho_wat*K_n_avg;
-
+    
+    std::cout<<"Flux SM Guess: "<<flux_sm<<std::endl;
+    
     // compute evaporation
     E = c::rho_air*flux_wq;
     
-    //std::cout<<"-------------------- E = "<<flux_wq<<std::endl;
-    //std::cout<<"-------------------- W = "<<flux_sm<<std::endl;
-    //std::cout<<"----------------------- soil_q = "<<soil_q[0]<<std::endl;
-    //std::cout<<"----------------------- soil_q1 = "<<soil_q[1]<<std::endl;
-    //std::cout<<"----------------------- K_n = "<<K_n_avg<<std::endl;
+    std::cout<<"Initial Evaporation: "<<E<<std::endl;
+    
+   //std::cout<<"-------------------- E = "<<flux_wq<<std::endl;
+   //std::cout<<"-------------------- W = "<<flux_sm<<std::endl;
+   //std::cout<<"-------------------- soil_q = "<<soil_q[0]<<std::endl;
+   //std::cout<<"-------------------- soil_q1 = "<<soil_q[1]<<std::endl;
+   //std::cout<<"-------------------- K_n = "<<K_n_avg<<std::endl;
 
     // convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
@@ -426,19 +440,33 @@ void UtahLSM :: solveSMB() {
 
         // compute new weighted soil moisture flux
         flux_sm = delta*flux_sm_last - (1.-delta)*E;
-
+        
+        std::cout<<"New Flux SM: "<<flux_sm<<std::endl;
+        std::cout<<"Old PSI: "<<psi[0]<<std::endl;
         // update soil moisture potential
         psi[0]    = psi[1] + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
-
-        //if (psi[0]>psi_sat[0]) psi[0] = psi_sat[0];
+        std::cout<<"K "<<K_n_avg<<std::endl;
+        std::cout<<"New PSI: "<<psi[0]<<std::endl;
+        
+        //std::cout<<"----------------------- psi_g = "<<psi[0]<<std::endl;
+        
+        if (psi[0]>psi_sat[0]) {
+            //std::cout<<"Shit dawg"<<std::endl;
+            psi[0] = psi_sat[0];
+        }
         
         // update soil moisture
-# Update this by adding another surfaceWaterContent function
-        soil_q[0] = porosity[0]*std::pow(psi_sat[0]/psi[0],(1./b[0]));
+        soil_q[0] = soil::surfaceWaterContent(psi[0], psi_sat[0], porosity[0],
+                                              residual[0], b[0], soil_model);
         
+        
+        //std::cout<<"----------------------- soil_g = "<<soil_q[0]<<std::endl;
         // update evaporation
-        computeFluxes(soil_T[0],soil_q[0]);
-        E = c::rho_air*flux_wq;//(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        //computeFluxes(soil_T[0],soil_q[0]);
+        //E = c::rho_air*flux_wq;//(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        double gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
+                                                 soil_T[0],soil_q[0],atm_p,soil_model);
+        E = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // update soil moisture transfer
         transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
@@ -451,11 +479,11 @@ void UtahLSM :: solveSMB() {
         converged = std::abs((E + flux_sm)/E) <=flux_criteria;
 
         if (converged) {
-            flux_wq = E/c::rho_air;
+            //flux_wq = E/c::rho_air;
             double H = c::rho_air*c::Cp_air*flux_wT;
             double L = c::rho_air*c::Lv*flux_wq;
             double G = flux_gr;
-            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
+            std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
             break;
         }
     }
@@ -488,7 +516,7 @@ void UtahLSM :: solveDiffusion(int type) {
     
     // interpolate soil_z and D_n to mid-points
     if (type==1) {
-        transfer_t = soil::thermalTransfer(psi_sat,porosity,soil_q,b,Ci,nsoilz);
+        transfer_t = soil::thermalTransfer(psi_sat,porosity,porosity,soil_q,b,Ci,nsoilz,soil_model);
         D = transfer_t.d;
         for (int i=0; i<nsoilz-1; i++) {
             K_mid[i] = 0.5*(D[i]+D[i+1]);

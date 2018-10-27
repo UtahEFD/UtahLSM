@@ -177,9 +177,9 @@ int main () {
         
         // set time
         utc = utc_start + float(t+1)*dt;
-        //std::cout<<"------------------------------------------"<<std::endl;
-        //std::cout<<"\rProcessing time: "<<utc<<std::endl;
-        //std::cout<<"------------------------------------------"<<std::endl;
+        std::cout<<"------------------------------------------"<<std::endl;
+        std::cout<<"\rProcessing time: "<<utc<<std::endl;
+        std::cout<<"------------------------------------------"<<std::endl;
         // compute wind speed
         atm_ws = sqrt( pow(atm_u[t],2) + pow(atm_v[t],2) );
         

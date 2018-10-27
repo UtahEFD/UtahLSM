@@ -35,8 +35,34 @@ namespace soil {
         return hum_spec;
     }
     
-    // compute soil surface moisture from surface mixing ratio
-    double surfaceWaterContent(const double psi_sat, const double porosity,
+    // compute soil surface moisture
+    double surfaceWaterContent(const double psi, const double psi_sat,
+                               const double porosity, const double residual,
+                               const double b, const int model) {
+        
+        double soil_q;
+        double soil_e = porosity-residual;
+        
+        // model=1: Brooks and Corey (1964)
+        // model=2: Campbell (1974)
+        // model=3: van Genuchten (1980)
+        if (model==1) {
+            soil_q = residual+soil_e*std::pow(psi_sat/psi,(1./b));
+        } else if (model==2) {
+            soil_q = porosity*std::pow(psi_sat/psi,(1./b));
+        } else if (model==3) {
+            double m = 1 / (1+b);
+            soil_q = residual+soil_e*std::pow( (1 / (1 + std::pow(psi/psi_sat, (1/(1-m))))),m);
+        } else {
+            std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
+            throw(1);
+        }
+        return soil_q;
+        
+    }
+    
+    // estimate soil surface moisture from surface mixing ratio
+    double surfaceWaterContentEstimate(const double psi_sat, const double porosity,
                                const double residual, const double b,
                                const double sfc_T, const double sfc_q,
                                const double atm_p, const int model) {
@@ -56,7 +82,7 @@ namespace soil {
             soil_q = porosity*std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),-1./b);
         } else if (model==3) {
             double m = 1 / (1+b);
-            soil_q = residual+soil_e*std::pow(1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m)),-m);
+            soil_q = residual+soil_e*std::pow(1/ (1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m))),m);
         } else {
             std::cout<<"Soil model must be 1, 2, or 3"<<std::endl;
             throw(1);
@@ -65,23 +91,25 @@ namespace soil {
     }
     
     // compute soil thermal conductivity/diffusivity
-    struct thermalTransfer thermalTransfer(const std::vector<double> &psi_nsat,
+    struct thermalTransfer thermalTransfer(const std::vector<double> &psi_sat,
                                            const std::vector<double> &porosity,
+                                           const std::vector<double> &residual,
                                            const std::vector<double> &soil_q,
                                            const std::vector<double> &b,
                                            const std::vector<double> &Ci,
-                                           const int depth) {
+                                           const int depth, const int model) {
         
         struct thermalTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
-        double psi_n, pf;
+        double psi, pf;
         
         // loop through each depth
         for (int d=0; d<depth; ++d) {
             
-            psi_n = 100.*psi_nsat[d]*std::pow((porosity[d]/soil_q[d]),b[d]);
-            pf = std::log10(std::abs(psi_n));
+            psi = 100.*waterPotential(psi_sat[d],porosity[d],residual[d],soil_q[d],b[d],model);
+            //)  psi_nsat[d]*std::pow((porosity[d]/soil_q[d]),b[d]);
+            pf = std::log10(std::abs(psi));
             if (pf <= 5.1) {
                 transfer.k[d] = 418.46*std::exp(-(pf+2.7));
             } else {
@@ -89,7 +117,7 @@ namespace soil {
             }
                         
             // convert to thermal diffusivity
-            double heat_cap = (1-porosity[d])*Ci[d] + soil_q[d]*c::Ci_wat + (porosity[d]-soil_q[d])*c::Cp_air;
+            double heat_cap = heatCapacity(porosity[d], Ci[d], soil_q[d]);
             transfer.d[d] = transfer.k[d] / heat_cap;
         }
         
@@ -106,10 +134,10 @@ namespace soil {
                                              const int depth, const int model) {
         
         // local variables
-        double Se, dpsi_dtheta;
+        double Se;
         struct moistureTransfer transfer;
-        transfer.d.resize(depth);
         transfer.k.resize(depth);
+        transfer.d.resize(depth);
 
         // loop through each depth
         for (int d=0; d<depth; ++d) {
@@ -121,20 +149,16 @@ namespace soil {
             // model=3: van Genuchten (1980)
             if (model==1) {
                 transfer.k[d] = K_sat[d]*std::pow(Se,(2.*b[d]+3.));
-                transfer.d[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(Se,(b[d]+3.))/(porosity[d]-residual[d]);
-                //dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-b[d])/(soil_q[d]);
+                transfer.d[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(Se,(b[d]+2.))/(porosity[d]-residual[d]);
             } else if (model==2) {
                 transfer.k[d] = K_sat[d]*std::pow(soil_q[d]/porosity[d],(2.*b[d]+3.));
-                transfer.d[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],(b[d]+3.))/soil_q[d];
-                //dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],-b[d])/soil_q[d];
+                transfer.d[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(soil_q[d]/porosity[d],(b[d]+2.))/soil_q[d];
             } else if (model==3) {
                 double m = 1 / (1+b[d]);
-                transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow(1 - (std::pow(1 - std::pow(Se,1/m),m)),2);
-                transfer.k[d] = -b[d]*K_sat[d]*psi_sat[d]*std::pow(Se,0.5-1/m)*
+                transfer.k[d] = K_sat[d]*std::sqrt(Se)*std::pow(1 - std::pow(1 - std::pow(Se,1/m),m),2);
+                transfer.d[d] = (1-m)*K_sat[d]*psi_sat[d]*std::pow(Se,0.5-1/m)*
                 (std::pow(1-std::pow(Se,1/m),-m) + std::pow(1-std::pow(Se,1/m),m) -2)/(m*(porosity[d]-residual[d]));
-                //dpsi_dtheta   = -b[d]*psi_sat[d]*std::pow(Se,-1/m)*std::pow(std::pow(Se,-1/m)-1,-m)/(porosity[d]-residual[d]);
             }
-            //transfer.d[d] = transfer.k[d]*std::abs(dpsi_dtheta);
         }
                 
         return transfer;
@@ -158,6 +182,7 @@ namespace soil {
             if (psi>psi_sat) psi = psi_sat;
         } else if (model==2) {
             psi = psi_sat*std::pow(soil_q/porosity,-b);
+            //std::cout<<psi<<" "<<psi_sat<<" "<<soil_q<<" "<<std::pow(soil_q/porosity,-b)<<std::endl;
             if (psi>psi_sat) psi = psi_sat;
         } else if (model==3) {
             double m = 1 / (1+b);
@@ -192,6 +217,7 @@ namespace soil {
             // model=3: van Genuchten (1980)
             if (model==1) {
                 psi[d] = psi_sat[d]*std::pow(Se,-b[d]);
+                if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
             } else if (model==2) {
                 psi[d] = psi_sat[d]*std::pow(soil_q[d]/porosity[d],-b[d]);
                 if (psi[d]>psi_sat[d]) psi[d] = psi_sat[d];
