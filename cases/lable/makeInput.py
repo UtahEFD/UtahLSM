@@ -97,7 +97,7 @@ qv3  = data.variables['mean_q'][:]*18.0153/1000/1.2/1000
 # construct time
 nt   = len(tt)
 tt   = np.arange(0,nt*1800,1800)
-tt1m = np.arange(0,3*86400,60)
+tt1m = np.arange(0,31*86400,60)
 
 # interpolate from 30-minute to 1-minute frequency to match MET
 lwD1m  = np.interp(tt1m,tt,lwD)
@@ -108,6 +108,17 @@ rNet1m = np.interp(tt1m,tt,rNet)
 G1m    = np.interp(tt1m,tt,G)
 H1m    = np.interp(tt1m,tt,H)
 LE1m   = np.interp(tt1m,tt,LE)
+
+tc = 0
+badU = []
+for r in ws:
+	if (r==0):
+		badU.append(tc)
+	tc+=1
+
+for b in badU:
+	uc[b] = uc[badU[0]-1]
+	vc[b] = vc[badU[0]-1]
 
 tc = 0
 badT = []
@@ -143,10 +154,10 @@ nt   = len(tt1)
 tt1  = np.arange(0,nt*60,60)
 nt   = len(tt)
 tt2  = np.arange(0,nt*1800,1800)
-pl.plot(tt1/3600/24,qv)
-pl.plot(tt2/3600/24,qv3)
+#pl.plot(tt1/3600/24,ws)
+#pl.plot(tt2/3600/24,qv3)
 #pl.plot(sl,sl,color='k')
-pl.show()
+#pl.show()
 
 ##############################
 # Write all time series data #

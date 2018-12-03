@@ -38,9 +38,11 @@ int main () {
     double dt, utc_start;
     int nsteps;
     
-    // namelist space section
+    // namelist length section
     double z_o, z_t, z_m, z_s;
-    int nsoilz;
+    
+    // namelist soil section
+    int soil_param, soil_model, nsoilz;
     
     //namelist pressure section
     double atm_p;
@@ -76,7 +78,11 @@ int main () {
     n_error += input.getItem(&z_t,    "length", "z_t",    "");
     n_error += input.getItem(&z_m,    "length", "z_m",    "");
     n_error += input.getItem(&z_s,    "length", "z_s",    "");
-    n_error += input.getItem(&nsoilz, "length", "nsoilz", "");
+    
+    // grab values from the soil section
+    n_error += input.getItem(&soil_param, "soil", "soil_param", "");
+    n_error += input.getItem(&soil_model, "soil", "soil_model", "");
+    n_error += input.getItem(&nsoilz,     "soil", "nsoilz",     "");
     
     // grab values from radiation section
     n_error += input.getItem(&albedo,     "radiation", "albedo",     "");
@@ -159,6 +165,11 @@ int main () {
     std::cout<<"Running UtahLSM"<<std::endl;;
     std::cout<<"##############################################################"<<std::endl;
     //nsteps = 2;
+    struct timespec start, finish;
+    double elapsed;
+    
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    
     for (int t=0; t<nsteps; ++t) {
         
         // check if first time through
@@ -182,8 +193,9 @@ int main () {
         // Call the model
         UtahLSM utahlsm(first,dt,z_o,z_t,z_m,z_s,
                         atm_p,atm_ws,atm_T[t],atm_q[t],
-                        nsoilz,soil_z,soil_type,soil_T,
-                        soil_T_last,soil_q,soil_q_last,
+                        nsoilz,soil_param,soil_model,
+                        soil_z,soil_type,soil_T,
+                        soil_T_last,soil_q,
                         julian_day,utc,latitude,longitude,
                         albedo,emissivity,net_r,comp_rad,
                         zeta_m,zeta_s,zeta_o,zeta_t,
@@ -203,8 +215,11 @@ int main () {
         soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
         soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
     }
-    std::cout<<std::endl;
-    std::cout<<"Finished!"<<std::endl;
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+    elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    //std::cout<<std::endl;
+    std::cout<<"Finished in "<<elapsed<<" seconds!"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;
     return 0;
 }
