@@ -2,7 +2,7 @@
 
 import netCDF4 as nc
 import numpy as np
-import os,sys
+import os,sys,json
 import pylab as pl
 
 ####################################
@@ -16,14 +16,14 @@ import pylab as pl
 # soil types are SiL, SiL, C, CL, CL
 
 # soil sensor depths for STAMP
-measZ = [0.0, 0.05, 0.10, 0.20, 0.50, 0.75, 1.0]
-nSoil = len(measZ)
+z_obs = [0.0, 0.05, 0.10, 0.20, 0.50, 0.75, 1.0]
+nsoil = len(z_obs)
 
 # soil temperature
-measSoilTemp = [301.95,301.95,300.45,297.52,293.52,291.90,291.95]
+st_ob = [301.95,301.95,300.45,297.52,293.52,291.90,291.95]
 
 # soil moisture
-measSoilMois = [0.1115,0.1115,0.1707,0.3603,0.3276,0.1549,20.8900]
+sm_ob = [0.1115,0.1115,0.1707,0.3603,0.3276,0.1549,.2089]
 
 # soil type from USDA 11-category + peat
 # Lamont - 0-19: silty loam, 20-34: clay, 35-60: clay loam
@@ -39,19 +39,7 @@ measSoilMois = [0.1115,0.1115,0.1707,0.3603,0.3276,0.1549,20.8900]
 # 10 = silty clay
 # 11 = clay
 # 12 = peat
-
-soilType     = [4,4,4,4,11,8,8,8]
-
-# write output
-of = open('inputSoil.dat','w')
-os = '{0:^15} {1:^15s} {2:^15s} {3:^15s}\n'
-os = os.format('soil_z','soil_type','soil_T','soil_q')
-of.write(os)
-for z in range(nSoil):
-	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}\n"
-	os = os.format(measZ[z],soilType[z],measSoilTemp[z],measSoilMois[z])
-	of.write(os)
-of.close()
+stype     = [4,4,4,4,11,8,8,8]
 
 ################################################
 # Read met tower data for u,v,T,q for 20121024 #
@@ -61,24 +49,24 @@ of.close()
 met = nc.MFDataset('observations/sgpmetE13.b1.*.cdf')
 
 # grab variables
-tt = met.variables['time'][:]
+tm = met.variables['time'][:]
 ws = met.variables['wspd_vec_mean'][:]
 wd = met.variables['wdir_vec_mean'][:]
 pt = met.variables['temp_mean'][:] + 273.15
 pa = met.variables['atmos_pressure'][:]*10
 pv = met.variables['vapor_pressure_mean'][:]*10
 
-# fix times to be continuous across days
-#for ttt in range(1,31):
-#    ti = ttt*1440
- #   tt[ti::] = tt[ti::]+tt[ti-1]+60
-
 # compute wind components
 uc = -ws*np.sin(wd*np.pi/180)
 vc = -ws*np.cos(wd*np.pi/180)
-print(len(uc))
+
 # compute water vapor mixing ratio
-qv = 0.622 * pv / (pa-pv)
+qs = 0.622 * pv / (pa-pv)
+
+# time dimension
+dt    = tm[1] - tm[0]
+ntime = len(tm)
+t_utc = (tm-86400)%86400
 
 ########################################
 # Read net radiation data for 20121024 #
@@ -88,15 +76,16 @@ qv = 0.622 * pv / (pa-pv)
 data = nc.MFDataset('observations/sgpseb*')
 
 # grab variables
-tt   = data.variables['time_offset'][:]
+tm2  = data.variables['time_offset'][:]
 rNet = data.variables['net_radiation'][:]
 
-nt   = len(tt)
-tt   = np.arange(0,nt*1800,1800)
-tt1m = np.arange(0,30*86400,60)
+# construct time
+nt    = len(tm2)
+dt2   = tm2[1]-tm2[0]
+tm2   = np.arange(0,nt*dt2,dt2)
+
 # interpolate from 30-minute to 1-minute frequency to match MET
-#tt1m   = np.arange(tt[0],tt[-1]+1800,60)
-rNet1m = np.interp(tt1m,tt,rNet)
+rNet1m = np.interp(tm,tm2,rNet)
 
 tc = 0
 badT = []
@@ -109,21 +98,61 @@ for b in badT:
 
 tc = 0
 badQ = []
-for r in qv:
+for r in qs:
 	if (str(r)=='--'):
 		badQ.append(tc)
 	tc+=1
 
 for b in badQ:
-	qv[b] = qv[badQ[0]-1]
+	qs[b] = qs[badQ[0]-1]
 
 ##############################
 # Write all time series data #
 ##############################
-of = open('inputMetr.dat','w')
-os1 = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('atm_u','atm_v','atm_T','atm_q', 'R_net')
-of.write(os1)
-for t in range(len(tt1m)):
-	os1 = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qv[t], rNet1m[t])
-	of.write(os1)
-of.close()
+metr = {}
+metr['time'] = {}
+metr['data'] = {}
+
+metr['time']['ntime'] = ntime
+metr['time']['tstep'] = float(dt)
+metr['data']['atm_U'] = ws.tolist()
+metr['data']['atm_T'] = pt.tolist()
+metr['data']['atm_q'] = qs.tolist()
+metr['data']['atm_p'] = pa.tolist()
+metr['data']['R_net'] = rNet1m.tolist()
+with open('inputOffline.json', 'w') as outfile:  
+    json.dump(metr,outfile,indent=4)
+
+########################
+# Settings for UtahLSM #
+########################
+namelist = {}
+namelist['length'] = {}
+namelist['soil'] = {}
+namelist['radiation'] = {}
+
+# length scale section
+namelist['length']['z_o'] = 0.0500
+namelist['length']['z_t'] = 0.0005
+namelist['length']['z_m'] = 10.0 
+namelist['length']['z_s'] = 2.0
+
+# soil section
+namelist['soil']['nsoil']     = nsoil
+namelist['soil']['param']     = 3
+namelist['soil']['model']     = 2
+namelist['soil']['soil_z']    = z_obs
+namelist['soil']['soil_type'] = stype
+namelist['soil']['soil_T']    = st_ob
+namelist['soil']['soil_q']    = sm_ob
+
+# radiation section
+namelist['radiation']['utc_start']  = t_utc[0] 
+namelist['radiation']['comp_rad']   = 0
+namelist['radiation']['albedo']     = 0.25
+namelist['radiation']['emissivity'] = 0.96
+namelist['radiation']['latitude']   = 36.6906
+namelist['radiation']['longitude']  = 97.5564
+namelist['radiation']['julian_day'] = 153
+with open('inputLSM.json', 'w') as outfile:  
+    json.dump(namelist,outfile,indent=4)

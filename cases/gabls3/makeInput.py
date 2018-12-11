@@ -1,15 +1,13 @@
 #!/usr/bin/env python
-
+import sys, json
 import netCDF4 as nc
 import numpy as np
-import sys
-import pylab as pl
 
 ##########################################
-# Manual entry of soil data for 20121024 #
+# Soil data taken from Cesar Observatory #
 ##########################################
 
-# measurements are every 10 minutes
+# measurements are saved 10 minutes
 # so there are 144 per day
 date = 2
 tidx = (date-1)*144
@@ -45,7 +43,8 @@ sm_15 = np.mean([obs.variables['SM2'][jdi],obs.variables['SM8'][jdi], obs.variab
 sm_30 = np.mean([obs.variables['SM3'][jdi],obs.variables['SM9'][jdi], obs.variables['SM15'][jdi],obs.variables['SM21'][jdi]])
 sm_45 = np.mean([obs.variables['SM4'][jdi],obs.variables['SM10'][jdi],obs.variables['SM16'][jdi],obs.variables['SM22'][jdi]])
 sm_60 = np.mean([obs.variables['SM5'][jdi],obs.variables['SM11'][jdi],obs.variables['SM17'][jdi],obs.variables['SM23'][jdi]])
-sm_73 = np.mean([obs.variables['SM6'][jdi],obs.variables['SM12'][jdi],obs.variables['SM18'][jdi],obs.variables['SM24'][jdi]])					
+sm_73 = np.mean([obs.variables['SM6'][jdi],obs.variables['SM12'][jdi],obs.variables['SM18'][jdi],obs.variables['SM24'][jdi]])				
+
 sm_ob = np.array([sm_05,sm_05,sm_15,sm_30,sm_45,sm_60,sm_73])
 z_obm = np.array([0.0,0.05,0.15,0.30,0.45,0.60,0.725])
 
@@ -66,17 +65,6 @@ sm_oi = np.interp(z_obs,z_obm,sm_ob)
 # 11 = clay
 # 12 = peat
 stype = np.full((nsoil),11)
-
-# write output
-of = open('inputSoil.dat','w')
-os = '{0:^15} {1:^15s} {2:^15s} {3:^15s}\n'
-os = os.format('soil_z','soil_type','soil_T','soil_q')
-of.write(os)
-for z in range(nsoil):
-	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}\n"
-	os = os.format(z_obs[z],stype[z],st_ob[z],sm_oi[z])
-	of.write(os)
-of.close()
 
 ###################################
 # Read met tower data for u,v,T,q #
@@ -101,7 +89,9 @@ uc = -ws*np.sin(wd*np.pi/180)
 vc = -ws*np.cos(wd*np.pi/180)
 
 # time dimension
+dt    = tm[1] - tm[0]
 ntime = len(tm)
+t_utc = (tm-86400)%86400
 
 #################################
 # Read radiation data for R_net #
@@ -116,10 +106,50 @@ net = swd-swu+lwd-lwu
 ##############################
 # Write all time series data #
 ##############################
-of = open('inputMetr.dat','w')
-os = '{0:^15s} {1:^15s} {2:^15s} {3:^15s} {4:^15s}\n'.format('atm_u','atm_v','atm_T','atm_q', 'R_net')
-of.write(os)
-for t in range(ntime):
-	os = "{0:15.8E}  {1:2.8E}  {2:2.8E}  {3:2.8E}  {4:2.8E}\n".format(uc[t], vc[t], pt[t], qs[t], net[t])
-	of.write(os)
-of.close()
+metr = {}
+metr['time'] = {}
+metr['data'] = {}
+
+metr['time']['ntime'] = ntime 
+metr['time']['tstep'] = float(dt)
+metr['data']['atm_U'] = ws.tolist()
+metr['data']['atm_T'] = pt.tolist()
+metr['data']['atm_q'] = qs.tolist()
+metr['data']['atm_p'] = pa.tolist()
+metr['data']['R_net'] = net.tolist()
+with open('inputOffline.json', 'w') as outfile:  
+    json.dump(metr,outfile,indent=4)
+
+########################
+# Settings for UtahLSM #
+########################
+namelist = {}
+namelist['length'] = {}
+namelist['soil'] = {}
+namelist['radiation'] = {}
+
+# length scale section
+namelist['length']['z_o'] = 0.15
+namelist['length']['z_t'] = 0.0015
+namelist['length']['z_m'] = 10.0 
+namelist['length']['z_s'] = 2.0
+
+# soil section
+namelist['soil']['nsoil']     = nsoil
+namelist['soil']['param']     = 3
+namelist['soil']['model']     = 2
+namelist['soil']['soil_z']    = z_obs.tolist()
+namelist['soil']['soil_type'] = stype.tolist()
+namelist['soil']['soil_T']    = st_ob.tolist()
+namelist['soil']['soil_q']    = sm_oi.tolist()
+
+# radiation section
+namelist['radiation']['utc_start']  = t_utc[0] 
+namelist['radiation']['comp_rad']   = 0
+namelist['radiation']['albedo']     = 0.33
+namelist['radiation']['emissivity'] = 0.99
+namelist['radiation']['latitude']   = 51.9711
+namelist['radiation']['longitude']  = -4.9267
+namelist['radiation']['julian_day'] = 183
+with open('inputLSM.json', 'w') as outfile:  
+    json.dump(namelist,outfile,indent=4)

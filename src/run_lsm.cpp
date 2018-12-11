@@ -70,9 +70,9 @@ int main () {
     // initialize an instance of UtahLSM
     Input* inputLSM = new Input("inputLSM.json");
     flux_wq = 0;
-    UtahLSM* utahlsm = new UtahLSM(inputLSM,ustar,flux_wT,flux_wq);
-    std::cout<<"##############################################################"<<std::endl;
     
+    UtahLSM* utahlsm = new UtahLSM(inputLSM,ustar,flux_wT,flux_wq);
+
     struct timespec start, finish;
     double utc=0,elapsed;
     
@@ -91,7 +91,15 @@ int main () {
         
         // run the model
         utahlsm->run();
-        
+    }
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+    elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    std::cout<<std::endl;
+    std::cout<<"New flux: "<<flux_wq<<std::endl;
+    std::cout<<"Finished in "<<elapsed<<" seconds!"<<std::endl;
+    std::cout<<"##############################################################"<<std::endl;
+    
 
 //        // write output data
 //        const std::vector<size_t> index = {static_cast<unsigned long>(t)};
@@ -106,16 +114,6 @@ int main () {
 //        Rnet_var.putVar(index, net_r);
 //        soil_T_var.putVar(time_height_index, time_height_size, &soil_T[0]);
 //        soil_q_var.putVar(time_height_index, time_height_size, &soil_q[0]);
-    }
-    clock_gettime(CLOCK_MONOTONIC, &finish);
-    elapsed = (finish.tv_sec - start.tv_sec);
-    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
-    std::cout<<std::endl;
-    std::cout<<"New flux: "<<flux_wq<<std::endl;
-    std::cout<<"Finished in "<<elapsed<<" seconds!"<<std::endl;
-    std::cout<<"##############################################################"<<std::endl;
-    
-
 //    // create output file
 //    std::cout<<"##############################################################"<<std::endl;
 //    std::cout<<"Creating output file"<<std::endl;

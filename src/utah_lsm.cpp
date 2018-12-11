@@ -47,6 +47,10 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
     input->getItem(soil_T,"soil","soil_T");
     input->getItem(soil_q,"soil","soil_q");
     
+    // initialize history arrays for first run
+    soil_T_last = soil_T;
+    soil_q_last = soil_q;
+    
     // modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
                    bind2nd(std::multiplies<double>(), -1.0));

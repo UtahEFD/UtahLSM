@@ -37,9 +37,9 @@ class UtahLSM {
         std::vector<double> soil_q;
     
         // local variables
-        double flux_gr;
-        double zeta_m, zeta_s, zeta_o, zeta_t;
-        double surf_T_last, surf_q_last; 
+        double flux_gr=0;
+        double zeta_m=0, zeta_s=0, zeta_o=0, zeta_t=0;
+        double surf_T_last=0, surf_q_last=0;
         std::vector<double> soil_T_last;
         std::vector<double> soil_q_last;
     
@@ -60,7 +60,7 @@ class UtahLSM {
     
         // time data
         bool first=true;
-        double tstep, runtime, utc=0;
+        double tstep=0, runtime=0, utc=0;
     
         // internal functions
         void setSoilProperties();
