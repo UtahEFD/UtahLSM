@@ -11,6 +11,7 @@
 #include <vector>
 #include <numeric>
 #include <functional>
+#include <algorithm>
 #include "utah_lsm.hpp"
 #include "json.hpp"
 #include "constants.hpp"
@@ -37,7 +38,7 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
     input->getItem(z_t,"length","z_t");
     input->getItem(z_m,"length","z_m");
     input->getItem(z_s,"length","z_s");
-    
+                       
     // soil section
     input->getItem(nsoilz,"soil","nsoil");
     input->getItem(soil_param,"soil","param");
@@ -46,7 +47,7 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
     input->getItem(soil_type,"soil","soil_type");
     input->getItem(soil_T,"soil","soil_T");
     input->getItem(soil_q,"soil","soil_q");
-    
+                       
     // initialize history arrays for first run
     soil_T_last = soil_T;
     soil_q_last = soil_q;
@@ -54,13 +55,13 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
     // modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
                    bind2nd(std::multiplies<double>(), -1.0));
-    
+
     // set soil properties
     setSoilProperties();
     
     // radiation section
     input->getItem(comp_rad,"radiation","comp_rad");
-    if (comp_rad) {
+    if (comp_rad==1) {
         input->getItem(utc_start,"radiation","utc_start");
         input->getItem(albedo,"radiation","albedo");
         input->getItem(emissivity,"radiation","emissivity");
@@ -68,13 +69,13 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         input->getItem(longitude,"radiation","longitude");
         input->getItem(julian_day,"radiation","julian_day");
         
+        // set initial time
         utc = utc_start;
         
         // convert latitude and longitude into radians
         latitude  = latitude * c::pi / 180.0;
         longitude = longitude * c::pi / 180.0;
     }
-    
 }
 
 // Set soil properties at each depth
@@ -106,6 +107,9 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
         utc = std::fmod(runtime,86400);
         julian_day = int(runtime/86400);
     }
+    
+    // keep winds from being exactly zero
+    if (atm_U==0) atm_U = 0.1;
 }
 
 void UtahLSM :: run() {
@@ -369,7 +373,7 @@ void UtahLSM :: solveSEB() {
             double H = c::rho_air*c::Cp_air*flux_wT;
             double L = c::rho_air*c::Lv*flux_wq;
             double G = flux_gr;
-            std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
+            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
             break;
         }
         
@@ -427,7 +431,7 @@ void UtahLSM :: solveSMB() {
     double E;
     double flux_sm_last, flux_sm, flux_sm2;
     double K_n_avg, D_n_avg;
-    double delta = 0.5, flux_criteria = .001;
+    double delta = 0.8, flux_criteria = .001;
     std::vector<double> psi;
     std::vector<double> D_n;
     std::vector<double> K_n;
@@ -441,7 +445,7 @@ void UtahLSM :: solveSMB() {
     // compute initial soil moisture flux
     transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
     K_n      = transfer.k;
-    std::cout<<K_n[0]<<" "<<K_n[1]<<std::endl;
+    //std::cout<<K_n[0]<<" "<<K_n[1]<<std::endl;
     D_n      = transfer.d;
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
     D_n_avg  = std::accumulate(D_n.begin(), D_n.end(), 0.0)/D_n.size();
@@ -449,12 +453,12 @@ void UtahLSM :: solveSMB() {
     flux_sm2 = c::rho_wat*D_n_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
     + c::rho_wat*K_n_avg;
     
-    std::cout<<"Flux SM Guess: "<<flux_sm<<std::endl;
+    //std::cout<<"Flux SM Guess: "<<flux_sm<<std::endl;
     
     // compute evaporation
     E = c::rho_air*flux_wq;
     
-    std::cout<<"Initial Evaporation: "<<E<<std::endl;
+    //std::cout<<"Initial Evaporation: "<<E<<std::endl;
     
     //std::cout<<"-------------------- E = "<<flux_wq<<std::endl;
     //std::cout<<"-------------------- W = "<<flux_sm<<std::endl;
@@ -471,12 +475,12 @@ void UtahLSM :: solveSMB() {
         // compute new weighted soil moisture flux
         flux_sm = delta*flux_sm_last - (1.-delta)*E;
         
-        std::cout<<"New Flux SM: "<<flux_sm<<std::endl;
-        std::cout<<"Old PSI: "<<psi[0]<<std::endl;
+        //std::cout<<"New Flux SM: "<<flux_sm<<std::endl;
+        //std::cout<<"Old PSI: "<<psi[0]<<std::endl;
         // update soil moisture potential
         psi[0]    = psi[1] + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_n_avg))-1);
-        std::cout<<"K "<<K_n_avg<<std::endl;
-        std::cout<<"New PSI: "<<psi[0]<<std::endl;
+        //std::cout<<"K "<<K_n_avg<<std::endl;
+        //std::cout<<"New PSI: "<<psi[0]<<std::endl;
         
         //std::cout<<"----------------------- psi_g = "<<psi[0]<<std::endl;
         
@@ -513,7 +517,7 @@ void UtahLSM :: solveSMB() {
             double H = c::rho_air*c::Cp_air*flux_wT;
             double L = c::rho_air*c::Lv*flux_wq;
             double G = flux_gr;
-            std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
+            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
             break;
         }
     }
