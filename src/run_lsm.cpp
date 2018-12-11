@@ -64,28 +64,40 @@ int main () {
     inputOffline->getItem(atm_p,"data","atm_p");
     inputOffline->getItem(R_net,"data","R_net");
     
+    // Initialize a vector of UtahLSM instances
+    int nLSM = 10;
+    std::vector<UtahLSM*> globalUtahLSM(nLSM);
+    
     // initialize an instance of UtahLSM input
     Input* inputLSM = new Input("inputLSM.json");
     
-    // initialize an instance of UtahLSM
-    UtahLSM* utahlsm = new UtahLSM(inputLSM,ustar,flux_wT,flux_wq);
+    // Fill array with LSM instances
+    for (int i=0; i<nLSM; i++) {
+        globalUtahLSM[i] = new UtahLSM(inputLSM,ustar,flux_wT,flux_wq);
+    }
     
+    // set up time information
     struct timespec start, finish;
     double utc=0,elapsed;
-    
     clock_gettime(CLOCK_MONOTONIC, &start);
+    
     for (int t=0; t<ntime; ++t) {
 
         // set time
         utc += tstep;
         std::cout<<std::fixed<<"\r[UtahLSM] \t Running for time: "<<std::setw(7)<<utc<<std::flush;
         
-        // update user-specified fields
-        utahlsm->updateFields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t]);
+        // loop through each LSM instance
+        for (int i=0; i<nLSM; i++) {
         
-        // run the model
-        utahlsm->run();
+            // update user-specified fields
+            globalUtahLSM[i]->updateFields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t]);
+        
+            // run the model
+            globalUtahLSM[i]->run();
+        }
     }
+    // compuet run time information
     clock_gettime(CLOCK_MONOTONIC, &finish);
     elapsed = (finish.tv_sec - start.tv_sec);
     elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
