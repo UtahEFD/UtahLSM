@@ -30,7 +30,6 @@ namespace {
 int main () {
     
     // declare local variables
-    bool first = true;
     double ustar,flux_wT,flux_wq;
     
     // input time

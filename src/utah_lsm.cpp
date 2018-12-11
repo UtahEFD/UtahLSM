@@ -368,12 +368,12 @@ void UtahLSM :: solveSEB() {
         computeFluxes(soil_T[0],soil_q[0]);
         
         // check for convergence
-        //if (std::abs(flux_wT-last_F) <= flux_criteria) {
-        if (std::abs( (flux_wT-last_F)/last_F)<=flux_criteria ) {
-            double H = c::rho_air*c::Cp_air*flux_wT;
-            double L = c::rho_air*c::Lv*flux_wq;
-            double G = flux_gr;
-            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
+        if (std::abs(flux_wT-last_F) <= flux_criteria) {
+//        if (std::abs( (flux_wT-last_F)/last_F)<=flux_criteria ) {
+//            double H = c::rho_air*c::Cp_air*flux_wT;
+//            double L = c::rho_air*c::Lv*flux_wq;
+//            double G = flux_gr;
+//            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
             break;
         }
         
@@ -512,14 +512,14 @@ void UtahLSM :: solveSMB() {
         // check for convergence
         converged = std::abs((E + flux_sm)/E) <=flux_criteria;
         
-        if (converged) {
-            //flux_wq = E/c::rho_air;
-            double H = c::rho_air*c::Cp_air*flux_wT;
-            double L = c::rho_air*c::Lv*flux_wq;
-            double G = flux_gr;
-            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
-            break;
-        }
+//        if (converged) {
+//            //flux_wq = E/c::rho_air;
+//            double H = c::rho_air*c::Cp_air*flux_wT;
+//            double L = c::rho_air*c::Lv*flux_wq;
+//            double G = flux_gr;
+//            //std::cout<<"Done: hf="<<H<<", mf="<<L<<", gf="<<G<<", T = "<<soil_T[0]<<", Q = "<<soil_q[0]<<std::endl;
+//            break;
+//        }
     }
 }
 
