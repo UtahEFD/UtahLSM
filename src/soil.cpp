@@ -182,7 +182,6 @@ namespace soil {
             if (psi>psi_sat) psi = psi_sat;
         } else if (model==2) {
             psi = psi_sat*std::pow(soil_q/porosity,-b);
-            //std::cout<<psi<<" "<<psi_sat<<" "<<soil_q<<" "<<std::pow(soil_q/porosity,-b)<<std::endl;
             if (psi>psi_sat) psi = psi_sat;
         } else if (model==3) {
             double m = 1 / (1+b);
@@ -351,8 +350,6 @@ namespace soil {
             default:
             {
                 throw std::invalid_argument("soil_param must be set to 1, 2, or 3");
-//                std::cout<<"soil_param must be set to 1, 2, or 3"<<std::endl;
-//                throw(1);
                 break;
             }
         }

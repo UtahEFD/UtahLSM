@@ -21,16 +21,12 @@ namespace matrix {
         double bet;
         std::vector<double> gam(n);
         
-        //std::cout<<"matrix ----- r0: "<<r[0]<<std::endl;
-        
         // solve system
         if (b[0] == 0.0) throw(std::string("Error 1 in tridag"));
         u[1]=r[0]/(bet=b[0]);
-        //std::cout<<"matrix ----- u1: "<<u[1]<<std::endl;
-        //std::cout<<"matrix ----- bet: "<<bet<<std::endl;
+        
         for (j=1;j<n;j++) {
             gam[j]=c[j-1]/bet;
-            //std::cout<<"matrix ----- gam: "<<gam[j]<<std::endl;
             bet=b[j]-a[j]*gam[j];
             if (bet == 0.0) throw(std::string("Error 2 in tridag"));
             u[j+1]=(r[j]-a[j]*u[j])/bet;
