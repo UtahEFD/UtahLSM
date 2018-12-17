@@ -28,6 +28,10 @@ namespace {
     namespace c = Constants;
 }
 
+///////////////////////
+// Private functions //
+///////////////////////
+
 UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq) :
                    ustar(ustar), flux_wT(flux_wT), flux_wq(flux_wq) {
 
@@ -76,19 +80,71 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         latitude  = latitude * c::pi / 180.0;
         longitude = longitude * c::pi / 180.0;
     }
-}
-
-// Set soil properties at each depth
-void UtahLSM :: setSoilProperties() {
-
-    struct soil::properties soilProperties = soil::properties(soil_type,nsoilz,soil_param);
-
-    b        = soilProperties.b;
-    psi_sat  = soilProperties.psi_sat;
-    porosity = soilProperties.porosity;
-    residual = soilProperties.residual;
-    K_sat    = soilProperties.K_sat;
-    Ci       = soilProperties.Ci;
+                       
+    // output section
+    input->getItem(saveOutput, "output", "save");
+    if (saveOutput) {
+        
+        // get fields to save from user
+        input->getItem(outputFields,"output","fields");
+        
+        // attributes for each field
+        attributes1D att_time  = {runtime, "time",  "time",               "s"};
+        attributes1D att_ust   = {ustar,   "ust",   "friction velocity",  "m s-1"};
+        attributes1D att_shf   = {flux_wT, "shf",   "sensible heat flux", "W m-2"};
+        attributes1D att_lhf   = {flux_wq, "lhf",   "latent heat flux",   "W m-2"};
+        attributes1D att_ghf   = {flux_gr, "ghf",   "ground heat flux",   "W m-2"};
+        attributes1D att_obl   = {L,       "obl",   "Obukhov length",     "m"};
+        attributes2D att_soilz = {soil_z,  "soilz", "soil depth",         "m"};
+        attributes2D att_soilt = {soil_T,  "soilt", "soil temperature",   "K"};
+        attributes2D att_soilq = {soil_q,  "soilq", "soil moisture",      "m3 m-3"};
+        
+        // map the name to attributes
+        map1D.emplace("time", att_time);
+        map1D.emplace("ust",  att_ust);
+        map1D.emplace("shf",  att_shf);
+        map1D.emplace("lhf",  att_lhf);
+        map1D.emplace("ghf",  att_ghf);
+        map1D.emplace("obl",  att_obl);
+        map2D.emplace("soilz",att_soilz);
+        map2D.emplace("soilt",att_soilt);
+        map2D.emplace("soilq",att_soilq);
+        
+        // we will always save time and depth
+        fieldsToSave1D.push_back(map1D["time"]);
+        fieldsToSave2D.push_back(map2D["soilz"]);
+        
+        // create list of fields to save
+        for (int i=0; i<outputFields.size(); i++) {
+            std::string key = outputFields[i];
+            if (map1D.count(key)) {
+                fieldsToSave1D.push_back(map1D[key]);
+            } else if (map2D.count(key)) {
+                fieldsToSave2D.push_back(map2D[key]);
+            }
+        }
+        
+        // create an output instance
+        output = new Output();
+        
+        // add dimensions
+        NcDim t_dim = output->addDimension("t");
+        NcDim z_dim = output->addDimension("z",nsoilz);
+        dim_1D.push_back(t_dim);
+        dim_2D.push_back(t_dim);
+        dim_2D.push_back(z_dim);
+        
+        // add 1D fields
+        for (int i=0; i<fieldsToSave1D.size(); i++) {
+            attributes1D att = fieldsToSave1D[i];
+            output->addField(att.name, att.units, att.long_name, dim_1D);
+        }
+        // add 2D fields
+        for (int i=0; i<fieldsToSave2D.size(); i++) {
+            attributes2D att = fieldsToSave2D[i];
+            output->addField(att.name, att.units, att.long_name, dim_2D);
+        }
+    }
 }
 
 // Update user-supplied fields
@@ -140,6 +196,44 @@ void UtahLSM :: run() {
 
 }
 
+void UtahLSM :: save() {
+    
+    // output size and location
+    const std::vector<size_t> index = {static_cast<unsigned long>(output_counter)};
+    const std::vector<size_t> time_height_index = {static_cast<size_t>(output_counter), 0};
+    std::vector<size_t> time_height_size  = {1, static_cast<unsigned long>(nsoilz)};
+    
+    // loop through 1D fields to save
+    for (int i=0; i<fieldsToSave1D.size(); i++) {
+        output->saveField1D(fieldsToSave1D[i].name, index, fieldsToSave1D[i].data);
+    }
+    // loop through 2D fields to save
+    for (int i=0; i<fieldsToSave2D.size(); i++) {
+        output->saveField2D(fieldsToSave2D[i].name, time_height_index,
+                            time_height_size, fieldsToSave2D[i].data);
+    }
+    // increment for next time insertion
+    output_counter +=1;
+    
+}
+
+///////////////////////
+// Private functions //
+///////////////////////
+
+// Set soil properties at each depth
+void UtahLSM :: setSoilProperties() {
+    
+    struct soil::properties soilProperties = soil::properties(soil_type,nsoilz,soil_param);
+    
+    b        = soilProperties.b;
+    psi_sat  = soilProperties.psi_sat;
+    porosity = soilProperties.porosity;
+    residual = soilProperties.residual;
+    K_sat    = soilProperties.K_sat;
+    Ci       = soilProperties.Ci;
+}
+
 // compute net radiation
 void UtahLSM :: computeRadiation() {
     R_net = radiation::net(soil_T[0],emissivity,julian_day,utc,latitude,longitude,albedo);
@@ -151,7 +245,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // local variables
     int max_iterations = 200;
     bool converged = false;
-    double L=0, gnd_q, flux_wTv;
+    double gnd_q, flux_wTv;
     double last_L, criteria = 0.1, ref_T = 300.;
     int depth = nsoilz;
     

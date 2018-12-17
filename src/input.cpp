@@ -59,3 +59,8 @@ void Input :: getItem(std::vector<int>& external, std::string section, std::stri
 void Input :: getItem(std::vector<double>& external, std::string section, std::string name) {
     external = input[section][name].get<std::vector<double>>();
 }
+
+// Getter for vector of strings
+void Input :: getItem(std::vector<std::string>& external, std::string section, std::string name) {
+    external = input[section][name].get<std::vector<std::string>>();
+}

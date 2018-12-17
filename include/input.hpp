@@ -37,6 +37,7 @@ class Input {
         void getItem(double&, std::string, std::string);
         void getItem(std::vector<int>&, std::string, std::string);
         void getItem(std::vector<double>&, std::string, std::string);
+        void getItem(std::vector<std::string>&, std::string, std::string);
 };
 
 #endif

@@ -65,7 +65,7 @@ int main () {
     inputOffline->getItem(R_net,"data","R_net");
     
     // Initialize a vector of UtahLSM instances
-    int nLSM = 10;
+    int nLSM = 1;
     std::vector<UtahLSM*> globalUtahLSM(nLSM);
     
     // initialize an instance of UtahLSM input
@@ -95,6 +95,9 @@ int main () {
         
             // run the model
             globalUtahLSM[i]->run();
+            
+            // save output
+            globalUtahLSM[i]->save();
         }
     }
     // compuet run time information
