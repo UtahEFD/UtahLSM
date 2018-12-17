@@ -88,16 +88,27 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         // get fields to save from user
         input->getItem(outputFields,"output","fields");
         
+        // create an output instance
+        output = new Output();
+        
+        // add dimensions
+        NcDim t_dim = output->addDimension("t");
+        NcDim z_dim = output->addDimension("z",nsoilz);
+        dim_1D_t.push_back(t_dim);
+        dim_1D_z.push_back(z_dim);
+        dim_2D.push_back(t_dim);
+        dim_2D.push_back(z_dim);
+        
         // attributes for each field
-        attributes1D att_time  = {runtime, "time",  "time",               "s"};
-        attributes1D att_ust   = {ustar,   "ust",   "friction velocity",  "m s-1"};
-        attributes1D att_shf   = {flux_wT, "shf",   "sensible heat flux", "W m-2"};
-        attributes1D att_lhf   = {flux_wq, "lhf",   "latent heat flux",   "W m-2"};
-        attributes1D att_ghf   = {flux_gr, "ghf",   "ground heat flux",   "W m-2"};
-        attributes1D att_obl   = {L,       "obl",   "Obukhov length",     "m"};
-        attributes2D att_soilz = {soil_z,  "soilz", "soil depth",         "m"};
-        attributes2D att_soilt = {soil_T,  "soilt", "soil temperature",   "K"};
-        attributes2D att_soilq = {soil_q,  "soilq", "soil moisture",      "m3 m-3"};
+        attributes1D att_time  = {&runtime, "time",  "time",               "s",     dim_1D_t};
+        attributes1D att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_1D_t};
+        attributes1D att_shf   = {&flux_wT, "shf",   "sensible heat flux", "W m-2", dim_1D_t};
+        attributes1D att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_1D_t};
+        attributes1D att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_1D_t};
+        attributes1D att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_1D_t};
+        attributes2D att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_1D_z};
+        attributes2D att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_2D};
+        attributes2D att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_2D};
         
         // map the name to attributes
         map1D.emplace("time", att_time);
@@ -106,13 +117,15 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         map1D.emplace("lhf",  att_lhf);
         map1D.emplace("ghf",  att_ghf);
         map1D.emplace("obl",  att_obl);
-        map2D.emplace("soilz",att_soilz);
         map2D.emplace("soilt",att_soilt);
         map2D.emplace("soilq",att_soilq);
         
-        // we will always save time and depth
+        // we will always save time
         fieldsToSave1D.push_back(map1D["time"]);
-        fieldsToSave2D.push_back(map2D["soilz"]);
+
+        // depth is only saved once, do it manually
+        output->addField(att_soilz.name, att_soilz.units, att_soilz.long_name, att_soilz.dimensions);
+        output->saveField1D(att_soilz.name, &soil_z);
         
         // create list of fields to save
         for (int i=0; i<outputFields.size(); i++) {
@@ -124,25 +137,15 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
             }
         }
         
-        // create an output instance
-        output = new Output();
-        
-        // add dimensions
-        NcDim t_dim = output->addDimension("t");
-        NcDim z_dim = output->addDimension("z",nsoilz);
-        dim_1D.push_back(t_dim);
-        dim_2D.push_back(t_dim);
-        dim_2D.push_back(z_dim);
-        
         // add 1D fields
         for (int i=0; i<fieldsToSave1D.size(); i++) {
             attributes1D att = fieldsToSave1D[i];
-            output->addField(att.name, att.units, att.long_name, dim_1D);
+            output->addField(att.name, att.units, att.long_name, att.dimensions);
         }
         // add 2D fields
         for (int i=0; i<fieldsToSave2D.size(); i++) {
             attributes2D att = fieldsToSave2D[i];
-            output->addField(att.name, att.units, att.long_name, dim_2D);
+            output->addField(att.name, att.units, att.long_name, att.dimensions);
         }
     }
 }

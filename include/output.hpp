@@ -37,9 +37,10 @@ class Output {
         // setter
         NcDim addDimension(std::string, int size=0);
         void addField(std::string, std::string, std::string, std::vector<NcDim>);
-        void saveField1D(std::string name, const std::vector<size_t>, double);
-        void saveField2D(std::string name, const std::vector<size_t>,
-                         std::vector<size_t>, std::vector<double>);
+        void saveField1D(std::string, std::vector<double>*);
+        void saveField1D(std::string, const std::vector<size_t>, double*);
+        void saveField2D(std::string, const std::vector<size_t>,
+                         std::vector<size_t>, std::vector<double>*);
 };
 
 #endif

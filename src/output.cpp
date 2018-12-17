@@ -46,8 +46,15 @@ void Output :: addField(std::string name, std::string units,
     fields[name] = var;
 }
 
+void Output :: saveField1D(std::string name, std::vector<double>* data) {
+    
+    // write output data
+    NcVar var = fields[name];
+    var.putVar(data);
+}
+
 void Output :: saveField1D(std::string name, const std::vector<size_t> index,
-                           double data) {
+                           double* data) {
     
     // write output data
     NcVar var = fields[name];
@@ -55,9 +62,9 @@ void Output :: saveField1D(std::string name, const std::vector<size_t> index,
 }
 
 void Output :: saveField2D(std::string name, const std::vector<size_t> index,
-                           std::vector<size_t> size, std::vector<double> data) {
+                           std::vector<size_t> size, std::vector<double>* data) {
     
     // write output data
     NcVar var = fields[name];
-    var.putVar(index, size, &data[0]);
+    var.putVar(index, size, data);
 }

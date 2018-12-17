@@ -50,6 +50,7 @@ class UtahLSM {
     
         // namelist output section
         int saveOutput = false;
+    
         std::vector<std::string> outputFields;
 
         // soil properties
@@ -72,18 +73,24 @@ class UtahLSM {
     
         int output_counter=0;
     
+        std::vector<NcDim> dim_1D_t;
+        std::vector<NcDim> dim_1D_z;
+        std::vector<NcDim> dim_2D;
+    
         struct attributes1D {
-            double data;
+            double* data;
             std::string name;
             std::string long_name;
             std::string units;
+            std::vector<NcDim> dimensions;
         };
     
         struct attributes2D {
-            std::vector<double> data;
+            std::vector<double>* data;
             std::string name;
             std::string long_name;
             std::string units;
+            std::vector<NcDim> dimensions;
         };
     
         std::map<std::string,attributes1D> map1D;
@@ -91,12 +98,6 @@ class UtahLSM {
     
         std::vector<attributes1D> fieldsToSave1D;
         std::vector<attributes2D> fieldsToSave2D;
-    
-        std::vector<attributes1D> attList1D;
-        std::vector<attributes2D> attList2D;
-    
-        std::vector<NcDim> dim_1D;
-        std::vector<NcDim> dim_2D;
     
         // internal functions
         void setSoilProperties();
