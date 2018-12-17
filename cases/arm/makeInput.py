@@ -130,6 +130,7 @@ namelist = {}
 namelist['length'] = {}
 namelist['soil'] = {}
 namelist['radiation'] = {}
+namelist['output'] = {}
 
 # length scale section
 namelist['length']['z_o'] = 0.0500
@@ -154,5 +155,10 @@ namelist['radiation']['emissivity'] = 0.96
 namelist['radiation']['latitude']   = 36.6906
 namelist['radiation']['longitude']  = 97.5564
 namelist['radiation']['julian_day'] = 153
+
+# output section
+namelist['output']['save'] = 1
+namelist['output']['fields'] = ['all']
+
 with open('inputLSM.json', 'w') as outfile:  
     json.dump(namelist,outfile,indent=4)

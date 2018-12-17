@@ -55,5 +55,11 @@
         "latitude": 36.6906,
         "longitude": 97.5564,
         "julian_day": 153
+    },
+    "output": {
+        "save": 1,
+        "fields": [
+            "all"
+        ]
     }
 }
