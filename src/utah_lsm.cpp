@@ -88,6 +88,11 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         // get fields to save from user
         input->getItem(outputFields,"output","fields");
         
+        if (outputFields[0]=="all") {
+            outputFields.erase(outputFields.begin());
+            outputFields = {"ust","shf","lhf","ghf","obl","soilt","soilq"};
+        }
+        
         // create an output instance
         output = new Output();
         
@@ -125,7 +130,7 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
 
         // depth is only saved once, do it manually
         output->addField(att_soilz.name, att_soilz.units, att_soilz.long_name, att_soilz.dimensions);
-        output->saveField1D(att_soilz.name, &soil_z);
+        output->saveField1D(att_soilz.name, *att_soilz.data);
         
         // create list of fields to save
         for (int i=0; i<outputFields.size(); i++) {
@@ -159,10 +164,10 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     atm_q = q;
     atm_p = p;
     R_net = rad;
+    runtime += tstep;
     
     // update total time for rad model
     if (comp_rad==1) {
-        runtime += tstep;
         utc = std::fmod(runtime,86400);
         julian_day = int(runtime/86400);
     }
@@ -213,11 +218,10 @@ void UtahLSM :: save() {
     // loop through 2D fields to save
     for (int i=0; i<fieldsToSave2D.size(); i++) {
         output->saveField2D(fieldsToSave2D[i].name, time_height_index,
-                            time_height_size, fieldsToSave2D[i].data);
+                            time_height_size, *fieldsToSave2D[i].data);
     }
     // increment for next time insertion
     output_counter +=1;
-    
 }
 
 ///////////////////////

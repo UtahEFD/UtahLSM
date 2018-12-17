@@ -155,7 +155,7 @@ namelist['radiation']['julian_day'] = 183
 
 # output section
 namelist['output']['save'] = 1
-namelist['output']['fields'] = ['shf','lhf','soilt']
+namelist['output']['fields'] = ['all']
 
 with open('inputLSM.json', 'w') as outfile:  
     json.dump(namelist,outfile,indent=4)

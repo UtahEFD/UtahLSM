@@ -66,9 +66,7 @@
     "output": {
         "save": 1,
         "fields": [
-            "shf",
-            "lhf",
-            "soilt"
+            "all"
         ]
     }
 }
