@@ -49,9 +49,9 @@ class UtahLSM {
         double albedo, emissivity, latitude, longitude;
     
         // namelist output section
-        int saveOutput = false;
+        int save_output = false;
     
-        std::vector<std::string> outputFields;
+        std::vector<std::string> output_fields;
 
         // soil properties
         std::vector<double> b;
@@ -73,11 +73,11 @@ class UtahLSM {
     
         int output_counter=0;
     
-        std::vector<NcDim> dim_1D_t;
-        std::vector<NcDim> dim_1D_z;
-        std::vector<NcDim> dim_2D;
+        std::vector<NcDim> dim_scalar_t;
+        std::vector<NcDim> dim_scalar_z;
+        std::vector<NcDim> dim_vector;
     
-        struct attributes1D {
+        struct AttScalar {
             double* data;
             std::string name;
             std::string long_name;
@@ -85,7 +85,7 @@ class UtahLSM {
             std::vector<NcDim> dimensions;
         };
     
-        struct attributes2D {
+        struct AttVector {
             std::vector<double>* data;
             std::string name;
             std::string long_name;
@@ -93,11 +93,11 @@ class UtahLSM {
             std::vector<NcDim> dimensions;
         };
     
-        std::map<std::string,attributes1D> map1D;
-        std::map<std::string,attributes2D> map2D;
+        std::map<std::string,AttScalar> map_att_scalar;
+        std::map<std::string,AttVector> map_att_vector;
     
-        std::vector<attributes1D> fieldsToSave1D;
-        std::vector<attributes2D> fieldsToSave2D;
+        std::vector<AttScalar> output_scalar;
+        std::vector<AttVector> output_vector;
     
         // internal functions
         void setSoilProperties();

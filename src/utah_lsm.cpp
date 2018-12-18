@@ -82,15 +82,15 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
     }
                        
     // output section
-    input->getItem(saveOutput, "output", "save");
-    if (saveOutput) {
+    input->getItem(save_output, "output", "save");
+    if (save_output) {
         
         // get fields to save from user
-        input->getItem(outputFields,"output","fields");
+        input->getItem(output_fields,"output","fields");
         
-        if (outputFields[0]=="all") {
-            outputFields.erase(outputFields.begin());
-            outputFields = {"ust","shf","lhf","ghf","obl","soilt","soilq"};
+        if (output_fields[0]=="all") {
+            output_fields.erase(output_fields.begin());
+            output_fields = {"ust","shf","lhf","ghf","obl","soilt","soilq"};
         }
         
         // create an output instance
@@ -99,57 +99,57 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         // add dimensions
         NcDim t_dim = output->addDimension("t");
         NcDim z_dim = output->addDimension("z",nsoilz);
-        dim_1D_t.push_back(t_dim);
-        dim_1D_z.push_back(z_dim);
-        dim_2D.push_back(t_dim);
-        dim_2D.push_back(z_dim);
+        dim_scalar_t.push_back(t_dim);
+        dim_scalar_z.push_back(z_dim);
+        dim_vector.push_back(t_dim);
+        dim_vector.push_back(z_dim);
         
         // attributes for each field
-        attributes1D att_time  = {&runtime, "time",  "time",               "s",     dim_1D_t};
-        attributes1D att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_1D_t};
-        attributes1D att_shf   = {&flux_wT, "shf",   "sensible heat flux", "W m-2", dim_1D_t};
-        attributes1D att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_1D_t};
-        attributes1D att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_1D_t};
-        attributes1D att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_1D_t};
-        attributes2D att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_1D_z};
-        attributes2D att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_2D};
-        attributes2D att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_2D};
+        AttScalar att_time  = {&runtime, "time",  "time",               "s",     dim_scalar_t};
+        AttScalar att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_scalar_t};
+        AttScalar att_shf   = {&flux_wT, "shf",   "sensible heat flux", "W m-2", dim_scalar_t};
+        AttScalar att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
+        AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
+        AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
+        AttVector att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_scalar_z};
+        AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector};
+        AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector};
         
         // map the name to attributes
-        map1D.emplace("time", att_time);
-        map1D.emplace("ust",  att_ust);
-        map1D.emplace("shf",  att_shf);
-        map1D.emplace("lhf",  att_lhf);
-        map1D.emplace("ghf",  att_ghf);
-        map1D.emplace("obl",  att_obl);
-        map2D.emplace("soilt",att_soilt);
-        map2D.emplace("soilq",att_soilq);
+        map_att_scalar.emplace("time", att_time);
+        map_att_scalar.emplace("ust",  att_ust);
+        map_att_scalar.emplace("shf",  att_shf);
+        map_att_scalar.emplace("lhf",  att_lhf);
+        map_att_scalar.emplace("ghf",  att_ghf);
+        map_att_scalar.emplace("obl",  att_obl);
+        map_att_vector.emplace("soilt",att_soilt);
+        map_att_vector.emplace("soilq",att_soilq);
         
         // we will always save time
-        fieldsToSave1D.push_back(map1D["time"]);
+        output_scalar.push_back(map_att_scalar["time"]);
 
         // depth is only saved once, do it manually
         output->addField(att_soilz.name, att_soilz.units, att_soilz.long_name, att_soilz.dimensions);
         output->saveField1D(att_soilz.name, *att_soilz.data);
         
         // create list of fields to save
-        for (int i=0; i<outputFields.size(); i++) {
-            std::string key = outputFields[i];
-            if (map1D.count(key)) {
-                fieldsToSave1D.push_back(map1D[key]);
-            } else if (map2D.count(key)) {
-                fieldsToSave2D.push_back(map2D[key]);
+        for (int i=0; i<output_fields.size(); i++) {
+            std::string key = output_fields[i];
+            if (map_att_scalar.count(key)) {
+                output_scalar.push_back(map_att_scalar[key]);
+            } else if (map_att_vector.count(key)) {
+                output_vector.push_back(map_att_vector[key]);
             }
         }
         
         // add 1D fields
-        for (int i=0; i<fieldsToSave1D.size(); i++) {
-            attributes1D att = fieldsToSave1D[i];
+        for (int i=0; i<output_scalar.size(); i++) {
+            AttScalar att = output_scalar[i];
             output->addField(att.name, att.units, att.long_name, att.dimensions);
         }
         // add 2D fields
-        for (int i=0; i<fieldsToSave2D.size(); i++) {
-            attributes2D att = fieldsToSave2D[i];
+        for (int i=0; i<output_vector.size(); i++) {
+            AttVector  att = output_vector[i];
             output->addField(att.name, att.units, att.long_name, att.dimensions);
         }
     }
@@ -212,13 +212,13 @@ void UtahLSM :: save() {
     std::vector<size_t> time_height_size  = {1, static_cast<unsigned long>(nsoilz)};
     
     // loop through 1D fields to save
-    for (int i=0; i<fieldsToSave1D.size(); i++) {
-        output->saveField1D(fieldsToSave1D[i].name, index, fieldsToSave1D[i].data);
+    for (int i=0; i<output_scalar.size(); i++) {
+        output->saveField1D(output_scalar[i].name, index, output_scalar[i].data);
     }
     // loop through 2D fields to save
-    for (int i=0; i<fieldsToSave2D.size(); i++) {
-        output->saveField2D(fieldsToSave2D[i].name, time_height_index,
-                            time_height_size, *fieldsToSave2D[i].data);
+    for (int i=0; i<output_vector.size(); i++) {
+        output->saveField2D(output_vector[i].name, time_height_index,
+                            time_height_size, *output_vector[i].data);
     }
     // increment for next time insertion
     output_counter +=1;
@@ -231,7 +231,7 @@ void UtahLSM :: save() {
 // Set soil properties at each depth
 void UtahLSM :: setSoilProperties() {
     
-    struct soil::properties soilProperties = soil::properties(soil_type,nsoilz,soil_param);
+    struct soil::Properties soilProperties = soil::properties(soil_type,nsoilz,soil_param);
     
     b        = soilProperties.b;
     psi_sat  = soilProperties.psi_sat;
@@ -258,7 +258,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     
     int int_depth;
     double heat_cap,dT, dz;
-    struct soil::thermalTransfer transfer;
+    struct soil::ThermalTransfer transfer;
     std::vector<double> K(depth);
     
     // compute surface mixing ratio
@@ -522,7 +522,7 @@ void UtahLSM :: solveSMB() {
     std::vector<double> psi;
     std::vector<double> D_n;
     std::vector<double> K_n;
-    struct soil::moistureTransfer transfer;
+    struct soil::MoistureTransfer transfer;
     
     // moisture potential at first level below ground
     psi = soil::waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, soil_model);
@@ -580,8 +580,8 @@ void UtahLSM :: solveDiffusion(int type) {
     double surf_scalar_last;
     double dKdz, C_tp, C_tm, C_p, C_m;
     double dz_p, dz_m, a_m, a_p, a_o;
-    struct soil::moistureTransfer transfer_m;
-    struct soil::thermalTransfer transfer_t;
+    struct soil::MoistureTransfer transfer_m;
+    struct soil::ThermalTransfer transfer_t;
     std::vector<double> K(nsoilz,0.0);
     std::vector<double> D(nsoilz,0.0);
     std::vector<double> K_mid(nsoilz-1,0.0);

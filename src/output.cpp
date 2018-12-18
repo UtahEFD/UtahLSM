@@ -22,15 +22,15 @@ namespace {
 Output :: Output() {
     
     // create output file
-    outFile = new NcFile("lsm.nc", NcFile::replace);
+    outfile = new NcFile("lsm.nc", NcFile::replace);
 }
 
 NcDim Output :: addDimension(std::string name, int size) {
     
     if (size) {
-        return outFile->addDim(name, size);
+        return outfile->addDim(name, size);
     } else {
-        return outFile->addDim(name);
+        return outfile->addDim(name);
     }
 }
 
@@ -38,7 +38,7 @@ void Output :: addField(std::string name, std::string units,
                         std::string long_name, std::vector<NcDim> dims) {
  
     // add field
-    NcVar var = outFile->addVar(name, ncDouble, dims);
+    NcVar var = outfile->addVar(name, ncDouble, dims);
     var.putAtt("units", units);
     var.putAtt("long_name", long_name);
     

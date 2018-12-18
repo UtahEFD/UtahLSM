@@ -91,7 +91,7 @@ namespace soil {
     }
     
     // compute soil thermal conductivity/diffusivity
-    struct thermalTransfer thermalTransfer(const std::vector<double> &psi_sat,
+    struct ThermalTransfer thermalTransfer(const std::vector<double> &psi_sat,
                                            const std::vector<double> &porosity,
                                            const std::vector<double> &residual,
                                            const std::vector<double> &soil_q,
@@ -99,7 +99,7 @@ namespace soil {
                                            const std::vector<double> &Ci,
                                            const int depth, const int model) {
         
-        struct thermalTransfer transfer;
+        struct ThermalTransfer transfer;
         transfer.d.resize(depth);
         transfer.k.resize(depth);
         double psi, pf;
@@ -125,7 +125,7 @@ namespace soil {
     }
     
     // compute average soil moisture transfer
-    struct moistureTransfer moistureTransfer(const std::vector<double>& psi_sat,
+    struct MoistureTransfer moistureTransfer(const std::vector<double>& psi_sat,
                                              const std::vector<double>& K_sat,
                                              const std::vector<double>& porosity,
                                              const std::vector<double>& residual,
@@ -135,7 +135,7 @@ namespace soil {
         
         // local variables
         double Se;
-        struct moistureTransfer transfer;
+        struct MoistureTransfer transfer;
         transfer.k.resize(depth);
         transfer.d.resize(depth);
 
@@ -246,7 +246,7 @@ namespace soil {
     // 10 = silty clay
     // 11 = clay
     // 12 = peat
-    struct properties properties(const std::vector<int>& soil_type, const int depth, const int src) {
+    struct Properties properties(const std::vector<int>& soil_type, const int depth, const int src) {
         
         std::vector<double>b_list;   // exponent (unitless)
         std::vector<double>psi_list; // saturation moisture potential (m)
@@ -256,7 +256,7 @@ namespace soil {
         std::vector<double>Ci_list;  // volumetric heat capacity (J/m^3/K)
         
         // struct to hold soil properties
-        struct properties properties;
+        struct Properties properties;
         properties.b.resize(depth);
         properties.psi_sat.resize(depth);
         properties.porosity.resize(depth);

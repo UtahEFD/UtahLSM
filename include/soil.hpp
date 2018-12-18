@@ -18,17 +18,17 @@
 
 namespace soil {
 	
-	struct moistureTransfer {
+	struct MoistureTransfer {
         std::vector<double> d; 
         std::vector<double> k;
     };
     
-    struct thermalTransfer {
+    struct ThermalTransfer {
         std::vector<double> d;
         std::vector<double> k;
     };
     
-    struct properties {
+    struct Properties {
 	    std::vector<double> b;
 	    std::vector<double> psi_sat;
 	    std::vector<double> porosity;
@@ -59,17 +59,17 @@ namespace soil {
                                        const std::vector<double>&, const std::vector<double>&,
                                        const std::vector<double>&, const int, const int);
     
-    thermalTransfer thermalTransfer(const std::vector<double>&, const std::vector<double>&,
+    ThermalTransfer thermalTransfer(const std::vector<double>&, const std::vector<double>&,
                                     const std::vector<double>&, const std::vector<double>&,
                                     const std::vector<double>&, const std::vector<double>&,
                                     const int, const int);
     
-    moistureTransfer moistureTransfer(const std::vector<double>&, const std::vector<double>&,
+    MoistureTransfer moistureTransfer(const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,
                                       const std::vector<double>&, const std::vector<double>&,
                                       const int, const int);
     
-    properties properties(const std::vector<int>&, const int, const int);
+    Properties properties(const std::vector<int>&, const int, const int);
 };
 
 #endif

@@ -26,7 +26,7 @@ class Output {
     private:
     
         // netCDF variables
-        NcFile* outFile;
+        NcFile* outfile;
         std::map<std::string,NcVar> fields;
     
     public:
