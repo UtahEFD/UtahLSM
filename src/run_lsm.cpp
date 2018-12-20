@@ -8,6 +8,8 @@
 //
 #include "utah_lsm.hpp"
 #include "constants.hpp"
+#include "input.hpp"
+#include "output.hpp"
 #include "json.hpp"
 #include <iostream>
 #include <cmath>
@@ -65,15 +67,20 @@ int main () {
     inputOffline->getItem(R_net,"data","R_net");
     
     // Initialize a vector of UtahLSM instances
-    int nLSM = 1;
-    std::vector<UtahLSM*> globalUtahLSM(nLSM);
+    int ny=2, nx=2;
+    std::vector<UtahLSM*> globalUtahLSM(ny*nx);
     
-    // initialize an instance of UtahLSM input
-    Input* inputLSM = new Input("inputLSM.json");
+    // initialize an instance of UtahLSM input and output
+    Input* inputLSM  = new Input("inputLSM.json");
+    Output* outputLSM = new Output("lsm.nc");
     
     // Fill array with LSM instances
-    for (int i=0; i<nLSM; i++) {
-        globalUtahLSM[i] = new UtahLSM(inputLSM,ustar,flux_wT,flux_wq);
+    int k = 0;
+    for (int j=0; j<ny; j++) {
+        for (int i=0; i<nx; i++) {
+            globalUtahLSM[k] = new UtahLSM(inputLSM,outputLSM,ustar,flux_wT,flux_wq,j,i);
+            k++;
+        }
     }
     
     // set up time information
@@ -88,16 +95,21 @@ int main () {
         std::cout<<std::fixed<<"\r[UtahLSM] \t Running for time: "<<std::setw(7)<<utc<<std::flush;
         
         // loop through each LSM instance
-        for (int i=0; i<nLSM; i++) {
-        
-            // update user-specified fields
-            globalUtahLSM[i]->updateFields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t]);
-        
-            // run the model
-            globalUtahLSM[i]->run();
-            
-            // save output
-            globalUtahLSM[i]->save();
+        int k = 0;
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
+                
+                // update user-specified fields
+                globalUtahLSM[k]->updateFields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t]);
+                
+                // run the model
+                globalUtahLSM[k]->run();
+                
+                // save output
+                globalUtahLSM[k]->save(outputLSM);
+                
+                k++;
+            }
         }
     }
     // compuet run time information

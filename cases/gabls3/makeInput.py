@@ -124,10 +124,15 @@ with open('inputOffline.json', 'w') as outfile:
 # Settings for UtahLSM #
 ########################
 namelist = {}
+namelist['grid'] = {}
 namelist['length'] = {}
 namelist['soil'] = {}
 namelist['radiation'] = {}
 namelist['output'] = {}
+
+# grid section
+namelist['grid']['nx'] = 2
+namelist['grid']['ny'] = 2
 
 # length scale section
 namelist['length']['z_o'] = 0.15

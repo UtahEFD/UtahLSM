@@ -7,8 +7,8 @@
 //  Created by Jeremy Gibbs on 6/29/17.
 //
 
-#include "output.hpp"
 #include "utah_lsm.hpp"
+#include "output.hpp"
 #include "constants.hpp"
 #include <iostream>
 
@@ -19,10 +19,9 @@ namespace {
     namespace c = Constants;
 }
 
-Output :: Output() {
+Output :: Output(std::string output_file) {
     
-    // create output file
-    outfile = new NcFile("lsm.nc", NcFile::replace);
+    outfile = new NcFile(output_file, NcFile::replace);
 }
 
 NcDim Output :: addDimension(std::string name, int size) {
@@ -37,20 +36,12 @@ NcDim Output :: addDimension(std::string name, int size) {
 void Output :: addField(std::string name, std::string units,
                         std::string long_name, std::vector<NcDim> dims) {
  
-    // add field
-    NcVar var = outfile->addVar(name, ncDouble, dims);
+    NcVar var;
+
+    var = outfile->addVar(name, ncDouble, dims);
     var.putAtt("units", units);
     var.putAtt("long_name", long_name);
-    
-    // map name to field for later access
     fields[name] = var;
-}
-
-void Output :: saveField1D(std::string name, std::vector<double>& data) {
-    
-    // write output data
-    NcVar var = fields[name];
-    var.putVar(&data[0]);
 }
 
 void Output :: saveField1D(std::string name, const std::vector<size_t> index,
@@ -67,4 +58,11 @@ void Output :: saveField2D(std::string name, const std::vector<size_t> index,
     // write output data
     NcVar var = fields[name];
     var.putVar(index, size, &data[0]);
+}
+
+void Output :: saveField2D(std::string name, std::vector<double>& data) {
+    
+    // write output data
+    NcVar var = fields[name];
+    var.putVar(&data[0]);
 }

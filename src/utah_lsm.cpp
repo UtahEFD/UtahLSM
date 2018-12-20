@@ -16,6 +16,7 @@
 #include "json.hpp"
 #include "constants.hpp"
 #include "input.hpp"
+#include "output.hpp"
 #include "soil.hpp"
 #include "radiation.hpp"
 #include "most.hpp"
@@ -32,10 +33,15 @@ namespace {
 // Private functions //
 ///////////////////////
 
-UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq) :
-                   ustar(ustar), flux_wT(flux_wT), flux_wq(flux_wq) {
+UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
+                   double& flux_wq, int j, int i) : ustar(ustar),
+                   flux_wT(flux_wT),flux_wq(flux_wq), j(j), i(i) {
 
     std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
+    
+    // grid section
+    input->getItem(nx,"grid","nx");
+    input->getItem(ny,"grid","ny");
     
     // length scale section
     input->getItem(z_o,"length","z_o");
@@ -94,16 +100,45 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         }
         
         // create an output instance
-        output = new Output();
+        (j==0 && i==0) ? master=true : master=false;
         
         // add dimensions
-        NcDim t_dim = output->addDimension("t");
-        NcDim z_dim = output->addDimension("z",nsoilz);
+        NcDim t_dim, z_dim;
+        if (master) {
+            t_dim = output->addDimension("t");
+            z_dim = output->addDimension("z",nsoilz);
+        } else {
+            t_dim = NcDim();
+            z_dim = NcDim();
+        }
         dim_scalar_t.push_back(t_dim);
         dim_scalar_z.push_back(z_dim);
         dim_vector.push_back(t_dim);
         dim_vector.push_back(z_dim);
         
+        if (ny>1) {
+            NcDim y_dim;
+            if (master) {
+                y_dim = output->addDimension("y",ny);
+            }else {
+                y_dim = NcDim();
+            }
+            dim_scalar_t.push_back(y_dim);
+            dim_scalar_z.push_back(y_dim);
+            dim_vector.push_back(y_dim);
+        }
+        if (nx>1) {
+            NcDim x_dim;
+            if (master) {
+                x_dim = output->addDimension("x",nx);
+            }else {
+                x_dim = NcDim();
+            }
+            dim_scalar_t.push_back(x_dim);
+            dim_scalar_z.push_back(x_dim);
+            dim_vector.push_back(x_dim);
+        }
+
         // attributes for each field
         AttScalar att_time  = {&runtime, "time",  "time",               "s",     dim_scalar_t};
         AttScalar att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_scalar_t};
@@ -111,7 +146,7 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         AttScalar att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
-        AttVector att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_scalar_z};
+        AttVector att_soilz = {&soil_z,  "soilz", "Obukhov length",     "m",    dim_scalar_z};
         AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector};
         AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector};
         
@@ -122,15 +157,13 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         map_att_scalar.emplace("lhf",  att_lhf);
         map_att_scalar.emplace("ghf",  att_ghf);
         map_att_scalar.emplace("obl",  att_obl);
+        map_att_vector.emplace("soilz",att_soilz);
         map_att_vector.emplace("soilt",att_soilt);
         map_att_vector.emplace("soilq",att_soilq);
         
-        // we will always save time
+        // we will always save time and depth
         output_scalar.push_back(map_att_scalar["time"]);
-
-        // depth is only saved once, do it manually
-        output->addField(att_soilz.name, att_soilz.units, att_soilz.long_name, att_soilz.dimensions);
-        output->saveField1D(att_soilz.name, *att_soilz.data);
+        output_vector.push_back(map_att_vector["soilz"]);
         
         // create list of fields to save
         for (int i=0; i<output_fields.size(); i++) {
@@ -145,12 +178,16 @@ UtahLSM :: UtahLSM(Input* input, double& ustar, double& flux_wT, double& flux_wq
         // add 1D fields
         for (int i=0; i<output_scalar.size(); i++) {
             AttScalar att = output_scalar[i];
-            output->addField(att.name, att.units, att.long_name, att.dimensions);
+            if (master) {
+                output->addField(att.name, att.units, att.long_name, att.dimensions);
+            }
         }
         // add 2D fields
         for (int i=0; i<output_vector.size(); i++) {
             AttVector  att = output_vector[i];
-            output->addField(att.name, att.units, att.long_name, att.dimensions);
+            if (master) {
+                output->addField(att.name, att.units, att.long_name, att.dimensions);
+            }
         }
     }
 }
@@ -204,22 +241,70 @@ void UtahLSM :: run() {
 
 }
 
-void UtahLSM :: save() {
+void UtahLSM :: save(Output* output) {
     
     // output size and location
-    const std::vector<size_t> index = {static_cast<unsigned long>(output_counter)};
-    const std::vector<size_t> time_height_index = {static_cast<size_t>(output_counter), 0};
-    std::vector<size_t> time_height_size  = {1, static_cast<unsigned long>(nsoilz)};
+    std::vector<size_t> scalar_index;
+    std::vector<size_t> scalar_size;
+    std::vector<size_t> vector_index;
+    std::vector<size_t> vector_size;
+    std::vector<size_t> vector_index_z;
+    std::vector<size_t> vector_size_z;
+    if (ny==1 && nx==1) {
+        scalar_index = {static_cast<unsigned long>(output_counter)};
+        vector_index = {static_cast<size_t>(output_counter), 0};
+        vector_size  = {1, static_cast<unsigned long>(nsoilz)};
+    }
+    else if (ny>1 && nx==1) {
+        scalar_index = {static_cast<unsigned long>(output_counter), static_cast<unsigned long>(j)};
+        vector_index = {static_cast<size_t>(output_counter), 0, static_cast<unsigned long>(j)};
+        vector_size  = {1, static_cast<unsigned long>(nsoilz), 1};
+        vector_index_z = {0, static_cast<unsigned long>(j)};
+        vector_size_z  = {static_cast<unsigned long>(nsoilz),1};
+    } else if (ny==1 && nx>1) {
+        scalar_index = {static_cast<unsigned long>(output_counter), static_cast<unsigned long>(i)};
+        vector_index = {static_cast<size_t>(output_counter), 0, static_cast<unsigned long>(i)};
+        vector_size  = {1, static_cast<unsigned long>(nsoilz), 1};
+        vector_index_z = {0, static_cast<unsigned long>(i)};
+        vector_size_z  = {static_cast<unsigned long>(nsoilz),1};
+    }
+    else {
+        scalar_index = {static_cast<unsigned long>(output_counter), static_cast<unsigned long>(j),
+            static_cast<unsigned long>(i)};
+        scalar_size  = {1, 1, 1};
+        vector_index = {static_cast<size_t>(output_counter), 0, static_cast<unsigned long>(j),
+                        static_cast<unsigned long>(i)};
+        vector_size  = {1, static_cast<unsigned long>(nsoilz),1, 1};
+        vector_index_z = {0, static_cast<unsigned long>(j),static_cast<unsigned long>(i)};
+        vector_size_z  = {static_cast<unsigned long>(nsoilz),1 ,1};
+    }
     
     // loop through 1D fields to save
     for (int i=0; i<output_scalar.size(); i++) {
-        output->saveField1D(output_scalar[i].name, index, output_scalar[i].data);
+        if (i==0 && master) {
+            output->saveField1D(output_scalar[i].name, scalar_index, output_scalar[i].data);
+        } else if (i>0) {
+            output->saveField1D(output_scalar[i].name, scalar_index, output_scalar[i].data);
+        }
     }
     // loop through 2D fields to save
     for (int i=0; i<output_vector.size(); i++) {
-        output->saveField2D(output_vector[i].name, time_height_index,
-                            time_height_size, *output_vector[i].data);
+        
+        // soil depth is only saved once with no time component
+        if (i==0 && output_counter==0) {
+            if (ny==1 && nx==1)  {
+                output->saveField2D(output_vector[i].name, *output_vector[i].data);
+            } else {
+                output->saveField2D(output_vector[i].name, vector_index_z,
+                                    vector_size_z, *output_vector[i].data);
+            }
+            output_vector.erase(output_vector.begin());
+        } else {
+            output->saveField2D(output_vector[i].name, vector_index,
+                                vector_size, *output_vector[i].data);
+        }
     }
+    
     // increment for next time insertion
     output_counter +=1;
 }

@@ -9,24 +9,31 @@
 #ifndef UTAHLSM_HPP
 #define UTAHLSM_HPP
 
-#include "input.hpp"
-#include "output.hpp"
 #include <string>
 #include <vector>
+
+#include <netcdf>
 
 /**
  * This is the main UtahLSM class.
  */
 
+using namespace netCDF;
+using namespace netCDF::exceptions;
+
 class Input;
 class Output;
+
 class UtahLSM {
     
     private:
-        
+    
         // flux pointers
         double &ustar, &flux_wT, &flux_wq;
-
+    
+        // namelist grid section
+        int nx, ny;
+    
         // namelist length section
         double z_o, z_t, z_m, z_s;
         
@@ -69,8 +76,8 @@ class UtahLSM {
         double tstep=0, runtime=0, utc=0;
     
         // local output information
-        Output* output;
-    
+        bool master;
+        int j=0, i=0;
         int output_counter=0;
     
         std::vector<NcDim> dim_scalar_t;
@@ -111,12 +118,12 @@ class UtahLSM {
     
     public :
         
-        UtahLSM(Input*,double&,double&,double&);
+        UtahLSM(Input*,Output*,double&,double&,double&,int j=0, int i=0);
     
         // external functions
         void updateFields(double,double,double,double,double,double);
         void run();
-        void save();
+        void save(Output*);
 };
 
 #endif
