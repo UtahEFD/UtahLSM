@@ -24,16 +24,17 @@ else()
 endif()
 
 # set compilers
-set(CMAKE_C_COMPILER "cc")
-set(CMAKE_CXX_COMPILER "c++")
+#set(CMAKE_C_COMPILER "cc")
+#set(CMAKE_CXX_COMPILER "c++")
 
 # Start the project only after the system specific settings are loaded.
 project(utahlsm)
 
+SET(NETCDF_CXX "YES")
 FIND_PACKAGE(NetCDF REQUIRED)
 IF(NetCDF_FOUND)
   INCLUDE_DIRECTORIES(${NETCDF_INCLUDES})
-  MESSAGE(STATUS "Found NetCDF: ${NETCDF_INCLUDES}, ${NETCDF_LIBRARIES}")
+  MESSAGE(STATUS "Found NetCDF: ${NETCDF_INCLUDES}: ${NETCDF_LIBRARIES_C}, ${NETCDF_LIBRARIES_CXX}")
 ELSE(NetCDF_FOUND)
   # Get system settings file
   set(SYST default)

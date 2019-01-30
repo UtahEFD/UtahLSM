@@ -6,3 +6,5 @@ add_executable(utahlsm
 
 target_link_libraries(utahlsm lsm)
 target_link_libraries(utahlsm ${LIBS})
+target_link_libraries(utahlsm ${NETCDF_LIBRARIES_CXX})
+target_link_libraries(utahlsm ${NETCDF_LIBRARIES_C})
