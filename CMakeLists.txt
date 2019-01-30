@@ -12,9 +12,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config)
 # install to the run directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-# Get system settings file
-set(SYST default)
-include(${SYST} OPTIONAL RESULT_VARIABLE SYSTINC)
 
 # Set the default build type to RELEASE.
 if(NOT CMAKE_BUILD_TYPE)
@@ -32,6 +29,16 @@ set(CMAKE_CXX_COMPILER "c++")
 
 # Start the project only after the system specific settings are loaded.
 project(utahlsm)
+
+FIND_PACKAGE(NetCDF REQUIRED)
+IF(NetCDF_FOUND)
+  INCLUDE_DIRECTORIES(${NETCDF_INCLUDES})
+  MESSAGE(STATUS "Found NetCDF: ${NETCDF_INCLUDES}, ${NETCDF_LIBRARIES}")
+ELSE(NetCDF_FOUND)
+  # Get system settings file
+  set(SYST default)
+  include(${SYST} OPTIONAL RESULT_VARIABLE SYSTINC)
+ENDIF(NetCDF_FOUND)
 
 # Only set the compiler flags when the cache is created
 # to enable editing of the flags in the CMakeCache.txt file.
