@@ -1,6 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_library(lsm 
+add_library(lsm
   input.cpp
   matrix.cpp
   most.cpp
