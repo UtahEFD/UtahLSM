@@ -25,6 +25,10 @@
 #  target_link_libraries (uses_f90_interface ${NETCDF_LIBRARIES})
 #  target_link_libraries (only_uses_c_interface ${NETCDF_LIBRARIES_C})
 #
+# Updated by Pete Willemsen, January 2019
+#   - look for C++4 (netcdf_c++4) bindings rather than older C++ bindings (netcdf_c++)
+#   - allows the C library and C++ libraries to be installed in different locations
+# 
 # Taken from: https://github.com/jedbrown/cmake-modules/blob/master/FindNetCDF.cmake
 #
 # Copyright Constantine Khroulev
@@ -59,7 +63,7 @@ if (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
 find_path (NETCDF_INCLUDES netcdf.h
-  HINTS NETCDF_DIR ENV NETCDF_DIR NO_DEFAULT_PATH)
+  HINTS ${NETCDF_DIR} ENV NETCDF_DIR)
 
 find_library (NETCDF_LIBRARIES_C       NAMES netcdf)
 mark_as_advanced(NETCDF_LIBRARIES_C)

@@ -31,6 +31,7 @@ endif()
 project(utahlsm)
 
 SET(NETCDF_CXX "YES")
+SET(NETCDF_DIR "/usr/local/include")
 FIND_PACKAGE(NetCDF REQUIRED)
 IF(NetCDF_FOUND)
   INCLUDE_DIRECTORIES(${NETCDF_INCLUDES})
