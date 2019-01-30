@@ -59,9 +59,12 @@ endif()
 
 file(GLOB_RECURSE HEADERS "include/*")
 file(GLOB_RECURSE SOURCES "src/*")
+
 include_directories("include" SYSTEM ${INCLUDE_DIRS})
 link_libraries(${LIBS})
-add_executable(utahlsm ${HEADERS} ${SOURCES})
+
+add_subdirectory(src)
+add_subdirectory(utahlsmMain)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
