@@ -6,30 +6,24 @@
 #  Created by Jeremy Gibbs on 10/30/17
 
 # set cmake version and config file location
-cmake_minimum_required (VERSION 2.8.1)
+cmake_minimum_required (VERSION 3.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config)
 
 # install to the run directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-
-# Set the default build type to RELEASE.
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RELEASE CACHE STRING
-    "Choose the type of build, options are: None Debug Release." FORCE)
-else()
-  string(TOUPPER ${CMAKE_BUILD_TYPE} TEMP)
-  set(CMAKE_BUILD_TYPE ${TEMP} CACHE STRING
-    "Choose the type of build, options are: None Debug Release." FORCE)
-endif()
-
-# set compilers
-#set(CMAKE_C_COMPILER "cc")
-#set(CMAKE_CXX_COMPILER "c++")
-
 # Start the project only after the system specific settings are loaded.
 project(utahlsm)
 
+#
+# This code used C++ 11 and 14 features so enable these on CXX Flags
+#
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+#
+# NETCDF is Required! Search for it.
+#
 SET(NETCDF_CXX "YES")
 FIND_PACKAGE(NetCDF REQUIRED)
 IF(NetCDF_FOUND)
@@ -41,23 +35,6 @@ ELSE(NetCDF_FOUND)
   set(SYST default)
   include(${SYST} OPTIONAL RESULT_VARIABLE SYSTINC)
 ENDIF(NetCDF_FOUND)
-
-# Only set the compiler flags when the cache is created
-# to enable editing of the flags in the CMakeCache.txt file.
-if(NOT HASCACHE)
-  set(CMAKE_CXX_FLAGS ${USER_CXX_FLAGS} CACHE STRING
-    "Flags used by the CXX-compiler during all build types." FORCE)
-  set(CMAKE_CXX_FLAGS_DEBUG ${USER_CXX_FLAGS_DEBUG} CACHE STRING
-    "Flags used by the CXX-compiler during debug builds." FORCE)
-  set(CMAKE_CXX_FLAGS_RELEASE ${USER_CXX_FLAGS_RELEASE} CACHE STRING
-    "Flags used by the CXX-compiler during release builds." FORCE)
-
-  message(STATUS "Build Type: " ${CMAKE_BUILD_TYPE})
-  set(HASCACHE TRUE CACHE BOOL "CMakeCache.txt created." FORCE)
-  # Make sure that ccmake only contains build type.
-  mark_as_advanced(HASCACHE)
-  mark_as_advanced(CMAKE_INSTALL_PREFIX)
-endif()
 
 # Print the C++ and CUDA compiler flags to the screen.
 if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
