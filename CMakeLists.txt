@@ -20,6 +20,7 @@ project(utahlsm)
 #
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 #
 # NETCDF is Required! Search for it.
@@ -35,6 +36,18 @@ ELSE(NetCDF_FOUND)
   set(SYST default)
   include(${SYST} OPTIONAL RESULT_VARIABLE SYSTINC)
 ENDIF(NetCDF_FOUND)
+
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+  configure_file(config/doxygen.conf.in ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf)
+  add_custom_target(doc
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf
+    COMMENT "Generating API documentation with Doxygen." VERBATIM
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf)
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc DESTINATION ${CMAKE_SOURCE_DIR})
+else(DOXYGEN)
+  message(STATUS "WARNING: Doxygen not found - Reference manual will not be created.")
+endif()
 
 # Print the C++ and CUDA compiler flags to the screen.
 if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
@@ -52,14 +65,3 @@ link_libraries(${LIBS})
 add_subdirectory(src)
 add_subdirectory(utahlsmMain)
 
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-  configure_file(config/doxygen.conf.in ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf)
-  add_custom_target(doc
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf
-    COMMENT "Generating API documentation with Doxygen." VERBATIM
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf)
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc DESTINATION ${CMAKE_SOURCE_DIR})
-else(DOXYGEN)
-  message(STATUS "WARNING: Doxygen not found - Reference manual will not be created.")
-endif()
