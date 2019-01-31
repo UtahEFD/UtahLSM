@@ -107,20 +107,21 @@ macro (NetCDF_check_interface lang header libs)
   if (NETCDF_${lang})
 
     message(STATUS "Searching for NETCDF_${lang} interfaces (via header file ${header} and library ${libs})...")
+    set (NETCDF_${lang}_SEARCHPATH ${NETCDF_DIR})
     if (NETCDF_${lang}_DIR)
-       message(STATUS "     looking in ${NETCDF_${lang}_DIR}")
+      set (NETCDF_${lang}_SEARCHPATH ${NETCDF_${lang}_DIR})
+      message(STATUS "     looking in ${NETCDF_${lang}_SEARCHPATH}")
     endif (NETCDF_${lang}_DIR)
 
     find_path (NETCDF_INCLUDES_${lang} NAMES ${header}
-      HINTS ${NETCDF_${lang}_DIR} NO_DEFAULT_PATH)
-    
+      HINTS ${NETCDF_${lang}_SEARCHPATH})
     # message(STATUS "   result NETCDF_INCLUDES_${lang} = ${NETCDF_INCLUDES_${lang}}")
 
     # Extract the Parent directory path for NETCDF_${lang}
     get_filename_component(NETCDF_${lang}_PDIR ${NETCDF_INCLUDES_${lang}} DIRECTORY)
     # message(STATUS "   Parent ${lang} dir = ${NETCDF_${lang}_PDIR}")
 
-    find_library (NETCDF_LIBRARIES_${lang}    NAMES ${libs}      PATHS ${NETCDF_${lang}_PDIR}/lib   NO_DEFAULT_PATH)
+    find_library (NETCDF_LIBRARIES_${lang}    NAMES ${libs}      PATHS ${NETCDF_${lang}_PDIR}/lib)
     # message(STATUS "   result NETCDF_LIBRARIES_${lang} = ${NETCDF_LIBRARIES_${lang}}")
     mark_as_advanced (NETCDF_INCLUDES_${lang} NETCDF_LIBRARIES_${lang})
     
@@ -137,7 +138,7 @@ NetCDF_check_interface (CXX netcdf netcdf_c++4)  # header for CXX does not have 
 NetCDF_check_interface (F77 netcdf.inc  netcdff)
 NetCDF_check_interface (F90 netcdf.mod  netcdff)
 
-message(STATUS "All Libraries: ${NetCDF_libs}")
+message(STATUS "All NetCDF Libraries: ${NetCDF_libs}")
 set (NETCDF_LIBRARIES "${NetCDF_libs}" CACHE STRING "All NetCDF libraries required for requested interfaces")
 
 # handle the QUIETLY and REQUIRED arguments and set NETCDF_FOUND to TRUE if
