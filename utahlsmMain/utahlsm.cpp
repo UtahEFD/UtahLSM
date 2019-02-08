@@ -38,6 +38,9 @@ int main () {
     int ntime; 
     double tstep;
     
+    // input grid
+    int nx, ny;
+    
     // input meteorology
     std::vector<double> atm_U;
     std::vector<double> atm_T;
@@ -66,13 +69,16 @@ int main () {
     inputOffline->getItem(atm_p,"data","atm_p");
     inputOffline->getItem(R_net,"data","R_net");
     
-    // Initialize a vector of UtahLSM instances
-    int ny=2, nx=2;
-    std::vector<UtahLSM*> globalUtahLSM(ny*nx);
-    
     // initialize an instance of UtahLSM input and output
     Input* inputLSM  = new Input("inputLSM.json");
     Output* outputLSM = new Output("lsm.nc");
+    
+    // Get grid information
+    inputLSM->getItem(nx,"grid","nx");
+    inputLSM->getItem(ny,"grid","ny");
+    
+    // Initialize a vector of UtahLSM instances
+    std::vector<UtahLSM*> globalUtahLSM(ny*nx);
     
     // Fill array with LSM instances
     int k = 0;
