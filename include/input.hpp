@@ -1,7 +1,7 @@
 //
 //  input.hpp
 //  
-//  This class handles reading in user options
+//  This class is an input manager
 //
 //  Created by Jeremy Gibbs on 6/29/17.
 //
@@ -39,5 +39,15 @@ class Input {
         void getItem(std::vector<double>&, std::string, std::string);
         void getItem(std::vector<std::string>&, std::string, std::string);
 };
+
+// C-style functions
+typedef void * InputObject;
+
+extern "C" {
+   InputObject GetInput(char*);
+   void GetItemInt(InputObject,int*,char*,char*);
+   void GetItemDbl(InputObject,double*,char*,char*);
+   void GetItemDblArr(InputObject,double[],int*,char*,char*);
+}
 
 #endif

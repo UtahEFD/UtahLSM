@@ -63,5 +63,5 @@ include_directories("include" SYSTEM ${INCLUDE_DIRS})
 link_libraries(${LIBS})
 
 add_subdirectory(src)
-add_subdirectory(utahlsmMain)
+add_subdirectory(utahlsmOffline)
 

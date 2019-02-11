@@ -41,4 +41,12 @@ class Output {
                          std::vector<size_t>, std::vector<double>&);
 };
 
+
+// C-style functions
+typedef void * OutputObject;
+
+extern "C" {
+   OutputObject GetOutput(char*);
+}
+
 #endif

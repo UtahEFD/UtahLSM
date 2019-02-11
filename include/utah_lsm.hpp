@@ -126,4 +126,18 @@ class UtahLSM {
         void save(Output*);
 };
 
+
+// C-style functions
+typedef void * LSMObject;
+typedef void * InputObject;
+typedef void * OutputObject;
+
+extern "C" {
+   LSMObject GetLSM(InputObject,OutputObject,double*,double*,double*,int*,int*);
+   void UpdateFields(LSMObject,double*, double*, double*, double*, double*, double*);
+   void Run(LSMObject);
+   void Save(LSMObject,OutputObject);
+}
+
+
 #endif

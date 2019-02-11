@@ -785,3 +785,54 @@ void UtahLSM :: solveDiffusion(int type) {
         std::exit(0);
     }
 }
+
+// C-style functions
+
+// Interface function to return an lsm object
+LSMObject GetLSM(InputObject input, OutputObject output,
+                 double* ustar, double* flux_wT, 
+                 double* flux_wq, int* j, int* i) {
+    
+    // Get input and output objects
+    Input* input_obj = (Input*)input;
+    Output* output_obj = (Output*)output;
+    
+    // create lsm object
+    UtahLSM* lsm = new UtahLSM(input_obj,output_obj,*ustar,*flux_wT,*flux_wq,*j,*i);
+
+    return (LSMObject)lsm;
+}
+
+// Interface function to update large-scale forcing data
+void UpdateFields(LSMObject lsm,double* dt,double* u,double* T,double* q,double* p,double* rad=0) {
+        
+    // get LSM object
+    UtahLSM* lsm_obj = (UtahLSM*)lsm;
+    
+    // update fields
+    lsm_obj->updateFields(*dt,*u,*T,*q,*p,*rad);
+    
+    return;
+    
+}
+
+// Interface function to run the model
+void Run(LSMObject lsm) {
+    
+    // get LSM object
+    UtahLSM* lsm_obj = (UtahLSM*)lsm;
+    
+    // run the lsm
+    lsm_obj->run();
+}
+
+// Interface function to save output data
+void Save(LSMObject lsm, OutputObject output) {
+        
+    // get LSM and output objects
+    UtahLSM* lsm_obj = (UtahLSM*)lsm;
+    Output* output_obj = (Output*)output;
+    
+    // run the lsm
+    lsm_obj->save(output_obj);
+}

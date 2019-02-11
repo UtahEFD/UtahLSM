@@ -8,18 +8,14 @@
 //
 
 #include "input.hpp"
-#include "utah_lsm.hpp"
-#include "constants.hpp"
 #include "json.hpp"
 #include<vector>
 #include<iostream>
 #include<fstream>
+#include<string>
+#include<cstring>
 
 using json = nlohmann::json;
-
-namespace {
-    namespace c = Constants;
-}
 
 Input :: Input(std::string input_file) {
     
@@ -63,4 +59,93 @@ void Input :: getItem(std::vector<double>& external, std::string section, std::s
 // Getter for vector of strings
 void Input :: getItem(std::vector<std::string>& external, std::string section, std::string name) {
     external = input[section][name].get<std::vector<std::string>>();
+}
+
+// C-style functions
+
+// Interface function to return an input object
+InputObject GetInput(char* input_file) {
+    
+    std::string inputFile(input_file);
+    
+    // remove trailing spaces sent from fortran
+    while(inputFile.size() && isspace(inputFile.back())) 
+        inputFile.pop_back();
+    
+    Input *input = new Input(inputFile);
+    return (InputObject)input;
+}
+
+// Interface function to retrieve an int from an input object
+void GetItemInt(InputObject input, int* external,char* section, char* name) {
+    
+    // Get input object
+    Input* input_obj = (Input*)input;
+        
+    // Convert incoming char to string
+    std::string inputSection(section);
+    std::string inputName(name);
+    
+    // remove trailing spaces sent from fortran
+    while(inputSection.size() && isspace(inputSection.back())) 
+        inputSection.pop_back();
+    while(inputName.size() && isspace(inputName.back())) 
+        inputName.pop_back();
+    
+    // Get item from input object
+    input_obj->getItem(*external,inputSection,inputName);
+    
+    return; 
+}
+
+// Interface function to retrieve a double from an input object
+void GetItemDbl(InputObject input, double* external,char* section, char* name) {
+    
+    // Get input object
+    Input* input_obj = (Input*)input;
+        
+    // Convert incoming char to string
+    std::string inputSection(section);
+    std::string inputName(name);
+    
+    // remove trailing spaces sent from fortran
+    while(inputSection.size() && isspace(inputSection.back())) 
+        inputSection.pop_back();
+    while(inputName.size() && isspace(inputName.back())) 
+        inputName.pop_back();
+    
+    // Get item from input object
+    input_obj->getItem(*external,inputSection,inputName);
+    
+    return; 
+}
+
+// Interface function to retrieve a double array from an input object
+void GetItemDblArr(InputObject input, double external[], int* size, char* section, char* name) {
+    
+    // Get input object
+    Input* input_obj = (Input*)input;
+        
+    // create a local vector
+    std::vector<double> local(*size);
+    
+    // Convert incoming char to string
+    std::string inputSection(section);
+    std::string inputName(name);
+    
+    // remove trailing spaces sent from fortran
+    while(inputSection.size() && isspace(inputSection.back())) 
+        inputSection.pop_back();
+    while(inputName.size() && isspace(inputName.back())) 
+        inputName.pop_back();
+    
+    // Get item from input object
+    input_obj->getItem(local,inputSection,inputName);
+    
+    // Update values from local vector to external array
+    for (int i=0;i<*size;i++) {
+        external[i] = local[i];
+    }
+    
+    return; 
 }

@@ -1,23 +1,18 @@
 //
-//  input.cpp
+//  output.cpp
 //  
-//  This class handles reading in user options
-//  This is modified from version in MicroHH
+//  This class is an output manager
 //
 //  Created by Jeremy Gibbs on 6/29/17.
 //
 
-#include "utah_lsm.hpp"
 #include "output.hpp"
-#include "constants.hpp"
 #include <iostream>
+#include <netcdf>
+
 
 using namespace netCDF;
 using namespace netCDF::exceptions;
-
-namespace {
-    namespace c = Constants;
-}
 
 Output :: Output(std::string output_file) {
     
@@ -65,4 +60,19 @@ void Output :: saveField2D(std::string name, std::vector<double>& data) {
     // write output data
     NcVar var = fields[name];
     var.putVar(&data[0]);
+}
+
+// C-style functions
+
+// Interface function to return an output object
+OutputObject GetOutput(char* output_file) {
+    
+    std::string outputFile(output_file);
+    
+    // remove trailing spaces sent from fortran
+    while(outputFile.size() && isspace(outputFile.back())) 
+        outputFile.pop_back();
+    
+    Output* output = new Output(outputFile);
+    return (OutputObject)output;
 }
