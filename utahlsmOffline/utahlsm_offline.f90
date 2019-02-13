@@ -1,3 +1,11 @@
+!!
+!!  utahlsm_offline.f90
+!!  
+!!  This program is an example that runs
+!!  UtahLSM in an offline mode
+!!
+!!  Created by Jeremy Gibbs on 02/13/2017
+!!
 program p
 
    use, intrinsic :: iso_fortran_env, only : compiler_version
@@ -49,8 +57,20 @@ program p
    double precision :: flux_wq
    integer :: i, j, k, t
    integer :: i_max, j_max
+   character*1 :: creturn = achar(13)
    type(c_ptr), allocatable :: globalUtahLSM(:)
-      
+   
+   ! program timing variables
+   real :: start_time, stop_time, elapsed
+   
+   ! write a friendly welcome message
+   write(*,'(a)') '##############################################################'
+   write(*,'(a)') '#                                                            #'
+   write(*,'(a)') '#                     Welcome to UtahLSM                     #'
+   write(*,'(a)') '#   A land surface model created at the University of Utah   #'
+   write(*,'(a)') '#                                                            #'
+   write(*,'(a)') '##############################################################'
+   
    ! Create C++ object representing offline case
    input_offline_obj = GetInput( input_file=input_offline_file )
    
@@ -90,12 +110,16 @@ program p
         k = k+1
     enddo
    enddo
-      
+   
+   ! set up time information
+   call cpu_time(start_time)
+   
    ! loop through all times
    utc = 0
    do t=1,ntime
-    write(*,'(a18,f10.2)') 'Running for time:',utc
-    utc = utc + tstep
+        utc = utc + tstep
+        write(6,'(a,a,f0.2)',advance='no') creturn, '[UtahLSM]        Running for time: ', utc
+        flush(6)
     
     ! loop through each LSM instance
     k = 1
@@ -108,5 +132,12 @@ program p
         enddo
     enddo
    enddo
+   
+   ! compuet run time information
+   call cpu_time(stop_time)
+   elapsed = stop_time - start_time
+   write(*,*) creturn
+   write(6,'(a,f0.6,a)') '[UtahLSM]        Finished in ',elapsed, ' seconds!'
+   write(*,'(a)') '##############################################################'
 
 end program p

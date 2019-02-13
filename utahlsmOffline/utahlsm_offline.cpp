@@ -1,5 +1,5 @@
 //
-//  run_lsm.cpp
+//  utahlsm_offline.cpp
 //  
 //  This program is an example that runs
 //  UtahLSM in an offline mode
@@ -31,6 +31,15 @@ namespace {
 
 int main () {
     
+    // print a nice little welcome message
+    std::cout << std::endl;
+    std::cout<<"##############################################################"<<std::endl;
+    std::cout<<"#                                                            #"<<std::endl;
+    std::cout<<"#                     Welcome to UtahLSM                     #"<<std::endl;
+    std::cout<<"#   A land surface model created at the University of Utah   #"<<std::endl;
+    std::cout<<"#                                                            #"<<std::endl;
+    std::cout<<"##############################################################"<<std::endl;
+    
     // declare local variables
     double ustar,flux_wT,flux_wq;
     
@@ -47,15 +56,6 @@ int main () {
     std::vector<double> atm_q;
     std::vector<double> atm_p;
     std::vector<double> R_net;
-        
-    // print a nice little welcome message
-    std::cout << std::endl;
-    std::cout<<"##############################################################"<<std::endl;
-    std::cout<<"#                                                            #"<<std::endl;
-    std::cout<<"#                     Welcome to UtahLSM                     #"<<std::endl;
-    std::cout<<"#   A land surface model created at the University of Utah   #"<<std::endl;
-    std::cout<<"#                                                            #"<<std::endl;
-    std::cout<<"##############################################################"<<std::endl;
     
     // read offline input file
     Input* inputOffline = new Input("inputOffline.json");
@@ -98,7 +98,7 @@ int main () {
 
         // set time
         utc += tstep;
-        std::cout<<std::fixed<<"\r[UtahLSM] \t Running for time: "<<std::setw(7)<<utc<<std::flush;
+        std::cout<<std::fixed<<"\r[UtahLSM] \t Running for time: "<<std::setprecision(2)<<utc<<std::flush;
         
         // loop through each LSM instance
         int k = 0;
