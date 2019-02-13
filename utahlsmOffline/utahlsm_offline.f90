@@ -44,23 +44,16 @@ program p
    character*50 :: name_atmp = 'atm_p'
    character*50 :: name_rnet = 'R_net'
    
-   double precision, allocatable :: atm_U(:)
-   double precision, allocatable :: atm_T(:)
-   double precision, allocatable :: atm_q(:)
-   double precision, allocatable :: atm_p(:)
-   double precision, allocatable :: R_net(:)
+   double precision, allocatable :: atm_U(:),atm_T(:),atm_q(:),atm_p(:),R_net(:)
    
    ! local LSM variables
-   double precision :: utc
-   double precision :: ustar
-   double precision :: flux_wT
-   double precision :: flux_wq
+   double precision :: utc, ustar, flux_wT, flux_wq
    integer :: i, j, k, t
    integer :: i_max, j_max
-   character*1 :: creturn = achar(13)
    type(c_ptr), allocatable :: globalUtahLSM(:)
    
    ! program timing variables
+   character*1 :: creturn = achar(13)
    real :: start_time, stop_time, elapsed
    
    ! write a friendly welcome message
