@@ -146,7 +146,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
         AttScalar att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
-        AttVector att_soilz = {&soil_z,  "soilz", "Obukhov length",     "m",    dim_scalar_z};
+        AttVector att_soilz = {&soil_z,  "soilz", "Obukhov length",     "m",     dim_scalar_z};
         AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector};
         AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector};
         
@@ -174,7 +174,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
                 output_vector.push_back(map_att_vector[key]);
             }
         }
-        
+
         // add 1D fields
         for (int i=0; i<output_scalar.size(); i++) {
             AttScalar att = output_scalar[i];
@@ -242,7 +242,7 @@ void UtahLSM :: run() {
 }
 
 void UtahLSM :: save(Output* output) {
-    
+        
     // output size and location
     std::vector<size_t> scalar_index;
     std::vector<size_t> scalar_size;
@@ -298,12 +298,14 @@ void UtahLSM :: save(Output* output) {
                 output->saveField2D(output_vector[i].name, vector_index_z,
                                     vector_size_z, *output_vector[i].data);
             }
-            output_vector.erase(output_vector.begin());
         } else {
             output->saveField2D(output_vector[i].name, vector_index,
                                 vector_size, *output_vector[i].data);
         }
     }
+    
+    // remove soil depth from fields to save after first time loop
+    if (output_counter==0) output_vector.erase(output_vector.begin());
     
     // increment for next time insertion
     output_counter +=1;
