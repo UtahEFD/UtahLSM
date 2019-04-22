@@ -10,6 +10,7 @@
 #define SOIL_HPP
 
 #include <vector>
+include <stdexcept>
 
 /**
  * This class handles tasks associated with soil.

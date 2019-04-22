@@ -4,3 +4,4 @@ doc/
 build/
 *utahlsm
 *.nc
+.vscode/
