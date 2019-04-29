@@ -15,22 +15,21 @@
 using json = nlohmann::json;
 
 /**
- * This class handles reading input files.
+ * Class for managing input files.
+ * This class is responsible for opening a supplied input file
+ * and returning requested fields from that file.
  */
 
 class Input {
     
     private:
-        // json wrapper
-        json input;
-    
-        // function to read file
-        void readInputFile(std::string);
+
+        json input;                      ///< json wrapper of input file
+        void readInputFile(std::string); ///< Read the input file
     
     public:
     
-        // initializer
-        Input(std::string);
+        Input(std::string);        
     
         // getters
         void getItem(int&, std::string, std::string);

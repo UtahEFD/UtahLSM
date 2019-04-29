@@ -10,7 +10,7 @@
 #define CONSTANTS_HPP
 
 /**
- * This class stores commonly used constants.
+ * Namespace for storing commonly used constants.
  */
 
 namespace Constants {
