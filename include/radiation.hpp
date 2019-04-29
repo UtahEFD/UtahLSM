@@ -1,7 +1,7 @@
 //
 //  radiation.hpp
 //  
-//  This namespace handles functions related to soil
+//  This class computes surface radiation
 //
 //  Created by Jeremy Gibbs on 11/6/17.
 //
@@ -13,14 +13,25 @@
  * This class computes the surface radiation.
  */
 
-namespace radiation {
+class Radiation {
     
-    double longwaveIn();
-    double longwaveOut(const double,const double);
-    double shortwaveIn(const double,const double,const double,const double);
-    double shortwaveOut(const double,const double);
-    double net(const double,const double,const double,
-               const double,const double,const double,const double);
+    public:
+        
+        Radiation(const double,const double,const double,const double);
+        
+        double computeNet(const double,const double,const double);
+        
+    private:
+        
+        // site properties
+        double latitude, longitude, albedo, emissivity;
+        
+        // functions for each component
+        double longwaveIn();
+        double longwaveOut(const double,const double);
+        double shortwaveIn(const double,const double,const double,const double);
+        double shortwaveOut(const double,const double);
+    
 };
 
 #endif

@@ -74,7 +74,7 @@ class UtahLSM {
         // time data
         bool first=true;
         double tstep=0, runtime=0, utc=0;
-    
+        
         // local output information
         bool master;
         int j=0, i=0;
@@ -108,7 +108,6 @@ class UtahLSM {
     
         // internal functions
         void setSoilProperties();
-        void computeRadiation();
         void computeFluxes(double,double);
         void solveSEB();
         void solveSMB();

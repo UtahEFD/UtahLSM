@@ -220,7 +220,8 @@ void UtahLSM :: run() {
     
     // run radiation model is needed
     if (comp_rad==1) {
-        computeRadiation();
+        Radiation* radiation = new Radiation(latitude,longitude,albedo,emissivity);
+        R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
     }
     
     // solve the surface energy balance
@@ -326,11 +327,6 @@ void UtahLSM :: setSoilProperties() {
     residual = soilProperties.residual;
     K_sat    = soilProperties.K_sat;
     Ci       = soilProperties.Ci;
-}
-
-// compute net radiation
-void UtahLSM :: computeRadiation() {
-    R_net = radiation::net(soil_T[0],emissivity,julian_day,utc,latitude,longitude,albedo);
 }
 
 // compute surface fluxes using Monin-Obukhov w/Dyer-Hicks
