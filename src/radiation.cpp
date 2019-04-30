@@ -17,7 +17,7 @@
 #include "constants.hpp"
 
 namespace {
-    namespace c = Constants;
+    namespace c = constants;
 }
 
 Radiation::Radiation(const double latitude,const double longitude,

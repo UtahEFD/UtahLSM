@@ -18,7 +18,7 @@
 #include <iostream>
 
 namespace {
-    namespace c = Constants;
+    namespace c = constants;
 }
 
 namespace soil {

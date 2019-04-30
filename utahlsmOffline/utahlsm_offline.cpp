@@ -32,7 +32,7 @@ using namespace netCDF;
 using namespace netCDF::exceptions;
 
 namespace {
-    namespace c = Constants;
+    namespace c = constants;
 }
 
 int main () {

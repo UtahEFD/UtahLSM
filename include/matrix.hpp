@@ -23,7 +23,7 @@
  * This class currently solves a tridiagonal matrix using
  * the Thomas algorithm.
  */
-namespace Matrix {
+namespace matrix {
 
     /**
      * Solves a tridiagonal matrix using the Thomas algorithm.

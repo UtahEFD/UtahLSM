@@ -15,7 +15,7 @@
 #include <iostream>
 #include <vector>
 
-namespace Matrix {
+namespace matrix {
     
     // Solve tridiagonal matrix using the Thomas algorithm
     void tridiagonal(const std::vector<double>& a,const std::vector<double>& b,

@@ -18,8 +18,7 @@
 /**
  * Namespace for storing commonly used constants.
  */
-
-namespace Constants {
+namespace constants {
     const double vonk    = 0.4;              ///< von Karman constant
     const double grav    = 9.81;             ///< acceleration due to gravity [m/s^2]
     const double pi      = 3.14159265358979; ///< pi
