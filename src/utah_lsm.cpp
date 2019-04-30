@@ -782,8 +782,8 @@ void UtahLSM :: solveDiffusion(int type) {
     
     // solve the tridiagonal system
     try {
-        if (type==1) matrix::tridiagonal(e,f,g,r,soil_T);
-        if (type==2) matrix::tridiagonal(e,f,g,r,soil_q);
+        if (type==1) Matrix::tridiagonal(e,f,g,r,soil_T);
+        if (type==2) Matrix::tridiagonal(e,f,g,r,soil_q);
     } catch(std::string &e) {
         std::cout<<e<<std::endl;
         std::exit(0);

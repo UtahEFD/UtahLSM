@@ -18,15 +18,25 @@
 #include <vector>
 
 /**
- * This class solves a tridiagonal matrix using
- * the Thomas algorithm
+ * Class for managing matrix algebra.
+ * 
+ * This class currently solves a tridiagonal matrix using
+ * the Thomas algorithm.
  */
+namespace Matrix {
 
-namespace matrix {
-
-    void tridiagonal(const std::vector<double>&,const std::vector<double>&,
-                     const std::vector<double>&,const std::vector<double>&,
-                     std::vector<double>&);
+    /**
+     * Solves a tridiagonal matrix using the Thomas algorithm.
+     *
+     * @param[in]  a first off-diagonal band
+     * @param[in]  b diagonal band
+     * @param[in]  c second off-diagonal band
+     * @param[in]  r right-hand column vector
+     * @param[out] u solution vector
+     */
+    void tridiagonal(const std::vector<double>& a,const std::vector<double>& b,
+                     const std::vector<double>& c,const std::vector<double>& r,
+                     std::vector<double> &u);
 };
 
 #endif
