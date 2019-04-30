@@ -13,7 +13,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # Start the project only after the system specific settings are loaded.
-project(utahlsm)
+project(UtahLSM VERSION 1.0 DESCRIPTION "UtahLSM is a lightweight, fast-response land-surface model" LANGUAGES CXX)
 
 #
 # This code used C++ 11 and 14 features so enable these on CXX Flags
