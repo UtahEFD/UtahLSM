@@ -1,11 +1,16 @@
 !!
-!!  utahlsm_offline.f90
-!!  
-!!  This program is an example that runs
-!!  UtahLSM in an offline mode
-!!
-!!  Created by Jeremy Gibbs on 02/13/2017
-!!
+!! UtahLSM
+!! 
+!! Copyright (c) 2019 Jeremy A. Gibbs
+!! Copyright (c) 2019 Pete Willemsen
+!! Copyright (c) 2019 Rob Stoll
+!! Copyright (c) 2019 Eric Pardyjak
+!! 
+!! This file is part of UtahLSM.
+!! 
+!! This software is free and is distributed under the MIT License.
+!! See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
+!! 
 program p
 
    use, intrinsic :: iso_fortran_env, only : compiler_version

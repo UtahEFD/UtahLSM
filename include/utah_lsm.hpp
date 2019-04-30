@@ -1,10 +1,16 @@
-//
-//  utah_lsm.hpp
-//  
-//  This class handles the Utah LSM
-//
-//  Created by Jeremy Gibbs on 10/31/17.
-//
+/*
+ * UtahLSM
+ * 
+ * Copyright (c) 2019 Jeremy A. Gibbs
+ * Copyright (c) 2019 Pete Willemsen
+ * Copyright (c) 2019 Rob Stoll
+ * Copyright (c) 2019 Eric Pardyjak
+ * 
+ * This file is part of UtahLSM.
+ * 
+ * This software is free and is distributed under the MIT License.
+ * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
+ */
 
 #ifndef UTAHLSM_HPP
 #define UTAHLSM_HPP

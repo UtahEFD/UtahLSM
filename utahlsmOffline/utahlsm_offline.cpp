@@ -1,11 +1,17 @@
-//
-//  utahlsm_offline.cpp
-//  
-//  This program is an example that runs
-//  UtahLSM in an offline mode
-//
-//  Created by Jeremy Gibbs on 10/30/17
-//
+/*
+ * UtahLSM
+ * 
+ * Copyright (c) 2019 Jeremy A. Gibbs
+ * Copyright (c) 2019 Pete Willemsen
+ * Copyright (c) 2019 Rob Stoll
+ * Copyright (c) 2019 Eric Pardyjak
+ * 
+ * This file is part of UtahLSM.
+ * 
+ * This software is free and is distributed under the MIT License.
+ * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
+ */
+
 #include "utah_lsm.hpp"
 #include "constants.hpp"
 #include "input.hpp"
