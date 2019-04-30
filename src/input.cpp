@@ -1,34 +1,39 @@
-//
-//  input.cpp
-//  
-//  This class handles reading in user options
-//  This is modified from version in MicroHH
-//
-//  Created by Jeremy Gibbs on 6/29/17.
-//
+/*
+ * UtahLSM
+ * 
+ * Copyright (c) 2019 Jeremy A. Gibbs
+ * Copyright (c) 2019 Pete Willemsen
+ * Copyright (c) 2019 Rob Stoll
+ * Copyright (c) 2019 Eric Pardyjak
+ * 
+ * This file is part of UtahLSM.
+ * 
+ * This software is free and is distributed under the MIT License.
+ * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
+ */
 
 #include "input.hpp"
 #include "json.hpp"
-#include<vector>
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<cstring>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstring>
 
 using json = nlohmann::json;
 
+// Constructor for Input class
 Input :: Input(std::string input_file) {
     
     // define json wrapper
     json input;
     
-    // read input
+    // read input file
     std::cout<<"[Input] \t Reading "<<input_file<<std::endl;
     readInputFile(input_file);
-    
 }
 
-// Read in the namelist file
+// Read the input file
 void Input :: readInputFile(std::string input_file) {
     
     // read file and de-serialize
@@ -36,113 +41,117 @@ void Input :: readInputFile(std::string input_file) {
     i >> input;
 }
 
-// Getter for integer
+// Retrieve the requested integer from the input file
 void Input :: getItem(int& external, std::string section, std::string name) {
     external = input[section][name].get<int>();
 }
 
-// Getter for double
+// Retrieve the requested double from the input file
 void Input :: getItem(double& external, std::string section, std::string name) {
     external = input[section][name].get<double>();
 }
 
-// Getter for vector of ints
+// Retrieve the requested vector<int> from the input file
 void Input :: getItem(std::vector<int>& external, std::string section, std::string name) {
     external = input[section][name].get<std::vector<int>>();
 }
 
-// Getter for vector of doubles
+// Retrieve the requested vector<double> from the input file
 void Input :: getItem(std::vector<double>& external, std::string section, std::string name) {
     external = input[section][name].get<std::vector<double>>();
 }
 
-// Getter for vector of strings
+// Retrieve the requested vector<string> from the input file
 void Input :: getItem(std::vector<std::string>& external, std::string section, std::string name) {
     external = input[section][name].get<std::vector<std::string>>();
 }
 
-// C-style functions
+//////////////////////////////////////////////////////////////
+// C-style interface for compatibility with other languages //
+//////////////////////////////////////////////////////////////
 
-// Interface function to return an input object
+// C-style wrapper for the Input constructor
 InputObject GetInput(char* input_file) {
     
+    // Convert from char* to std::string
     std::string inputFile(input_file);
     
-    // remove trailing spaces sent from fortran
+    // Remove trailing spaces sent from Fortran
     while(inputFile.size() && isspace(inputFile.back())) 
         inputFile.pop_back();
     
+    // Return Input object
     Input *input = new Input(inputFile);
     return (InputObject)input;
 }
 
-// Interface function to retrieve an int from an input object
-void GetItemInt(InputObject input, int* external,char* section, char* name) {
+// C-style wrapper for the getItem function for an integer
+void GetItemInt(InputObject input, int* external, char* section, char* name) {
     
-    // Get input object
+    // Get Input object
     Input* input_obj = (Input*)input;
         
-    // Convert incoming char to string
+    // Convert from char* to std::string
     std::string inputSection(section);
     std::string inputName(name);
     
-    // remove trailing spaces sent from fortran
+    // Remove trailing spaces sent from Fortran
     while(inputSection.size() && isspace(inputSection.back())) 
         inputSection.pop_back();
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from input object
+    // Get item from Input object
     input_obj->getItem(*external,inputSection,inputName);
     
     return; 
 }
 
-// Interface function to retrieve a double from an input object
-void GetItemDbl(InputObject input, double* external,char* section, char* name) {
+// C-style wrapper for the getItem function for a double
+void GetItemDbl(InputObject input, double* external, char* section, char* name) {
     
-    // Get input object
+    // Get Input object
     Input* input_obj = (Input*)input;
         
-    // Convert incoming char to string
+    // Convert from char* to std::string
     std::string inputSection(section);
     std::string inputName(name);
     
-    // remove trailing spaces sent from fortran
+    // Remove trailing spaces sent from Fortran
     while(inputSection.size() && isspace(inputSection.back())) 
         inputSection.pop_back();
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from input object
+    // Get item from Input object
     input_obj->getItem(*external,inputSection,inputName);
     
     return; 
 }
 
-// Interface function to retrieve a double array from an input object
+// C-style wrapper for the getItem function for a vector<double>
 void GetItemDblArr(InputObject input, double external[], int* size, char* section, char* name) {
     
-    // Get input object
+    // Get Input object
     Input* input_obj = (Input*)input;
         
-    // create a local vector
+    // Create a local vector
     std::vector<double> local(*size);
     
-    // Convert incoming char to string
+    // Convert from char* to std::string
     std::string inputSection(section);
     std::string inputName(name);
     
-    // remove trailing spaces sent from fortran
+    // Remove trailing spaces sent from Fortran
     while(inputSection.size() && isspace(inputSection.back())) 
         inputSection.pop_back();
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from input object
+    // Get item from Input object
     input_obj->getItem(local,inputSection,inputName);
     
-    // Update values from local vector to external array
+    // Copy values from local vector to external array
     for (int i=0;i<*size;i++) {
         external[i] = local[i];
     }

@@ -64,4 +64,3 @@ link_libraries(${LIBS})
 
 add_subdirectory(src)
 add_subdirectory(utahlsmOffline)
-
