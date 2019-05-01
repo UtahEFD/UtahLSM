@@ -70,7 +70,9 @@ void Output :: saveFieldVector(std::string name, std::vector<double>& data) {
     var.putVar(&data[0]);
 }
 
-// C-style functions
+//////////////////////////////////////////////////////////////
+// C-style interface for compatibility with other languages //
+//////////////////////////////////////////////////////////////
 
 // Interface function to return an output object
 OutputObject GetOutput(char* output_file) {
