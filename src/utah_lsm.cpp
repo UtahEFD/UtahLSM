@@ -289,9 +289,9 @@ void UtahLSM :: save(Output* output) {
     // loop through 1D fields to save
     for (int i=0; i<output_scalar.size(); i++) {
         if (i==0 && master) {
-            output->saveField1D(output_scalar[i].name, scalar_index, output_scalar[i].data);
+            output->saveFieldScalar(output_scalar[i].name, scalar_index, output_scalar[i].data);
         } else if (i>0) {
-            output->saveField1D(output_scalar[i].name, scalar_index, output_scalar[i].data);
+            output->saveFieldScalar(output_scalar[i].name, scalar_index, output_scalar[i].data);
         }
     }
     // loop through 2D fields to save
@@ -300,14 +300,14 @@ void UtahLSM :: save(Output* output) {
         // soil depth is only saved once with no time component
         if (i==0 && output_counter==0) {
             if (ny==1 && nx==1)  {
-                output->saveField2D(output_vector[i].name, *output_vector[i].data);
+                output->saveFieldVector(output_vector[i].name, *output_vector[i].data);
             } else {
-                output->saveField2D(output_vector[i].name, vector_index_z,
-                                    vector_size_z, *output_vector[i].data);
+                output->saveFieldVector(output_vector[i].name, vector_index_z,
+                                        vector_size_z, *output_vector[i].data);
             }
         } else {
-            output->saveField2D(output_vector[i].name, vector_index,
-                                vector_size, *output_vector[i].data);
+            output->saveFieldVector(output_vector[i].name, vector_index,
+                                    vector_size, *output_vector[i].data);
         }
     }
     

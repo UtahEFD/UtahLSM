@@ -20,39 +20,95 @@
 #include <map>
 #include <netcdf>
 
-/**
- * This class handles saving output files.
- */
-
 using namespace netCDF;
 using namespace netCDF::exceptions;
 
+/**
+ * Class for managing output files.
+ * 
+ * This class is responsible for creating an output file, 
+ * managing which fields to save, and generating their metadata.
+ */
 class Output {
     
     private:
-        // netCDF variables
-        NcFile* outfile;
-        std::map<std::string,NcVar> fields;
+        
+        NcFile* outfile;                    ///< netcdf output file
+        std::map<std::string,NcVar> fields; ///< map linking name with variable
+    
     public:
     
-        // initializer
-        Output(std::string);
+        /**
+         * Constructs an Output object.
+         *
+         * @param[in] output_file name of output file.
+         */
+        Output(std::string output_file);
         
-        // setter
-        NcDim addDimension(std::string, int size=0);
-        void addField(std::string, std::string, std::string, std::vector<NcDim>);
-        void saveField1D(std::string, const std::vector<size_t>, double*);
-        void saveField2D(std::string, std::vector<double>&);
-        void saveField2D(std::string, const std::vector<size_t>,
-                         std::vector<size_t>, std::vector<double>&);
+        /**
+         * Adds a dimension to the output file.
+         *
+         * @param[in] name name of the dimension
+         * @param[in] size optional size of the dimension
+         * @return    reference to the created NcDim
+         */
+        NcDim addDimension(std::string name, int size=0);
+        
+        /**
+         * Adds a field to the output file.
+         *
+         * @param[in] name name of the field
+         * @param[in] units units of the field
+         * @param[in] long_name description of the field
+         * @param[in] dims dimensions of the field
+         */
+        void addField(std::string name, std::string units,
+                      std::string long_name, std::vector<NcDim> dims);
+        
+        /**
+         * Saves a scalar double field to the output file.
+         *
+         * @param[in] name name of the field
+         * @param[in] index data index of where to save field
+         * @param[in] data scalar data to save
+         */
+        void saveFieldScalar(std::string name, const std::vector<size_t> index,
+                             double* data);
+        
+        
+        /**
+         * Saves a 1D vector<double> field to the output file.
+         *
+         * @param[in] name name of the field
+         * @param[in] data vector data to save
+         */
+        void saveFieldVector(std::string name, std::vector<double>& data);
+
+        /**
+         * Saves a 2D+ vector<double> field to the output file.
+         *
+         * @param[in] name name of the field
+         * @param[in] index data index of where to save field
+         * @param[in] size size in each dimension of the field
+         * @param[in] data vector data to save
+         */
+        void saveFieldVector(std::string name, const std::vector<size_t> index,
+                             std::vector<size_t> size, std::vector<double>& data);
 };
 
 
-// C-style functions
-typedef void * OutputObject;
+/** 
+ * C-style interface for compatibility with other languages.
+ */
+typedef void * OutputObject; ///< Pointer representing Output object 
 
 extern "C" {
-   OutputObject GetOutput(char*);
+    /**
+     * C-style wrapper for the Output constructor.
+     *
+     * @param[in] output_file name of output file
+     */
+    OutputObject GetOutput(char* output_file);
 }
 
 #endif
