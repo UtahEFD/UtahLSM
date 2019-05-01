@@ -18,6 +18,7 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <fstream>
 #include "utah_lsm.hpp"
 #include "json.hpp"
 #include "constants.hpp"
@@ -27,7 +28,6 @@
 #include "radiation.hpp"
 #include "most.hpp"
 #include "matrix.hpp"
-#include <fstream>
 
 using json = nlohmann::json;
 
@@ -42,6 +42,9 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
 
     std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
     
+    // Objects to use
+    soil = new Soil;
+
     // Input grid section
     input->getItem(nx,"grid","nx");
     input->getItem(ny,"grid","ny");
@@ -51,7 +54,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     input->getItem(z_t,"length","z_t");
     input->getItem(z_m,"length","z_m");
     input->getItem(z_s,"length","z_s");
-                       
+                 
     // Input soil section
     input->getItem(nsoilz,"soil","nsoil");
     input->getItem(soil_param,"soil","param");
@@ -67,7 +70,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     
     // Modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
-                   bind2nd(std::multiplies<double>(), -1.0));
+                   std::bind(std::multiplies<double>(), std::placeholders::_1, -1.0));
 
     // Set soil properties
     setSoilProperties();
@@ -319,7 +322,7 @@ void UtahLSM :: save(Output* output) {
 // Set soil properties at each depth
 void UtahLSM :: setSoilProperties() {
     
-    struct soil::Properties soilProperties = soil::properties(soil_type,nsoilz,soil_param);
+    struct Soil::Properties soilProperties = soil->properties(soil_type,nsoilz,soil_param);
     
     b        = soilProperties.b;
     psi_sat  = soilProperties.psi_sat;
@@ -340,11 +343,11 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     int depth = nsoilz;
     int int_depth;
     double heat_cap,dT, dz;
-    struct soil::ThermalTransfer transfer;
+    struct Soil::ThermalTransfer transfer;
     std::vector<double> K(depth);
     
     // Compute surface mixing ratio
-    gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
+    gnd_q  = soil->surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
                                       sfc_T,sfc_q,atm_p,soil_model);
     
     // Sensible flux, latent flux, ustar, and L
@@ -367,7 +370,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
         } else {
             // Next time we integrate to depth of minimum flux within the soil
-            transfer   = soil::thermalTransfer(psi_sat,porosity,residual,soil_q,b,Ci,depth,soil_model);
+            transfer   = soil->thermalTransfer(psi_sat,porosity,residual,soil_q,b,Ci,depth,soil_model);
             K = transfer.k;
             
             // Compute heat flux within soil and find depth of minimum
@@ -386,7 +389,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_gr = 0;
             for (int d=0; d<int_depth; ++d) {
                 
-                heat_cap = soil::heatCapacity(porosity[d], Ci[d], soil_q[d]);
+                heat_cap = soil->heatCapacity(porosity[d], Ci[d], soil_q[d]);
                 dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
                 if (d==0) {
                     dz = soil_z[d] - soil_z[d+1];
@@ -409,7 +412,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         if ( (first) && (i == 0)) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
-            soil_q[0] = soil::surfaceWaterContentEstimate(psi_sat[0], porosity[0], residual[0],b[0],soil_T[0],gnd_q, atm_p,soil_model);
+            soil_q[0] = soil->surfaceWaterContentEstimate(psi_sat[0], porosity[0], residual[0],b[0],soil_T[0],gnd_q, atm_p,soil_model);
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -584,7 +587,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     double heat_cap, dSEB_dT;
     
     // Compute derivative of SEB wrt temperature
-    heat_cap = soil::heatCapacity(porosity[0], Ci[0], soil_q[0]);
+    heat_cap = soil->heatCapacity(porosity[0], Ci[0], soil_q[0]);
     dSEB_dT = - 4.*emissivity*c::sb*std::pow(sfc_T,3.)
     - c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
     - heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
@@ -604,13 +607,13 @@ void UtahLSM :: solveSMB() {
     std::vector<double> psi;
     std::vector<double> D_n;
     std::vector<double> K_n;
-    struct soil::MoistureTransfer transfer;
+    struct Soil::MoistureTransfer transfer;
     
     // Moisture potential at first level below ground
-    psi = soil::waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, soil_model);
+    psi = soil->waterPotential(psi_sat, porosity, residual, soil_q, b, nsoilz, soil_model);
     
     // Compute initial soil moisture flux
-    transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
+    transfer = soil->moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
     K_n      = transfer.k;
     D_n      = transfer.d;
     K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
@@ -638,15 +641,15 @@ void UtahLSM :: solveSMB() {
         }
         
         // Update soil moisture
-        soil_q[0] = soil::surfaceWaterContent(psi[0], psi_sat[0], porosity[0],
+        soil_q[0] = soil->surfaceWaterContent(psi[0], psi_sat[0], porosity[0],
                                               residual[0], b[0], soil_model);
 
-        double gnd_q  = soil::surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
+        double gnd_q  = soil->surfaceMixingRatio(psi_sat[0],porosity[0],residual[0],b[0],
                                                  soil_T[0],soil_q[0],atm_p,soil_model);
         E = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // Update soil moisture transfer
-        transfer = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
+        transfer = soil->moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,2,soil_model);
         K_n      = transfer.k;
         K_n_avg  = std::accumulate(K_n.begin(), K_n.end(), 0.0)/K_n.size();
         
@@ -662,8 +665,8 @@ void UtahLSM :: solveDiffusion(int type) {
     double surf_scalar_last;
     double dKdz, C_tp, C_tm, C_p, C_m;
     double dz_p, dz_m, a_m, a_p, a_o;
-    struct soil::MoistureTransfer transfer_m;
-    struct soil::ThermalTransfer transfer_t;
+    struct Soil::MoistureTransfer transfer_m;
+    struct Soil::ThermalTransfer transfer_t;
     std::vector<double> K(nsoilz,0.0);
     std::vector<double> D(nsoilz,0.0);
     std::vector<double> K_mid(nsoilz-1,0.0);
@@ -682,7 +685,7 @@ void UtahLSM :: solveDiffusion(int type) {
     
     // Interpolate soil_z and D_n to mid-points
     if (type==1) {
-        transfer_t = soil::thermalTransfer(psi_sat,porosity,porosity,soil_q,b,Ci,nsoilz,soil_model);
+        transfer_t = soil->thermalTransfer(psi_sat,porosity,porosity,soil_q,b,Ci,nsoilz,soil_model);
         D = transfer_t.d;
         for (int i=0; i<nsoilz-1; i++) {
             K_mid[i] = 0.5*(D[i]+D[i+1]);
@@ -691,7 +694,7 @@ void UtahLSM :: solveDiffusion(int type) {
         scalar = soil_T;
         surf_scalar_last = soil_T_last[0];
     } else {
-        transfer_m = soil::moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,nsoilz,soil_model);
+        transfer_m = soil->moistureTransfer(psi_sat,K_sat,porosity,residual,soil_q,b,nsoilz,soil_model);
         D      = transfer_m.d;
         K      = transfer_m.k;
         for (int i=0; i<nsoilz-1; i++) {

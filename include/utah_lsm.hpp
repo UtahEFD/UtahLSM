@@ -24,6 +24,7 @@ using namespace netCDF::exceptions;
 
 class Input;
 class Output;
+class Soil;
 
 /**
  * This is the main UtahLSM class.
@@ -75,6 +76,9 @@ class UtahLSM {
         void save(Output* output);
     
     private:
+
+        // Object to use 
+        Soil* soil;
 
         // Fields to compute
         double &ustar;   ///< reference to friction velocity
