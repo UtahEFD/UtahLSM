@@ -23,12 +23,12 @@ namespace {
 
 namespace soil {
     
-    // compute heat capacity
+    // Compute heat capacity
     double heatCapacity(const double porosity, const double Ci, const double soil_q) {
         return (1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air;
     }
     
-    // compute surface mixing ratio
+    // Compute surface mixing ratio
     double surfaceMixingRatio(const double psi_sat, const double porosity,
                               const double residual,  const double b,
                               const double sfc_T, const double sfc_q,
@@ -42,7 +42,7 @@ namespace soil {
         return hum_spec;
     }
     
-    // compute soil surface moisture
+    // Compute soil surface moisture
     double surfaceWaterContent(const double psi, const double psi_sat,
                                const double porosity, const double residual,
                                const double b, const int model) {
@@ -68,7 +68,7 @@ namespace soil {
         
     }
     
-    // estimate soil surface moisture from surface mixing ratio
+    // Estimate soil surface moisture from surface mixing ratio
     double surfaceWaterContentEstimate(const double psi_sat, const double porosity,
                                const double residual, const double b,
                                const double sfc_T, const double sfc_q,
@@ -97,7 +97,7 @@ namespace soil {
         return soil_q;
     }
     
-    // compute soil thermal conductivity/diffusivity
+    // Compute soil thermal conductivity/diffusivity
     struct ThermalTransfer thermalTransfer(const std::vector<double> &psi_sat,
                                            const std::vector<double> &porosity,
                                            const std::vector<double> &residual,
@@ -131,7 +131,7 @@ namespace soil {
         return transfer;
     }
     
-    // compute average soil moisture transfer
+    // Compute average soil moisture transfer
     struct MoistureTransfer moistureTransfer(const std::vector<double>& psi_sat,
                                              const std::vector<double>& K_sat,
                                              const std::vector<double>& porosity,
@@ -140,13 +140,13 @@ namespace soil {
                                              const std::vector<double>& b,
                                              const int depth, const int model) {
         
-        // local variables
+        // Local variables
         double Se;
         struct MoistureTransfer transfer;
         transfer.k.resize(depth);
         transfer.d.resize(depth);
 
-        // loop through each depth
+        // Loop through each depth
         for (int d=0; d<depth; ++d) {
             
             Se = (soil_q[d]-residual[d])/(porosity[d]-residual[d]);
@@ -171,12 +171,12 @@ namespace soil {
         return transfer;
     }
     
-    // compute soil water potential (single level)
+    // Compute soil water potential (single level)
     double waterPotential(const double psi_sat, const double porosity,
                           const double residual, const double soil_q,
                           const double b, const int model) {
         
-        // local variables
+        // Local variables
         double psi, Se;
         
         Se = (soil_q-residual)/(porosity-residual);
@@ -201,7 +201,7 @@ namespace soil {
         return psi;
     }
     
-    // compute soil water potential (full column)
+    // Compute soil water potential (full column)
     std::vector<double> waterPotential(const std::vector<double>& psi_sat,
                                        const std::vector<double>& porosity,
                                        const std::vector<double>& residual,
@@ -209,11 +209,11 @@ namespace soil {
                                        const std::vector<double>& b,
                                        const int depth, const int model) {
         
-        // local variables
+        // Local variables
         double Se;
         std::vector<double> psi(depth);
         
-        // loop through each depth
+        // Loop through each depth
         for (int d=0; d<depth; ++d) {
             
             Se = (soil_q[d]-residual[d])/(porosity[d]-residual[d]);
@@ -239,7 +239,7 @@ namespace soil {
         return psi;
     }
     
-    // set soil type properties at each depth
+    // Set soil type properties at each depth
     // soil type from USDA 11-category + peat
     // 01 = sand
     // 02 = loamy sand
@@ -262,7 +262,7 @@ namespace soil {
         std::vector<double>K_list;   // hydraulic conductivity (m/s)
         std::vector<double>Ci_list;  // volumetric heat capacity (J/m^3/K)
         
-        // struct to hold soil properties
+        // Struct to hold soil properties
         struct Properties properties;
         properties.b.resize(depth);
         properties.psi_sat.resize(depth);
@@ -361,7 +361,7 @@ namespace soil {
             }
         }
          
-        // loop through each depth to assign soil type properties
+        // Loop through each depth to assign soil type properties
         int soil;
         for (int d=0; d<depth; ++d) {
 	        

@@ -130,7 +130,7 @@ class UtahLSM {
         std::vector<double> psi_sat;  ///< saturated moisture potential
         std::vector<double> porosity; ///< saturated soil moisture 
         std::vector<double> residual; ///< minimum soil moisture
-        std::vector<double> K_sat;    ///< hydrated soil conductivity
+        std::vector<double> K_sat;    ///< saturated hydraulic conductivity
         std::vector<double> Ci;       ///< dry volumetric heat capacity
 
         // Local atmospheric data
