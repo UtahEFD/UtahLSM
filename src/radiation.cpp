@@ -20,45 +20,46 @@ namespace {
     namespace c = constants;
 }
 
+// Constructor for Radiation class
 Radiation::Radiation(const double latitude,const double longitude,
                      const double albedo,const double emissivity) : 
                      latitude(latitude), longitude(longitude), 
                      albedo(albedo), emissivity(emissivity) {}
 
+// Computes the surface net radiation
 double Radiation::computeNet(const double julian_day, const double time_utc, const double sfc_T) {
     
-    // compute incoming shortwave radiation
+    // Compute incoming shortwave radiation
     double shortwave_in = shortwaveIn(julian_day, time_utc, latitude, longitude);
     
-    // compute outgoing shortwave radiation
+    // Compute outgoing shortwave radiation
     double shortwave_out = shortwaveOut(albedo, shortwave_in);
     
-    // compute outgoing longwave radiation
+    // Compute outgoing longwave radiation
     double longwave_out = longwaveOut(emissivity, sfc_T);
     
-    // compute incoming longwave radiation (current hack is net longwave of -50)
+    // Compute incoming longwave radiation (current hack is net longwave of -50)
     double longwave_in = longwave_out - 50.0;
     
-    // compute net radiation
+    // Compute net radiation
     return shortwave_in - shortwave_out + longwave_in - longwave_out;
-    
 }
 
-// compute incoming longwave radiation
+// Compute incoming longwave radiation
 double Radiation::longwaveIn() {
     
     return 0;
 }
 
-// compute outgoing longwave radiation
+// Compute outgoing longwave radiation
 double Radiation::longwaveOut(const double emissivity, const double sfc_T) {
     
     return emissivity * c::sb * std::pow(sfc_T,4.);
 }
 
-// compute incoming shortwave radiation
+// Compute incoming shortwave radiation
 double Radiation::shortwaveIn(const double julian_day,const double time_utc,
-                   const double latitude,const double longitude) {
+                              const double latitude,const double longitude) {
     
     // local variables
     double shortwave_in = 0;
@@ -75,7 +76,7 @@ double Radiation::shortwaveIn(const double julian_day,const double time_utc,
     return shortwave_in;
 }
 
-// compute outgoing shortwave radiation
+// Compute outgoing shortwave radiation
 double Radiation::shortwaveOut(const double albedo, const double shortwave_in) {
     
     return albedo * shortwave_in;
