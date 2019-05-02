@@ -13,9 +13,11 @@
  */
 
 #include "most.hpp"
-#include "constants.hpp"
+
 #include <cmath>
 #include <iostream>
+
+#include "constants.hpp"
 
 namespace {
     namespace c = constants;

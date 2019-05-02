@@ -12,22 +12,24 @@
  * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
  */
 
-#include <cmath>
-#include <iostream>
-#include <vector>
-#include <numeric>
-#include <functional>
-#include <algorithm>
-#include <fstream>
 #include "utah_lsm.hpp"
-#include "json.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <vector>
+
 #include "constants.hpp"
+#include "json.hpp"
 #include "input.hpp"
-#include "output.hpp"
-#include "soil.hpp"
-#include "radiation.hpp"
-#include "most.hpp"
 #include "matrix.hpp"
+#include "most.hpp"
+#include "output.hpp"
+#include "radiation.hpp"
+#include "soil.hpp"
 
 using json = nlohmann::json;
 

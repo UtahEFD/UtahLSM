@@ -12,8 +12,10 @@
  * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
  */
 
-#include <cmath> 
 #include "radiation.hpp"
+
+#include <cmath> 
+
 #include "constants.hpp"
 
 namespace {

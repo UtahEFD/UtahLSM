@@ -13,12 +13,14 @@
  */
 
 #include "input.hpp"
-#include "json.hpp"
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
+
 #include <cstring>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "json.hpp"
 
 using json = nlohmann::json;
 

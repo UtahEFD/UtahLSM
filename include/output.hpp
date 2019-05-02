@@ -15,10 +15,10 @@
 #ifndef OUTPUT_HPP
 #define OUTPUT_HPP
 
-#include <string>
-#include <vector>
 #include <map>
 #include <netcdf>
+#include <string>
+#include <vector>
 
 using namespace netCDF;
 using namespace netCDF::exceptions;

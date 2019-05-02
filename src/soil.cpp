@@ -12,9 +12,11 @@
  * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
  */
 
+#include "soil.hpp"
+
 #include <cmath>
 #include <iostream>
-#include "soil.hpp"
+
 #include "constants.hpp"
 
 namespace {

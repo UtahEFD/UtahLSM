@@ -15,9 +15,9 @@
 #ifndef UTAHLSM_HPP
 #define UTAHLSM_HPP
 
+#include <netcdf>
 #include <string>
 #include <vector>
-#include <netcdf>
 
 using namespace netCDF;
 using namespace netCDF::exceptions;

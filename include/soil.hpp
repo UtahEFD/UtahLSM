@@ -15,8 +15,8 @@
 #ifndef SOIL_HPP
 #define SOIL_HPP
 
-#include <vector>
 #include <stdexcept>
+#include <vector>
 
 /**
  * Namespace for managing soil properties

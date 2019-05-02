@@ -12,19 +12,19 @@
  * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
  */
 
-#include "utah_lsm.hpp"
+#include <cmath>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <netcdf>
+#include <vector>
+
 #include "constants.hpp"
 #include "input.hpp"
-#include "output.hpp"
 #include "json.hpp"
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <functional>
-#include <netcdf>
-#include <fstream>
-#include <iostream>
-#include <iomanip>
+#include "output.hpp"
+#include "utah_lsm.hpp"
 
 using json = nlohmann::json;
 

@@ -13,9 +13,9 @@
  */
 
 #include "output.hpp"
+
 #include <iostream>
 #include <netcdf>
-
 
 using namespace netCDF;
 using namespace netCDF::exceptions;
