@@ -12,10 +12,10 @@
  * See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
  */
 
-#include <cmath> 
+#include <cmath>
+#include <iostream>
 #include "soil.hpp"
 #include "constants.hpp"
-#include <iostream>
 
 namespace {
     namespace c = constants;
@@ -96,12 +96,12 @@ double Soil::surfaceWaterContentEstimate(const double psi_sat, const double poro
 
 // Compute soil thermal conductivity/diffusivity
 struct Soil::ThermalTransfer Soil::thermalTransfer(const std::vector<double> &psi_sat,
-                                       const std::vector<double> &porosity,
-                                       const std::vector<double> &residual,
-                                       const std::vector<double> &soil_q,
-                                       const std::vector<double> &b,
-                                       const std::vector<double> &Ci,
-                                       const int depth, const int model) {
+                                                   const std::vector<double> &porosity,
+                                                   const std::vector<double> &residual,
+                                                   const std::vector<double> &soil_q,
+                                                   const std::vector<double> &b,
+                                                   const std::vector<double> &Ci,
+                                                   const int depth, const int model) {
     
     struct ThermalTransfer transfer;
     transfer.d.resize(depth);
