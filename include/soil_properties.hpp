@@ -489,6 +489,28 @@ SoilType* SoilType::get(int type, int source) {
 
     if (type==1) {
         return new Sand(source);
+    } else if (type==2) {
+        return new LoamySand(source);
+    } else if (type==3) {
+        return new SandyLoam(source);
+    } else if (type==4) {
+        return new SiltyLoam(source);
+    } else if (type==5) {
+        return new Loam(source);
+    } else if (type==6) {
+        return new SandyClayLoam(source);
+    } else if (type==7) {
+        return new SiltyClayLoam(source);
+    } else if (type==8) {
+        return new ClayLoam(source);
+    } else if (type==9) {
+        return new SandyClay(source);
+    } else if (type==10) {
+        return new SiltyClay(source);
+    } else if (type==11) {
+        return new Clay(source);
+    } else if (type==12) {
+        return new Peat(source);
     }
 }
 

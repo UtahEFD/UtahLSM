@@ -18,12 +18,28 @@
 #include <stdexcept>
 #include <vector>
 
+#include "soil_properties.hpp"
+
 /**
- * Namespace for managing soil properties
+ * Class for managing the soil model
+ * 
+ * This class computes various terms using a soil model.
  */
 class Soil {
 	
     public:
+
+        /**
+         * Constructs a Soil object.
+         *
+         * @param[in] soil_type soil type at each depth
+         * @param[in] soil_param soil properties dataset
+         * @param[in] soil_model soil model
+         * @param[in] depth number of soil levels
+         */
+        Soil(const std::vector<int>& soil_type, const int soil_param, 
+             const int soil_model, const int levels);
+
         /**
          * Struct to hold soil moisture transfer coefficients.
          */
@@ -188,16 +204,9 @@ class Soil {
                                           const std::vector<double>& soil_q,
                                           const std::vector<double>& b,
                                           const int depth, const int model);
-
-        /**
-         * Set soil type properties at each soil level.
-         *
-         * @param[in] soil_type soil type at each soil level
-         * @param[in] depth number of soil levels
-         * @param[in] src soil parameter set
-         * @return soil type properties
-         */
-        Properties properties(const std::vector<int>& soil_type, const int depth, const int src);
+    
+    private:
+        std::vector<SoilType*> properties;
 };
 
 #endif
