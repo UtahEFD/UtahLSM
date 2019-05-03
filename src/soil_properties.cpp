@@ -16,7 +16,7 @@
 
 // Factory method that returns the correct soil properties
 SoilType* SoilType::getProperties(int type, int source) {
-
+    
     if (type==1) {
         return new Sand(source);
     } else if (type==2) {

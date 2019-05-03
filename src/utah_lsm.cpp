@@ -92,7 +92,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
         radiation = new Radiation(latitude,longitude,albedo,emissivity);
     }
     // Create soil class
-    soil      = Soil::getModel(soil_type,soil_param,soil_model,nsoilz);
+    soil = Soil::getModel(soil_type,soil_param,soil_model,nsoilz);
     
     // Input output section
     input->getItem(save_output, "output", "save");
@@ -419,6 +419,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     }
     
     if (!converged) {
+        std::cout<<std::endl;
         std::cout<<"[Fluxes] \t We did not converge"<<std::endl;
         std::cout<<L<<" "<<flux_wq<<std::endl;
         throw(1);

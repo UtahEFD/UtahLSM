@@ -27,7 +27,7 @@ namespace {
 }
 
 Soil::Soil(const std::vector<int>& soil_type, const int soil_param, const int soil_model, const int levels) {
-        
+    
     // Set up soil properties in the column
     properties.resize(levels);
     for (int i=0; i<levels; i++) {
@@ -87,6 +87,13 @@ double Soil::diffusivityThermal(const double conductivity, const double soil_q, 
 // Factory method that returns the correct soil model
 Soil* Soil::getModel(const std::vector<int>& soil_type, const int soil_param, 
                      const int soil_model, const int levels) {
+    if (soil_param==1) {
+        std::cout<<"[Soil] \t\t Using the Clapp and Hornberger dataset"<<std::endl;
+    } else if (soil_param==2) {
+        std::cout<<"[Soil] \t\t Using the Cosby et al. dataset"<<std::endl;
+    } else if (soil_param==3) {
+        std::cout<<"[Soil] \t\t Using the Rawls and Brakensiek dataset"<<std::endl;
+    }
 
     if (soil_model==1) {
         std::cout<<"[Soil] \t\t Using the Brooks-Corey model"<<std::endl;
