@@ -29,6 +29,8 @@ class Soil {
 	
     public:
 
+        std::vector<SoilType*> properties; ///< vector of soil properties
+    
         /**
          * Constructs a Soil object.
          *
@@ -41,34 +43,6 @@ class Soil {
              const int soil_model, const int levels);
 
         /**
-         * Struct to hold soil moisture transfer coefficients.
-         */
-	    struct MoistureTransfer {
-            std::vector<double> d; ///< soil moisture diffusivity
-            std::vector<double> k; ///< soil moisture conductivity
-        };
-
-        /**
-         * Struct to hold soil thermal transfer coefficients.
-         */
-        struct ThermalTransfer {
-            std::vector<double> d; ///< soil moisture diffusivity
-            std::vector<double> k; ///< soil moisture conductivity
-        };
-
-        /**
-         * Struct to hold soil properties.
-         */
-        struct Properties {
-	        std::vector<double> b;        ///< b exponent 
-	        std::vector<double> psi_sat;  ///< saturated soil moisture potential
-	        std::vector<double> porosity; ///< saturated soil moisture 
-            std::vector<double> residual; ///< minimum soil moisture
-	        std::vector<double> K_sat;    ///< saturated hydraulic conductivity
-	        std::vector<double> Ci;       ///< dry volumetric heat capacity
-        };
-
-        /**
          * Computes heat capacity of soil.
          *
          * @param[in] porosity saturated soil moisture
@@ -76,40 +50,25 @@ class Soil {
          * @param[in] soil_q soil moisture
          * @return heat capacity of soil
          */
-        double heatCapacity(const double porosity, const double Ci, const double soil_q);
+        double heatCapacity(const double soil_q, const int level);
 
         /**
          * Computes surface mixing ratio.
          *
-         * @param[in] psi_sat saturated soil moisture potential
-         * @param[in] porosity saturated soil moisture
-         * @param[in] residual minimum soil moisture
-         * @param[in] b b exponent 
          * @param[in] sfc_T surface moisture
          * @param[in] sfc_q surface moisture
          * @param[in] atm_p atmospheric pressure
-         * @param[in] model soil model
          * @return surface mixing ratio
          */
-        double surfaceMixingRatio(const double psi_sat, const double porosity,
-                                  const double residual,  const double b,
-                                  const double sfc_T, const double sfc_q,
-                                  const double atm_p, const int model);
+        double surfaceMixingRatio(const double sfc_T, const double sfc_q, const double atm_p);
 
         /**
          * Computes soil surface moisture.
          *
          * @param[in] psi soil moisture potential
-         * @param[in] psi_sat saturated soil moisture potential
-         * @param[in] porosity saturated soil moisture
-         * @param[in] residual minimum soil moisture
-         * @param[in] b b exponent
-         * @param[in] model soil model
          * @return soil surface moisture
          */
-        double surfaceWaterContent(const double psi, const double psi_sat,
-                                   const double porosity, const double residual,
-                                   const double b, const int model);
+        virtual double surfaceWaterContent(const double psi)=0;
 
         /**
          * Estimate soil surface moisture from surface mixing ratio.
@@ -124,89 +83,62 @@ class Soil {
          * @param[in] model soil model
          * @return soil surface moisture
          */
-        double surfaceWaterContentEstimate(const double psi_sat, const double porosity,
-                                           const double residual, const double b,
-                                           const double sfc_T, const double sfc_q,
-                                           const double atm_p, const int model);
+        virtual double surfaceWaterContentEstimate(const double sfc_T, const double sfc_q,
+                                                   const double atm_p)=0;
 
         /**
          * Computes soil water potential (single level).
          *
-         * @param[in] psi_sat saturated soil moisture potential
-         * @param[in] porosity saturated soil moisture
-         * @param[in] residual minimum soil moisture
          * @param[in] soil_q soil moisture
-         * @param[in] b b exponent 
-         * @param[in] model soil model
+         * @param[in] level soil level for computation
          * @return soil water potential
          */
-        double waterPotential(const double psi_sat, const double porosity,
-                              const double residual, const double soil_q,
-                              const double b, const int model);
-
+        virtual double waterPotential(const double soil_q, const int level)=0;
+        
         /**
-         * Computes soil water potential (full column).
+         * Computes soil thermal conductivity.
          *
-         * @param[in] psi_sat saturated soil moisture potential
-         * @param[in] porosity saturated soil moisture
-         * @param[in] residual minimum soil moisture
          * @param[in] soil_q soil moisture
-         * @param[in] b b exponent 
-         * @param[in] depth number of soil levels
-         * @param[in] model soil model
-         * @return soil water potential
+         * @param[in] level soil level for computation
+         * @return soil thermal conductivity
          */
-        std::vector<double> waterPotential(const std::vector<double>& psi_sat,
-                                           const std::vector<double>& porosity,
-                                           const std::vector<double>& residual,
-                                           const std::vector<double>& soil_q,
-                                           const std::vector<double>& b,
-                                           const int depth, const int model);
+        double conductivityThermal(const double soil_q, const int level);
 
         /**
-         * Computes soil thermal conductivity/diffusivity.
+         * Computes soil thermal diffusivity.
          *
-         * @param[in] psi_sat saturated soil moisture potential
-         * @param[in] porosity saturated soil moisture
-         * @param[in] residual minimum soil moisture
+         * @param[in] conductivity soil thermal conductivity
          * @param[in] soil_q soil moisture
-         * @param[in] b b exponent
-         * @param[in] Ci dry volumetric heat capacity
-         * @param[in] depth number of soil levels
-         * @param[in] model soil model
-         * @return soil thermal conductivity/diffusivity
+         * @param[in] level soil level for computation
+         * @return soil thermal diffusivity
          */
-        ThermalTransfer thermalTransfer(const std::vector<double> &psi_sat,
-                                        const std::vector<double> &porosity,
-                                        const std::vector<double> &residual,
-                                        const std::vector<double> &soil_q,
-                                        const std::vector<double> &b,
-                                        const std::vector<double> &Ci,
-                                        const int depth, const int model);
+        double diffusivityThermal(const double conductivity, const double soil_q, const int level);
 
         /**
-         * Computes soil moisture conductivity/diffusivity.
+         * Computes soil moisture conductivity.
          *
-         * @param[in] psi_sat saturated soil moisture potential
-         * @param[in] K_sat saturated hydraulic conductivity
-         * @param[in] porosity saturated soil moisture
-         * @param[in] residual minimum soil moisture
          * @param[in] soil_q soil moisture
-         * @param[in] b b exponent
-         * @param[in] depth number of soil levels
-         * @param[in] model soil model
+         * @param[in] level soil level for computation
          * @return soil moisture conductivity/diffusivity
          */
-        MoistureTransfer moistureTransfer(const std::vector<double>& psi_sat,
-                                          const std::vector<double>& K_sat,
-                                          const std::vector<double>& porosity,
-                                          const std::vector<double>& residual,
-                                          const std::vector<double>& soil_q,
-                                          const std::vector<double>& b,
-                                          const int depth, const int model);
-    
-    private:
-        std::vector<SoilType*> properties;
-};
+        virtual double conductivityMoisture(const double soil_q, const int level)=0;
 
+        /**
+         * Computes soil moisture diffusivity.
+         *
+         * @param[in] soil_q soil moisture
+         * @param[in] level soil level for computation
+         * @return soil moisture conductivity/diffusivity
+         */
+        virtual double diffusivityMoisture(const double soil_q, const int level)=0;
+
+        /**
+         * Factory method that returns the correct soil model.
+         * 
+         * @param[in] model soil model
+         * @return pointer to proper soil model
+         */
+        static Soil* getModel(const std::vector<int>& soil_type, const int soil_param, 
+                              const int soil_model, const int levels);
+};
 #endif

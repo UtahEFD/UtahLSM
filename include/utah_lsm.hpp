@@ -25,6 +25,7 @@ using namespace netCDF::exceptions;
 class Input;
 class Output;
 class Soil;
+class Radiation;
 
 /**
  * This is the main UtahLSM class.
@@ -77,8 +78,9 @@ class UtahLSM {
     
     private:
 
-        // Object to use 
+        // Classes 
         Soil* soil;
+        Radiation* radiation;
 
         // Fields to compute
         double &ustar;   ///< reference to friction velocity
@@ -128,14 +130,6 @@ class UtahLSM {
         double surf_q_last=0;            ///< surface moisture from previous time step
         std::vector<double> soil_T_last; ///< soil temperature from previous time step
         std::vector<double> soil_q_last; ///< soil moisture from previous time step
-    
-        // Local soil properties
-        std::vector<double> b;        ///< b exponent 
-        std::vector<double> psi_sat;  ///< saturated moisture potential
-        std::vector<double> porosity; ///< saturated soil moisture 
-        std::vector<double> residual; ///< minimum soil moisture
-        std::vector<double> K_sat;    ///< saturated hydraulic conductivity
-        std::vector<double> Ci;       ///< dry volumetric heat capacity
 
         // Local atmospheric data
         double atm_U; ///< wind speed
@@ -186,11 +180,6 @@ class UtahLSM {
         std::vector<AttScalar> output_scalar;           ///< vector of scalar attributes to save
         std::vector<AttVector> output_vector;           ///< vector of vector attributes to save
 
-        /**
-         * Initializes the soil properties of the column.
-         */
-        void setSoilProperties();
-        
         /**
          * Computes fluxes using similarity theory.
          *

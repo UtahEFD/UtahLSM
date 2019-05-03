@@ -21,5 +21,9 @@ add_library(lsm
   output.cpp
   radiation.cpp
   soil.cpp
+  soil_brookscorey.cpp
+  soil_campbell.cpp
+  soil_vangenuchten.cpp
+  soil_properties.cpp
   utah_lsm.cpp
 )

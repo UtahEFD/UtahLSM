@@ -15,6 +15,7 @@
 #ifndef SOILPROPERTIES_HPP
 #define SOILPROPERTIES_HPP
 
+#include <iostream>
 #include <vector>
 
 /**
@@ -47,12 +48,12 @@ struct SoilType {
 
     public:
         
-        double b;        ///< exponent (unitless)
-        double psi_sat;  ///< saturation moisture potential (m)
-        double porosity; ///< saturated soil moisture 
-        double residual; ///< residual moisture (volume/volume)
-        double K_sat;    ///< hydraulic conductivity (m/s)
-        double ci;       ///< volumetric heat capacity (J/m^3/K)
+        double b=0;        ///< exponent (unitless)
+        double psi_sat=0;  ///< saturation moisture potential (m)
+        double porosity=0; ///< saturated soil moisture 
+        double residual=0; ///< residual moisture (volume/volume)
+        double K_sat=0;    ///< hydraulic conductivity (m/s)
+        double ci=0;       ///< volumetric heat capacity (J/m^3/K)
 
         /**
          * Factory method that returns the correct soil properties.
@@ -60,7 +61,7 @@ struct SoilType {
          * @param[in] type the soil type
          * @param[in] dataset soil properties dataset
          */
-        static SoilType* get(int type, int dataset);
+        static SoilType* getProperties(int type, int dataset);
 };
 
 /**
@@ -482,36 +483,5 @@ struct Peat : public SoilType {
         }
     }   
 };
-
-
-// Factory method that returns the correct soil properties
-SoilType* SoilType::get(int type, int source) {
-
-    if (type==1) {
-        return new Sand(source);
-    } else if (type==2) {
-        return new LoamySand(source);
-    } else if (type==3) {
-        return new SandyLoam(source);
-    } else if (type==4) {
-        return new SiltyLoam(source);
-    } else if (type==5) {
-        return new Loam(source);
-    } else if (type==6) {
-        return new SandyClayLoam(source);
-    } else if (type==7) {
-        return new SiltyClayLoam(source);
-    } else if (type==8) {
-        return new ClayLoam(source);
-    } else if (type==9) {
-        return new SandyClay(source);
-    } else if (type==10) {
-        return new SiltyClay(source);
-    } else if (type==11) {
-        return new Clay(source);
-    } else if (type==12) {
-        return new Peat(source);
-    }
-}
 
 #endif
