@@ -660,7 +660,9 @@ void UtahLSM :: solveDiffusion(int type) {
         for (int i=0; i<nsoilz-1; i++) {
             K[i]     = soil->conductivityThermal(soil_q[i],i);
             K[i+1]   = soil->conductivityThermal(soil_q[i+1],i);
-            K_mid[i] = 0.5*(K[i]+K[i+1]);
+            D[i]     = soil->diffusivityThermal(K[i],soil_q[i],i);
+            D[i+1]   = soil->diffusivityThermal(K[i+1],soil_q[i+1],i);
+            K_mid[i] = 0.5*(D[i]+D[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
         }
         scalar = soil_T;
