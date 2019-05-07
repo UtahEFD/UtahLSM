@@ -62,12 +62,12 @@ program p
    real :: start_time, stop_time, elapsed
    
    ! write a friendly welcome message
-   write(*,'(a)') '##############################################################'
-   write(*,'(a)') '#                                                            #'
-   write(*,'(a)') '#                     Welcome to UtahLSM                     #'
-   write(*,'(a)') '#   A land surface model created at the University of Utah   #'
-   write(*,'(a)') '#                                                            #'
-   write(*,'(a)') '##############################################################'
+   write(*,*) '##############################################################'
+   write(*,*) '#                                                            #'
+   write(*,*) '#                     Welcome to UtahLSM                     #'
+   write(*,*) '#   A land surface model created at the University of Utah   #'
+   write(*,*) '#                                                            #'
+   write(*,*) '##############################################################'
    
    ! Create C++ object representing offline case
    input_offline_obj = GetInput( input_file=input_offline_file )
@@ -111,7 +111,7 @@ program p
    
    ! set up time information
    call cpu_time(start_time)
-   
+
    ! loop through all times
    utc = 0
    do t=1,ntime
@@ -135,7 +135,7 @@ program p
    call cpu_time(stop_time)
    elapsed = stop_time - start_time
    write(*,*) creturn
-   write(6,'(a,f0.6,a)') '[UtahLSM]        Finished in ',elapsed, ' seconds!'
-   write(*,'(a)') '##############################################################'
+   write(6,'(a,a,f0.2)') "[UtahLSM]        Finished in ",elapsed, " seconds!"
+   write(*,*) '##############################################################'
 
 end program p
