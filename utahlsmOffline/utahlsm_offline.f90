@@ -135,7 +135,7 @@ program p
    call cpu_time(stop_time)
    elapsed = stop_time - start_time
    write(*,*) creturn
-   write(6,'(a,a,f0.2)') "[UtahLSM]        Finished in ",elapsed, " seconds!"
+   write(6,'(a,f0.2,a)') "[UtahLSM]        Finished in ",elapsed, " seconds!"
    write(*,*) '##############################################################'
 
 end program p
