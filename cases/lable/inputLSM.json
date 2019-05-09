@@ -1,4 +1,12 @@
 {
+    "time": {
+        "step_seb": 10,
+        "step_dif": 10
+    },
+    "grid": {
+        "nx": 1,
+        "ny": 1
+    },
     "length": {
         "z_o": 0.05,
         "z_t": 0.0005,

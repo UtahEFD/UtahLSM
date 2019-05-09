@@ -87,6 +87,10 @@ class UtahLSM {
         double &flux_wT; ///< reference to kinematic heat flux
         double &flux_wq; ///< reference to kinematic moisture flux
 
+        // Input time section
+        int step_seb; ///< steps between calls to energy balance
+        int step_dif; ///< steps between calls to diffusion
+
         // Input grid section
         int nx; ///< number of points in x-direction
         int ny; ///< number of points in y-direction
@@ -140,6 +144,7 @@ class UtahLSM {
     
         // Local time data
         bool first=true;  ///< flag whether first time step or not
+        int step_count=0; ///< number of times the LSM has been called
         double tstep=0;   ///< current time step
         double runtime=0; ///< current elapsed time
         double utc=0;     ///< current time in UTC
@@ -152,7 +157,7 @@ class UtahLSM {
         std::vector<NcDim> dim_scalar_t; ///< dimension vector for time
         std::vector<NcDim> dim_scalar_z; ///< dimension vector for soil depth
         std::vector<NcDim> dim_vector;   ///< dimension vector for other fields
-
+            
         /**
          * Struct to hold attributes of scalar fields.
          */

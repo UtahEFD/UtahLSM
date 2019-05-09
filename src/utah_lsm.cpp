@@ -44,6 +44,10 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
 
     std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
 
+    // Input time section
+    input->getItem(step_seb,"time","step_seb");
+    input->getItem(step_dif,"time","step_dif");
+
     // Input grid section
     input->getItem(nx,"grid","nx");
     input->getItem(ny,"grid","ny");
@@ -222,30 +226,46 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
 
 // Run UtahLSM
 void UtahLSM :: run() {
+    
+    // Save previoius temp and moisture
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
     
-    // Solve the surface energy balance
-    solveSEB();
+    // Check if time to re-compute balances
+    if ( (step_count % step_seb)==0 ) {
+        // Solve the surface energy balance
+        solveSEB();
 
-    // Solve the surface moisture balance
-    solveSMB();
+        // Solve the surface moisture balance
+        solveSMB();
+    } else {
+        // just return new fluxes
+        computeFluxes(soil_T[0],soil_q[0]);
+    }
 
     // Save current temperature and moisture
     soil_T_last = soil_T;
     soil_q_last = soil_q;
 
-    // Solve diffusion equations
-    solveDiffusion(1);
-    solveDiffusion(2);
+    // check if time to compute diffusion
+    if ( (step_count % step_dif)==0 ) {
+        // Solve heat diffusion
+        solveDiffusion(1);
+
+        // solve moisture diffusion
+        solveDiffusion(2);
+    }
     
     // Change flag of whether initial time
     if (first) first=false;
+
+    // Increment step counter
+    step_count += 1;
 }
 
 // Save current fields to the output file
 void UtahLSM :: save(Output* output) {
-        
+    
     // Output size and location
     std::vector<size_t> scalar_index;
     std::vector<size_t> scalar_size;
