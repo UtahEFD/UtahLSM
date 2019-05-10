@@ -86,7 +86,7 @@ double Campbell::conductivityMoisture(const double soil_q, const int level) {
 double Campbell::diffusivityMoisture(const double soil_q, const int level) {
 
     double b            = properties[level]->b;
-    double psi_sat      = properties[0]->psi_sat;
+    double psi_sat      = properties[level]->psi_sat;
     double porosity     = properties[level]->porosity;
     double residual     = properties[level]->residual;
     double K_sat        = properties[level]->K_sat;

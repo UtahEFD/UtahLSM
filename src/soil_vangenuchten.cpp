@@ -32,7 +32,7 @@ double VanGenuchten::surfaceWaterContent(const double psi) {
     double residual = properties[0]->residual;
     double soil_e   = porosity-residual;
     double m        = 1 / (1+b);
-    double soil_q   = residual+soil_e*std::pow( (1 / (1 + std::pow(psi/psi_sat, (1/(1-m))))),m);
+    double soil_q   = residual+soil_e*std::pow( (1 + std::pow(psi/psi_sat, (1/(1-m)))),-m);
     
     return soil_q;
     
@@ -51,7 +51,7 @@ double VanGenuchten::surfaceWaterContentEstimate(const double sfc_T, const doubl
     double ln       = std::log(sfc_q/qs);
     double soil_e   = porosity-residual;
     double m = 1 / (1+b);
-    double soil_q = residual+soil_e*std::pow(1/ (1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m))),m);
+    double soil_q = residual+soil_e*std::pow((1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m))),-m);
     
     return soil_q;
 }
@@ -90,14 +90,14 @@ double VanGenuchten::conductivityMoisture(const double soil_q, const int level) 
 double VanGenuchten::diffusivityMoisture(const double soil_q, const int level) {
 
     double b            = properties[level]->b;
-    double psi_sat      = properties[0]->psi_sat;
+    double psi_sat      = properties[level]->psi_sat;
     double porosity     = properties[level]->porosity;
     double residual     = properties[level]->residual;
     double K_sat        = properties[level]->K_sat;
     double Se           = (soil_q-residual)/(porosity-residual);
     double m            = 1 / (1+b);
-    double diffusivity  = (1-m)*K_sat*psi_sat*std::pow(Se,0.5-1/m)*
-                          (std::pow(1-std::pow(Se,1/m),-m) + std::pow(1-std::pow(Se,1/m),m) -2)/
+    double diffusivity  = -(1-m)*K_sat*psi_sat*std::pow(Se,-0.5-1/m)*
+                          std::pow(std::pow(Se,-1/m)-1,-m)*std::pow(1-std::pow(1-std::pow(Se,1/m),m),2) /
                           (m*(porosity-residual));
 
     return diffusivity;

@@ -233,6 +233,7 @@ void UtahLSM :: run() {
     
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {
+
         // Solve the surface energy balance
         solveSEB();
 
@@ -249,6 +250,7 @@ void UtahLSM :: run() {
 
     // check if time to compute diffusion
     if ( (step_count % step_dif)==0 ) {
+
         // Solve heat diffusion
         solveDiffusion(1);
 
