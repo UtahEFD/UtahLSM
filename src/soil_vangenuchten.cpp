@@ -32,10 +32,9 @@ double VanGenuchten::surfaceWaterContent(const double psi) {
     double residual = properties[0]->residual;
     double soil_e   = porosity-residual;
     double m        = 1 / (1+b);
-    double soil_q   = residual+soil_e*std::pow( (1 + std::pow(psi/psi_sat, (1/(1-m)))),-m);
+    double soil_q   = residual + soil_e*std::pow((1 + std::pow(psi/psi_sat, (1/(1-m)))),-m);
     
     return soil_q;
-    
 }
 
 // Estimate soil surface moisture from surface mixing ratio
@@ -50,8 +49,8 @@ double VanGenuchten::surfaceWaterContentEstimate(const double sfc_T, const doubl
     double qs       = 0.622*(es/(atm_p-0.378*es));
     double ln       = std::log(sfc_q/qs);
     double soil_e   = porosity-residual;
-    double m = 1 / (1+b);
-    double soil_q = residual+soil_e*std::pow((1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m))),-m);
+    double m        = 1 / (1+b);
+    double soil_q   = residual+soil_e*std::pow((1+std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),1/(1-m))),-m);
     
     return soil_q;
 }
@@ -95,10 +94,16 @@ double VanGenuchten::diffusivityMoisture(const double soil_q, const int level) {
     double residual     = properties[level]->residual;
     double K_sat        = properties[level]->K_sat;
     double Se           = (soil_q-residual)/(porosity-residual);
+    double soil_e       = porosity-residual;
     double m            = 1 / (1+b);
-    double diffusivity  = -(1-m)*K_sat*psi_sat*std::pow(Se,-0.5-1/m)*
-                          std::pow(std::pow(Se,-1/m)-1,-m)*std::pow(1-std::pow(1-std::pow(Se,1/m),m),2) /
-                          (m*(porosity-residual));
+    double A            = (1-m)*K_sat*psi_sat / (m*soil_e);
+    double C            = std::pow(Se,0.5-1/m)*(std::pow(1-std::pow(Se,1/m),-m) +
+                          std::pow(1-std::pow(Se,1/m),m) - 2);
+    double diffusivity  = A*C;
+    
+    //  -(1-m)*K_sat*psi_sat*std::pow(Se,-0.5-1/m)*
+                        //    std::pow(std::pow(Se,-1/m)-1,-m)*std::pow(1-std::pow(1-std::pow(Se,1/m),m),2) /
+                        //    (m*(porosity-residual));
 
     return diffusivity;
 }

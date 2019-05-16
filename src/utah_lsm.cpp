@@ -21,6 +21,7 @@
 #include <iostream>
 #include <numeric>
 #include <vector>
+#include <iomanip>
 
 #include "constants.hpp"
 #include "json.hpp"
@@ -412,6 +413,10 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
+            std::cout<<std::endl;
+            std::cout<<R_net<<" "<<flux_gr<<" "<<std::setprecision(10)<<flux_wT<<std::endl;
+            std::cout<<flux_wq<<" "<<gnd_q<<" "<<soil_q[0]<<std::endl;
+            throw(1);
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -703,8 +708,8 @@ void UtahLSM :: solveDiffusion(int type) {
     }
     
     // Matrix coefficients for first level below surface
-    C_p  = tstep*K_mid[0]/(2*(z_mid[0]-z_mid[1])*(soil_z[0]-soil_z[1]));
-    C_m  = tstep*K_mid[1]/(2*(z_mid[0]-z_mid[1])*(soil_z[1]-soil_z[2]));
+    C_p  = step_dif*tstep*K_mid[0]/(2*(z_mid[0]-z_mid[1])*(soil_z[0]-soil_z[1]));
+    C_m  = step_dif*tstep*K_mid[1]/(2*(z_mid[0]-z_mid[1])*(soil_z[1]-soil_z[2]));
     C_tp = (1.0 + C_p + C_m);
     C_tm = (1.0 - C_p - C_m);
     
@@ -722,14 +727,14 @@ void UtahLSM :: solveDiffusion(int type) {
         a_o  = (dz_p - dz_m) / (dz_p * dz_m);
         a_p  = dz_m / (dz_p * (dz_p + dz_m) );
         
-        dKdz = tstep*(K[0]*a_p + K[1]*a_o + K[2]*a_m);
+        dKdz = step_dif*tstep*(K[0]*a_p + K[1]*a_o + K[2]*a_m);
         r[0] = r[0] + dKdz;
     }
     
     // Matrix coefficients for the interior levels
     for (int i=1; i<nsoilz-2; i++) {
-        C_p  = tstep*K_mid[i]  / (2*(z_mid[i]-z_mid[i+1])*(soil_z[i]  -soil_z[i+1]));
-        C_m  = tstep*K_mid[i+1]/ (2*(z_mid[i]-z_mid[i+1])*(soil_z[i+1]-soil_z[i+2]));
+        C_p  = step_dif*tstep*K_mid[i]  / (2*(z_mid[i]-z_mid[i+1])*(soil_z[i]  -soil_z[i+1]));
+        C_m  = step_dif*tstep*K_mid[i+1]/ (2*(z_mid[i]-z_mid[i+1])*(soil_z[i+1]-soil_z[i+2]));
         C_tp = (1 + C_p + C_m);
         C_tm = (1 - C_p - C_m);
         
@@ -746,7 +751,7 @@ void UtahLSM :: solveDiffusion(int type) {
             a_m  = -dz_p / (dz_m * (dz_p + dz_m));
             a_o  = (dz_p - dz_m) / (dz_p * dz_m);
             a_p  = dz_m / (dz_p * (dz_p + dz_m) );
-            dKdz = tstep*(K[i]*a_p + K[i+1]*a_o + K[i+2]*a_m);
+            dKdz = step_dif*tstep*(K[i]*a_p + K[i+1]*a_o + K[i+2]*a_m);
             r[i] = r[i] + dKdz;
         }
     }
@@ -757,8 +762,8 @@ void UtahLSM :: solveDiffusion(int type) {
     double z_g  = 2*soil_z[j+1] - soil_z[j];
     double z_mg = (soil_z[j+1] + z_g) / 2.;
     
-    C_p  = tstep*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j]-soil_z[j+1]));
-    C_m  = tstep*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j+1]-z_g));
+    C_p  = step_dif*tstep*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j]-soil_z[j+1]));
+    C_m  = step_dif*tstep*K_mid[j]/(2*(z_mid[j]-z_mg)*(soil_z[j+1]-z_g));
     C_tp = (1 + C_p + C_m);
     C_tm = (1 - C_p - C_m);
     
@@ -769,7 +774,7 @@ void UtahLSM :: solveDiffusion(int type) {
     // For moisture, we need additional dKn/dz term
     // use simple 2-pt backward Euler approximation
     if (type==2) {
-        dKdz = tstep*(K[nsoilz-2]-K[nsoilz-1])/(soil_z[nsoilz-2]-soil_z[nsoilz-1]);
+        dKdz = step_dif*tstep*(K[nsoilz-2]-K[nsoilz-1])/(soil_z[nsoilz-2]-soil_z[nsoilz-1]);
         r[nsoilz-2] = r[nsoilz-2] + dKdz;
     }
     
