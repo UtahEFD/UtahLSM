@@ -15,6 +15,8 @@
 #ifndef RADIATION_HPP
 #define RADIATION_HPP
 
+#include <vector>
+
 /**
  * Class for managing radiation.
  * 
@@ -33,7 +35,8 @@ class Radiation {
          * @param[in] emissivity surface emissivity of the site
          */
         Radiation(const double latitude, const double longitude,
-                  const double albedo, const double emissivity);
+                  const double albedo, const double emissivity,
+                  const int nx, const int ny);
         
         /**
          * Computes the surface net radiation.
@@ -42,11 +45,14 @@ class Radiation {
          * @param[in] time_utc time of the day in UTC
          * @param[in] sfc_T surface temperature
          */
-        double computeNet(const double julian_day, const double time_utc, const double sfc_T);
+        std::vector<double> computeNet(const double julian_day, const double time_utc, 
+                                       const std::vector<double> sfc_T);
 
     private:
         
         // Local copies
+        int nx;             ///< number of cells in x-direction
+        int ny;             ///< number of cells in y-direction
         double latitude;    ///< site latitude
         double longitude;   ///< site longitude
         double albedo;      ///< surface albedo
@@ -57,7 +63,7 @@ class Radiation {
          *
          * @return downward longwave radiation 
          */
-        double longwaveIn();
+        //double longwaveIn();
 
         /**
          * Computes the upward longwave radiation at the surface.
@@ -66,7 +72,7 @@ class Radiation {
          * @param[in] sfc_T surface temperature
          * @return    upward longwave radiation
          */
-        double longwaveOut(const double emissivity, const double sfc_T);
+        std::vector<double> longwaveOut(const double emissivity,const std::vector<double> sfc_T);
 
         /**
          * Computes the downward shortwave radiation at the surface.
@@ -77,8 +83,8 @@ class Radiation {
          * @param[in] longitude of the site
          * @return    downward shortwave radiation
          */
-        double shortwaveIn(const double julian_day,const double time_utc,
-                           const double latitude,const double longitude);
+        std::vector<double> shortwaveIn(const double julian_day,const double time_utc,
+                                        const double latitude,const double longitude);
         
         /**
          * Computes the upward shortwave radiation at the surface.
@@ -87,7 +93,7 @@ class Radiation {
          * @param[in] shortwave_in downward shortwave radiation at the surface
          * @return    upward shortwave radiation
          */
-        double shortwaveOut(const double albedo, const double shortwave_in);  
+        std::vector<double> shortwaveOut(const double albedo,const std::vector<double> shortwave_in);  
 };
 
 #endif

@@ -39,9 +39,10 @@ namespace {
 }
 
 // Constructor for UtahLSM class
-UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
-                   double& flux_wq, int j, int i) : ustar(ustar),
-                   flux_wT(flux_wT),flux_wq(flux_wq), j(j), i(i) {
+UtahLSM :: UtahLSM(Input* input, Output* output, std::vector<double>& ustar, 
+                   std::vector<double>& flux_wT,std::vector<double>& flux_wq, 
+                   int nx, int ny) : ustar(ustar),flux_wT(flux_wT),
+                   flux_wq(flux_wq), nx(nx), ny(ny) {
 
     std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
 
@@ -65,8 +66,24 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     input->getItem(soil_model,"soil","model");
     input->getItem(soil_z,"soil","soil_z");
     input->getItem(soil_type,"soil","soil_type");
-    input->getItem(soil_T,"soil","soil_T");
-    input->getItem(soil_q,"soil","soil_q");
+
+    soil_T.resize(nsoilz*ny*nx);
+    soil_q.resize(nsoilz*ny*nx);
+
+    std::vector<double> soil_T_column;
+    std::vector<double> soil_q_column;
+    input->getItem(soil_T_column,"soil","soil_T");
+    input->getItem(soil_q_column,"soil","soil_q");
+
+    for (int k=0; k<nsoilz; k++) {
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
+                int id = i + j*ny + k*nx*ny;
+                soil_T[id] = soil_T_column[id];
+                soil_q[id] = soil_q_column[id];
+            }
+        }
+    }
                        
     // Initialize history arrays for first run
     soil_T_last = soil_T;
@@ -94,7 +111,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
         longitude = longitude * c::pi / 180.0;
 
         // Create radiation class
-        radiation = new Radiation(latitude,longitude,albedo,emissivity);
+        radiation = new Radiation(latitude,longitude,albedo,emissivity,nx,ny);
     }
     // Create soil class
     soil = Soil::getModel(soil_type,soil_param,soil_model,nsoilz);
@@ -110,56 +127,40 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
             output_fields = {"ust","shf","lhf","ghf","obl","soilt","soilq"};
         }
         
-        // Decide if master UtahLSM column or not
-        (j==0 && i==0) ? master=true : master=false;
-        
         // Add dimensions
-        NcDim t_dim, z_dim;
-        if (master) {
-            t_dim = output->addDimension("t");
-            z_dim = output->addDimension("z",nsoilz);
-        } else {
-            t_dim = NcDim();
-            z_dim = NcDim();
-        }
+        NcDim t_dim = output->addDimension("t");
+        NcDim z_dim = output->addDimension("z",nsoilz);
         dim_scalar_t.push_back(t_dim);
         dim_scalar_z.push_back(z_dim);
-        dim_vector.push_back(t_dim);
-        dim_vector.push_back(z_dim);
+        dim_vector_s.push_back(t_dim);
+        dim_vector_c.push_back(t_dim);
+        dim_vector_c.push_back(z_dim);
         
         if (ny>1) {
-            NcDim y_dim;
-            if (master) {
-                y_dim = output->addDimension("y",ny);
-            }else {
-                y_dim = NcDim();
-            }
+            NcDim y_dim = output->addDimension("y",ny);
             dim_scalar_t.push_back(y_dim);
             dim_scalar_z.push_back(y_dim);
-            dim_vector.push_back(y_dim);
+            dim_vector_s.push_back(y_dim);
+            dim_vector_c.push_back(y_dim);
         }
         if (nx>1) {
-            NcDim x_dim;
-            if (master) {
-                x_dim = output->addDimension("x",nx);
-            }else {
-                x_dim = NcDim();
-            }
+            NcDim x_dim = output->addDimension("x",nx);
             dim_scalar_t.push_back(x_dim);
             dim_scalar_z.push_back(x_dim);
-            dim_vector.push_back(x_dim);
+            dim_vector_s.push_back(x_dim);
+            dim_vector_c.push_back(x_dim);
         }
-
+        
         // Attributes for each field
         AttScalar att_time  = {&runtime, "time",  "time",               "s",     dim_scalar_t};
-        AttScalar att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_scalar_t};
-        AttScalar att_shf   = {&flux_wT, "shf",   "sensible heat flux", "W m-2", dim_scalar_t};
-        AttScalar att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
-        AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
-        AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
-        AttVector att_soilz = {&soil_z,  "soilz", "Obukhov length",     "m",     dim_scalar_z};
-        AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector};
-        AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector};
+        AttVector att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_vector_s};
+        AttVector att_shf   = {&flux_wT, "shf",   "sensible heat flux", "W m-2", dim_vector_s};
+        AttVector att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_vector_s};
+        AttVector att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_vector_s};
+        AttVector att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_vector_s};
+        AttVector att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_scalar_z};
+        AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector_c};
+        AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector_c};
         
         // Map the name to attributes
         map_att_scalar.emplace("time", att_time);
@@ -204,31 +205,42 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
 }
 
 // Update atmospheric quantities prior to solving
-void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,double rad=0) {
+void UtahLSM :: updateFields(double dt, 
+                             std::vector<double> u, std::vector<double> T,
+                             std::vector<double> q, std::vector<double> p,
+                             std::vector<double> rad=std::vector<double>{}) {
     
     tstep = dt;
     atm_U = u;
     atm_T = T;
     atm_q = q;
     atm_p = p;
-    R_net = rad;
     runtime += tstep;
     
     // Run radiation model and update time/date if needed
     if (comp_rad==1) {
         utc = std::fmod(runtime,86400);
         julian_day += int(runtime/86400);
-        R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
+        
+        // Compute radiation
+        R_net = radiation->computeNet(julian_day,utc,soil_T);
+        
+        // Keep winds from being exactly zero
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
+                int id = i + j*nx;
+                if (atm_U[id]==0) atm_U[id] = 0.01;
+            }
+        }
+    } else {
+        R_net = rad;
     }
-    
-    // Keep winds from being exactly zero
-    if (atm_U==0) atm_U = 0.1;
 }
 
 // Run UtahLSM
 void UtahLSM :: run() {
     
-    // Save previoius temp and moisture
+    // Save previous temperature and moisture
     surf_T_last = soil_T[0];
     surf_q_last = soil_q[0];
     

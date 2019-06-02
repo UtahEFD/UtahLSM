@@ -47,7 +47,9 @@ int main () {
     std::cout<<"##############################################################"<<std::endl;
     
     // declare local variables
-    double ustar,flux_wT,flux_wq;
+    std::vector<double> ustar(1,0.0);
+    std::vector<double> flux_wT(1,0.0);
+    std::vector<double> flux_wq(1,0.0);
     
     // input time
     int ntime; 
@@ -83,18 +85,9 @@ int main () {
     inputLSM->getItem(nx,"grid","nx");
     inputLSM->getItem(ny,"grid","ny");
     
-    // Initialize a vector of UtahLSM instances
-    std::vector<UtahLSM*> globalUtahLSM(ny*nx);
-    
-    // Fill array with LSM instances
-    int k = 0;
-    for (int j=0; j<ny; j++) {
-        for (int i=0; i<nx; i++) {
-            globalUtahLSM[k] = new UtahLSM(inputLSM,outputLSM,ustar,flux_wT,flux_wq,j,i);
-            k++;
-        }
-    }
-    
+    // Initialize UtahLSM instance
+    UtahLSM* utahlsm = new UtahLSM(inputLSM,outputLSM,ustar,flux_wT,flux_wq,nx,ny);
+  
     // set up time information
     struct timespec start, finish;
     double utc=0,elapsed;
@@ -106,24 +99,16 @@ int main () {
         utc += tstep;
         std::cout<<std::fixed<<"\r[UtahLSM] \t Running for time: "<<std::setprecision(2)<<utc<<std::flush;
         
-        // loop through each LSM instance
-        int k = 0;
-        for (int j=0; j<ny; j++) {
-            for (int i=0; i<nx; i++) {
-                
-                // update user-specified fields
-                globalUtahLSM[k]->updateFields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t]);
-                
-                // run the model
-                globalUtahLSM[k]->run();
-                
-                // save output
-                globalUtahLSM[k]->save(outputLSM);
-                
-                k++;
-            }
-        }
+        // update user-specified fields
+        utahlsm->updateFields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t]);
+
+        // run the model
+        utahlsm->run();
+
+        // save output
+        utahlsm->save(outputLSM);
     }
+
     // compuet run time information
     clock_gettime(CLOCK_MONOTONIC, &finish);
     elapsed = (finish.tv_sec - start.tv_sec);
