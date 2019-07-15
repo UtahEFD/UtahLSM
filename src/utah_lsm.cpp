@@ -67,8 +67,8 @@ UtahLSM :: UtahLSM(Input* input, Output* output, std::vector<double>& ustar,
     input->getItem(soil_z,"soil","soil_z");
     input->getItem(soil_type,"soil","soil_type");
 
-    soil_T.resize(nsoilz*ny*nx);
-    soil_q.resize(nsoilz*ny*nx);
+    soil_T.reserve(nsoilz*ny*nx);
+    soil_q.reserve(nsoilz*ny*nx);
 
     std::vector<double> soil_T_column;
     std::vector<double> soil_q_column;
@@ -76,11 +76,13 @@ UtahLSM :: UtahLSM(Input* input, Output* output, std::vector<double>& ustar,
     input->getItem(soil_q_column,"soil","soil_q");
 
     for (int k=0; k<nsoilz; k++) {
+        double soil_T_z = soil_T_column[k];
+        double soil_q_z = soil_q_column[k];
         for (int j=0; j<ny; j++) {
             for (int i=0; i<nx; i++) {
                 int id = i + j*ny + k*nx*ny;
-                soil_T[id] = soil_T_column[id];
-                soil_q[id] = soil_q_column[id];
+                soil_T[id] = soil_T_z;
+                soil_q[id] = soil_q_z;
             }
         }
     }
@@ -239,10 +241,6 @@ void UtahLSM :: updateFields(double dt,
 
 // Run UtahLSM
 void UtahLSM :: run() {
-    
-    // Save previous temperature and moisture
-    surf_T_last = soil_T[0];
-    surf_q_last = soil_q[0];
     
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {

@@ -60,7 +60,9 @@ class Soil {
          * @param[in] atm_p atmospheric pressure
          * @return surface mixing ratio
          */
-        double surfaceMixingRatio(const double sfc_T, const double sfc_q, const double atm_p);
+        double surfaceMixingRatio(std::vector<const double> sfc_T, 
+                                  std::vector<const double> sfc_q, 
+                                  std::vector<const double> atm_p);
 
         /**
          * Computes soil surface moisture.

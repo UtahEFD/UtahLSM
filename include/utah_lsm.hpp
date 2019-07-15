@@ -63,9 +63,9 @@ class UtahLSM {
          * @param[in] p pressure
          * @param[in] rad optional net radiation
          */
-        void updateFields(double dt, std::vector<double> u, 
-                          std::vector<double> T, std::vector<double> q, 
-                          std::vector<double> p, std::vector<double> rad);
+        void setFields(double dt, std::vector<double> u, 
+                       std::vector<double> T, std::vector<double> q, 
+                       std::vector<double> p, std::vector<double> rad);
         
         /**
          * Run UtahLSM.
