@@ -43,16 +43,28 @@ class UtahLSM {
          *
          * @param[in]     input Input object
          * @param[in]     output Output object
+         * @param[in]     nx size of grid in x-direction
+         * @param[in]     ny size of grid in y-direction
          * @param[in,out] ustar friction velocity
          * @param[in,out] flux_wT kinematic heat flux
          * @param[in,out] flux_wq kinematic moisture flux
-         * @param[in]     nx size of grid in x-direction
-         * @param[in]     ny size of grid in y-direction
+         * @param[in]     atm_U wind speed
+         * @param[in]     atm_T temperature
+         * @param[in]     atm_q mixing ratio
+         * @param[in]     atm_p pressure
+         * @param[in]     R_net optional net radiation
          */
-        UtahLSM(Input* input, Output* output, std::vector<double>& ustar, 
-                std::vector<double>& flux_wT, std::vector<double>& flux_wq, 
-                int nx=1, int ny=1);
-    
+        UtahLSM(Input* input, Output* output, 
+                int nx, int ny, 
+                std::vector<double>& ustar, 
+                std::vector<double>& flux_wT,
+                std::vector<double>& flux_wq, 
+                std::vector<double>& atm_U,
+                std::vector<double>& atm_T, 
+                std::vector<double>& atm_q,
+                std::vector<double>& atm_p, 
+                std::vector<double>& R_net);
+        
         /**
          * Update atmospheric quantities prior to solving.
          *

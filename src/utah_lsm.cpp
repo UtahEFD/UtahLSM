@@ -39,10 +39,17 @@ namespace {
 }
 
 // Constructor for UtahLSM class
-UtahLSM :: UtahLSM(Input* input, Output* output, std::vector<double>& ustar, 
-                   std::vector<double>& flux_wT,std::vector<double>& flux_wq, 
-                   int nx, int ny) : ustar(ustar),flux_wT(flux_wT),
-                   flux_wq(flux_wq), nx(nx), ny(ny) {
+UtahLSM :: UtahLSM(Input* input, Output* output, int nx, int ny, 
+                   std::vector<double>& ustar, 
+                   std::vector<double>& flux_wT,
+                   std::vector<double>& flux_wq, 
+                   std::vector<double>& atm_U,
+                   std::vector<double>& atm_T, 
+                   std::vector<double>& atm_q,
+                   std::vector<double>& atm_p, 
+                   std::vector<double>& R_net=std::vector<double>()) : 
+                   nx(nx), ny(ny), ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq),
+                   atm_U(atm_U), atm_T(atm_T), atm_q(atm_q), atm_p(atm_p), R_net(R_net) {
 
     std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
 
