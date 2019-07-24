@@ -1,11 +1,11 @@
 {
     "time": {
-        "step_seb": 10,
-        "step_dif": 10
+        "step_seb": 1,
+        "step_dif": 1
     },
     "grid": {
-        "nx": 128,
-        "ny": 128
+        "nx": 1,
+        "ny": 1
     },
     "length": {
         "z_o": 0.15,
@@ -15,8 +15,8 @@
     },
     "soil": {
         "nsoil": 9,
-        "param": 3,
-        "model": 2,
+        "param": 1,
+        "model": 3,
         "soil_z": [
             0.0,
             0.02,

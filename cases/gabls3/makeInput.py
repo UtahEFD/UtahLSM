@@ -2,6 +2,7 @@
 import sys, json
 import netCDF4 as nc
 import numpy as np
+import pylab as pl
 
 ##########################################
 # Soil data taken from Cesar Observatory #
@@ -27,6 +28,17 @@ st_50 = obs.variables['TS50'][tidx]+273.15
 st_ob = np.array([st_00,st_02,st_04,st_04,st_08,st_12,st_20,st_30,st_50])
 z_obs = np.array([0.00,0.02,0.04,0.06,0.08,0.12,0.20,0.30,0.50])
 nsoil = len(z_obs)
+
+z = np.polyfit(z_obs, st_ob, 1)
+f = np.poly1d(z)
+
+for x1 in np.linspace(0.0, 2.1, 20):
+    pl.plot(x1, f(x1), 'b+')
+pl.plot(z_obs,st_ob,ls='None',marker='o',color='r')
+pl.show()
+
+
+sys.exit()
 
 # soil moisture data (10-minute)
 obs   = nc.Dataset('observations/cesar_soil_water_lb1_t10_v1.1_200607.nc')
