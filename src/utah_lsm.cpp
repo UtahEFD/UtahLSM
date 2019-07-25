@@ -413,10 +413,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
-            std::cout<<std::endl;
-            std::cout<<R_net<<" "<<flux_gr<<" "<<std::setprecision(10)<<flux_wT<<std::endl;
-            std::cout<<flux_wq<<" "<<gnd_q<<" "<<soil_q[0]<<std::endl;
-            throw(1);
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
