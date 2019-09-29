@@ -12,7 +12,7 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 #
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_library(lsm
   input.cpp

@@ -47,7 +47,7 @@ ENDIF(NetCDF_FOUND)
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   configure_file(config/doxygen.conf.in ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf)
-  add_custom_target(doc
+  add_custom_target(lsmdoc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf
     COMMENT "Generating API documentation with Doxygen." VERBATIM
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf)
