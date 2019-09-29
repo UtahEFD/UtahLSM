@@ -43,15 +43,28 @@ class UtahLSM {
          *
          * @param[in]     input Input object
          * @param[in]     output Output object
+         * @param[in]     nx size of grid in x-direction
+         * @param[in]     ny size of grid in y-direction
          * @param[in,out] ustar friction velocity
          * @param[in,out] flux_wT kinematic heat flux
          * @param[in,out] flux_wq kinematic moisture flux
-         * @param[in]     j y-index of UtahLSM column if in a grid
-         * @param[in]     i x-index of UtahLSM column if in a grid
+         * @param[in]     atm_U wind speed
+         * @param[in]     atm_T temperature
+         * @param[in]     atm_q mixing ratio
+         * @param[in]     atm_p pressure
+         * @param[in]     R_net optional net radiation
          */
-        UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
-                double& flux_wq, int j=0, int i=0);
-    
+        UtahLSM(Input* input, Output* output, 
+                int nx, int ny, 
+                std::vector<double>& ustar, 
+                std::vector<double>& flux_wT,
+                std::vector<double>& flux_wq, 
+                std::vector<double>& atm_U,
+                std::vector<double>& atm_T, 
+                std::vector<double>& atm_q,
+                std::vector<double>& atm_p, 
+                std::vector<double>& R_net);
+        
         /**
          * Update atmospheric quantities prior to solving.
          *
@@ -62,7 +75,9 @@ class UtahLSM {
          * @param[in] p pressure
          * @param[in] rad optional net radiation
          */
-        void updateFields(double dt,double u,double T,double q,double p,double rad);
+        void setFields(double dt, std::vector<double> u, 
+                       std::vector<double> T, std::vector<double> q, 
+                       std::vector<double> p, std::vector<double> rad);
         
         /**
          * Run UtahLSM.
@@ -83,9 +98,9 @@ class UtahLSM {
         Radiation* radiation;
 
         // Fields to compute
-        double &ustar;   ///< reference to friction velocity
-        double &flux_wT; ///< reference to kinematic heat flux
-        double &flux_wq; ///< reference to kinematic moisture flux
+        std::vector<double>&ustar;   ///< reference to friction velocity
+        std::vector<double>&flux_wT; ///< reference to kinematic heat flux
+        std::vector<double>&flux_wq; ///< reference to kinematic moisture flux
 
         // Input time section
         int step_seb; ///< steps between calls to energy balance
@@ -124,23 +139,23 @@ class UtahLSM {
         std::vector<std::string> output_fields; ///< list of fields to save
 
         // Local surface variables
-        double flux_gr=0;                ///< ground heat flux
-        double L=0;                      ///< Obukhov length
-        double zeta_m=0;                 ///< zm/L
-        double zeta_s=0;                 ///< zs/L
-        double zeta_o=0;                 ///< zo/L
-        double zeta_t=0;                 ///< zt/L
-        double surf_T_last=0;            ///< surface temperature from previous time step
-        double surf_q_last=0;            ///< surface moisture from previous time step
+        std::vector<double> flux_gr;     ///< ground heat flux
+        std::vector<double> L;           ///< Obukhov length
+        std::vector<double> zeta_m;      ///< zm/L
+        std::vector<double> zeta_s;      ///< zs/L
+        std::vector<double> zeta_o;      ///< zo/L
+        std::vector<double> zeta_t;      ///< zt/L
+        std::vector<double> surf_T_last; ///< surface temperature from previous time step
+        std::vector<double> surf_q_last; ///< surface moisture from previous time step
         std::vector<double> soil_T_last; ///< soil temperature from previous time step
         std::vector<double> soil_q_last; ///< soil moisture from previous time step
 
         // Local atmospheric data
-        double atm_U; ///< wind speed
-        double atm_T; ///< temperature
-        double atm_q; ///< mizing ratio
-        double atm_p; ///< pressure
-        double R_net; ///< net surface radiation
+        std::vector<double> atm_U; ///< wind speed
+        std::vector<double> atm_T; ///< temperature
+        std::vector<double> atm_q; ///< mizing ratio
+        std::vector<double> atm_p; ///< pressure
+        std::vector<double> R_net; ///< net surface radiation
     
         // Local time data
         bool first=true;  ///< flag whether first time step or not
@@ -156,7 +171,8 @@ class UtahLSM {
         int output_counter=0;            ///< number of times output has been written
         std::vector<NcDim> dim_scalar_t; ///< dimension vector for time
         std::vector<NcDim> dim_scalar_z; ///< dimension vector for soil depth
-        std::vector<NcDim> dim_vector;   ///< dimension vector for other fields
+        std::vector<NcDim> dim_vector_s; ///< dimension vector for surface fields
+        std::vector<NcDim> dim_vector_c; ///< dimension vector for column fields
             
         /**
          * Struct to hold attributes of scalar fields.

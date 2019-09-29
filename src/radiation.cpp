@@ -24,62 +24,86 @@ namespace {
 
 // Constructor for Radiation class
 Radiation::Radiation(const double latitude,const double longitude,
-                     const double albedo,const double emissivity) : 
+                     const double albedo,const double emissivity,
+                     const int nx,const int ny) : 
                      latitude(latitude), longitude(longitude), 
-                     albedo(albedo), emissivity(emissivity) {}
+                     albedo(albedo), emissivity(emissivity),
+                     nx(nx), ny(ny) {}
 
 // Computes the surface net radiation
-double Radiation::computeNet(const double julian_day, const double time_utc, const double sfc_T) {
+std::vector<double> Radiation::computeNet(const double julian_day, const double time_utc, 
+                                          const std::vector<double> sfc_T) {
     
     // Compute incoming shortwave radiation
-    double shortwave_in = shortwaveIn(julian_day, time_utc, latitude, longitude);
+    std::vector<double> shortwave_in = shortwaveIn(julian_day, time_utc, latitude, longitude);
     
     // Compute outgoing shortwave radiation
-    double shortwave_out = shortwaveOut(albedo, shortwave_in);
+    std::vector<double> shortwave_out = shortwaveOut(albedo, shortwave_in);
     
     // Compute outgoing longwave radiation
-    double longwave_out = longwaveOut(emissivity, sfc_T);
-    
-    // Compute incoming longwave radiation (current hack is net longwave of -50)
-    double longwave_in = longwave_out - 50.0;
-    
-    // Compute net radiation
-    return shortwave_in - shortwave_out + longwave_in - longwave_out;
-}
+    std::vector<double> longwave_out = longwaveOut(emissivity, sfc_T);
 
-// Compute incoming longwave radiation
-double Radiation::longwaveIn() {
-    
-    return 0;
+    // Compute net radiation
+    std::vector<double> net_r(ny*nx,0.0);
+    for (int j=0; j<ny; j++) {
+        for (int i=0; i<nx; i++) {
+            int id = i + j*nx;
+            
+            // Compute incoming longwave radiation (current hack is net longwave of -50)
+            double longwave_in = longwave_out[id] - 50.0;
+
+            net_r[id] = shortwave_in[id] - shortwave_out[id] + longwave_in - longwave_out[id];
+        }
+    }
+    return net_r;
 }
 
 // Compute outgoing longwave radiation
-double Radiation::longwaveOut(const double emissivity, const double sfc_T) {
+std::vector<double> Radiation::longwaveOut(const double emissivity,const std::vector<double> sfc_T) {
     
-    return emissivity * c::sb * std::pow(sfc_T,4.);
+    std::vector<double> longwave_out(ny*nx,0.0);
+    for (int j=0; j<ny; j++) {
+        for (int i=0; i<nx; i++) {
+            int id = i + j*nx;
+            longwave_out[id] = emissivity * c::sb * std::pow(sfc_T[id],4.);
+        }
+    }
+    return longwave_out;
 }
 
 // Compute incoming shortwave radiation
-double Radiation::shortwaveIn(const double julian_day,const double time_utc,
-                              const double latitude,const double longitude) {
+std::vector<double> Radiation::shortwaveIn(const double julian_day,const double time_utc,
+                                           const double latitude,const double longitude) {
     
     // local variables
-    double shortwave_in = 0;
-    double declination = 23.45*(c::pi/180.0)*std::cos(2.0*c::pi*(julian_day-173)/365.25);
+    std::vector<double> shortwave_in(ny*nx,0.0);
+    double declination   = 23.45*(c::pi/180.0)*std::cos(2.0*c::pi*(julian_day-173)/365.25);
     double sin_elevation = std::sin(latitude)*std::sin(declination) - 
                            std::cos(latitude)*std::cos(declination) * 
                            std::cos( (2*c::pi*time_utc/(24.0*3600.0)) - longitude );
                            
     if (sin_elevation > 0) {
         double transmissivity = (0.6 + 0.2*sin_elevation);
-        shortwave_in = c::sc * transmissivity * sin_elevation;
+        for (int j=0; j<ny; j++) {
+            for (int i=0; i<nx; i++) {
+                int id = i + j*nx;
+                shortwave_in[id] = c::sc * transmissivity * sin_elevation;
+            }
+        }
     }
     
     return shortwave_in;
 }
 
 // Compute outgoing shortwave radiation
-double Radiation::shortwaveOut(const double albedo, const double shortwave_in) {
+std::vector<double> Radiation::shortwaveOut(const double albedo, const std::vector<double> shortwave_in) {
     
-    return albedo * shortwave_in;
+    // make a copy of shortwave in
+    std::vector<double> shortwave_out = shortwave_in;
+    
+    // multiply shortwave in by albedo
+    std::transform(shortwave_out.begin(), shortwave_out.end(), shortwave_out.begin(),
+                   std::bind(std::multiplies<double>(), std::placeholders::_1, albedo));
+    
+    return shortwave_out;
 }

@@ -45,8 +45,9 @@ double Soil::heatCapacity(const double soil_q, const int level) {
 }
 
 // Compute surface mixing ratio
-double Soil::surfaceMixingRatio(const double sfc_T, const double sfc_q,
-                                const double atm_p) {
+double Soil::surfaceMixingRatio(std::vector<const double> sfc_T, 
+                                std::vector<const double> sfc_q,
+                                std::vector<const double> atm_p) {
     
     double b        = properties[0]->b;
     double psi_sat  = properties[0]->psi_sat;
