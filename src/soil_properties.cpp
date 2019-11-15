@@ -42,7 +42,7 @@ SoilType* SoilType::getProperties(int type, int source) {
     } else if (type==12) {
         return new Peat(source);
     } else {
-        std::cout<<"Invalid soil property dataset: must be an integer between 1-12"<<std::endl;
+        std::cout<<"Invalid soil type: must be an integer between 1-12"<<std::endl;
         throw(1);
     }
 }
