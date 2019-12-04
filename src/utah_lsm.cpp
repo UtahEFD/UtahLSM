@@ -345,7 +345,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     bool converged = false;
     double gnd_q, flux_wTv;
     double last_L, criteria = 0.1, ref_T = 300.;
-    int depth = nsoilz;
     int int_depth;
     double heat_cap, dT, dz, K0, K1;
     
@@ -566,7 +565,7 @@ void UtahLSM :: solveSEB() {
 double UtahLSM :: computeSEB(double sfc_T) {
     
     // Local variables
-    double Qg, Qh, Ql, SEB, K;
+    double Qg, Qh, Ql, SEB;
     
     // Compute fluxes using passed in values
     computeFluxes(sfc_T,soil_q[0]);

@@ -48,10 +48,6 @@ double Soil::heatCapacity(const double soil_q, const int level) {
 double Soil::surfaceMixingRatio(const double sfc_T, const double sfc_q,
                                 const double atm_p) {
     
-    double b        = properties[0]->b;
-    double psi_sat  = properties[0]->psi_sat;
-    double porosity = properties[0]->porosity;
-    double residual = properties[0]->residual;
     double psi      = waterPotential(sfc_q, 0);
     double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
     double es       = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
