@@ -153,8 +153,8 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
         // Attributes for each field
         AttScalar att_time  = {&runtime, "time",  "time",               "s",     dim_scalar_t};
         AttScalar att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_scalar_t};
-        AttScalar att_shf   = {&flux_wT, "shf",   "sensible heat flux", "W m-2", dim_scalar_t};
-        AttScalar att_lhf   = {&flux_wq, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
+        AttScalar att_shf   = {&flux_sh, "shf",   "sensible heat flux", "W m-2", dim_scalar_t};
+        AttScalar att_lhf   = {&flux_lh, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
         AttVector att_soilz = {&soil_z,  "soilz", "Obukhov length",     "m",     dim_scalar_z};
@@ -436,6 +436,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         // Check for convergence
         converged = std::abs(last_L-L) <= criteria;
         if (converged) {
+            flux_sh = c::rho_air*c::Cp_air*flux_wT;
+            flux_lh = c::rho_air*c::Lv*flux_wq;
             break;
         }
     }

@@ -1,8 +1,4 @@
 {
-    "time": {
-        "step_seb": 10,
-        "step_dif": 10
-    },
     "grid": {
         "nx": 1,
         "ny": 1

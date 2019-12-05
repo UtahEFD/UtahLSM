@@ -86,6 +86,8 @@ class UtahLSM {
         double &ustar;   ///< reference to friction velocity
         double &flux_wT; ///< reference to kinematic heat flux
         double &flux_wq; ///< reference to kinematic moisture flux
+        double flux_sh;  ///< sensible heat flux
+        double flux_lh;  ///< latent heat flux
 
         // Input time section
         int step_seb; ///< steps between calls to energy balance

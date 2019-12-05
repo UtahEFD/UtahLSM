@@ -170,7 +170,7 @@ namelist['length']['z_s'] = 2.0
 
 # soil section
 namelist['soil']['nsoil']     = nsoil
-namelist['soil']['param']     = 3
+namelist['soil']['param']     = 1
 namelist['soil']['model']     = 2
 namelist['soil']['soil_z']    = z_obs.tolist()
 namelist['soil']['soil_type'] = stype.tolist()
