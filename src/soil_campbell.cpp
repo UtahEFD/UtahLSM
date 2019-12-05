@@ -29,7 +29,7 @@ double Campbell::surfaceWaterContent(const double psi) {
     double b        = properties[0]->b;
     double psi_sat  = properties[0]->psi_sat;
     double porosity = properties[0]->porosity;
-    double soil_q   = porosity*std::pow(psi_sat/psi,(1./b));
+    double soil_q   = porosity*std::pow(std::abs(psi_sat/psi),(1./b));
     
     return soil_q;
     
@@ -57,7 +57,7 @@ double Campbell::waterPotential(const double soil_q, const int level) {
     double psi_sat  = properties[level]->psi_sat;
     double porosity = properties[level]->porosity;
     double psi      = psi_sat*std::pow(soil_q/porosity,-b);
-    
+
     if (psi>psi_sat) psi = psi_sat;
     
     return psi;
@@ -81,7 +81,7 @@ double Campbell::diffusivityMoisture(const double soil_q, const int level) {
     double psi_sat      = properties[level]->psi_sat;
     double porosity     = properties[level]->porosity;
     double K_sat        = properties[level]->K_sat;
-    double diffusivity  = -b*K_sat*psi_sat*std::pow(soil_q/porosity,(b+2.))/soil_q;
+    double diffusivity  = -b*K_sat*psi_sat*std::pow(soil_q/porosity,(b+2.))/porosity;
 
     return diffusivity;
 }
