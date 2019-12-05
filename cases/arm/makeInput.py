@@ -127,11 +127,16 @@ with open('inputOffline.json', 'w') as outfile:
 # Settings for UtahLSM #
 ########################
 namelist = {}
+namelist['time'] = {}
 namelist['grid'] = {}
 namelist['length'] = {}
 namelist['soil'] = {}
 namelist['radiation'] = {}
 namelist['output'] = {}
+
+# time section
+namelist['time']['step_seb'] = 1
+namelist['time']['step_dif'] = 1
 
 # grid section
 namelist['grid']['nx'] = 1

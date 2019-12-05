@@ -105,9 +105,9 @@ namelist['soil'] = {}
 namelist['radiation'] = {}
 namelist['output'] = {}
 
-# grid section
-namelist['time']['step_seb'] = 10
-namelist['time']['step_dif'] = 10
+# time section
+namelist['time']['step_seb'] = 1
+namelist['time']['step_dif'] = 1
 
 # grid section
 namelist['grid']['nx'] = 1

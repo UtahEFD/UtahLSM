@@ -1,4 +1,8 @@
 {
+    "time": {
+        "step_seb": 40,
+        "step_dif": 40
+    },
     "grid": {
         "nx": 1,
         "ny": 1
@@ -11,7 +15,7 @@
     },
     "soil": {
         "nsoil": 9,
-        "param": 3,
+        "param": 1,
         "model": 2,
         "soil_z": [
             0.0,
