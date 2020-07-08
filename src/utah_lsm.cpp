@@ -590,9 +590,9 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     
     // Compute derivative of SEB wrt temperature
     heat_cap = soil->heatCapacity(soil_q[0],0);
-    dSEB_dT = - 4.*emissivity*c::sb*std::pow(sfc_T,3.)
-    - c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
-    - heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
+    dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
+    + c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
+    + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
     return dSEB_dT;
 }
 

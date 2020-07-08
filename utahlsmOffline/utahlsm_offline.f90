@@ -19,9 +19,9 @@ program p
    include "utahlsm_interface.f90"
  
    ! input/output filename variables
-   character*50 :: input_offline_file = 'inputOffline.json'
-   character*50 :: input_file = 'inputLSM.json'
-   character*50 :: output_file = 'lsm_f.nc'
+   character*50 :: input_offline_file = 'inputOffline.json'//char(0)
+   character*50 :: input_file = 'inputLSM.json'//char(0)
+   character*50 :: output_file = 'lsm_f.nc'//char(0)
    
    ! input/output pointer objects
    type(c_ptr) :: input_offline_obj = c_null_ptr
@@ -29,25 +29,25 @@ program p
    type(c_ptr) :: output_obj = c_null_ptr
    
    ! namelist time section
-   character*50 :: sect_time = 'time'
-   character*50 :: name_ntime = 'ntime'
-   character*50 :: name_tstep = 'tstep'
+   character*50 :: sect_time = 'time'//char(0)
+   character*50 :: name_ntime = 'ntime'//char(0)
+   character*50 :: name_tstep = 'tstep'//char(0)
    
    integer :: ntime
    double precision :: tstep
    
    ! namelist time section
-   character*50 :: sect_grid = 'grid'
-   character*50 :: name_imax = 'nx'
-   character*50 :: name_jmax = 'ny'
+   character*50 :: sect_grid = 'grid'//char(0)
+   character*50 :: name_imax = 'nx'//char(0)
+   character*50 :: name_jmax = 'ny'//char(0)
    
    ! namelist data section
-   character*50 :: sect_data = 'data'
-   character*50 :: name_atmu = 'atm_U'
-   character*50 :: name_atmt = 'atm_T'
-   character*50 :: name_atmq = 'atm_q'
-   character*50 :: name_atmp = 'atm_p'
-   character*50 :: name_rnet = 'R_net'
+   character*50 :: sect_data = 'data'//char(0)
+   character*50 :: name_atmu = 'atm_U'//char(0)
+   character*50 :: name_atmt = 'atm_T'//char(0)
+   character*50 :: name_atmq = 'atm_q'//char(0)
+   character*50 :: name_atmp = 'atm_p'//char(0)
+   character*50 :: name_rnet = 'R_net'//char(0)
    
    double precision, allocatable :: atm_U(:),atm_T(:),atm_q(:),atm_p(:),R_net(:)
    
@@ -62,12 +62,12 @@ program p
    real :: start_time, stop_time, elapsed
    
    ! write a friendly welcome message
-   write(*,*) '##############################################################'
-   write(*,*) '#                                                            #'
-   write(*,*) '#                     Welcome to UtahLSM                     #'
-   write(*,*) '#   A land surface model created at the University of Utah   #'
-   write(*,*) '#                                                            #'
-   write(*,*) '##############################################################'
+   write(*,'(a)')'##############################################################'
+   write(*,'(a)')'#                                                            #'
+   write(*,'(a)')'#                     Welcome to UtahLSM                     #'
+   write(*,'(a)')'#   A land surface model created at the University of Utah   #'
+   write(*,'(a)')'#                                                            #'
+   write(*,'(a)')'##############################################################'
    
    ! Create C++ object representing offline case
    input_offline_obj = GetInput( input_file=input_offline_file )
@@ -136,6 +136,6 @@ program p
    elapsed = stop_time - start_time
    write(*,*) creturn
    write(6,'(a,f0.2,a)') "[UtahLSM]        Finished in ",elapsed, " seconds!"
-   write(*,*) '##############################################################'
+   write(*,'(a)') '##############################################################'
 
 end program p

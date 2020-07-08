@@ -15,12 +15,12 @@
 interface
 
     function GetInput( input_file ) result( optr )bind(C, name="GetInput")
-        
         import :: c_char, c_ptr
         implicit none
+        
         ! Argument list
         character(len=1,kind=c_char), intent(in) :: input_file
-        
+
         ! Function result
         type(c_ptr) :: optr
     

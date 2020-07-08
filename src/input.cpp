@@ -77,13 +77,14 @@ InputObject GetInput(char* input_file) {
     
     // Convert from char* to std::string
     std::string inputFile(input_file);
-    
+
     // Remove trailing spaces sent from Fortran
     while(inputFile.size() && isspace(inputFile.back())) 
         inputFile.pop_back();
     
     // Return Input object
     Input *input = new Input(inputFile);
+
     return (InputObject)input;
 }
 
