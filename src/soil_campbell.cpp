@@ -57,7 +57,6 @@ double Campbell::waterPotential(const double soil_q, const int level) {
     double psi_sat  = properties[level]->psi_sat;
     double porosity = properties[level]->porosity;
     double psi      = psi_sat*std::pow(soil_q/porosity,-b);
-
     if (psi>psi_sat) psi = psi_sat;
     
     return psi;

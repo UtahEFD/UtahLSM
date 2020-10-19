@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from mpi4py import MPI
 import sys, json
 import netCDF4 as nc
 import numpy as np
@@ -65,7 +66,13 @@ sm_oi = np.interp(z_obs,z_obm,sm_ob)
 # 10 = silty clay
 # 11 = clay
 # 12 = peat
+# 13 = B11
+# 14 = O12
+# 15 = O16
 stype = np.full((nsoil),11)
+stype = np.array([11,11,11,11,11,11,11,11,12])
+#stype = np.array([13,13,13,13,13,13,14,14,15])
+
 
 ###################################
 # Read met tower data for u,v,T,q #

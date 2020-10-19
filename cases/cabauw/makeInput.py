@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from mpi4py import MPI
 import netCDF4 as nc
 import numpy as np
 import sys, json

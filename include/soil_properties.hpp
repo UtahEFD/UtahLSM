@@ -484,4 +484,65 @@ struct Peat : public SoilType {
     }   
 };
 
+/**
+ * Derived struct for managing properties for B11 (type=13).
+ */
+struct B11 : public SoilType {
+    B11(int dataset) {
+        // Heinen, Bakker, Wosten (Cabauw-specific)
+        if (dataset==4) {
+            b        = 9.35;
+            psi_sat  = -0.463;
+            porosity = 0.591;
+            residual = 0.01;
+            K_sat    = 7.30e-07;
+            ci       = 1090000;
+        } else {
+            std::cout<<"Invalid soil property dataset: this is specific to Cabauw and must equal 4."<<std::endl;
+            throw(1);
+        }
+    }   
+};
+
+/**
+ * Derived struct for managing properties for O12 (type=14).
+ */
+struct O12 : public SoilType {
+    O12(int dataset) {
+        // Heinen, Bakker, Wosten (Cabauw-specific)
+        if (dataset==4) {
+            b        = 6.33;
+            psi_sat  = -1.14;
+            porosity = 0.561;
+            residual = 0.01;
+            K_sat    = 1.25e-07;
+            ci       = 1090000;
+        } else {
+            std::cout<<"Invalid soil property dataset: this is specific to Cabauw and must equal 4."<<std::endl;
+            throw(1);
+        }
+    }   
+};
+
+
+/**
+ * Derived struct for managing properties for O16 (type=15).
+ */
+struct O16 : public SoilType {
+    O16(int dataset) {
+        // Heinen, Bakker, Wosten (Cabauw-specific)
+        if (dataset==4) {
+            b        = 2.75;
+            psi_sat  = -1.03;
+            porosity = 0.889;
+            residual = 0.00;
+            K_sat    = 1.69e-07;
+            ci       = 1090000;
+        } else {
+            std::cout<<"Invalid soil property dataset: this is specific to Cabauw and must equal 4."<<std::endl;
+            throw(1);
+        }
+    }   
+};
+
 #endif
