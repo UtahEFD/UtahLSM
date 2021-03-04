@@ -905,7 +905,7 @@ struct position_t
 #if defined(JSON_HEDLEY_DIAGNOSTIC_POP)
     #undef JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
     #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
 #elif JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
@@ -3981,7 +3981,7 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     // Fix: https://github.com/nlohmann/json/issues/1401
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -3998,7 +3998,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     #pragma clang diagnostic pop
 #endif
 } // namespace std
