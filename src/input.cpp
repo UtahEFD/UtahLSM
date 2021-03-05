@@ -55,17 +55,17 @@ void Input :: getItem(double& external, std::string section, std::string name) {
 
 // Retrieve the requested vector<int> from the input file
 void Input :: getItem(std::vector<int>& external, std::string section, std::string name) {
-    external = input[section][name].get<std::vector<int>>();
+    external = input[section][name].get<std::vector<int> >();
 }
 
 // Retrieve the requested vector<double> from the input file
 void Input :: getItem(std::vector<double>& external, std::string section, std::string name) {
-    external = input[section][name].get<std::vector<double>>();
+    external = input[section][name].get<std::vector<double> >();
 }
 
 // Retrieve the requested vector<string> from the input file
 void Input :: getItem(std::vector<std::string>& external, std::string section, std::string name) {
-    external = input[section][name].get<std::vector<std::string>>();
+    external = input[section][name].get<std::vector<std::string> >();
 }
 
 //////////////////////////////////////////////////////////////
