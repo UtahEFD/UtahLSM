@@ -50,7 +50,6 @@ double Soil::surfaceMixingRatio(const double sfc_T, const double sfc_q,
     
     double psi      = waterPotential(sfc_q, 0);
     double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
-    //std::cout<<"SMR: "<<"g: "<<c::grav<<" psi: "<<psi<<" Rv: "<<c::Rv<<" sfcT: "<<sfc_T<<" h: "<<h<<std::endl;
     double es       = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
     double hum_sat  = 0.622*(es/(atm_p-0.378*es));
     double hum_spec = h*hum_sat;
@@ -63,9 +62,6 @@ double Soil::conductivityThermal(const double soil_q, const int level) {
     double conductivity;
     double psi = 100.*waterPotential(soil_q,level);
     double pf = std::log10(std::abs(psi));
-    // std::cout<<"$$$$$$$$$ Thermal Conductivity $$$$$$$$$$"<<std::endl;
-    // std::cout<<"soilq: "<<soil_q<<" psi: "<<psi/100.<<" pf: "<<pf<<std::endl;
-    // std::cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<std::endl;
     if (pf <= 5.1) {
         conductivity = 418.46*std::exp(-(pf+2.7));
     } else {

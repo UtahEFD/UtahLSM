@@ -234,17 +234,7 @@ void UtahLSM :: run() {
 
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {
-
-        // Solve the surface energy balance
-        std::cout<<std::endl;
-        std::cout<<"Entering SEB: "<<std::endl;
-        //getchar();
         solveSEB();
-
-        // Solve the surface moisture balance
-        std::cout<<std::endl;
-        std::cout<<"Entering SMB: "<<std::endl;
-        //getchar();
         solveSMB();
     } else {
         // just return new fluxes
@@ -259,11 +249,9 @@ void UtahLSM :: run() {
     if ( (step_count % step_dif)==0 ) {
 
         // Solve heat diffusion
-        std::cout<<"Entering Diffusion Heat: "<<std::endl;
         solveDiffusion(1);
 
         // solve moisture diffusion
-        std::cout<<"Entering Diffusion Mois: "<<std::endl;
         solveDiffusion(2);
     }
     
@@ -359,8 +347,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // Compute surface mixing ratio
     gnd_q  = soil->surfaceMixingRatio(sfc_T,sfc_q,atm_p);
     
-    //std::cout<<"-------- computeFluxes: "<<sfc_T<<" "<<sfc_q<<" "<<atm_p<<std::endl;
-
     // Sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
         
@@ -410,19 +396,13 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
                 flux_gr = flux_gr + 0.5*( heat_cap*dT*dz/tstep);
             }
         }
-
-        //std::cout<<"-------- computeFluxes: "<<"(flux_gr ): "<<flux_gr<<std::endl;
         
         // Compute friction velocity
         ustar = atm_U*most::fm(z_m/z_o,zeta_m,zeta_o);
-
-        //std::cout<<"-------- computeFluxes: "<<"(ustar  ): "<<ustar<<std::endl;
         
         // Compute heat flux
         flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
-        //std::cout<<"-------- computeFluxes: "<<"(flux_wT ): "<<flux_wT<<std::endl;
-
         // Compute latent flux
         if ( (first) && (i == 0)) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
@@ -432,19 +412,13 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
         
-        //std::cout<<"-------- computeFluxes: "<<"(flux_wq ): "<<flux_wq<<std::endl;
-
         // Compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
         
-        //std::cout<<"-------- computeFluxes: "<<"(flux_wTv): "<<flux_wTv<<std::endl;
-
         // Compute L
         last_L = L;
         L      = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
         
-        //std::cout<<"-------- computeFluxes: "<<"(Obuk L  ): "<<L<<std::endl;
-        //getchar();
         // Bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
@@ -577,7 +551,6 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
-            std::cout<<"----- computeSEB: "<<"Rnet "<<R_net<<" Qh "<<Qh<<" Ql "<<Ql<<" Qg "<<Qg<<std::endl;
             break;
         }
         
@@ -592,8 +565,6 @@ void UtahLSM :: solveSEB() {
 // Compute surface energy budget
 double UtahLSM :: computeSEB(double sfc_T) {
     
-    //std::cout<<"----- computeSEB: "<<sfc_T<<" "<<soil_q[0]<<std::endl;
-    //getchar();
     // Local variables
     double Qg, Qh, Ql, SEB;
     
@@ -604,8 +575,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     Qh = c::rho_air*c::Cp_air*flux_wT;
     Ql = c::rho_air*c::Lv*flux_wq;
     Qg = flux_gr;
-    //std::cout<<"----- computeSEB: "<<"Rnet "<<R_net<<" Qh "<<Qh<<" Ql "<<Ql<<" Qg "<<Qg<<std::endl;
-    //getchar();
+    
     // Compute surface energy balance
     SEB = R_net - Qg - Qh - Ql;
     return SEB;
@@ -646,7 +616,6 @@ void UtahLSM :: solveSMB() {
     D0    = soil->diffusivityMoisture(soil_q[0],0);
     D1    = soil->diffusivityMoisture(soil_q[1],1);
     D_avg = 0.5*(D0+D1);
-    //getchar();
     flux_sm  = c::rho_wat*K_avg*((psi0 - psi1)/(soil_z[0]-soil_z[1]) + 1);
     flux_sm = c::rho_wat*D_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
                + c::rho_wat*K_avg;
@@ -657,13 +626,9 @@ void UtahLSM :: solveSMB() {
     // Convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
         
-        std::cout<<"--- Entering Convergence loop: "<<std::endl;
-
         // Save soil moisture flux for convergence test
         flux_sm_last = flux_sm;
         
-        std::cout<<std::setprecision(8)<<"------ flux_sm_last: "<<flux_sm_last<<" Evap: "<<E<<" flux_wq "<<flux_wq<<std::endl;
-        //getchar();
         // Compute new weighted soil moisture flux
         flux_sm = delta*flux_sm_last - (1.-delta)*E;
         
@@ -674,12 +639,8 @@ void UtahLSM :: solveSMB() {
         }
         
         // Update soil moisture
-        //std::cout<<"************************************************"<<std::endl;
         soil_q[0] = soil->surfaceWaterContent(psi0);
-        //std::cout<<"************************************************"<<std::endl;
         double gnd_q  = soil->surfaceMixingRatio(soil_T[0],soil_q[0],atm_p);
-        //std::cout<<"--------- psi0: "<<psi0<<" soil_q: "<<soil_q[0]<<" gnd_q: "<<gnd_q<<std::endl;
-        //getchar();
         E = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // Update soil moisture transfer
@@ -814,10 +775,6 @@ void UtahLSM :: solveDiffusion(int type) {
         dKdz = step_dif*tstep*(K[nsoilz-2]-K[nsoilz-1])/(soil_z[nsoilz-2]-soil_z[nsoilz-1]);
         r[nsoilz-2] = r[nsoilz-2] + dKdz;
     }
-        std::cout<<"BEFORE"<<std::endl;
-        for (int i=0;i<nsoilz;i++) {
-            std::cout<<" level "<<i<<": "<<scalar[i]<<std::endl;
-        }
 
     // Solve the tridiagonal system
     try {
@@ -829,13 +786,6 @@ void UtahLSM :: solveDiffusion(int type) {
             matrix::tridiagonal(e,f,g,r,soil_q);
             scalar = soil_q;
         }
-
-        std::cout<<"AFTER"<<std::endl;
-        for (int i=0;i<nsoilz;i++) {
-            std::cout<<" level "<<i<<": "<<scalar[i]<<std::endl;
-        }
-        getchar();
-
     } catch(std::string &e) {
         std::cout<<e<<std::endl;
         std::exit(0);

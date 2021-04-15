@@ -33,7 +33,6 @@ double BrooksCorey::surfaceWaterContent(const double psi) {
     double residual = properties[0]->residual;
     double soil_e   = porosity-residual;
     double soil_q   = residual+soil_e*std::pow(psi_sat/psi,1./b);
-    //std::cout<<"SFW: "<<std::setprecision(8)<<"soilq: "<<soil_q<<" resid: "<<residual<<" porosity: "<<porosity<<" psi: "<<psi<<" psisat: "<<psi_sat<<std::endl;
     return soil_q;
 }
 
@@ -50,7 +49,6 @@ double BrooksCorey::surfaceWaterContentEstimate(const double sfc_T, const double
     double ln       = std::log(sfc_q/qs);
     double soil_e   = porosity-residual;
     double soil_q   = residual+soil_e*std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),-1./b);
-    //std::cout<<"sfc_q: "<<sfc_q<<" soil_q: "<<soil_q<<std::endl;
     return soil_q;
 }
 
@@ -65,15 +63,11 @@ double BrooksCorey::waterPotential(const double soil_q, const int level) {
     double psi      = psi_sat*std::pow(Se,-b);
     
     double h        = std::exp(c::grav*psi/(c::Rv*295));
-    std::cout<<"--- PSI (level "<<level<<"): "<<std::setprecision(4)<<"soilq: "<<soil_q<<" resid: "<<residual<<" porosity: "<<porosity<<" Se: "<<Se<<" psi: "<<psi<<" psisat: "<<psi_sat<<" h: "<<h<<std::endl;
     
     if (psi>psi_sat) {
-        std::cout<<"    ====== WARNING: PSI (level "<<level<<"): Saturated! ======"<<std::endl;
         double h        = std::exp(c::grav*psi/(c::Rv*295));
         psi = psi_sat;
         Se = 1;
-        std::cout<<"--- FIXED (level "<<level<<"): "<<std::setprecision(4)<<"soilq: "<<soil_q<<" resid: "<<residual<<" porosity: "<<porosity<<" Se: "<<Se<<" psi: "<<psi<<" psisat: "<<psi_sat<<" h: "<<h<<std::endl;
-        std::cout<<"    ================================================"<<std::endl;
     }
     
     if (soil_q<0) {
@@ -94,7 +88,6 @@ double BrooksCorey::conductivityMoisture(const double soil_q, const int level) {
     double K_sat        = properties[level]->K_sat;
     double Se           = (soil_q-residual)/(porosity-residual);
     double conductivity = K_sat*std::pow(Se,(2.*b+3.));
-    //std::cout<<"CON (level "<<level<<"): "<<std::setprecision(17)<<"soilq: "<<soil_q<<" resid: "<<residual<<" porosity: "<<porosity<<" Se: "<<Se<<" b "<<b<<" Ksat "<<K_sat<<" K: "<<conductivity<<std::endl;
     return conductivity;
 }
 
@@ -108,6 +101,5 @@ double BrooksCorey::diffusivityMoisture(const double soil_q, const int level) {
     double K_sat        = properties[level]->K_sat;
     double Se           = (soil_q-residual)/(porosity-residual);
     double diffusivity  = -b*K_sat*psi_sat*std::pow(Se,(b+2.))/(porosity-residual);
-    //std::cout<<"DIF (level "<<level<<"): "<<std::setprecision(17)<<"soilq: "<<soil_q<<" resid: "<<residual<<" porosity: "<<porosity<<" Se: "<<Se<<" b "<<b<<" D: "<<diffusivity<<std::endl;
     return diffusivity;
 }
