@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-
-import netCDF4 as nc
+import json
 import numpy as np
-import os,sys,json
-import pylab as pl
+import netCDF4 as nc
 
 ####################################
 # UtahLSM test case: June 2016     #
@@ -53,20 +51,20 @@ tm = met.variables['time'][:]
 ws = met.variables['wspd_vec_mean'][:]
 wd = met.variables['wdir_vec_mean'][:]
 pt = met.variables['temp_mean'][:] + 273.15
-pa = met.variables['atmos_pressure'][:]*10
-pv = met.variables['vapor_pressure_mean'][:]*10
+pa = met.variables['atmos_pressure'][:] * 10
+pv = met.variables['vapor_pressure_mean'][:] * 10
 
 # compute wind components
-uc = -ws*np.sin(wd*np.pi/180)
-vc = -ws*np.cos(wd*np.pi/180)
+uc = -ws * np.sin(wd * np.pi / 180)
+vc = -ws * np.cos(wd * np.pi / 180)
 
 # compute water vapor mixing ratio
-qs = 0.622 * pv / (pa-pv)
+qs = 0.622 * pv / (pa - pv)
 
 # time dimension
 dt    = tm[1] - tm[0]
 ntime = len(tm)
-t_utc = (tm-86400)%86400
+t_utc = (tm - 86400) % 86400
 
 ########################################
 # Read net radiation data for 20121024 #
@@ -81,8 +79,8 @@ rNet = data.variables['net_radiation'][:]
 
 # construct time
 nt    = len(tm2)
-dt2   = tm2[1]-tm2[0]
-tm2   = np.arange(0,nt*dt2,dt2)
+dt2   = tm2[1] - tm2[0]
+tm2   = np.arange(0,nt * dt2,dt2)
 
 # interpolate from 30-minute to 1-minute frequency to match MET
 rNet1m = np.interp(tm,tm2,rNet)
@@ -90,21 +88,21 @@ rNet1m = np.interp(tm,tm2,rNet)
 tc = 0
 badT = []
 for r in pt:
-	if (str(r)=='--'):
-		badT.append(tc)
-	tc+=1
+    if (str(r) == '--'):
+        badT.append(tc)
+    tc += 1
 for b in badT:
-	pt[b] = pt[badT[0]-1]
+    pt[b] = pt[badT[0] - 1]
 
 tc = 0
 badQ = []
 for r in qs:
-	if (str(r)=='--'):
-		badQ.append(tc)
-	tc+=1
+    if (str(r) == '--'):
+        badQ.append(tc)
+    tc += 1
 
 for b in badQ:
-	qs[b] = qs[badQ[0]-1]
+    qs[b] = qs[badQ[0] - 1]
 
 ##############################
 # Write all time series data #
@@ -120,7 +118,7 @@ metr['data']['atm_T'] = pt.tolist()
 metr['data']['atm_q'] = qs.tolist()
 metr['data']['atm_p'] = pa.tolist()
 metr['data']['R_net'] = rNet1m.tolist()
-with open('inputOffline.json', 'w') as outfile:  
+with open('inputOffline.json', 'w') as outfile:
     json.dump(metr,outfile,indent=4)
 
 ########################
@@ -145,7 +143,7 @@ namelist['grid']['ny'] = 1
 # length scale section
 namelist['length']['z_o'] = 0.0500
 namelist['length']['z_t'] = 0.0005
-namelist['length']['z_m'] = 10.0 
+namelist['length']['z_m'] = 10.0
 namelist['length']['z_s'] = 2.0
 
 # soil section
@@ -158,7 +156,7 @@ namelist['soil']['soil_T']    = st_ob
 namelist['soil']['soil_q']    = sm_ob
 
 # radiation section
-namelist['radiation']['utc_start']  = t_utc[0] 
+namelist['radiation']['utc_start']  = t_utc[0]
 namelist['radiation']['comp_rad']   = 0
 namelist['radiation']['albedo']     = 0.25
 namelist['radiation']['emissivity'] = 0.96
@@ -170,5 +168,5 @@ namelist['radiation']['julian_day'] = 153
 namelist['output']['save'] = 1
 namelist['output']['fields'] = ['all']
 
-with open('inputLSM.json', 'w') as outfile:  
+with open('inputLSM.json', 'w') as outfile:
     json.dump(namelist,outfile,indent=4)

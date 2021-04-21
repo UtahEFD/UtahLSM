@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-import sys, json
-import netCDF4 as nc
+import json
 import numpy as np
-import pylab as pl
-import datetime as dt
 
 #############
 # Constants #
@@ -23,18 +20,18 @@ obs = open('observations/efs_sage_iop5_5min.dat','r').read().split()[20::]
 lem = open('observations/lems_iop5_10sec.dat','r').read().split()[17::]
 
 # atmospheric data
-pa    = np.array(obs[5::20]).astype(float)*100.0
+pa    = np.array(obs[5::20]).astype(float) * 100.0
 ws    = np.array(obs[6::20]).astype(float)
 wd    = np.array(obs[7::20]).astype(float)
-pt    = np.array(obs[8::20]).astype(float)+T0
+pt    = np.array(obs[8::20]).astype(float) + T0
 rh    = np.array(obs[9::20]).astype(float)
 net   = np.array(obs[10::20]).astype(float)
 ntime = len(ws)
 
 # convert relative humidity to mixing ratio
-es = E0*np.exp(Lv/Rv * (1/T0 - 1/pt))
-e  = rh*es/100
-sh = e * Rd / (Rv * (pa/100 - e))
+es = E0 * np.exp(Lv / Rv * (1 / T0 - 1 / pt))
+e  = rh * es / 100
+sh = e * Rd / (Rv * (pa / 100 - e))
 qs = sh / (sh + 1)
 
 # soil moisture
@@ -46,14 +43,14 @@ sm_ob = np.array([sm_00,sm_02,sm_07,sm_25])
 z_obm = np.array([0.000,0.025,0.075,0.25])
 
 # soil temperature
-st_01 = np.float(obs[12])+T0
-st_02 = np.float(obs[13])+T0
-st_05 = np.float(obs[14])+T0
-st_07 = np.float(obs[15])+T0
-st_10 = np.float(obs[16])+T0
-st_15 = np.float(obs[17])+T0
-st_25 = np.float(obs[18])+T0
-st_70 = np.float(obs[19])+T0
+st_01 = np.float(obs[12]) + T0
+st_02 = np.float(obs[13]) + T0
+st_05 = np.float(obs[14]) + T0
+st_07 = np.float(obs[15]) + T0
+st_10 = np.float(obs[16]) + T0
+st_15 = np.float(obs[17]) + T0
+st_25 = np.float(obs[18]) + T0
+st_70 = np.float(obs[19]) + T0
 st_00 = st_01
 st_ob = np.array([st_00,st_01,st_02,st_05,st_07,st_10,st_15,st_25,st_70])
 z_obs = np.array([0.000,0.01,0.025,0.050,0.075,0.100,0.150,0.250,0.700])
@@ -84,14 +81,14 @@ metr = {}
 metr['time'] = {}
 metr['data'] = {}
 
-metr['time']['ntime'] = ntime 
+metr['time']['ntime'] = ntime
 metr['time']['tstep'] = 300.0
 metr['data']['atm_U'] = ws.tolist()
 metr['data']['atm_T'] = pt.tolist()
 metr['data']['atm_q'] = qs.tolist()
 metr['data']['atm_p'] = pa.tolist()
 metr['data']['R_net'] = net.tolist()
-with open('inputOffline.json', 'w') as outfile:  
+with open('inputOffline.json', 'w') as outfile:
     json.dump(metr,outfile,indent=4)
 
 ########################
@@ -116,7 +113,7 @@ namelist['grid']['ny'] = 1
 # length scale section
 namelist['length']['z_o'] = 0.15
 namelist['length']['z_t'] = 0.0015
-namelist['length']['z_m'] = 10.0 
+namelist['length']['z_m'] = 10.0
 namelist['length']['z_s'] = 2.0
 
 # soil section
@@ -129,7 +126,7 @@ namelist['soil']['soil_T']    = st_ob.tolist()
 namelist['soil']['soil_q']    = sm_oi.tolist()
 
 # radiation section
-namelist['radiation']['utc_start']  = 12.0 
+namelist['radiation']['utc_start']  = 12.0
 namelist['radiation']['comp_rad']   = 0
 namelist['radiation']['albedo']     = 0.33
 namelist['radiation']['emissivity'] = 0.99
@@ -141,5 +138,5 @@ namelist['radiation']['julian_day'] = 133
 namelist['output']['save'] = 1
 namelist['output']['fields'] = ['all']
 
-with open('inputLSM.json', 'w') as outfile:  
+with open('inputLSM.json', 'w') as outfile:
     json.dump(namelist,outfile,indent=4)

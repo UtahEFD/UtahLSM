@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-from mpi4py import MPI
-import netCDF4 as nc
+import json
 import numpy as np
-import sys, json
-import pylab as pl
+import netCDF4 as nc
 
 ##########################################
 # Soil data taken from Cesar Observatory #
@@ -11,16 +9,16 @@ import pylab as pl
 
 # soil temperature data
 obs   = nc.Dataset('observations/cesar_soil_heat_lb1_t10_v1.0_201709.nc')
-t_obs = obs.variables['time'][:]*3600.
-st_00 = obs.variables['TS00'][0]+273.15
-st_02 = obs.variables['TS02'][0]+273.15
-st_04 = obs.variables['TS04'][0]+273.15
-st_06 = obs.variables['TS06'][0]+273.15
-st_08 = obs.variables['TS08'][0]+273.15
-st_12 = obs.variables['TS12'][0]+273.15
-st_20 = obs.variables['TS20'][0]+273.15
-st_30 = obs.variables['TS30'][0]+273.15
-st_50 = obs.variables['TS50'][0]+273.15
+t_obs = obs.variables['time'][:] * 3600.
+st_00 = obs.variables['TS00'][0] + 273.15
+st_02 = obs.variables['TS02'][0] + 273.15
+st_04 = obs.variables['TS04'][0] + 273.15
+st_06 = obs.variables['TS06'][0] + 273.15
+st_08 = obs.variables['TS08'][0] + 273.15
+st_12 = obs.variables['TS12'][0] + 273.15
+st_20 = obs.variables['TS20'][0] + 273.15
+st_30 = obs.variables['TS30'][0] + 273.15
+st_50 = obs.variables['TS50'][0] + 273.15
 st_ob = np.array([st_00,st_02,st_04,st_04,st_08,st_12,st_20,st_30,st_50])
 z_obs = np.array([0.00,0.02,0.04,0.06,0.08,0.12,0.20,0.30,0.50])
 nsoil = len(z_obs)
@@ -28,13 +26,13 @@ ntime = len(t_obs)
 
 # estimate surface moisture
 obs   = nc.Dataset('observations/cesar_surface_meteo_lc1_t10_v1.0_201709.nc')
-rh_00 = obs.variables['RH002'][0]/100
+rh_00 = obs.variables['RH002'][0] / 100
 psi_s = -.405
 eta_s = .482
 b     = 11.4
 g     = 9.81
 Rv    = 416.5
-sm_00 = eta_s * ( (g*psi_s)/(Rv*st_00*np.log(rh_00)) )**(1/b)
+sm_00 = eta_s * ((g * psi_s) / (Rv * st_00 * np.log(rh_00)))**(1 / b)
 
 # soil moisture data
 obs   = nc.Dataset('observations/cesar_soil_water_lb1_t10_v1.1_201709.nc')
@@ -74,21 +72,21 @@ stype = np.full((nsoil),11)
 met = nc.MFDataset('observations/cesar_surface_meteo_lc1_t10_v1.0_201709.nc')
 
 # grab variables
-tm = met.variables['time'][:]*3600.
+tm = met.variables['time'][:] * 3600.
 ws = met.variables['F010'][:]
 wd = met.variables['D010'][:]
 pt = met.variables['TA002'][:]
 pa = met.variables['P0'][:]
-qs = met.variables['Q002'][:]/1000
+qs = met.variables['Q002'][:] / 1000
 
 # compute wind components
-uc = -ws*np.sin(wd*np.pi/180)
-vc = -ws*np.cos(wd*np.pi/180)
+uc = -ws * np.sin(wd * np.pi / 180)
+vc = -ws * np.cos(wd * np.pi / 180)
 
 # time dimension
 dt    = tm[1] - tm[0]
 ntime = len(tm)
-t_utc = (tm-86400)%86400
+t_utc = (tm - 86400) % 86400
 
 #################################
 # Read radiation data for R_net #
@@ -98,38 +96,38 @@ swu = rad.variables['SWU'][:]
 swd = rad.variables['SWD'][:]
 lwu = rad.variables['LWU'][:]
 lwd = rad.variables['LWD'][:]
-net = swd-swu+lwd-lwu
+net = swd - swu + lwd - lwu
 
 tc = 0
 badU = []
 for r in ws:
-    if (r==0):
+    if (r == 0):
         badU.append(tc)
-    tc+=1
+    tc += 1
 
 for b in badU:
-    uc[b] = uc[badU[0]-1]
-    vc[b] = vc[badU[0]-1]
+    uc[b] = uc[badU[0] - 1]
+    vc[b] = vc[badU[0] - 1]
 
 tc = 0
 badT = []
 for r in pt:
-    if (str(r)=='--'):
+    if (str(r) == '--'):
         badT.append(tc)
-    tc+=1
-    
+    tc += 1
+
 for b in badT:
-    pt[b] = pt[badT[0]-1]
+    pt[b] = pt[badT[0] - 1]
 
 tc = 0
 badQ = []
 for r in qs:
-    if (str(r)=='--'):
+    if (str(r) == '--'):
         badQ.append(tc)
-    tc+=1
+    tc += 1
 
 for b in badQ:
-    qs[b] = q[badQ[0]-1]
+    qs[b] = qs[badQ[0] - 1]
 
 ##############################
 # Write all time series data #
@@ -138,16 +136,16 @@ metr = {}
 metr['time'] = {}
 metr['data'] = {}
 
-metr['time']['ntime'] = ntime 
+metr['time']['ntime'] = ntime
 metr['time']['tstep'] = float(dt)
 metr['data']['atm_U'] = ws.tolist()
 metr['data']['atm_T'] = pt.tolist()
 metr['data']['atm_q'] = qs.tolist()
 metr['data']['atm_p'] = pa.tolist()
 metr['data']['R_net'] = net.tolist()
-with open('inputOffline.json', 'w') as outfile:  
+with open('inputOffline.json', 'w') as outfile:
     json.dump(metr,outfile,indent=4)
-    
+
 ########################
 # Settings for UtahLSM #
 ########################
@@ -170,7 +168,7 @@ namelist['grid']['ny'] = 1
 # length scale section
 namelist['length']['z_o'] = 0.15
 namelist['length']['z_t'] = 0.0015
-namelist['length']['z_m'] = 10.0 
+namelist['length']['z_m'] = 10.0
 namelist['length']['z_s'] = 2.0
 
 # soil section
@@ -183,7 +181,7 @@ namelist['soil']['soil_T']    = st_ob.tolist()
 namelist['soil']['soil_q']    = sm_oi.tolist()
 
 # radiation section
-namelist['radiation']['utc_start']  = t_utc[0] 
+namelist['radiation']['utc_start']  = t_utc[0]
 namelist['radiation']['comp_rad']   = 0
 namelist['radiation']['albedo']     = 0.33
 namelist['radiation']['emissivity'] = 0.99
@@ -195,5 +193,5 @@ namelist['radiation']['julian_day'] = 244
 namelist['output']['save'] = 1
 namelist['output']['fields'] = ['all']
 
-with open('inputLSM.json', 'w') as outfile:  
+with open('inputLSM.json', 'w') as outfile:
     json.dump(namelist,outfile,indent=4)
