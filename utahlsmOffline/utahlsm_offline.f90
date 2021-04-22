@@ -66,6 +66,7 @@ program p
    write(*,'(a)')'#                                                            #'
    write(*,'(a)')'#                     Welcome to UtahLSM                     #'
    write(*,'(a)')'#   A land surface model created at the University of Utah   #'
+   write(*,'(a)')'#       and the NOAA National Severe Storms Laboratory       #'
    write(*,'(a)')'#                                                            #'
    write(*,'(a)')'##############################################################'
    
