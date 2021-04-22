@@ -132,10 +132,10 @@ class UtahLSM {
         double zeta_s=0;                 ///< zs/L
         double zeta_o=0;                 ///< zo/L
         double zeta_t=0;                 ///< zt/L
-        double surf_T_last=0;            ///< surface temperature from previous time step
-        double surf_q_last=0;            ///< surface moisture from previous time step
-        std::vector<double> soil_T_last; ///< soil temperature from previous time step
-        std::vector<double> soil_q_last; ///< soil moisture from previous time step
+        double sfc_T_new=0;            ///< surface temperature for next time step
+        double sfc_q_new=0;            ///< surface moisture for next time step
+        //std::vector<double> soil_T_last; ///< soil temperature from previous time step
+        //std::vector<double> soil_q_last; ///< soil moisture from previous time step
 
         // Local atmospheric data
         double atm_U; ///< wind speed
