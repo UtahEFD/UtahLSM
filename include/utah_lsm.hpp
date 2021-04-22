@@ -206,6 +206,16 @@ class UtahLSM {
         void solveSMB();
         
         /**
+         * Solves the diffusion equation for soil heat.
+         */
+        void solveDiffusionHeat();
+
+        /**
+         * Solves the diffusion equation for soil moisture.
+         */
+        void solveDiffusionMois();
+        
+        /**
          * Solves the diffusion equation for soil heat and moisture.
          * 
          * @param[in] type 1=heat, 2=moisture

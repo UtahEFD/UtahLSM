@@ -43,6 +43,7 @@ int main () {
     std::cout<<"#                                                            #"<<std::endl;
     std::cout<<"#                     Welcome to UtahLSM                     #"<<std::endl;
     std::cout<<"#   A land surface model created at the University of Utah   #"<<std::endl;
+    std::cout<<"#       and the NOAA National Severe Storms Laboratory       #"<<std::endl;
     std::cout<<"#                                                            #"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;
     

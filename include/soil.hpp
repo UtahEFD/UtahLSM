@@ -107,12 +107,11 @@ class Soil {
         /**
          * Computes soil thermal diffusivity.
          *
-         * @param[in] conductivity soil thermal conductivity
          * @param[in] soil_q soil moisture
          * @param[in] level soil level for computation
          * @return soil thermal diffusivity
          */
-        double diffusivityThermal(const double conductivity, const double soil_q, const int level);
+        double diffusivityThermal(const double soil_q, const int level);
 
         /**
          * Computes soil moisture conductivity.

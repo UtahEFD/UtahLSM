@@ -249,7 +249,7 @@ void UtahLSM :: run() {
     if ( (step_count % step_dif)==0 ) {
 
         // Solve heat diffusion
-        solveDiffusion(1);
+        solveDiffusionHeat(); //(1);
 
         // solve moisture diffusion
         solveDiffusion(2);
@@ -657,12 +657,110 @@ void UtahLSM :: solveSMB() {
     }
 }
 
-// Integrate soil heat diffusion equation
+void UtahLSM :: solveDiffusionHeat() {
+    
+    // Local variables
+    double AB = 0.5;
+    double AF = 0.5;
+    double dz, dz2, Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
+
+    std::vector<double> K(nsoilz,0.0);
+    std::vector<double> K_mid(nsoilz-1,0.0);
+    std::vector<double> z_mid(nsoilz-1,0.0);
+    std::vector<double> r(nsoilz-1,0.0);
+    std::vector<double> e(nsoilz-1,0.0);
+    std::vector<double> f(nsoilz-1,0.0);
+    std::vector<double> g(nsoilz-1,0.0);
+    
+    dz  = soil_z[0] - soil_z[1];
+    dz2 = std::pow(dz,2);
+
+    for (int i=0; i<nsoilz-1; i++) {
+
+        K[i]     = soil->diffusivityThermal(soil_q[i],i);
+        K[i+1]   = soil->diffusivityThermal(soil_q[i+1],i+1);
+        K_mid[i] = 0.5*(K[i]+K[i+1]);
+        z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
+    }
+
+    // Set up and solve a tridiagonal matrix
+    // AT(n+1) = r(n), where n denotes the time level
+    // e, f, g the components of A matrix
+    // T(n+1)  the soil temperature vector at t=n+1
+    // r(n)    the soil temperature vector at t=n multiplied by coefficients
+    
+    // Matrix coefficients for first level below surface
+    Cp  = step_dif * tstep * K_mid[0] / dz2;
+    Cm  = step_dif * tstep * K_mid[1] / dz2;
+    CBp = -AB * Cp;
+    CBm = -AB * Cm;
+    CB  = 1 - CBp - CBm;
+    CFp = AF * Cp;
+    CFm = AF * Cm;
+    CF  = 1 - CFp - CFm;
+    
+    e[0] = 0;
+    f[0] = CB;
+    g[0] = CBm;
+    r[0] = CFp * surf_T_last + CF * soil_T[1] + CFm * soil_T[2] - CBp * soil_T[0];
+
+    // Matrix coefficients for the interior levels
+    for (int i=1; i<nsoilz-2; i++) {
+
+        // for soil_T in this loop:
+        // i   -> j+1 level
+        // i+1 -> j   level
+        // i+2 -> j-1 level
+        Cp  = step_dif * tstep * K_mid[i] / dz2;
+        Cm  = step_dif * tstep * K_mid[i+1] / dz2;
+        CBp = -AB * Cp;
+        CBm = -AB * Cm;
+        CB  = 1 - CBp - CBm;
+        CFp = AF * Cp;
+        CFm = AF * Cm;
+        CF  = 1 - CFp - CFm;
+
+        e[i] = CBp;
+        f[i] = CB;
+        g[i] = CBm;
+        r[i] = CFp * soil_T[i] + CF * soil_T[i+1] + CFm * soil_T[i+2];
+    }
+
+    // Matrix coefficients for bottom level
+    // first, construct ghost  values
+    int j       = nsoilz-2;
+    double z_g  = 2*soil_z[j+1] - soil_z[j];
+    double z_mg = (soil_z[j+1] + z_g) / 2.;
+    
+    Cp  = step_dif * tstep * K_mid[j] / dz2;
+    Cm  = step_dif * tstep * K_mid[j] / dz2;
+    CBp = -AB * Cp;
+    CBm = -AB * Cm;
+    CB  = 1 - CBp - CBm;
+    CFp = AF * Cp;
+    CFm = AF * Cm;
+    CF  = 1 - CFp - CFm;
+
+    e[j] = (CBp - CBm);
+    f[j] = (CB + 2 * CBm);
+    g[j] = 0;
+    r[j] = (CFp - CFm) * soil_T[j] + (CF + 2* CFm) * soil_T[j+1];
+
+    // Solve the tridiagonal system
+    try {
+        matrix::tridiagonal(e,f,g,r,soil_T);
+    } catch(std::string &e) {
+        std::cout<<e<<std::endl;
+        std::exit(0);
+    }
+}
+
+// Integrate soil diffusion equations
 void UtahLSM :: solveDiffusion(int type) {
     
     // Local variables
-    double surf_scalar_last;
-    double dKdz, C_tp, C_tm, C_p, C_m;
+    double surf_scalar_last, dKdz;
+    double C_tp, C_tm, C_p, C_m;
     double dz_p, dz_m, a_m, a_p, a_o;
     std::vector<double> K(nsoilz,0.0);
     std::vector<double> D(nsoilz,0.0);
@@ -680,13 +778,13 @@ void UtahLSM :: solveDiffusion(int type) {
     // T(n+1)  the soil temperature vector at t=n+1
     // r(n)    the soil temperature vector at t=n multiplied by coefficients
     
-    // Interpolate soil_z and D_n to mid-points
+    // Interpolate soil_z and K_n to mid-points
     if (type==1) {
         for (int i=0; i<nsoilz-1; i++) {
             K[i]     = soil->conductivityThermal(soil_q[i],i);
             K[i+1]   = soil->conductivityThermal(soil_q[i+1],i+1);
-            D[i]     = soil->diffusivityThermal(K[i],soil_q[i],i);
-            D[i+1]   = soil->diffusivityThermal(K[i+1],soil_q[i+1],i+1);
+            D[i]     = soil->diffusivityThermal(soil_q[i],i);
+            D[i+1]   = soil->diffusivityThermal(soil_q[i+1],i+1);
             K_mid[i] = 0.5*(D[i]+D[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
         }

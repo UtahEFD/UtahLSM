@@ -72,10 +72,11 @@ double Soil::conductivityThermal(const double soil_q, const int level) {
 }
 
 // Compute soil thermal diffusivity
-double Soil::diffusivityThermal(const double conductivity, const double soil_q, const int level) {
+double Soil::diffusivityThermal(const double soil_q, const int level) {
 
-    double heat_cap    = heatCapacity(soil_q,level);
-    double diffusivity = conductivity / heat_cap;
+    double heat_cap     = heatCapacity(soil_q,level);
+    double conductivity = conductivityThermal(soil_q, level);
+    double diffusivity  = conductivity / heat_cap;
 
     return diffusivity;
 }
