@@ -1,10 +1,10 @@
 #
 # UtahLSM
 # 
-# Copyright (c) 2019 Jeremy A. Gibbs
-# Copyright (c) 2019 Pete Willemsen
-# Copyright (c) 2019 Rob Stoll
-# Copyright (c) 2019 Eric Pardyjak
+# Copyright (c) 2021 Jeremy A. Gibbs
+# Copyright (c) 2021 Rob Stoll
+# Copyright (c) 2021 Eric Pardyjak
+# Copyright (c) 2021 Pete Willemsen
 # 
 # This file is part of UtahLSM.
 # 
