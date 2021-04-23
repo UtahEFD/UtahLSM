@@ -71,6 +71,10 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     // Initialize new surface values for first run
     sfc_T_new = soil_T[0];
     sfc_q_new = soil_q[0];
+
+    // Initialize history arrays for first run
+    soil_T_last = soil_T;
+    soil_q_last = soil_q;
     
     // Modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
@@ -242,8 +246,8 @@ void UtahLSM :: run() {
     }
 
     // Save current temperature and moisture
-    // soil_T_last = soil_T;
-    // soil_q_last = soil_q;
+    soil_T_last = soil_T;
+    soil_q_last = soil_q;
 
     // check if time to compute diffusion
     if ( (step_count % step_dif)==0 ) {
@@ -385,7 +389,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             for (int d=0; d<int_depth; ++d) {
                 
                 heat_cap = soil->heatCapacity(soil_q[d],d);
-                dT = (d==0) ? sfc_T-soil_T[d] : soil_T[d]-soil_T[d];
+                dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
                 if (d==0) {
                     dz = soil_z[d] - soil_z[d+1];
                 } else if (d==int_depth-1){
