@@ -1,6 +1,8 @@
 # UtahLSM
 University of Utah Land Surface Model
 
+
+
 ## Overview
 UtahLSM is a lightweight, fast-response land-surface model suitable for use in large-eddy simulation (LES) codes.
 
@@ -8,13 +10,12 @@ More documentation to come
 
 ## Compiling
 
-When compiling on CHPC, NetCDF is installed in different directories.  First, make sure the correct module is loaded.
-
-Then, 
+Compiling should be relatively quick and painless. To compile:
 
 ````
 mkdir build
 cd build
-cmake -DNETCDF_DIR=/uufs/chpc.utah.edu/sys/installdir/netcdf-c/4.4.1-c7/include -DNETCDF_CXX_DIR=/uufs/chpc.utah.edu/sys/installdir/netcdf-cxx/4.3.0-5.4.0g/include ..
+cmake -DNETCDF_DIR=/path/to/netcdf-c/include -DNETCDF_CXX_DIR=/path/to/netcdf-cxx/include ..
+make
 ````
-
+The executables will be placed in the `bin` folder at the top level of file hierarchy, and be symlinked in each case folder.

@@ -222,7 +222,7 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     if (comp_rad==1) {
         utc = std::fmod(runtime,86400);
         julian_day += int(runtime/86400);
-        R_net = radiation->computeNet(julian_day,utc,sfc_T_new);
+        R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
     }
     
     // Keep winds from being exactly zero
