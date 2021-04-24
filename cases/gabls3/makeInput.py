@@ -48,8 +48,11 @@ sm_73 = np.mean([obs.variables['SM6'][jdi],obs.variables['SM12'][jdi],obs.variab
 sm_ob = np.array([sm_05,sm_05,sm_15,sm_30,sm_45,sm_60,sm_73])
 z_obm = np.array([0.0,0.05,0.15,0.30,0.45,0.60,0.725])
 
-# interpolate soil moisture to temperature grid
-sm_oi = np.interp(z_obs,z_obm,sm_ob)
+# interpolate soil moisture and temperature to regular grid
+z_int = np.arange(0,0.51,0.05)
+nsoil = len(z_int)
+st_oi = np.interp(z_int,z_obs,st_ob)
+sm_oi = np.interp(z_int,z_obm,sm_ob)
 
 # soil type from USDA 11-category + peat
 #  1 = sand
@@ -68,9 +71,8 @@ sm_oi = np.interp(z_obs,z_obm,sm_ob)
 # 14 = O12
 # 15 = O16
 stype = np.full((nsoil),11)
-stype = np.array([11,11,11,11,11,11,11,11,12])
+stype = np.array([11,11,11,11,11,11,11,11,11,11,12])
 # stype = np.array([13,13,13,13,13,13,14,14,15])
-
 
 ###################################
 # Read met tower data for u,v,T,q #
@@ -155,9 +157,9 @@ namelist['length']['z_s'] = 2.0
 namelist['soil']['nsoil']     = nsoil
 namelist['soil']['param']     = 3
 namelist['soil']['model']     = 2
-namelist['soil']['soil_z']    = z_obs.tolist()
+namelist['soil']['soil_z']    = z_int.tolist()
 namelist['soil']['soil_type'] = stype.tolist()
-namelist['soil']['soil_T']    = st_ob.tolist()
+namelist['soil']['soil_T']    = st_oi.tolist()
 namelist['soil']['soil_q']    = sm_oi.tolist()
 
 # radiation section
