@@ -1,7 +1,5 @@
 # UtahLSM
-University of Utah Land Surface Model
-
-
+University of Utah Land Surface Model (UtahLSM), created at the University of Utah and the NOAA National Severe Storms Laboratory
 
 ## Overview
 UtahLSM is a lightweight, fast-response land-surface model suitable for use in large-eddy simulation (LES) codes.
