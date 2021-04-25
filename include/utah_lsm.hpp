@@ -1,10 +1,10 @@
 /*
  * UtahLSM
  * 
- * Copyright (c) 2019 Jeremy A. Gibbs
- * Copyright (c) 2019 Pete Willemsen
- * Copyright (c) 2019 Rob Stoll
- * Copyright (c) 2019 Eric Pardyjak
+ * Copyright (c) 2021 Jeremy A. Gibbs
+ * Copyright (c) 2021 Rob Stoll
+ * Copyright (c) 2021 Eric Pardyjak
+ * Copyright (c) 2021 Pete Willemsen
  * 
  * This file is part of UtahLSM.
  * 
@@ -132,8 +132,8 @@ class UtahLSM {
         double zeta_s=0;                 ///< zs/L
         double zeta_o=0;                 ///< zo/L
         double zeta_t=0;                 ///< zt/L
-        double surf_T_last=0;            ///< surface temperature from previous time step
-        double surf_q_last=0;            ///< surface moisture from previous time step
+        double sfc_T_new=0;              ///< surface temperature for next time step
+        double sfc_q_new=0;              ///< surface moisture for next time step
         std::vector<double> soil_T_last; ///< soil temperature from previous time step
         std::vector<double> soil_q_last; ///< soil moisture from previous time step
 
@@ -204,6 +204,16 @@ class UtahLSM {
          * Solves the surface moisture budget.
          */
         void solveSMB();
+        
+        /**
+         * Solves the diffusion equation for soil heat.
+         */
+        void solveDiffusionHeat();
+
+        /**
+         * Solves the diffusion equation for soil moisture.
+         */
+        void solveDiffusionMois();
         
         /**
          * Solves the diffusion equation for soil heat and moisture.

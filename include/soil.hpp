@@ -1,10 +1,10 @@
 /*
  * UtahLSM
  * 
- * Copyright (c) 2019 Jeremy A. Gibbs
- * Copyright (c) 2019 Pete Willemsen
- * Copyright (c) 2019 Rob Stoll
- * Copyright (c) 2019 Eric Pardyjak
+ * Copyright (c) 2021 Jeremy A. Gibbs
+ * Copyright (c) 2021 Rob Stoll
+ * Copyright (c) 2021 Eric Pardyjak
+ * Copyright (c) 2021 Pete Willemsen
  * 
  * This file is part of UtahLSM.
  * 
@@ -107,12 +107,11 @@ class Soil {
         /**
          * Computes soil thermal diffusivity.
          *
-         * @param[in] conductivity soil thermal conductivity
          * @param[in] soil_q soil moisture
          * @param[in] level soil level for computation
          * @return soil thermal diffusivity
          */
-        double diffusivityThermal(const double conductivity, const double soil_q, const int level);
+        double diffusivityThermal(const double soil_q, const int level);
 
         /**
          * Computes soil moisture conductivity.

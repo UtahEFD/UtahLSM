@@ -5,3 +5,5 @@ build/
 *utahlsm
 *.nc
 .vscode/
+*utahlsm_offline 
+*utahlsm_offline_f 

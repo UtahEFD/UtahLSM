@@ -1,10 +1,10 @@
 /*
  * UtahLSM
  * 
- * Copyright (c) 2019 Jeremy A. Gibbs
- * Copyright (c) 2019 Pete Willemsen
- * Copyright (c) 2019 Rob Stoll
- * Copyright (c) 2019 Eric Pardyjak
+ * Copyright (c) 2021 Jeremy A. Gibbs
+ * Copyright (c) 2021 Rob Stoll
+ * Copyright (c) 2021 Eric Pardyjak
+ * Copyright (c) 2021 Pete Willemsen
  * 
  * This file is part of UtahLSM.
  * 
@@ -43,6 +43,7 @@ int main () {
     std::cout<<"#                                                            #"<<std::endl;
     std::cout<<"#                     Welcome to UtahLSM                     #"<<std::endl;
     std::cout<<"#   A land surface model created at the University of Utah   #"<<std::endl;
+    std::cout<<"#       and the NOAA National Severe Storms Laboratory       #"<<std::endl;
     std::cout<<"#                                                            #"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;
     
@@ -124,7 +125,7 @@ int main () {
             }
         }
     }
-    // compuet run time information
+    // compute run time information
     clock_gettime(CLOCK_MONOTONIC, &finish);
     elapsed = (finish.tv_sec - start.tv_sec);
     elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
