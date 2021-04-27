@@ -21,7 +21,7 @@ namespace matrix {
     // Solve tridiagonal matrix using the Thomas algorithm
     void tridiagonal(const std::vector<double>& a,const std::vector<double>& b,
                      const std::vector<double>& c,const std::vector<double>& r,
-                     std::span<double> &u) {
+                     std::span<double> u) {
         
         // Local variables
         int j,n=int(a.size());
