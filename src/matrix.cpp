@@ -14,13 +14,14 @@
 
 #include <iostream>
 #include <vector>
+#include <span>
 
 namespace matrix {
     
     // Solve tridiagonal matrix using the Thomas algorithm
     void tridiagonal(const std::vector<double>& a,const std::vector<double>& b,
                      const std::vector<double>& c,const std::vector<double>& r,
-                     std::vector<double> &u) {
+                     std::span<double> &u) {
         
         // Local variables
         int j,n=int(a.size());
@@ -31,7 +32,7 @@ namespace matrix {
         if (b[0] == 0.0) throw(std::string("Error 1 in tridag"));
 
         // Initialize first element of solution vector
-        u[1] = r[0]/(bet=b[0]);
+        u[0] = r[0]/(bet=b[0]);
         
         // Forward sweep 
         for (j=1;j<n;j++) {
@@ -42,11 +43,11 @@ namespace matrix {
             // Error check on bet
             if (bet == 0.0) throw(std::string("Error 2 in tridag"));
 
-            u[j+1]=(r[j]-a[j]*u[j])/bet;
+            u[j]=(r[j]-a[j]*u[j-1])/bet;
         }
 
         // Backward sweep
         for (j=(n-2);j>=0;j--)
-            u[j+1] -= gam[j+1]*u[j+2];
+            u[j] -= gam[j+1]*u[j+1];
     }
 };

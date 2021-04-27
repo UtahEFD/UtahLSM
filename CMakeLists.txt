@@ -25,7 +25,7 @@ project(UtahLSM VERSION 1.0 DESCRIPTION "UtahLSM is a lightweight, fast-response
 #
 # This code used C++ 11 and 14 features so enable these on CXX Flags
 #
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

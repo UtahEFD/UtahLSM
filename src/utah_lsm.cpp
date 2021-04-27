@@ -22,6 +22,7 @@
 #include <numeric>
 #include <vector>
 #include <iomanip>
+#include <span>
 
 #include "constants.hpp"
 #include "json.hpp"
@@ -753,7 +754,8 @@ void UtahLSM :: solveDiffusionHeat() {
 
     // Solve the tridiagonal system
     try {
-        matrix::tridiagonal(e,f,g,r,soil_T);
+        std::span<double> subsfc_T(soil_T.data() + 1, soil_T.size() - 1);
+        matrix::tridiagonal(e,f,g,r,subsfc_T);
     } catch(std::string &e) {
         std::cout<<e<<std::endl;
         std::exit(0);
@@ -912,7 +914,8 @@ void UtahLSM :: solveDiffusionMois() {
 
     // Solve the tridiagonal system
     try {
-        matrix::tridiagonal(e,f,g,r,soil_q);
+        std::span<double> subsfc_q(soil_q.data() + 1, soil_q.size() - 1);
+        matrix::tridiagonal(e,f,g,r,subsfc_q);
     } catch(std::string &e) {
         std::cout<<e<<std::endl;
         std::exit(0);

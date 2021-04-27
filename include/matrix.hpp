@@ -16,6 +16,7 @@
 #define MATRIX_HPP
 
 #include <vector>
+#include <span>
 
 /**
  * Class for managing matrix algebra.
@@ -36,7 +37,7 @@ namespace matrix {
      */
     void tridiagonal(const std::vector<double>& a,const std::vector<double>& b,
                      const std::vector<double>& c,const std::vector<double>& r,
-                     std::vector<double> &u);
+                     std::span<double> u);
 };
 
 #endif
