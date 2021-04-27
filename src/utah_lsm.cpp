@@ -254,10 +254,10 @@ void UtahLSM :: run() {
     if ( (step_count % step_dif)==0 ) {
 
         // Solve heat diffusion
-        solveDiffusionHeat(); //(1);
+        solveDiffusionHeat();
 
         // solve moisture diffusion
-        solveDiffusionMois(); //(2);
+        solveDiffusionMois();
     }
     
     // Change flag of whether initial time
@@ -686,36 +686,25 @@ void UtahLSM :: solveDiffusionHeat() {
         z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
     }
 
-    // Set up and solve a tridiagonal matrix
-    // AT(n+1) = r(n), where n denotes the time level
-    // e, f, g the components of A matrix
-    // T(n+1)  the soil temperature vector at t=n+1
-    // r(n)    the soil temperature vector at t=n multiplied by coefficients
-    
-    // Matrix coefficients for first level below surface
-    Cp  = step_dif * tstep * K_mid[0] / dz2;
-    Cm  = step_dif * tstep * K_mid[1] / dz2;
-    CBp = -AB * Cp;
-    CBm = -AB * Cm;
-    CB  = 1 - CBp - CBm;
-    CFp = AF * Cp;
-    CFm = AF * Cm;
-    CF  = 1 - CFp - CFm;
-    
-    e[0] = 0;
-    f[0] = CB;
-    g[0] = CBm;
-    r[0] = CFp * soil_T[0] + CF * soil_T[1] + CFm * soil_T[2] - CBp * sfc_T_new;
+    // Get the time step restriction
+    //double Kmax = *std::max_element(K.begin(), K.end());
+    //double dt_T = dz2 / (2*Kmax);     
+    //
+    double Kmax, dt_T;
+    dt_T = 1;
 
-    // Matrix coefficients for the interior levels
-    for (int i=1; i<nsoilz-2; i++) {
+    // Loop through diffusion by substep
+    for (int t=0; t<=tstep; t+=dt_T) {
 
-        // for soil_T in this loop:
-        // i   -> j+1 level
-        // i+1 -> j   level
-        // i+2 -> j-1 level
-        Cp  = step_dif * tstep * K_mid[i] / dz2;
-        Cm  = step_dif * tstep * K_mid[i+1] / dz2;
+        // Set up and solve a tridiagonal matrix
+        // AT(n+1) = r(n), where n denotes the time level
+        // e, f, g the components of A matrix
+        // T(n+1)  the soil temperature vector at t=n+1
+        // r(n)    the soil temperature vector at t=n multiplied by coefficients
+
+        // Matrix coefficients for first level below surface
+        Cp  = step_dif * dt_T * K_mid[0] / dz2;
+        Cm  = step_dif * dt_T * K_mid[1] / dz2;
         CBp = -AB * Cp;
         CBm = -AB * Cm;
         CB  = 1 - CBp - CBm;
@@ -723,42 +712,77 @@ void UtahLSM :: solveDiffusionHeat() {
         CFm = AF * Cm;
         CF  = 1 - CFp - CFm;
 
-        e[i] = CBp;
-        f[i] = CB;
-        g[i] = CBm;
-        r[i] = CFp * soil_T[i] + CF * soil_T[i+1] + CFm * soil_T[i+2];
-    }
+        e[0] = 0;
+        f[0] = CB;
+        g[0] = CBm;
+        r[0] = CFp * soil_T[0] + CF * soil_T[1] + CFm * soil_T[2] - CBp * sfc_T_new;
 
-    // Matrix coefficients for bottom level
-    // first, construct ghost  values
-    int j       = nsoilz-2;
-    double z_g  = 2*soil_z[j+1] - soil_z[j];
-    double z_mg = (soil_z[j+1] + z_g) / 2.;
-    
-    Cp  = step_dif * tstep * K_mid[j] / dz2;
-    Cm  = step_dif * tstep * K_mid[j] / dz2;
-    CBp = -AB * Cp;
-    CBm = -AB * Cm;
-    CB  = 1 - CBp - CBm;
-    CFp = AF * Cp;
-    CFm = AF * Cm;
-    CF  = 1 - CFp - CFm;
+        // Matrix coefficients for the interior levels
+        for (int i=1; i<nsoilz-2; i++) {
 
-    e[j] = (CBp - CBm);
-    f[j] = (CB + 2 * CBm);
-    g[j] = 0;
-    r[j] = (CFp - CFm) * soil_T[j] + (CF + 2* CFm) * soil_T[j+1];
+            // for soil_T in this loop:
+            // i   -> j+1 level
+            // i+1 -> j   level
+            // i+2 -> j-1 level
+            Cp  = step_dif * dt_T * K_mid[i] / dz2;
+            Cm  = step_dif * dt_T * K_mid[i+1] / dz2;
+            CBp = -AB * Cp;
+            CBm = -AB * Cm;
+            CB  = 1 - CBp - CBm;
+            CFp = AF * Cp;
+            CFm = AF * Cm;
+            CF  = 1 - CFp - CFm;
 
-    // now we can add new sfc T to column array
-    soil_T[0] = sfc_T_new;
+            e[i] = CBp;
+            f[i] = CB;
+            g[i] = CBm;
+            r[i] = CFp * soil_T[i] + CF * soil_T[i+1] + CFm * soil_T[i+2];
+        }
 
-    // Solve the tridiagonal system
-    try {
-        std::span<double> subsfc_T(soil_T.data() + 1, soil_T.size() - 1);
-        matrix::tridiagonal(e,f,g,r,subsfc_T);
-    } catch(std::string &e) {
-        std::cout<<e<<std::endl;
-        std::exit(0);
+        // Matrix coefficients for bottom level
+        // first, construct ghost  values
+        int j       = nsoilz-2;
+        double z_g  = 2*soil_z[j+1] - soil_z[j];
+        double z_mg = (soil_z[j+1] + z_g) / 2.;
+
+        Cp  = step_dif * dt_T * K_mid[j] / dz2;
+        Cm  = step_dif * dt_T * K_mid[j] / dz2;
+        CBp = -AB * Cp;
+        CBm = -AB * Cm;
+        CB  = 1 - CBp - CBm;
+        CFp = AF * Cp;
+        CFm = AF * Cm;
+        CF  = 1 - CFp - CFm;
+
+        e[j] = (CBp - CBm);
+        f[j] = (CB + 2 * CBm);
+        g[j] = 0;
+        r[j] = (CFp - CFm) * soil_T[j] + (CF + 2* CFm) * soil_T[j+1];
+
+        // now we can add new sfc T to column array
+        soil_T[0] = sfc_T_new;
+
+        // Solve the tridiagonal system
+        try {
+            // we only need to send the layers below surface
+            std::span<double> subsfc_T(soil_T.data() + 1, soil_T.size() - 1);
+            matrix::tridiagonal(e,f,g,r,subsfc_T);
+        } catch(std::string &e) {
+            std::cout<<e<<std::endl;
+            std::exit(0);
+        }
+
+        // solve K for this step to get a new dt
+        for (int i=0; i<nsoilz-1; i++) {
+            K[i]     = soil->diffusivityThermal(soil_q[i],i);
+            K[i+1]   = soil->diffusivityThermal(soil_q[i+1],i+1);
+            K_mid[i] = 0.5*(K[i]+K[i+1]);
+            z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
+        }
+
+        // Get the time step restriction
+        Kmax = *std::max_element(K.begin(), K.end());
+        dt_T = dz2 / (2*Kmax); 
     }
 }
 
@@ -786,71 +810,27 @@ void UtahLSM :: solveDiffusionMois() {
     dz  = soil_z[0] - soil_z[1];
     dz2 = std::pow(dz,2);
 
-    for (int i=0; i<nsoilz-1; i++) {
+    // Get the time step restriction
+    //double Dmax = *std::max_element(D.begin(), D.end());
+    //double dt_q = dz2 / (2*Dmax);     
+    double Dmax, dt_q;
+    dt_q = 1;
+    // Loop through diffusion by substep
+    for (int t=0; t<=tstep; t+=dt_q) {
 
-        D[i]     = soil->diffusivityMoisture(soil_q[i],i);
-        D[i+1]   = soil->diffusivityMoisture(soil_q[i+1],i+1);
-        D_mid[i] = 0.5*(D[i]+D[i+1]);
-        z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
+        // Set up and solve a tridiagonal matrix
+        // AT(n+1) = r(n), where n denotes the time level
+        // e, f, g the components of A matrix
+        // T(n+1)  the soil temperature vector at t=n+1
+        // r(n)    the soil temperature vector at t=n multiplied by coefficients
 
-        // linearized K
-        K_lin[i] = soil->conductivityMoisture(soil_q[i],i)/soil_q[i];
-        if (i==nsoilz-2) {
-            K_lin[i+1] = soil->conductivityMoisture(soil_q[i+1],i+1)/soil_q[i+1];
-        }
-    }
-
-    // Set up and solve a tridiagonal matrix
-    // AT(n+1) = r(n), where n denotes the time level
-    // e, f, g the components of A matrix
-    // T(n+1)  the soil temperature vector at t=n+1
-    // r(n)    the soil temperature vector at t=n multiplied by coefficients
-    
-    // first soil level below the surface
-    // common coefficients
-    Cpd  = step_dif * tstep * D_mid[0] / dz2;
-    Cmd  = step_dif * tstep * D_mid[1] / dz2;
-    Cpk  = step_dif * tstep * K_lin[0] / (2*dz);
-    Cmk  = step_dif * tstep * K_lin[2] / (2*dz);
-    
-    // coefficients for backward scheme
-    CBpd = -AB * Cpd;
-    CBmd = -AB * Cmd;
-    CBpk = -AB * Cpk;
-    CBmk = -AB * Cmk;
-    CB   = (1 - CBpd - CBmd);
-    CBp  = CBpd + CBpk;
-    CBm  = CBmd - CBmk;
-    
-    // coefficients for forward scheme
-    CFpd = AF * Cpd;
-    CFmd = AF * Cmd;
-    CFpk = AF * Cpk;
-    CFmk = AF * Cmk;
-    CF   = (1 - CFpd - CFmd);
-    CFp  = CFpd + CFpk;
-    CFm  = CFmd - CFmk;
-    
-    // matrix components
-    e[0] = 0;
-    f[0] = CB;
-    g[0] = CBm;
-    r[0] = CFp * soil_q[0] + CF * soil_q[1] + CFm * soil_q[2] - CBp * sfc_q_new;
-
-    // interior soil levels
-    for (int i=1; i<nsoilz-2; i++) {
-
-        // for soil_T in this loop:
-        // i   -> j+1 level
-        // i+1 -> j   level
-        // i+2 -> j-1 level
-        
+        // first soil level below the surface
         // common coefficients
-        Cpd  = step_dif * tstep * D_mid[i] / dz2;
-        Cmd  = step_dif * tstep * D_mid[i+1] / dz2;
-        Cpk  = step_dif * tstep * K_lin[i] / (2*dz);
-        Cmk  = step_dif * tstep * K_lin[i+2] / (2*dz);
-        
+        Cpd  = step_dif * dt_q * D_mid[0] / dz2;
+        Cmd  = step_dif * dt_q * D_mid[1] / dz2;
+        Cpk  = step_dif * dt_q * K_lin[0] / (2*dz);
+        Cmk  = step_dif * dt_q * K_lin[2] / (2*dz);
+
         // coefficients for backward scheme
         CBpd = -AB * Cpd;
         CBmd = -AB * Cmd;
@@ -859,7 +839,7 @@ void UtahLSM :: solveDiffusionMois() {
         CB   = (1 - CBpd - CBmd);
         CBp  = CBpd + CBpk;
         CBm  = CBmd - CBmk;
-        
+
         // coefficients for forward scheme
         CFpd = AF * Cpd;
         CFmd = AF * Cmd;
@@ -870,55 +850,113 @@ void UtahLSM :: solveDiffusionMois() {
         CFm  = CFmd - CFmk;
 
         // matrix components
-        e[i] = CBp;
-        f[i] = CB;
-        g[i] = CBm;
-        r[i] = CFp * soil_q[i] + CF * soil_q[i+1] + CFm * soil_q[i+2];
-    }
+        e[0] = 0;
+        f[0] = CB;
+        g[0] = CBm;
+        r[0] = CFp * soil_q[0] + CF * soil_q[1] + CFm * soil_q[2] - CBp * sfc_q_new;
 
-    // bottom soil level
-    int j = nsoilz-2;
-    
-    // common coefficients
-    Cpd  = step_dif * tstep * D_mid[j] / dz2;
-    Cmd  = step_dif * tstep * D_mid[j] / dz2;
-    Cpk  = step_dif * tstep * K_lin[j] / (2*dz);
-    Cmk  = step_dif * tstep * K_lin[j] / (2*dz);
-    
-    // coefficients for backward scheme
-    CBpd = -AB * Cpd;
-    CBmd = -AB * Cmd;
-    CBpk = -AB * Cpk;
-    CBmk = -AB * Cmk;
-    CB   = (1 - CBpd - CBmd);
-    CBp  = CBpd + CBpk;
-    CBm  = CBmd - CBmk;
-    
-    // coefficients for forward scheme
-    CFpd = AF * Cpd;
-    CFmd = AF * Cmd;
-    CFpk = AF * Cpk;
-    CFmk = AF * Cmk;
-    CF   = (1 - CFpd - CFmd);
-    CFp  = CFpd + CFpk;
-    CFm  = CFmd - CFmk;
+        // interior soil levels
+        for (int i=1; i<nsoilz-2; i++) {
 
-    // matrix components
-    e[j] = (CBp - CBm);
-    f[j] = (CB + 2 * CBm);
-    g[j] = 0;
-    r[j] = (CFp - CFm) * soil_q[j] + (CF + 2 * CFm) * soil_q[j+1];
+            // for soil_T in this loop:
+            // i   -> j+1 level
+            // i+1 -> j   level
+            // i+2 -> j-1 level
 
-    // now we can add new sfc q to column array
-    soil_q[0] = sfc_q_new;
+            // common coefficients
+            Cpd  = step_dif * dt_q * D_mid[i] / dz2;
+            Cmd  = step_dif * dt_q * D_mid[i+1] / dz2;
+            Cpk  = step_dif * dt_q * K_lin[i] / (2*dz);
+            Cmk  = step_dif * dt_q * K_lin[i+2] / (2*dz);
 
-    // Solve the tridiagonal system
-    try {
-        std::span<double> subsfc_q(soil_q.data() + 1, soil_q.size() - 1);
-        matrix::tridiagonal(e,f,g,r,subsfc_q);
-    } catch(std::string &e) {
-        std::cout<<e<<std::endl;
-        std::exit(0);
+            // coefficients for backward scheme
+            CBpd = -AB * Cpd;
+            CBmd = -AB * Cmd;
+            CBpk = -AB * Cpk;
+            CBmk = -AB * Cmk;
+            CB   = (1 - CBpd - CBmd);
+            CBp  = CBpd + CBpk;
+            CBm  = CBmd - CBmk;
+
+            // coefficients for forward scheme
+            CFpd = AF * Cpd;
+            CFmd = AF * Cmd;
+            CFpk = AF * Cpk;
+            CFmk = AF * Cmk;
+            CF   = (1 - CFpd - CFmd);
+            CFp  = CFpd + CFpk;
+            CFm  = CFmd - CFmk;
+
+            // matrix components
+            e[i] = CBp;
+            f[i] = CB;
+            g[i] = CBm;
+            r[i] = CFp * soil_q[i] + CF * soil_q[i+1] + CFm * soil_q[i+2];
+        }
+
+        // bottom soil level
+        int j = nsoilz-2;
+
+        // common coefficients
+        Cpd  = step_dif * dt_q * D_mid[j] / dz2;
+        Cmd  = step_dif * dt_q * D_mid[j] / dz2;
+        Cpk  = step_dif * dt_q * K_lin[j] / (2*dz);
+        Cmk  = step_dif * dt_q * K_lin[j] / (2*dz);
+
+        // coefficients for backward scheme
+        CBpd = -AB * Cpd;
+        CBmd = -AB * Cmd;
+        CBpk = -AB * Cpk;
+        CBmk = -AB * Cmk;
+        CB   = (1 - CBpd - CBmd);
+        CBp  = CBpd + CBpk;
+        CBm  = CBmd - CBmk;
+
+        // coefficients for forward scheme
+        CFpd = AF * Cpd;
+        CFmd = AF * Cmd;
+        CFpk = AF * Cpk;
+        CFmk = AF * Cmk;
+        CF   = (1 - CFpd - CFmd);
+        CFp  = CFpd + CFpk;
+        CFm  = CFmd - CFmk;
+
+        // matrix components
+        e[j] = (CBp - CBm);
+        f[j] = (CB + 2 * CBm);
+        g[j] = 0;
+        r[j] = (CFp - CFm) * soil_q[j] + (CF + 2 * CFm) * soil_q[j+1];
+
+        // now we can add new sfc q to column array
+        soil_q[0] = sfc_q_new;
+
+        // Solve the tridiagonal system
+        try {
+            // we only need the layers below the surface
+            std::span<double> subsfc_q(soil_q.data() + 1, soil_q.size() - 1);
+            matrix::tridiagonal(e,f,g,r,subsfc_q);
+        } catch(std::string &e) {
+            std::cout<<e<<std::endl;
+            std::exit(0);
+        }
+
+        // solve for D to get new dt
+        for (int i=0; i<nsoilz-1; i++) {
+            D[i]     = soil->diffusivityMoisture(soil_q[i],i);
+            D[i+1]   = soil->diffusivityMoisture(soil_q[i+1],i+1);
+            D_mid[i] = 0.5*(D[i]+D[i+1]);
+            z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
+
+            // linearized K
+            K_lin[i] = soil->conductivityMoisture(soil_q[i],i)/soil_q[i];
+            if (i==nsoilz-2) {
+                K_lin[i+1] = soil->conductivityMoisture(soil_q[i+1],i+1)/soil_q[i+1];
+            }
+        }
+
+        // get new dt
+        Dmax = *std::max_element(D.begin(), D.end());
+        dt_q = dz2 / (2*Dmax); 
     }
 }
 

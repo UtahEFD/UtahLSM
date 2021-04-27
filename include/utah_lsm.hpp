@@ -82,6 +82,10 @@ class UtahLSM {
         Soil* soil;
         Radiation* radiation;
 
+        // Diffusion time step restrictions
+        double dt_T; ///< diffusion time step for temperature
+        double dt_q; ///< diffusion time step for moisture
+
         // Fields to compute
         double &ustar;   ///< reference to friction velocity
         double &flux_wT; ///< reference to kinematic heat flux
