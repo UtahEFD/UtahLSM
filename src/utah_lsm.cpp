@@ -371,35 +371,10 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             }
             flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
         } else {
-            // Compute heat flux within soil and find depth of minimum
-            // This is the depth to integrate time change of T
-            double hfs;
-            double min_sflux = 10000.;
-            for (int d=0; d<nsoilz-1; ++d) {
-                K0 = soil->conductivityThermal(soil_q[d],d);
-                K1 = soil->conductivityThermal(soil_q[d+1],d+1);
-                hfs = (d==0) ? 0.5*(K0+K1) * (sfc_T - soil_T[d+1])/(soil_z[d]-soil_z[d+1]):
-                0.5*(K0+K1) * (soil_T[d] - soil_T[d+1])/(soil_z[d]-soil_z[d+1]);
-                if (std::abs(hfs)<std::abs(min_sflux)) {
-                    min_sflux = hfs;
-                    int_depth = d+1;
-                }
-            }
-            // Integrate time change to depth of minimum flux
-            flux_gr = 0;
-            for (int d=0; d<int_depth; ++d) {
-                
-                heat_cap = soil->heatCapacity(soil_q[d],d);
-                dT = (d==0) ? sfc_T-soil_T_last[d] : soil_T[d]-soil_T_last[d];
-                if (d==0) {
-                    dz = soil_z[d] - soil_z[d+1];
-                } else if (d==int_depth-1){
-                    dz = soil_z[d-1] - soil_z[d];
-                } else {
-                    dz = soil_z[d-1] - soil_z[d+1];
-                }
-                flux_gr = flux_gr + 0.5*( heat_cap*dT*dz/tstep);
-            }
+            double K0 = soil->conductivityThermal(soil_q[0],0);
+            double K1 = soil->conductivityThermal(soil_q[1],1);
+            double Kmid = 0.5*(K0 + K1);
+            flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
         }
         
         // Compute friction velocity
@@ -663,8 +638,8 @@ void UtahLSM :: solveSMB() {
 void UtahLSM :: solveDiffusionHeat() {
     
     // Local variables
-    double AB = 0.5;
-    double AF = 0.5;
+    double AB = 1.0;
+    double AF = 1.0-AB;
     double dz, dz2, Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
 
     std::vector<double> K(nsoilz,0.0);
@@ -789,8 +764,8 @@ void UtahLSM :: solveDiffusionHeat() {
 void UtahLSM :: solveDiffusionMois() {
     
     // Local variables
-    double AB = 0.5;
-    double AF = 0.5;
+    double AB = 1.0;
+    double AF = 1.0-AB;
     double Cp,Cm;
     double dz, dz2;
     double Cpd, Cmd, Cpk, Cmk;
