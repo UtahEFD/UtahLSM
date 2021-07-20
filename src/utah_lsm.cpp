@@ -638,9 +638,17 @@ void UtahLSM :: solveSMB() {
 void UtahLSM :: solveDiffusionHeat() {
     
     // Local variables
+<<<<<<< HEAD
     double AB = 0.5;
     double AF = 1.0-AB;
     double dz, dz2, Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
+=======
+    double AB  = 1.0;
+    double AF  = 1.0-AB;
+    double dz  = soil_z[0] - soil_z[1];
+    double dz2 = std::pow(dz,2);
+    double Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
+>>>>>>> 00a555e50c78c1606e7993fa38c95f9979c7e2b0
 
     std::vector<double> K(nsoilz,0.0);
     std::vector<double> K_mid(nsoilz-1,0.0);
@@ -649,9 +657,6 @@ void UtahLSM :: solveDiffusionHeat() {
     std::vector<double> e(nsoilz-1,0.0);
     std::vector<double> f(nsoilz-1,0.0);
     std::vector<double> g(nsoilz-1,0.0);
-    
-    dz  = soil_z[0] - soil_z[1];
-    dz2 = std::pow(dz,2);
 
     for (int i=0; i<nsoilz-1; i++) {
 
@@ -662,9 +667,6 @@ void UtahLSM :: solveDiffusionHeat() {
     }
 
     // Get the time step restriction
-    //double Kmax = *std::max_element(K.begin(), K.end());
-    //double dt_T = dz2 / (2*Kmax);     
-    //
     double Kmax, dt_T;
     dt_T = 1;
 
@@ -715,10 +717,7 @@ void UtahLSM :: solveDiffusionHeat() {
         }
 
         // Matrix coefficients for bottom level
-        // first, construct ghost  values
-        int j       = nsoilz-2;
-        double z_g  = 2*soil_z[j+1] - soil_z[j];
-        double z_mg = (soil_z[j+1] + z_g) / 2.;
+        int j = nsoilz-2;
 
         Cp  = step_dif * dt_T * K_mid[j] / dz2;
         Cm  = step_dif * dt_T * K_mid[j] / dz2;
@@ -764,10 +763,16 @@ void UtahLSM :: solveDiffusionHeat() {
 void UtahLSM :: solveDiffusionMois() {
     
     // Local variables
+<<<<<<< HEAD
     double AB = 0.5;
     double AF = 1.0-AB;
+=======
+    double AB  = 1.0;
+    double AF  = 1.0-AB;
+    double dz  = soil_z[0] - soil_z[1];
+    double dz2 = std::pow(dz,2);
+>>>>>>> 00a555e50c78c1606e7993fa38c95f9979c7e2b0
     double Cp,Cm;
-    double dz, dz2;
     double Cpd, Cmd, Cpk, Cmk;
     double CBpd,CBmd,CBpk,CBmk;
     double CFpd,CFmd,CFpk,CFmk;
@@ -781,15 +786,11 @@ void UtahLSM :: solveDiffusionMois() {
     std::vector<double> e(nsoilz-1,0.0);
     std::vector<double> f(nsoilz-1,0.0);
     std::vector<double> g(nsoilz-1,0.0);
-    
-    dz  = soil_z[0] - soil_z[1];
-    dz2 = std::pow(dz,2);
 
     // Get the time step restriction
-    //double Dmax = *std::max_element(D.begin(), D.end());
-    //double dt_q = dz2 / (2*Dmax);     
     double Dmax, dt_q;
     dt_q = 1;
+    
     // Loop through diffusion by substep
     for (int t=0; t<=tstep; t+=dt_q) {
 
@@ -869,7 +870,7 @@ void UtahLSM :: solveDiffusionMois() {
             r[i] = CFp * soil_q[i] + CF * soil_q[i+1] + CFm * soil_q[i+2];
         }
 
-        // bottom soil level
+        // Matrix coefficients for bottom level
         int j = nsoilz-2;
 
         // common coefficients
