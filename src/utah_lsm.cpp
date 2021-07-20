@@ -271,7 +271,7 @@ void UtahLSM :: run() {
 void UtahLSM :: save(Output* output) {
     
     // Output size and location
-    std::vector<size_t> scalar_index;
+    std::vector<size_t> scalar_index; 
     std::vector<size_t> scalar_size;
     std::vector<size_t> vector_index;
     std::vector<size_t> vector_size;
@@ -638,7 +638,7 @@ void UtahLSM :: solveSMB() {
 void UtahLSM :: solveDiffusionHeat() {
     
     // Local variables
-    double AB = 1.0;
+    double AB = 0.5;
     double AF = 1.0-AB;
     double dz, dz2, Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
 
@@ -691,7 +691,7 @@ void UtahLSM :: solveDiffusionHeat() {
         f[0] = CB;
         g[0] = CBm;
         r[0] = CFp * soil_T[0] + CF * soil_T[1] + CFm * soil_T[2] - CBp * sfc_T_new;
-
+        
         // Matrix coefficients for the interior levels
         for (int i=1; i<nsoilz-2; i++) {
 
@@ -764,7 +764,7 @@ void UtahLSM :: solveDiffusionHeat() {
 void UtahLSM :: solveDiffusionMois() {
     
     // Local variables
-    double AB = 1.0;
+    double AB = 0.5;
     double AF = 1.0-AB;
     double Cp,Cm;
     double dz, dz2;

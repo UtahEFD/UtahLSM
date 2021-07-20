@@ -82,8 +82,8 @@ namespace most {
 
     // Integral stability correction for scalars under unstable conditions
     double psihUnstable(const double zeta) {
-        double x = std::pow( (1.-(16.*zeta)), 0.25);
-        return 2.*std::log(1+std::pow(x,2)/2.);
+        double y = std::pow( (1.-(16.*zeta)), 0.5);
+        return 2.*std::log((1+y)/2.);
     }
     
     // Common log-law function for momentum
