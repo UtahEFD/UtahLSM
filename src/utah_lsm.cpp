@@ -638,9 +638,11 @@ void UtahLSM :: solveSMB() {
 void UtahLSM :: solveDiffusionHeat() {
     
     // Local variables
-    double AB = 0.5;
-    double AF = 1.0-AB;
-    double dz, dz2, Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
+    double AB  = 1.0;
+    double AF  = 1.0-AB;
+    double dz  = soil_z[0] - soil_z[1];
+    double dz2 = std::pow(dz,2);
+    double Cp, Cm, CBp, CBm, CB, CFp, CFm, CF;
 
     std::vector<double> K(nsoilz,0.0);
     std::vector<double> K_mid(nsoilz-1,0.0);
@@ -755,8 +757,10 @@ void UtahLSM :: solveDiffusionHeat() {
 void UtahLSM :: solveDiffusionMois() {
     
     // Local variables
-    double AB = 0.5;
-    double AF = 1.0-AB;
+    double AB  = 1.0;
+    double AF  = 1.0-AB;
+    double dz  = soil_z[0] - soil_z[1];
+    double dz2 = std::pow(dz,2);
     double Cp,Cm;
     double Cpd, Cmd, Cpk, Cmk;
     double CBpd,CBmd,CBpk,CBmk;
