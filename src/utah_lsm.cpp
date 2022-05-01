@@ -1,10 +1,10 @@
 /*
  * UtahLSM
  * 
- * Copyright (c) 2021 Jeremy A. Gibbs
- * Copyright (c) 2021 Rob Stoll
- * Copyright (c) 2021 Eric Pardyjak
- * Copyright (c) 2021 Pete Willemsen
+ * Copyright (c) 2017–2022 Jeremy A. Gibbs
+ * Copyright (c) 2017–2022 Rob Stoll
+ * Copyright (c) 2017–2022 Eric Pardyjak
+ * Copyright (c) 2017–2022 Pete Willemsen
  * 
  * This file is part of UtahLSM.
  * 
@@ -351,7 +351,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     
     // Compute surface mixing ratio
     gnd_q  = soil->surfaceMixingRatio(sfc_T,sfc_q,atm_p);
-    
+    // std::cout<<"computeFluxes, sfc mix ratio: "<<gnd_q<<std::endl;
+    // std::cin.get();
     // Sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
         
@@ -651,7 +652,7 @@ void UtahLSM :: solveDiffusionHeat() {
     std::vector<double> e(nsoilz-1,0.0);
     std::vector<double> f(nsoilz-1,0.0);
     std::vector<double> g(nsoilz-1,0.0);
-
+    std::cout<<"IN solveDiffusionHeat"<<std::endl;
     for (int i=0; i<nsoilz-1; i++) {
 
         K[i]     = soil->diffusivityThermal(soil_q[i],i);

@@ -16,7 +16,7 @@
     "soil": {
         "nsoil": 11,
         "param": 3,
-        "model": 2,
+        "model": 1,
         "soil_z": [
             0.0,
             0.05,

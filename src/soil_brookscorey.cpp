@@ -1,10 +1,10 @@
 /*
  * UtahLSM
  * 
- * Copyright (c) 2021 Jeremy A. Gibbs
- * Copyright (c) 2021 Rob Stoll
- * Copyright (c) 2021 Eric Pardyjak
- * Copyright (c) 2021 Pete Willemsen
+ * Copyright (c) 2017–2022 Jeremy A. Gibbs
+ * Copyright (c) 2017–2022 Rob Stoll
+ * Copyright (c) 2017–2022 Eric Pardyjak
+ * Copyright (c) 2017–2022 Pete Willemsen
  * 
  * This file is part of UtahLSM.
  * 
@@ -62,18 +62,17 @@ double BrooksCorey::waterPotential(const double soil_q, const int level) {
     double Se       = (soil_q-residual)/(porosity-residual);
     double psi      = psi_sat*std::pow(Se,-b);
     
-    double h        = std::exp(c::grav*psi/(c::Rv*295));
-    
     if (psi>psi_sat) {
-        double h        = std::exp(c::grav*psi/(c::Rv*295));
         psi = psi_sat;
-        Se = 1;
+        std::cout<<"Damn Dude PSI Done Fucked Up"<<std::endl;
     }
     
-    if (soil_q<0) {
+    if (Se<0) {
         std::exit(0);
     }
-    if (soil_q > 1) {
+    if (Se > 1) {
+        std::cout<<"NOPE WALK THAT SHIT BACK"<<std::endl;
+        std::cout<<Se<<std::endl;
         std::exit(0);
     }
     return psi;
