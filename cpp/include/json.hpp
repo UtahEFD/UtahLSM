@@ -938,7 +938,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #if defined(JSON_HEDLEY_DIAGNOSTIC_POP)
     #undef JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-#if defined(__clang__)
+#if defined(__clang__) && ~ !defined(__INTEL_COMPILER)
     #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
     #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
 #elif JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
@@ -1447,8 +1447,10 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #if !defined(JSON_HEDLEY_UNREACHABLE)
     #define JSON_HEDLEY_UNREACHABLE() JSON_HEDLEY_ASSUME(0)
 #endif
+#if !defined(__INTEL_COMPILER)
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
+#endif
 
-JSON_HEDLEY_DIAGNOSTIC_PUSH
 #if JSON_HEDLEY_HAS_WARNING("-Wpedantic")
     #pragma clang diagnostic ignored "-Wpedantic"
 #endif
@@ -1474,7 +1476,10 @@ JSON_HEDLEY_DIAGNOSTIC_PUSH
 #else
     #define JSON_HEDLEY_NON_NULL(...)
 #endif
-JSON_HEDLEY_DIAGNOSTIC_POP
+
+#if !defined(__INTEL_COMPILER)
+    JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
 
 #if defined(JSON_HEDLEY_PRINTF_FORMAT)
     #undef JSON_HEDLEY_PRINTF_FORMAT
@@ -2418,7 +2423,7 @@ using is_detected_convertible =
 #endif
 
 // disable documentation warnings on clang
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wdocumentation"
     #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
@@ -4763,7 +4768,7 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     // Fix: https://github.com/nlohmann/json/issues/1401
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -4780,7 +4785,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     #pragma clang diagnostic pop
 #endif
 } // namespace std
@@ -23168,7 +23173,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 
 
 // restore clang diagnostic settings
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_COMPILER)
     #pragma clang diagnostic pop
 #endif
 
