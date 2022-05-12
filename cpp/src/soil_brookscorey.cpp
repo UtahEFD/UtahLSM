@@ -64,16 +64,16 @@ double BrooksCorey::waterPotential(const double soil_q, const int level) {
     
     if (psi>psi_sat) {
         psi = psi_sat;
-        std::cout<<"Damn Dude PSI Done Fucked Up"<<std::endl;
+        //std::cout<<"Error in PSI"<<std::endl;
     }
     
     if (Se<0) {
         std::exit(0);
     }
     if (Se > 1) {
-        std::cout<<"NOPE WALK THAT SHIT BACK"<<std::endl;
-        std::cout<<Se<<std::endl;
-        std::exit(0);
+        // std::cout<<"NOPE WALK THAT BACK"<<std::endl;
+        // std::cout<<Se<<std::endl;
+        // std::exit(0);
     }
     return psi;
 }
