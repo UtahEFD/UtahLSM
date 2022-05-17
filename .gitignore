@@ -7,3 +7,6 @@ build/
 .vscode/
 *utahlsm_offline 
 *utahlsm_offline_f 
+**/__pycache__
+**/.vscode
+*.json
