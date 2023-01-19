@@ -48,8 +48,8 @@ if __name__ == "__main__":
 	
 	# create Output instance
 	if not outf:
-		outf='../cases/%s/utahlsm_py.nc'%case
-	outputSCM = io.Output(outf)
+		outf='utahlsm_%s_py.nc'%case
+	outputLSM = io.Output(outf)
 	
 	# run the model
 	#scm.run()
