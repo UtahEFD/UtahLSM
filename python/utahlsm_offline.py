@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 import argparse
+import os
 import sys
 import time
 from util import io, matrix
+
+# custom error message for user case entry
+class InvalidCase(Exception):
+	pass 
 
 # main program to run the LSM
 if __name__ == "__main__":
@@ -21,7 +26,7 @@ if __name__ == "__main__":
 	
 	# get case from user
 	parser = argparse.ArgumentParser(description="Run a case with UtahLSM")
-	parser.add_argument("-c", "--case", dest='case', 
+	parser.add_argument("-c", "--case", dest='case', required=True,
 						action='store', type=str, help="Case name")
 	parser.add_argument("-o", "--output", dest='outfile', 
 						action='store', type=str, help="Output file name")
@@ -30,17 +35,21 @@ if __name__ == "__main__":
 	outf = args.outfile
 	
 	# create Input instance
-	namelist = 'cases/%s/namelist.json'%case
-	initfile = 'cases/%s/scm_init.nc'%case  
-	inputSCM = io.Input(namelist,initfile)
+	try:
+		if os.path.exists('../cases/%s/'%case):
+			namelist = '../cases/%s/lsm_namelist.json'%case
+			initfile = '../cases/%s/lsm_init.nc'%case  
+			inputLSM = io.Input(namelist,initfile)
+		else:
+			raise InvalidCase('Error: The folder ../cases/%s does not exist.'%case)
+	except InvalidCase as e:
+		print(e)
+		sys.exit(1)
 	
 	# create Output instance
 	if not outf:
-		outf='utahlsm.nc'
+		outf='../cases/%s/utahlsm_py.nc'%case
 	outputSCM = io.Output(outf)
-	
-	# create SCM instance
-	#scm = SingleColumnModel(inputSCM,outputSCM)
 	
 	# run the model
 	#scm.run()

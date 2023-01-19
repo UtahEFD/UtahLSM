@@ -25,7 +25,7 @@ target_link_libraries(utahlsm_offline ${LIBS})
 target_link_libraries(utahlsm_offline ${NETCDF_LIBRARIES_CXX})
 target_link_libraries(utahlsm_offline ${NETCDF_LIBRARIES_C})
 
-file( GLOB CASES ${CMAKE_SOURCE_DIR}/cases/* )
+file( GLOB CASES ${CMAKE_SOURCE_DIR}/../cases/* )
 set(COUNTER 1)
 foreach( case_folder ${CASES} )
   ADD_CUSTOM_TARGET(symlink_c++_${COUNTER} ALL COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utahlsm_offline ${case_folder}/utahlsm_offline)

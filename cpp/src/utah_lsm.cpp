@@ -734,7 +734,7 @@ void UtahLSM :: solveDiffusionHeat() {
         // Solve the tridiagonal system
         try {
             // we only need to send the layers below surface
-            std::span<double> subsfc_T(soil_T.data() + 1, soil_T.size() - 1);
+            std::span<double> subsfc_T(soil_T.cbegin() + 1, soil_T.size() - 1);
             matrix::tridiagonal(e,f,g,r,subsfc_T);
         } catch(std::string &e) {
             std::cout<<e<<std::endl;

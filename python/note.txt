@@ -1,1 +1,4 @@
-Python port of code will reside here. This will allow for easier testing and evaluation.
+Python port of code will reside here. This will allow for easier testing and evaluation of the code.
+
+Update 1/18/2023:
+	The general structure is in place. I need to port the actual lsm model code over. 

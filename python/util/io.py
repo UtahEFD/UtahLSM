@@ -7,8 +7,7 @@ from util import constants
 class Input(object):
 
 	def __init__(self, namelist, inputfile):
-		self.keys = []
-		
+				
 		# read the namelist
 		try:
 			with open(namelist) as json_file:
@@ -19,76 +18,58 @@ class Input(object):
 			print('Error parsing %s: %s (see line %s)'%(namelist,e.msg,e.lineno))
 		else:
 			# time section
-			self.dt        = data["time"]["dt"]
-			self.tt        = data["time"]["tt"]
-			#self.adaptive  = data["time"]["adaptive"]
+			self.step_seb   = data["time"]["step_seb"]
+			self.step_dif   = data["time"]["step_dif"]
 			
 			# grid section
-			self.nz        = data["grid"]["nz"]
-			self.lz        = data["grid"]["lz"]
-			self.dz        = self.lz/(self.nz-1)
+			self.nx         = data["grid"]["nx"]
+			self.ny         = data["grid"]["ny"]
 			
-			# large-scale forcing section
-			self.fc        = data["force"]["fc"]
-			self.wls       = data["force"]["wls"]
-			# TODO: check if this flag exists
-			#       if so, skip next part and extract keys
-			#       then check if ug,vg,wls exist
-			#self.ls_time   = data["force"]["timedep"]
-			# TODO: add option for ug,vg to be time varying
-			# TODO: add in w option for large-scale subsidence
-			self.ug        = data["force"]["ug"]
-			self.vg        = data["force"]["vg"]
+			# length section
+			self.z_o        = data["length"]["z_o"]
+			self.z_t        = data["length"]["z_t"]
+			self.z_m        = data["length"]["z_m"]
+			self.z_s        = data["length"]["z_s"]
 			
-			# thermodynamic section
-			self.Tref      = data["thermo"]["Tref"]
-			self.lapse     = data["thermo"]["lapse"]
-			self.beta      = constants.grav / self.Tref
+			# soil section
+			self.nsoil      = data["soil"]["nsoil"]
+			self.param      = data["soil"]["param"]
+			self.model      = data["soil"]["model"]
 			
-			# surface section
-			self.z0        = data["surface"]["z0"]
-			self.z0h       = data["surface"]["z0h"]
-			self.sfc_model = data["surface"]["model"]
-			self.n_patch   = data["surface"]["n_patch"]
-			self.Tdiff     = data["surface"]["Tdiff"]
-			#self.sfc_time  = data["surface"]["timedep"]
-			
-			# landuse section
-			self.l1        = data["landuse"]["0"]
-			self.l2        = data["landuse"]["1"]
-			self.fa        = list(data['landuse'].values())
-			for key in data['landuse'].keys(): 
-				self.keys.append(int(key)) 
-			
-			# pbl section
-			self.pbl_model = data["pbl"]["model"]
+			# radiation section
+			self.utc_start  =  data["radiation"]["utc_start"]
+			self.comp_rad   =  data["radiation"]["comp_rad"]
+			self.albedo     =  data["radiation"]["albedo"]
+			self.emissivity =  data["radiation"]["emissivity"]
+			self.latitude   =  data["radiation"]["latitude"]
+			self.longitude  =  data["radiation"]["longitude"]
+			self.julian_day =  data["radiation"]["julian_day"]
 			
 			# output section
-			self.t_save    = data["output"]["t_save"]
-			self.n_save    = np.floor(self.t_save/self.dt)   
-			
-			# initialization data
+			self.save       = data["output"]["save"]
+			self.fields     = data["output"]["fields"]
+		
+		# open and parse the netcdf initialization data
+		try:
 			inifile = nc.Dataset(inputfile)
-			self.zf = inifile.variables['zf'][:]
-			self.zh = inifile.variables['zh'][:]
-			self.u  = inifile.variables['u'][:]
-			self.v  = inifile.variables['v'][:]
-			self.T  = inifile.variables['T'][:]
-			# TODO: add ug,vg,wls, and Tsfc if not constant
-			
-			# TODO: put a check of namelist here
-			#if self.tt > 15:
-				#self.wls= inifile.variables['wls'][:]
-			if self.sfc_model!=1:
-				#self.Tse = inifile.variables['Tse'][:]
-				self.Ts1 = inifile.variables['Ts1'][:]
-				self.Ts2 = inifile.variables['Ts2'][:]
-			else:
-				self.Ts = inifile.variables['Ts'][:]
-			
-			# TODO: put a try in here and handle missing tke
-			if self.pbl_model==2 or self.pbl_model==3:
-				self.tke = inifile.variables['tke'][:]
+		# report file open error to user and exit program
+		except (RuntimeError,FileNotFoundError) as e:
+			print('There was an issue opening \'%s\'.'%(inputfile))
+			print('Error: ',e.strerror)
+			sys.exit(1)  
+		# process the netcdf input file
+		else:
+			# load initial data from netcdf into local variables
+			try:
+				self.soil_z    = inifile.variables['soil_z'][:]
+				self.soil_T    = inifile.variables['soil_T'][:]
+				self.soil_q    = inifile.variables['soil_q'][:]
+				self.soil_type = inifile.variables['soil_type'][:]
+			# report a netcdf dictionary error to user and exit program
+			except (KeyError) as e:
+				print("There was an issue accessing data from \'%s\'"%inputfile)
+				print("Error: The key",e,"does not exist")
+				sys.exit(1)
 
 class Output(object):
 			
