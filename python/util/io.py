@@ -102,8 +102,8 @@ class Output(object):
 		
 		# create output file
 		self.outfile             = nc.Dataset(outfile,'w')
-		self.outfile.description = "NSSL-SCM output"
-		self.outfile.source      = "Dominic Candela and Jeremy A. Gibbs"
+		self.outfile.description = "UtahLSM output"
+		self.outfile.source      = "Jeremy A. Gibbs"
 		self.outfile.history     = "Created " + time.ctime(time.time())
 	
 		# dictionary of fields to be saved
@@ -116,75 +116,25 @@ class Output(object):
 				'long_name':'time',
 				'units':'s'
 			},
-			'zf': {
-				'dimension':("zf",),
-				'long_name':'z-distance on full levels',
+			'soil_z': {
+				'dimension':("z",),
+				'long_name':'z-distance',
 				'units':'m'
 			},
-			'zh': {
-				'dimension':("zh",),
-				'long_name':'z-distance on half levels',
-				'units':'m'
+			'soil_type': {
+				'dimension':("z",),
+				'long_name':'soil type',
+				'units':''
 			},
-			'zi': {
-				'dimension':("t",),
-				'long_name':'PBL depth',
-				'units':'m'
-			},
-			'l': {
-				'dimension':("t","zf",),
-				'long_name':'PBL length scale',
-				'units':'m'
-			},
-			'L': {
-				'dimension':("t",),
-				'long_name': 'Obukhov Length',
-				'units': 'm'
-			},
-			'u': {
-				'dimension':("t","zh",),
-				'long_name':'u-component velocity',
-				'units':'m s-1'
-			},
-			'v': {
-				'dimension':("t","zh",),
-				'long_name':'v-component velocity',
-				'units':'m s-1'
-			},
-			'T': {
-				'dimension':("t","zh",),
-				'long_name':'temperature',
+			'soil_T': {
+				'dimension':("t","z",),
+				'long_name':'soil temperature',
 				'units':'K'
 			},
-			'us': {
-				'dimension':("t",),
-				'long_name':'friction velocity',
-				'units':'m s-1'
-			},
-			'wu': {
-				'dimension':("t","zf",),
-				'long_name':'kinematic momentum flux',
-				'units':'m2 s-2'
-			},
-			'wT': {
-				'dimension':("t","zf",),
-				'long_name':'kinematic heat flux',
-				'units':'m s-1 K'
-			},
-			'tke': {
-				'dimension':("t","zf",),
-				'long_name':'turbulence kinetic energy',
-				'units':'m2 s-2'
-			},
-			'Km': {
-				'dimension':("t","zf",),
-				'long_name':'eddy diffusivity momentum',
-				'units':'m2 s-1'
-			},
-			'Kh': {
-				'dimension':("t","zf",),
-				'long_name':'eddy diffusivity heat',
-				'units':'m2 s-1'
+			'soil_q': {
+				'dimension':("t","z",),
+				'long_name':'soil moisture',
+				'units':'g g-1'
 			},
 		}
 	
