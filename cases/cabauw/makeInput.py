@@ -162,21 +162,48 @@ for b in badQ:
     qs[b] = qs[badQ[0] - 1]
 
 ##############################
-# Write all time series data #
+# Write all time-series data #
 ##############################
-metr = {}
-metr['time'] = {}
-metr['data'] = {}
 
-metr['time']['ntime'] = ntime
-metr['time']['tstep'] = float(dt)
-metr['data']['atm_U'] = ws.tolist()
-metr['data']['atm_T'] = pt.tolist()
-metr['data']['atm_q'] = qs.tolist()
-metr['data']['atm_p'] = pa.tolist()
-metr['data']['R_net'] = net.tolist()
-with open('inputOffline.json', 'w') as outfile:
-    json.dump(metr,outfile,indent=4)
+# time-series file
+metr             = nc.Dataset('lsm_offline.nc','w')
+metr.description = "UtahLSM input file for offline run"
+metr.source      = "Jeremy A. Gibbs"
+metr.history     = "Created " + time.ctime(time.time())
+
+# add dimensions
+metr.createDimension('t', ntime)
+
+# add variables
+metr_s = metr.createVariable("tstep", "f4", ())
+metr_s.long_name = "time step for input offline data"
+metr_s.units = "s"
+metr_u = metr.createVariable("atm_U", "f4", ("t"))
+metr_u.long_name = "wind speed"
+metr_u.units = "m s-1"
+metr_t = metr.createVariable("atm_T", "f4", ("t"))
+metr_t.long_name = "temperature"
+metr_t.units = "K"
+metr_q = metr.createVariable("atm_q", "f4", ("t"))
+metr_q.long_name = "mixing ratio"
+metr_q.units = "g g-1"
+metr_p = metr.createVariable("atm_p", "f4", ("t"))
+metr_p.long_name = "pressure"
+metr_p.units = "hPa"
+metr_r = metr.createVariable("R_net", "f4", ("t"))
+metr_r.long_name = "net radiation"
+metr_r.units = "W m-2"
+
+# write time-series data
+metr_s[:] = float(dt)
+metr_u[:] = ws
+metr_t[:] = pt
+metr_q[:] = qs
+metr_p[:] = pa
+metr_r[:] = net
+
+# close file
+metr.close()
 
 ########################
 # Settings for UtahLSM #

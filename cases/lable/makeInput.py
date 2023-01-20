@@ -2,6 +2,7 @@
 import json
 import numpy as np
 import netCDF4 as nc
+import time
 
 ##########################################
 # Manual entry of soil data for 20121024 #
@@ -31,7 +32,39 @@ sm_ob = [0.2448, 0.2448, 0.2535, 0.2528, 0.3666, 0.3272, 0.3230]
 # 10 = silty clay
 # 11 = clay
 # 12 = peat
-stype     = [4,4,4,4,11,8,8,8]
+stype     = [4,4,4,4,11,8,8]
+
+# initialization file
+init             = nc.Dataset('lsm_init.nc','w')
+init.description = "UtahLSM input file"
+init.source      = "Jeremy A. Gibbs"
+init.history     = "Created " + time.ctime(time.time())
+
+# add dimensions
+init.createDimension('z', nsoil)
+
+# add variables
+init_z = init.createVariable("soil_z", "f4", ("z",))
+init_z.long_name = "z-distance"
+init_z.units = "m"
+init_T = init.createVariable("soil_T", "f4", ("z"))
+init_T.long_name = "soil temperature"
+init_T.units = "T"
+init_q = init.createVariable("soil_q", "f4", ("z"))
+init_q.long_name = "soil moisture"
+init_q.units = "g g-1"
+init_i = init.createVariable("soil_type", "f4", ("z"))
+init_i.long_name = "soil type"
+init_i.units = ""
+
+# write initial data
+init_z[:] = z_obs
+init_T[:] = st_ob
+init_q[:] = sm_ob
+init_i[:] = stype
+
+# close file
+init.close()
 
 ################################################
 # Read met tower data for u,v,T,q for 20121024 #
@@ -125,21 +158,48 @@ for b in badQ:
     qs[b] = qs[badQ[0] - 1]
 
 ##############################
-# Write all time series data #
+# Write all time-series data #
 ##############################
-metr = {}
-metr['time'] = {}
-metr['data'] = {}
 
-metr['time']['ntime'] = ntime
-metr['time']['tstep'] = float(dt)
-metr['data']['atm_U'] = ws.tolist()
-metr['data']['atm_T'] = pt.tolist()
-metr['data']['atm_q'] = qs.tolist()
-metr['data']['atm_p'] = pa.tolist()
-metr['data']['R_net'] = rNet1m.tolist()
-with open('inputOffline.json', 'w') as outfile:
-    json.dump(metr,outfile,indent=4)
+# time-series file
+metr             = nc.Dataset('lsm_offline.nc','w')
+metr.description = "UtahLSM input file for offline run"
+metr.source      = "Jeremy A. Gibbs"
+metr.history     = "Created " + time.ctime(time.time())
+
+# add dimensions
+metr.createDimension('t', ntime)
+
+# add variables
+metr_s = metr.createVariable("tstep", "f4", ())
+metr_s.long_name = "time step for input offline data"
+metr_s.units = "s"
+metr_u = metr.createVariable("atm_U", "f4", ("t"))
+metr_u.long_name = "wind speed"
+metr_u.units = "m s-1"
+metr_t = metr.createVariable("atm_T", "f4", ("t"))
+metr_t.long_name = "temperature"
+metr_t.units = "K"
+metr_q = metr.createVariable("atm_q", "f4", ("t"))
+metr_q.long_name = "mixing ratio"
+metr_q.units = "g g-1"
+metr_p = metr.createVariable("atm_p", "f4", ("t"))
+metr_p.long_name = "pressure"
+metr_p.units = "hPa"
+metr_r = metr.createVariable("R_net", "f4", ("t"))
+metr_r.long_name = "net radiation"
+metr_r.units = "W m-2"
+
+# write time-series data
+metr_s[:] = float(dt)
+metr_u[:] = ws
+metr_t[:] = pt
+metr_q[:] = qs
+metr_p[:] = pa
+metr_r[:] = rNet1m
+
+# close file
+metr.close()
 
 ########################
 # Settings for UtahLSM #
@@ -170,10 +230,6 @@ namelist['length']['z_s'] = 2.0
 namelist['soil']['nsoil']     = nsoil
 namelist['soil']['param']     = 3
 namelist['soil']['model']     = 2
-namelist['soil']['soil_z']    = z_obs
-namelist['soil']['soil_type'] = stype
-namelist['soil']['soil_T']    = st_ob
-namelist['soil']['soil_q']    = sm_ob
 
 # radiation section
 namelist['radiation']['utc_start']  = t_utc[0]
@@ -188,5 +244,5 @@ namelist['radiation']['julian_day'] = 298
 namelist['output']['save'] = 1
 namelist['output']['fields'] = ['all']
 
-with open('inputLSM.json', 'w') as outfile:
+with open('lsm_namelist.json', 'w') as outfile:
     json.dump(namelist,outfile,indent=4)

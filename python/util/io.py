@@ -6,7 +6,7 @@ from util import constants
 
 class Input(object):
 
-	def __init__(self, namelist, inputfile):
+	def __init__(self, namelist, inputfile, offlinefile=None):
 				
 		# read the namelist
 		try:
@@ -70,6 +70,31 @@ class Input(object):
 				print("There was an issue accessing data from \'%s\'"%inputfile)
 				print("Error: The key",e,"does not exist")
 				sys.exit(1)
+		
+		# open and parse the netcdf offline data if available
+		if (offlinefile):
+			try:
+				metfile = nc.Dataset(offlinefile)
+			# report file open error to user and exit program
+			except (RuntimeError,FileNotFoundError) as e:
+				print('There was an issue opening \'%s\'.'%(offlinefile))
+				print('Error: ',e.strerror)
+				sys.exit(1)  
+			# process the netcdf offline file
+			else:
+				# load offline data from netcdf into local variables
+				try:
+					self.tstep = metfile.variables['tstep'][:]
+					self.atm_U = metfile.variables['atm_U'][:]
+					self.atm_T = metfile.variables['atm_T'][:]
+					self.atm_q = metfile.variables['atm_q'][:]
+					self.atm_p = metfile.variables['atm_p'][:]
+					self.r_net = metfile.variables['R_net'][:]
+				# report a netcdf dictionary error to user and exit program
+				except (KeyError) as e:
+					print("There was an issue accessing data from \'%s\'"%inputfile)
+					print("Error: The key",e,"does not exist")
+					sys.exit(1)
 
 class Output(object):
 			

@@ -77,7 +77,7 @@ int main () {
     inputOffline->getItem(R_net,"data","R_net");
     
     // initialize an instance of UtahLSM input and output
-    Input* inputLSM  = new Input("inputLSM.json");
+    Input* inputLSM  = new Input("lsm_namelist.json");
     Output* outputLSM = new Output("lsm.nc");
     
     // Get grid information

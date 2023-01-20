@@ -37,18 +37,19 @@ if __name__ == "__main__":
 	# create Input instance
 	try:
 		if os.path.exists('../cases/%s/'%case):
-			namelist = '../cases/%s/lsm_namelist.json'%case
-			initfile = '../cases/%s/lsm_init.nc'%case  
-			inputLSM = io.Input(namelist,initfile)
+			namelist    = '../cases/%s/lsm_namelist.json'%case
+			initfile    = '../cases/%s/lsm_init.nc'%case 
+			offlinefile = '../cases/%s/lsm_offline.nc'%case  
+			inputLSM    = io.Input(namelist,initfile,offlinefile)
 		else:
 			raise InvalidCase('Error: The folder ../cases/%s does not exist.'%case)
 	except InvalidCase as e:
 		print(e)
 		sys.exit(1)
-	
+
 	# create Output instance
 	if not outf:
-		outf='utahlsm_%s_py.nc'%case
+		outf='lsm_%s_py.nc'%case
 	outputLSM = io.Output(outf)
 	
 	# run the model
