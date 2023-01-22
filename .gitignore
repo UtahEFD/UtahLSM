@@ -3,7 +3,7 @@ bin/
 doc/
 build/
 *utahlsm
-*.nc
+lsm*.nc
 .vscode/
 *utahlsm_offline 
 *utahlsm_offline_f 
