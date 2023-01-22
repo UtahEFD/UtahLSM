@@ -134,7 +134,32 @@ class Output(object):
 			'soil_q': {
 				'dimension':("t","z",),
 				'long_name':'soil moisture',
-				'units':'g g-1'
+				'units':'m3 m-3'
+			},
+			'ust': {
+				'dimension':("t",),
+				'long_name':'friction velocity',
+				'units':'m s-1'
+			},
+			'obl': {
+				'dimension':("t",),
+				'long_name':'Obukhov length',
+				'units':'m'
+			},
+			'shf': {
+				'dimension':("t",),
+				'long_name':'sensible heat flux',
+				'units':'W m-2'
+			},
+			'lhf': {
+				'dimension':("t",),
+				'long_name':'latent heat flux',
+				'units':'W m-2'
+			},
+			'ghf': {
+				'dimension':("t",),
+				'long_name':'ground heat flux',
+				'units':'W m-2'
 			},
 		}
 	

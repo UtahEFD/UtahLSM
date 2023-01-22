@@ -162,7 +162,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
         AttScalar att_lhf   = {&flux_lh, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
         AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
-        AttVector att_soilz = {&soil_z,  "soilz", "Obukhov length",     "m",     dim_scalar_z};
+        AttVector att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_scalar_z};
         AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector};
         AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector};
         
