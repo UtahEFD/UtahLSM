@@ -64,7 +64,7 @@ class Input(object):
 				self.soil_z    = inifile.variables['soil_z'][:]
 				self.soil_T    = inifile.variables['soil_T'][:]
 				self.soil_q    = inifile.variables['soil_q'][:]
-				self.soil_type = inifile.variables['soil_type'][:]
+				self.soil_type = inifile.variables['soil_type'][:].astype('int')
 			# report a netcdf dictionary error to user and exit program
 			except (KeyError) as e:
 				print("There was an issue accessing data from \'%s\'"%inputfile)
