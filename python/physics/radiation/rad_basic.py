@@ -1,10 +1,10 @@
-from .soil import SOIL
+from .radiation import RAD
 
-class BROOKSCOREY(SOIL):
+class BASIC(RAD):
 
     # class initialization
     def __init__(self,inputLSM):
         
-        print("[UtahLSM: SOIL] \t--- running with the Brooks-Corey scheme")
+        print("[UtahLSM: RAD] \t\t --- running with the basic model")
         # initialize parent class
         super().__init__(inputLSM)

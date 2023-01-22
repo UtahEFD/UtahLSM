@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 import time
+from physics import RAD, SOIL, SFC
 from util import io, matrix
 
 # custom error message for user case entry
@@ -29,6 +30,7 @@ class UtahLSM:
         print("[UtahLSM: Setup] \t Reading input settings")
         # configuration variables
         nz         = self.input.nsoil
+        soil_model = self.input.model
         
         print("[UtahLSM: Setup] \t Reading input data")
         # input fields
@@ -36,15 +38,19 @@ class UtahLSM:
         self.soil_T    = self.input.soil_T
         self.soil_q    = self.input.soil_q
         self.soil_type = self.input.soil_type
-#         
-#         print("[UtahLSM: Setup] \t Creating surface model")
-#         # choose surface model
-#         self.sfc = SFC.get_model(sfc_model,self.input)
-#       
-#         print("[UtahLSM: Setup] \t Creating PBL model")
-#         # choose PBL model
-#         self.pbl = PBL.get_model(pbl_model,self.input,self.sfc)
-# 
+        
+        print("[UtahLSM: Setup] \t Creating radiation model")
+        # choose radiation model
+        self.rad = RAD.get_model(1,self.input)
+        
+        print("[UtahLSM: Setup] \t Creating soil model")
+        # choose surface model
+        self.soil = SOIL.get_model(soil_model,self.input)
+        
+        print("[UtahLSM: Setup] \t Creating surface model")
+        # choose surface model
+        self.sfc = SFC.get_model(1,self.input)
+
         print("[UtahLSM: Setup] \t Creating additional fields")
         # initialize flux arrays
         self.obl = np.zeros(1)
