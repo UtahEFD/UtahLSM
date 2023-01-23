@@ -20,7 +20,7 @@ class UtahLSM:
     """
     
     # model class initialization
-    def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq, col_j, col_i):
+    def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq, col_j=0, col_i=0):
         """Constructor method
         """
         
@@ -94,30 +94,35 @@ class UtahLSM:
         self.output.save(self.output_fields,0,0,initial=True)
         
     # Update atmospheric quantities prior to solving
-    #def update_fields(dt,atm_U, atm_T, atm_q, atm_p, R_net=0):
+    def update_fields(dt,atm_U, atm_T, atm_q, atm_p, R_net=0): pass
+    
+    # Run the model
+    def run(): pass
         
-        
-        
-    # void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,double rad=0) {
-    #     
-    #     tstep = dt;
-    #     atm_U = u;
-    #     atm_T = T;
-    #     atm_q = q;
-    #     atm_p = p;
-    #     R_net = rad;
-    #     runtime += tstep;
-    #     
-    #     // Run radiation model and update time/date if needed
-    #     if (comp_rad==1) {
-    #         utc = std::fmod(runtime,86400);
-    #         julian_day += int(runtime/86400);
-    #         R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
-    #     }
-    #     
-    #     // Keep winds from being exactly zero
-    #     if (atm_U==0) atm_U = 0.1;
-    # }
+    # Save output fields
+    def save(): pass
+    
+    # Solve the surface energy budget
+    def solve_seb(): pass
+    
+    # Solve the surface moisture budget
+    def solve_smb(): pass
+    
+    # Solve the diffusion equation for soil heat
+    def solve_diffusion_heat(): pass
+    
+    # Solve the diffusion equation for soil moisture
+    def solve_diffusion_mois(): pass
+    
+    # Solve the diffusion equation for soil heat and moisture
+    # 1=heat, 2=moisture
+    def solve_diffusion(diff_type): pass
+    
+    # Compute the surface energy budget
+    def compute_seb(sfc_T): pass
+    
+    # Compute the derivative of the surface energy budget
+    def compute_dseb(sfc_T): pass
 
 # main program to run the LSM
 if __name__ == "__main__":
@@ -175,7 +180,7 @@ if __name__ == "__main__":
     atm_T = inputLSM.atm_T
     atm_q = inputLSM.atm_q
     atm_p = inputLSM.atm_p
-    R_net = inputLSM.R_net
+    R_net = inputLSM.r_net
     
     # local fluxes to be modified by lsm
     ustar   = 0.0
