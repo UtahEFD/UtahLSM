@@ -4,7 +4,7 @@ import numpy as np
 import os
 import sys
 import time
-from physics import RAD, SOIL, SFC
+from physics import Radiation, Soil, Surface
 from util import io, matrix
 
 # custom error message for user case entry
@@ -20,9 +20,10 @@ class UtahLSM:
     """
     
     # model class initialization
-    def __init__(self,inputLSM, outputLSM):
+    def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq, col_j, col_i):
         """Constructor method
         """
+        
         # set the input and output fields
         self.input  = inputLSM
         self.output = outputLSM
@@ -34,22 +35,23 @@ class UtahLSM:
         
         print("[UtahLSM: Setup] \t Reading input data")
         # input fields
-        self.soil_z    = self.input.soil_z
-        self.soil_T    = self.input.soil_T
-        self.soil_q    = self.input.soil_q
-        self.soil_type = self.input.soil_type
+        self.soil_column    = np.empty(4).astype(np.object_)
+        self.soil_column[0] = self.input.soil_z
+        self.soil_column[1] = self.input.soil_T
+        self.soil_column[2] = self.input.soil_q
+        self.soil_column[3] = self.input.soil_type
         
         print("[UtahLSM: Setup] \t Creating radiation model")
         # choose radiation model
-        self.rad = RAD.get_model(1,self.input)
+        self.rad = Radiation.get_model(1,self.input)
         
         print("[UtahLSM: Setup] \t Creating soil model")
         # choose surface model
-        self.soil = SOIL.get_model(soil_model,self.input)
+        self.soil = Soil.get_model(soil_model,self.input)
         
         print("[UtahLSM: Setup] \t Creating surface model")
         # choose surface model
-        self.sfc = SFC.get_model(1,self.input)
+        #self.sfc = Surface.get_model(1,self.input)
 
         print("[UtahLSM: Setup] \t Creating additional fields")
         # initialize flux arrays
@@ -58,6 +60,13 @@ class UtahLSM:
         self.shf = np.zeros(1)
         self.lhf = np.zeros(1)
         self.ghf = np.zeros(1)
+        
+        # Local time data
+        self.first=True   # flag whether first time step or not
+        self.step_count=0 # number of times the LSM has been called
+        self.tstep=0      # current time step
+        self.runtime=0    # current elapsed time
+        self.utc=0        # current time in UTC
 
         print("[UtahLSM: Setup] \t Creating output file")    
         # set reference to output dimensions
@@ -69,10 +78,10 @@ class UtahLSM:
 
         # set reference to output fields
         self.output_fields = {
-            'soil_z':self.soil_z,
-            'soil_T':self.soil_T,
-            'soil_q':self.soil_q,
-            'soil_type':self.soil_type,
+            'soil_z':self.soil_column[0],
+            'soil_T':self.soil_column[1],
+            'soil_q':self.soil_column[2],
+            'soil_type':self.soil_column[3],
             'ust':self.ust,
             'obl':self.obl,
             'shf':self.shf,
@@ -83,6 +92,32 @@ class UtahLSM:
 
         # write initial data
         self.output.save(self.output_fields,0,0,initial=True)
+        
+    # Update atmospheric quantities prior to solving
+    #def update_fields(dt,atm_U, atm_T, atm_q, atm_p, R_net=0):
+        
+        
+        
+    # void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,double rad=0) {
+    #     
+    #     tstep = dt;
+    #     atm_U = u;
+    #     atm_T = T;
+    #     atm_q = q;
+    #     atm_p = p;
+    #     R_net = rad;
+    #     runtime += tstep;
+    #     
+    #     // Run radiation model and update time/date if needed
+    #     if (comp_rad==1) {
+    #         utc = std::fmod(runtime,86400);
+    #         julian_day += int(runtime/86400);
+    #         R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
+    #     }
+    #     
+    #     // Keep winds from being exactly zero
+    #     if (atm_U==0) atm_U = 0.1;
+    # }
 
 # main program to run the LSM
 if __name__ == "__main__":
@@ -121,7 +156,7 @@ if __name__ == "__main__":
     except InvalidCase as e:
         print(e)
         sys.exit(1)
-
+    
     # create Output instance
     if not outf:
         outf='lsm_%s_py.nc'%case

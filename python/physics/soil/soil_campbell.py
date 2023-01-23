@@ -1,6 +1,6 @@
-from .soil import SOIL
+from .soil import Soil
 
-class Campbell(SOIL):
+class Campbell(Soil):
 
     # class initialization
     def __init__(self,inputLSM):

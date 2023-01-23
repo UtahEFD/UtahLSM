@@ -3,7 +3,7 @@ import numpy as np
 from util import constants as c
 from .soil_type import SoilType
 
-class SOIL(object):
+class Soil(object):
     
     def __init__(self,inputLSM):
         

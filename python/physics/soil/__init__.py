@@ -1,3 +1,3 @@
-from .soil import SOIL
+from .soil import Soil
 
-__all__ = ['SOIL']
+__all__ = ['Soil']

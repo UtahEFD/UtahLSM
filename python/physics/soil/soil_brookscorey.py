@@ -1,7 +1,7 @@
 import sys
-from .soil import SOIL
+from .soil import Soil
 
-class BrooksCorey(SOIL):
+class BrooksCorey(Soil):
 
     # class initialization
     def __init__(self,inputLSM):

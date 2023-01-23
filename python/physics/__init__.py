@@ -1,7 +1,7 @@
-from .radiation import RAD
-from .sfc import SFC
-from .soil import SOIL
+from .radiation import Radiation
+from .soil import Soil
+from .surface import Surface
 
-__all__ = ['RAD']
-__all__ = ['SFC']
-__all__ = ['SOIL']
+__all__ = ['Radiation']
+__all__ = ['Soil']
+__all__ = ['Surface']

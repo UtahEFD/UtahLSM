@@ -1,8 +1,8 @@
 import numpy as np
-from .util import constants as c
-from .radiation import RAD
+from util import constants as c
+from .radiation import Radiation
 
-class BASIC(RAD):
+class RadBasic(Radiation):
 
     # class initialization
     def __init__(self,inputLSM):
@@ -10,11 +10,6 @@ class BASIC(RAD):
         print("[UtahLSM: RAD] \t\t --- running with the basic model")
         # initialize parent class
         super().__init__(inputLSM)
-        
-        self.latitude   = inputLSM.latitude
-        self.longitude  = inputLSM.longitude
-        self.albedo     = self.inputLSM.albedo
-        self.emissivity = self.inputLSM.emissivity
         
     # Computes the surface net radiation
     def compute_net(self, julian_day, time_utc, sfc_T):
@@ -46,9 +41,7 @@ class BASIC(RAD):
     def shortwave_in(self, julian_day, time_utc, latitude, longitude):
         sw_in = 0
         declination = 23.45*(c.pi/180.0)*np.cos(2.0*c.pi*(julian_day-173)/365.25)
-        sin_elevation = np.sin(latitude)*np.sin(declination) - 
-           np.cos(latitude)*std::cos(declination) * 
-           np.cos( (2*c.pi*time_utc/(24.0*3600.0)) - longitude )
+        sin_elevation = np.sin(latitude)*np.sin(declination) - np.cos(latitude)*np.cos(declination)* np.cos( (2*c.pi*time_utc/(24.0*3600.0)) - longitude )
         if (sin_elevation > 0):
             transmissivity = (0.6 + 0.2*sin_elevation)
             sw_in = c.sc * transmissivity * sin_elevation

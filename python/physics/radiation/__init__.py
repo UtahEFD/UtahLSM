@@ -1,3 +1,3 @@
-from .radiation import RAD
+from .radiation import Radiation
 
-__all__ = ['RAD']
+__all__ = ['Radiation']

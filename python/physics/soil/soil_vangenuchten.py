@@ -1,6 +1,6 @@
-from .soil import SOIL
+from .soil import Soil
 
-class VanGenuchten(SOIL):
+class VanGenuchten(Soil):
 
     # class initialization
     def __init__(self,inputLSM):
