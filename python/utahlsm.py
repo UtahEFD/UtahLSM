@@ -23,7 +23,7 @@ class UtahLSM:
     def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq, col_j=0, col_i=0):
         """Constructor method
         """
-        
+        # TODO: finish writing main init function
         # set the input and output fields
         self.input  = inputLSM
         self.output = outputLSM
@@ -94,34 +94,44 @@ class UtahLSM:
         self.output.save(self.output_fields,0,0,initial=True)
         
     # Update atmospheric quantities prior to solving
+    # TODO: write update_fields function
     def update_fields(dt,atm_U, atm_T, atm_q, atm_p, R_net=0): pass
     
     # Run the model
+    # TODO: write run function
     def run(): pass
         
     # Save output fields
+    # TODO: write save function
     def save(): pass
     
     # Solve the surface energy budget
+    # TODO: write solve_seb function
     def solve_seb(): pass
     
     # Solve the surface moisture budget
+    # TODO: write solve_smb function
     def solve_smb(): pass
     
     # Solve the diffusion equation for soil heat
+    # TODO: write solve_diffusion_heat function
     def solve_diffusion_heat(): pass
     
     # Solve the diffusion equation for soil moisture
+    # TODO: write solve_diffusion_mois function
     def solve_diffusion_mois(): pass
     
     # Solve the diffusion equation for soil heat and moisture
     # 1=heat, 2=moisture
+    # TODO: write solve_diffusion function
     def solve_diffusion(diff_type): pass
     
     # Compute the surface energy budget
+    # TODO: write compute_seb function
     def compute_seb(sfc_T): pass
     
     # Compute the derivative of the surface energy budget
+    # TODO: write compute_dseb function
     def compute_dseb(sfc_T): pass
 
 # main program to run the LSM
