@@ -157,19 +157,64 @@ if __name__ == "__main__":
         print(e)
         sys.exit(1)
     
+    print("[UtahLSM: Info] \t Running offline for the %s case"%case)
+    
     # create Output instance
     if not outf:
         outf='lsm_%s_py.nc'%case
     outputLSM = io.Output(outf)
     
-    # create UtahLSM instance
-    lsm = UtahLSM(inputLSM,outputLSM)
+    # grid information
+    nx = inputLSM.nx
+    ny = inputLSM.ny
     
-    # run the model
-    #scm.run()
+    # get offline input data
+    ntime = inputLSM.ntime
+    tstep = inputLSM.tstep
+    atm_U = inputLSM.atm_U
+    atm_T = inputLSM.atm_T
+    atm_q = inputLSM.atm_q
+    atm_p = inputLSM.atm_p
+    R_net = inputLSM.R_net
+    
+    # local fluxes to be modified by lsm
+    ustar   = 0.0
+    flux_wq = 0.0
+    flux_wT = 0.0
+    
+    # Initialize an array of UtahLSM instances
+    global_utah_lsm = np.empty((ny*nx)).astype(np.object_)
+    
+    # Fill array with lsm instances
+    k = 0
+    for j in range(0,ny):
+        for i in range(0,nx):
+            # create UtahLSM instance
+            global_utah_lsm[k] = UtahLSM(inputLSM,outputLSM,ustar,flux_wq,flux_wT,j,i)
+            k+=1
+    
+    # Loop through each time
+    utc = 0
+    for t in range(0,ntime):
+        utc += tstep
+        sys.stdout.write("\r[UtahLSM: Run] \t\t Running for time %05.2f of %05.2f"%(utc,ntime*tstep))
+        sys.stdout.flush()
+        
+        # loop through each lsm instance
+        k = 0
+        #for j in range(0,ny):
+        #    for i in range(0,nx):
+                # update user-specified fields
+                #global_utah_lsm[k].update_fields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
+                
+                # run the model
+                #global_utah_lsm[k].run()
+                
+                # save output
+                #global_utah_lsm[k].save(outputLSM)
     
     # time info
     t2 = time.time()
     tt = t2 - t1
-    print("\n[UtahLSM: Run] \t Done! Completed in %0.2f seconds"%tt)
+    print("\n[UtahLSM: Run] \t\t Done! Completed in %0.2f seconds"%tt)
     print("##############################################################")

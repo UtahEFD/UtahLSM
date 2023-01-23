@@ -7,7 +7,7 @@ class SurfaceMOST(Surface):
     # class initialization
     def __init__(self,inputLSM, soil):
         
-        print("[UtahLSM: SL] \t\t --- running with the MOST scheme")
+        print("[UtahLSM: Surface] \t\t --- running with the MOST scheme")
         # initialize parent class
         super().__init__(inputLSM)
         

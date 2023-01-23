@@ -84,6 +84,7 @@ class Input(object):
 			else:
 				# load offline data from netcdf into local variables
 				try:
+					self.ntime = len(metfile.dimensions['t'])
 					self.tstep = metfile.variables['tstep'][:]
 					self.atm_U = metfile.variables['atm_U'][:]
 					self.atm_T = metfile.variables['atm_T'][:]

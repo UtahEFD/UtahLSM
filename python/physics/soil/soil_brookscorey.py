@@ -6,7 +6,7 @@ class BrooksCorey(Soil):
     # class initialization
     def __init__(self,inputLSM):
         
-        print("[UtahLSM: SOIL] \t--- running with the Brooks-Corey model")
+        print("[UtahLSM: Soil] \t\t--- running with the Brooks-Corey model")
         # initialize parent class
         super().__init__(inputLSM)
     

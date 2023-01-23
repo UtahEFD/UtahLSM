@@ -7,7 +7,7 @@ class VanGenuchten(Soil):
         
         # TODO: Check these computations, especially power terms
         
-        print("[UtahLSM: SOIL] \t--- running with the Van Genuchten scheme")
+        print("[UtahLSM: Soil] \t--- running with the Van Genuchten scheme")
         # initialize parent class
         super().__init__(inputLSM)
         
