@@ -20,7 +20,7 @@ class UtahLSM:
     """
     
     # model class initialization
-    def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq, col_j=0, col_i=0):
+    def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq):
         """Constructor method
         """
         # TODO: finish writing main init function
@@ -100,12 +100,19 @@ class UtahLSM:
         self.lhf = np.zeros(1)
         self.ghf = np.zeros(1)
         
+        # Local atmospheric data
+        self.atm_U = 0
+        self.atm_T = 0
+        self.atm_q = 0
+        self.atm_p = 0
+        self.R_net = 0
+        
         # Local time data
-        self.first=True   # flag whether first time step or not
-        self.step_count=0 # number of times the LSM has been called
-        self.tstep=0      # current time step
-        self.runtime=0    # current elapsed time
-        self.utc=0        # current time in UTC
+        self.first      = True # flag whether first time step or not
+        self.step_count = 0    # number of times the LSM has been called
+        self.tstep      = 0    # current time step
+        self.runtime    = 0    # current elapsed time
+        self.utc        = 0    # current time in UTC
 
         print("[UtahLSM: Setup] \t Creating output file")    
         # set reference to output dimensions
@@ -133,9 +140,25 @@ class UtahLSM:
         self.output.save(self.output_fields,0,0,initial=True)
         
     # Update atmospheric quantities prior to solving
-    # TODO: write update_fields function
-    def update_fields(dt,atm_U, atm_T, atm_q, atm_p, R_net=0): pass
-    
+    def update_fields(self,dt, u, T, q, p, rad=0):
+        self.tstep    = dt
+        self.atm_U    = u
+        self.atm_T    = T
+        self.atm_q    = q
+        self.atm_p    = p
+        self.runtime += tstep
+        
+        # Run radiation model and update time/date if needed
+        if (self.comp_rad==1):
+            utc         = np.fmod(self.runtime,86400)
+            julian_day += int(runtime/86400);
+            self.R_net  = self.rad.computeNet(julian_day,utc,self.soil_T[0])
+        else:
+            self.R_net = rad
+        
+        # Keep winds from being exactly zero
+        if (self.atm_U==0): self.atm_U = 0.1
+            
     # Run the model
     # TODO: write run function
     def run(): pass
@@ -143,6 +166,9 @@ class UtahLSM:
     # Save output fields
     # TODO: write save function
     def save(): pass
+    
+    # Compute fluxes using similarity theory
+    def computeFluxes(sfc_T, sfc_q): pass
     
     # Solve the surface energy budget
     # TODO: write solve_seb function
@@ -235,17 +261,7 @@ if __name__ == "__main__":
     ustar   = 0.0
     flux_wq = 0.0
     flux_wT = 0.0
-    
-    # Initialize an array of UtahLSM instances
-    global_utah_lsm = np.empty((ny*nx)).astype(np.object_)
-    
-    # Fill array with lsm instances
-    k = 0
-    for j in range(0,ny):
-        for i in range(0,nx):
-            # create UtahLSM instance
-            global_utah_lsm[k] = UtahLSM(inputLSM,outputLSM,ustar,flux_wq,flux_wT,j,i)
-            k+=1
+    lsm     = UtahLSM(inputLSM,outputLSM,ustar,flux_wq,flux_wT)
     
     # Loop through each time
     utc = 0
@@ -254,8 +270,10 @@ if __name__ == "__main__":
         sys.stdout.write("\r[UtahLSM: Run] \t\t Running for time %05.2f of %05.2f"%(utc,ntime*tstep))
         sys.stdout.flush()
         
+        # update user-specified fields
+        lsm.update_fields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
+        
         # loop through each lsm instance
-        k = 0
         #for j in range(0,ny):
         #    for i in range(0,nx):
                 # update user-specified fields
