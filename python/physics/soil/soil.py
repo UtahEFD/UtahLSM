@@ -5,12 +5,12 @@ from .soil_type import SoilType
 
 class Soil(object):
     
-    def __init__(self,inputLSM):
+    def __init__(self,input):
         
         # TODO: limit what is passed in
         # TODO: implement error check on models
         
-        self.input = inputLSM    
+        self.input = input    
         nz = self.input.nsoil
         
         # fill properties
@@ -19,16 +19,16 @@ class Soil(object):
             self.properties[k] = SoilType.get_properties(self.input.param,self.input.soil_type[k])
     
     @staticmethod
-    def get_model(key,inputLSM):
+    def get_model(key,input):
         if key == 1:
             from .soil_brookscorey import BrooksCorey
-            return BrooksCorey(inputLSM)
+            return BrooksCorey(input)
         if key == 2:
             from .soil_campbell import Campbell
-            return Campbell(inputLSM)
+            return Campbell(input)
         if key == 3:
             from .soil_vangenuchten import VanGenuchten
-            return VanGenuchten(inputLSM)
+            return VanGenuchten(input)
     
     # Compute heat capacity
     def heat_capacity(self, soil_q, level):

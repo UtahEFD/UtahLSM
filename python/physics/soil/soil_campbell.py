@@ -3,10 +3,10 @@ from .soil import Soil
 class Campbell(Soil):
 
     # class initialization
-    def __init__(self,inputLSM):
+    def __init__(self,input):
         print("[UtahLSM: Soil] \t --- using the Campbell model")
         # initialize parent class
-        super().__init__(inputLSM)
+        super().__init__(input)
     
     # Compute soil surface moisture
     def surface_water_content(psi):

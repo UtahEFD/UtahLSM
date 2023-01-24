@@ -3,13 +3,13 @@ from .soil import Soil
 class VanGenuchten(Soil):
 
     # class initialization
-    def __init__(self,inputLSM):
+    def __init__(self,input):
         
         # TODO: Check these computations, especially power terms
         
         print("[UtahLSM: Soil] \t--- running with the Van Genuchten scheme")
         # initialize parent class
-        super().__init__(inputLSM)
+        super().__init__(input)
         
         # Compute soil surface moisture
         def surface_water_content(psi):

@@ -79,8 +79,8 @@ class UtahLSM:
             self.latitude  = self.latitude * constants.pi / 180.0
             self.longitude = self.longitude * constants.pi / 180.0
             
-            # choose radiation model
-            self.rad = Radiation.get_model(1,self.latitude, self.longitude, self.albedo, self.emissivity)
+            # Create radiation model
+            self.rad = Radiation.get_model(1,self.input)
         else:
             print("[UtahLSM: Radiation] \t Using offline data, no model")
         
@@ -90,7 +90,7 @@ class UtahLSM:
         
         print("[UtahLSM: Setup] \t Creating surface model")
         # choose surface model
-        #self.sfc = Surface.get_model(1,self.input)
+        self.sfc = Surface.get_model(1)
 
         print("[UtahLSM: Setup] \t Creating additional fields")
         # initialize flux arrays

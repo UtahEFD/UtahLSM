@@ -4,11 +4,11 @@ from .soil import Soil
 class BrooksCorey(Soil):
 
     # class initialization
-    def __init__(self,inputLSM):
+    def __init__(self,input):
         
         print("[UtahLSM: Soil] \t\t--- running with the Brooks-Corey model")
         # initialize parent class
-        super().__init__(inputLSM)
+        super().__init__(input)
     
     # Compute soil surface moisture
     def surface_water_content(psi):
