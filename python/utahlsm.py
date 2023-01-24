@@ -29,25 +29,62 @@ class UtahLSM:
         self.output = outputLSM
         
         print("[UtahLSM: Setup] \t Reading input settings")
+        # Input time section
+        self.dt_seb = inputLSM.step_seb
+        self.dt_dif = inputLSM.step_dif
+        
+        # Input grid section
+        self.nx = inputLSM.nx
+        self.ny = inputLSM.ny
+        
+        # Input length scale section
+        self.z_o = self.input.z_o
+        self.z_t = self.input.z_t
+        self.z_m = self.input.z_m
+        self.z_s = self.input.z_s
+        
         # configuration variables
-        nz         = self.input.nsoil
-        soil_model = self.input.model
+        self.nz             = self.input.nsoil
+        self.soil_param     = self.input.param
+        self.soil_model     = self.input.model
         
         print("[UtahLSM: Setup] \t Reading input data")
-        # input fields
-        self.soil_column    = np.empty(4).astype(np.object_)
-        self.soil_column[0] = self.input.soil_z
-        self.soil_column[1] = self.input.soil_T
-        self.soil_column[2] = self.input.soil_q
-        self.soil_column[3] = self.input.soil_type
+        self.soil_z    = self.input.soil_z
+        self.soil_T    = self.input.soil_T
+        self.soil_q    = self.input.soil_q
+        self.soil_type = self.input.soil_type
         
-        print("[UtahLSM: Setup] \t Creating radiation model")
-        # choose radiation model
-        self.rad = Radiation.get_model(1,self.input)
+        # Initialize new surface values for first run
+        self.sfc_T_new = self.soil_T[0]
+        self.sfc_q_new = self.soil_q[0]
+        
+        # Initialize history arrays for first run
+        soil_T_last = self.soil_T
+        soil_q_last = self.soil_q
+        
+        # Modify soil levels to be negative
+        self.soil_z = -1*self.soil_z
+        
+        # Input radiation section
+        self.comp_rad = self.inputLSM.comp_rad
+        if (self.comp_rad==1):
+            print("[UtahLSM: Setup] \t Creating radiation model")
+            self.albedo = self.inputLSM.albedo
+            self.emissivity = self.inputLSM.emissivity
+            self.latitude = self.inputLSM.latitude
+            self.longitude = self.inputLSM.longitude
+            self.julian_day = self.inputLSM.julian_day
+            
+            # convert latitude and longitude into radians
+            self.latitude  = self.latitude * c.pi / 180.0
+            self.longitude = self.longitude * c.pi / 180.0
+            
+            # choose radiation model
+            self.rad = Radiation.get_model(1,self.input)
         
         print("[UtahLSM: Setup] \t Creating soil model")
         # choose surface model
-        self.soil = Soil.get_model(soil_model,self.input)
+        self.soil = Soil.get_model(self.soil_model,self.input)
         
         print("[UtahLSM: Setup] \t Creating surface model")
         # choose surface model
@@ -72,16 +109,16 @@ class UtahLSM:
         # set reference to output dimensions
         self.output_dims = {
             't':0,
-            'z':nz
+            'z':self.nz
         }
         self.output.set_dims(self.output_dims)
 
         # set reference to output fields
         self.output_fields = {
-            'soil_z':self.soil_column[0],
-            'soil_T':self.soil_column[1],
-            'soil_q':self.soil_column[2],
-            'soil_type':self.soil_column[3],
+            'soil_z':self.soil_z,
+            'soil_T':self.soil_T,
+            'soil_q':self.soil_q,
+            'soil_type':self.soil_type,
             'ust':self.ust,
             'obl':self.obl,
             'shf':self.shf,

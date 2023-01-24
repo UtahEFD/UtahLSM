@@ -77,7 +77,6 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     soil_T_last = soil_T;
     soil_q_last = soil_q;
     
-    // Modify soil levels to be negative
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
                    std::bind(std::multiplies<double>(), std::placeholders::_1, -1.0));
     
