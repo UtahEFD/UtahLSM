@@ -5,7 +5,7 @@ import os
 import sys
 import time
 from physics import Radiation, Soil, Surface
-from util import io, matrix
+from util import constants, io, matrix
 
 # custom error message for user case entry
 class InvalidCase(Exception):
@@ -43,7 +43,7 @@ class UtahLSM:
         self.z_m = self.input.z_m
         self.z_s = self.input.z_s
         
-        # configuration variables
+        # Input soil section
         self.nz             = self.input.nsoil
         self.soil_param     = self.input.param
         self.soil_model     = self.input.model
@@ -66,24 +66,26 @@ class UtahLSM:
         self.soil_z = -1*self.soil_z
         
         # Input radiation section
-        self.comp_rad = self.inputLSM.comp_rad
+        self.comp_rad = self.input.comp_rad
         if (self.comp_rad==1):
             print("[UtahLSM: Setup] \t Creating radiation model")
-            self.albedo = self.inputLSM.albedo
-            self.emissivity = self.inputLSM.emissivity
-            self.latitude = self.inputLSM.latitude
-            self.longitude = self.inputLSM.longitude
-            self.julian_day = self.inputLSM.julian_day
+            self.albedo     = self.input.albedo
+            self.emissivity = self.input.emissivity
+            self.latitude   = self.input.latitude
+            self.longitude  = self.input.longitude
+            self.julian_day = self.input.julian_day
             
             # convert latitude and longitude into radians
-            self.latitude  = self.latitude * c.pi / 180.0
-            self.longitude = self.longitude * c.pi / 180.0
+            self.latitude  = self.latitude * constants.pi / 180.0
+            self.longitude = self.longitude * constants.pi / 180.0
             
             # choose radiation model
-            self.rad = Radiation.get_model(1,self.input)
+            self.rad = Radiation.get_model(1,self.latitude, self.longitude, self.albedo, self.emissivity)
+        else:
+            print("[UtahLSM: Radiation] \t Using offline data, no model")
         
+        # Create soil model
         print("[UtahLSM: Setup] \t Creating soil model")
-        # choose surface model
         self.soil = Soil.get_model(self.soil_model,self.input)
         
         print("[UtahLSM: Setup] \t Creating surface model")

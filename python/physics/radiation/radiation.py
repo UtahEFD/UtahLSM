@@ -1,15 +1,14 @@
 class Radiation(object):
     
-    def __init__(self,inputLSM):
+    def __init__(self, latitude, longitude, albedo, emissivity):
     
-        self.input      = inputLSM
-        self.latitude   = inputLSM.latitude
-        self.longitude  = inputLSM.longitude
-        self.albedo     = inputLSM.albedo
-        self.emissivity = inputLSM.emissivity
+        self.latitude   = latitude
+        self.longitude  = longitude
+        self.albedo     = albedo
+        self.emissivity = emissivity
         
     @staticmethod
-    def get_model(key,inputLSM):
+    def get_model(key,latitude, longitude, albedo, emissivity):
         if key == 1:
             from .rad_basic import RadBasic
-            return RadBasic(inputLSM)
+            return RadBasic(latitude, longitude, albedo, emissivity)

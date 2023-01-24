@@ -5,11 +5,11 @@ from .radiation import Radiation
 class RadBasic(Radiation):
 
     # class initialization
-    def __init__(self,inputLSM):
+    def __init__(self,latitude, longitude, albedo, emissivity):
         
         print("[UtahLSM: Radiation] \t --- using the basic model")
         # initialize parent class
-        super().__init__(inputLSM)
+        super().__init__(latitude, longitude, albedo, emissivity)
         
     # Computes the surface net radiation
     def compute_net(self, julian_day, time_utc, sfc_T):
