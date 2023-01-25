@@ -396,7 +396,58 @@ class UtahLSM:
     
     # Solve the surface moisture budget
     # TODO: write solve_smb function
-    def solve_smb(): pass
+    def solve_smb():
+        
+        # Local variables
+        max_iter_flux = 200
+        delta         = 0.5 
+        flux_criteria = .001
+        
+        # Moisture potential at first two levels below ground
+        psi0 = self.soil.water_potential(self.soil_q[0], 0)
+        psi1 = self.soil.water_potential(self.soil_q[1], 1)
+        
+        # Compute initial soil moisture flux
+        K0    = self.soil.conductivity_moisture(self.soil_q[0],0)
+        K1    = self.soil.conductivity_moisture(self.soil_q[1],1)
+        K_avg = 0.5*(K0+K1)
+        D0    = self.soil.diffusivity_moisture(self.soil_q[0],0)
+        D1    = self.soil.diffusivity_moisture(self.soil_q[1],1)
+        D_avg = 0.5*(D0+D1)
+        flux_sm  = c.rho_wat*K_avg*((psi0 - psi1)/(self.soil_z[0]-self.soil_z[1]) + 1)
+        flux_sm = c.rho_wat*D_avg*(self.soil_q[0]-self.soil_q[1])/(self.soil_z[0]-self.soil_z[1]) + c.rho_wat*K_avg
+        
+        # Compute evaporation
+        E = c.rho_air*self.flux_wq
+        
+        # Convergence loop for moisture flux
+        for ff in range(0,max_iter_flux):
+            
+            # Save soil moisture flux for convergence test
+            flux_sm_last = flux_sm
+            
+            # Compute new weighted soil moisture flux
+            flux_sm = delta*flux_sm_last - (1.-delta)*E
+            
+            # Re-compute moisture potential
+            psi0    = psi1 + (self.soil_z[0]-self.soil_z[1])*((flux_sm/(c.rho_wat*K_avg))-1)
+            if (psi0 > self.soil.properties[0].psi_sat):
+                psi0 = self.soil.properties[0].psi_sat
+            
+            # Update soil moisture
+            sfc_q_new = self.soil.surface_water_content(psi0)
+            gnd_q     = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
+            E = c.rho_air*(gnd_q-self.atm_q)*self.ust*self.sfc.fh(z_s, z_t,self.obl[:])
+            
+            # Update soil moisture transfer
+            K0    = self.soil.conductivity_moisture(self.sfc_q_new,0)
+            K1    = self.soil.conductivity_moisture(self.sfc_q_new,1)
+            K_avg = 0.5*(K0+K1)
+            
+            # Check for convergence
+            converged = np.abs((E + flux_sm)/E) <=flux_criteria
+        
+            if (converged): break
     
     # Solve the diffusion equation for soil heat
     # TODO: write solve_diffusion_heat function
