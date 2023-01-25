@@ -183,12 +183,12 @@ class UtahLSM:
         
         # check if time to compute diffusion
         if ( (self.step_count % self.dt_dif)==0 ):
-            pass
+            
             # Solve heat diffusion
-            #self.solve_diffusion_heat()
+            self.solve_diffusion_heat()
         
             # solve moisture diffusion
-            #self.solve_diffusion_mois()
+            self.solve_diffusion_mois()
         
         # Change flag of whether initial time
         if self.first: self.first = False
@@ -293,7 +293,7 @@ class UtahLSM:
         return dSEB_dT
     
     # Solve the surface energy budget
-    def solve_seb():
+    def solve_seb(self):
         
         # Local variables
         max_iter_temp = 200
@@ -395,8 +395,7 @@ class UtahLSM:
             self.sfc_T_new = 0.5*(self.sfc_T_new + last_T)
     
     # Solve the surface moisture budget
-    # TODO: write solve_smb function
-    def solve_smb():
+    def solve_smb(self):
         
         # Local variables
         max_iter_flux = 200
@@ -450,7 +449,7 @@ class UtahLSM:
             if (converged): break
     
     # Solve the diffusion equation for soil heat
-    def solve_diffusion_heat():
+    def solve_diffusion_heat(self):
         
         # Local variables
         AB  = 1.0
@@ -522,7 +521,7 @@ class UtahLSM:
                 r[i] = CFp * self.soil_T[i] + CF * self.soil_T[i+1] + CFm * self.soil_T[i+2]
         
             # Matrix coefficients for bottom level
-            j = nsoilz-2
+            j = self.nz-2
         
             Cp  = self.dt_dif * dt_T * K_mid[j] / dz2
             Cm  = self.dt_dif * dt_T * K_mid[j] / dz2
@@ -561,13 +560,163 @@ class UtahLSM:
             t+=dt_T
     
     # Solve the diffusion equation for soil moisture
-    # TODO: write solve_diffusion_mois function
-    def solve_diffusion_mois(): pass
-    
-    # Solve the diffusion equation for soil heat and moisture
-    # 1=heat, 2=moisture
-    # TODO: write solve_diffusion function
-    def solve_diffusion(diff_type): pass
+    def solve_diffusion_mois(self):
+        # Local variables
+        AB  = 1.0
+        AF  = 1.0-AB
+        dz  = self.soil_z[0] - self.soil_z[1]
+        dz2 = dz**2
+        
+        K_lin = np.zeros(self.nz)
+        D     = np.zeros(self.nz)
+        D_mid = np.zeros(self.nz-1)
+        z_mid = np.zeros(self.nz-1)
+        r     = np.zeros(self.nz-1)
+        e     = np.zeros(self.nz-1)
+        f     = np.zeros(self.nz-1)
+        g     = np.zeros(self.nz-1)
+        
+        # Get the time step restriction
+        dt_q = 1
+        
+        # Loop through diffusion by substep
+        t = 0
+        while (t<=self.tstep):
+        
+            # Set up and solve a tridiagonal matrix
+            # AT(n+1) = r(n), where n denotes the time level
+            # e, f, g the components of A matrix
+            # T(n+1)  the soil temperature vector at t=n+1
+            # r(n)    the soil temperature vector at t=n multiplied by coefficients
+        
+            # first soil level below the surface
+            # common coefficients
+            Cpd  = self.dt_dif * dt_q * D_mid[0] / dz2
+            Cmd  = self.dt_dif * dt_q * D_mid[1] / dz2
+            Cpk  = self.dt_dif * dt_q * K_lin[0] / (2*dz)
+            Cmk  = self.dt_dif * dt_q * K_lin[2] / (2*dz)
+        
+            # coefficients for backward scheme
+            CBpd = -AB * Cpd
+            CBmd = -AB * Cmd
+            CBpk = -AB * Cpk
+            CBmk = -AB * Cmk
+            CB   = (1 - CBpd - CBmd)
+            CBp  = CBpd + CBpk
+            CBm  = CBmd - CBmk
+        
+            # coefficients for forward scheme
+            CFpd = AF * Cpd
+            CFmd = AF * Cmd
+            CFpk = AF * Cpk
+            CFmk = AF * Cmk
+            CF   = (1 - CFpd - CFmd)
+            CFp  = CFpd + CFpk
+            CFm  = CFmd - CFmk
+        
+            # matrix components
+            e[0] = 0
+            f[0] = CB
+            g[0] = CBm
+            r[0] = CFp * self.soil_q[0] + CF * self.soil_q[1] + CFm * self.soil_q[2] - CBp * self.sfc_q_new
+        
+            # interior soil levels
+            for i in range(1,self.nz-2):
+        
+                # for soil_T in this loop:
+                # i   -> j+1 level
+                # i+1 -> j   level
+                # i+2 -> j-1 level# 
+                
+                # common coefficients
+                Cpd  = self.dt_dif * dt_q * D_mid[i] / dz2
+                Cmd  = self.dt_dif * dt_q * D_mid[i+1] / dz2
+                Cpk  = self.dt_dif * dt_q * K_lin[i] / (2*dz)
+                Cmk  = self.dt_dif * dt_q * K_lin[i+2] / (2*dz)
+        
+                # coefficients for backward scheme
+                CBpd = -AB * Cpd
+                CBmd = -AB * Cmd
+                CBpk = -AB * Cpk
+                CBmk = -AB * Cmk
+                CB   = (1 - CBpd - CBmd)
+                CBp  = CBpd + CBpk
+                CBm  = CBmd - CBmk
+        
+                # coefficients for forward scheme
+                CFpd = AF * Cpd
+                CFmd = AF * Cmd
+                CFpk = AF * Cpk
+                CFmk = AF * Cmk
+                CF   = (1 - CFpd - CFmd)
+                CFp  = CFpd + CFpk
+                CFm  = CFmd - CFmk
+        
+                # matrix components
+                e[i] = CBp
+                f[i] = CB
+                g[i] = CBm
+                r[i] = CFp * self.soil_q[i] + CF * self.soil_q[i+1] + CFm * self.soil_q[i+2]
+        
+            # Matrix coefficients for bottom level
+            j = self.nz-2
+        
+            # common coefficients
+            Cpd  = self.dt_dif * dt_q * D_mid[j] / dz2
+            Cmd  = self.dt_dif * dt_q * D_mid[j] / dz2
+            Cpk  = self.dt_dif * dt_q * K_lin[j] / (2*dz)
+            Cmk  = self.dt_dif * dt_q * K_lin[j] / (2*dz)
+        
+            # coefficients for backward scheme
+            CBpd = -AB * Cpd
+            CBmd = -AB * Cmd
+            CBpk = -AB * Cpk
+            CBmk = -AB * Cmk
+            CB   = (1 - CBpd - CBmd)
+            CBp  = CBpd + CBpk
+            CBm  = CBmd - CBmk
+        
+            # coefficients for forward scheme
+            CFpd = AF * Cpd
+            CFmd = AF * Cmd
+            CFpk = AF * Cpk
+            CFmk = AF * Cmk
+            CF   = (1 - CFpd - CFmd)
+            CFp  = CFpd + CFpk
+            CFm  = CFmd - CFmk
+        
+            # matrix components
+            e[j] = (CBp - CBm)
+            f[j] = (CB + 2 * CBm)
+            g[j] = 0
+            r[j] = (CFp - CFm) * self.soil_q[j] + (CF + 2 * CFm) * self.soil_q[j+1]
+        
+            # now we can add new sfc q to column array
+            self.soil_q[0] = self.sfc_q_new
+        
+            # Solve the tridiagonal system
+            try:
+                # we only need the layers below the surface
+                matrix.tridiagonal(e,f,g,r,soil_q[1::])
+            except:
+                sys.exit(0)
+        
+            # solve for D to get new dt
+            for i in range(0,self.nz-1):
+                D[i]     = self.soil.diffusivity_moisture(self.soil_q[i],i)
+                D[i+1]   = self.soil.diffusivity_moisture(self.soil_q[i+1],i+1)
+                D_mid[i] = 0.5*(D[i]+D[i+1])
+                z_mid[i] = 0.5*(self.soil_z[i]+self.soil_z[i+1])
+        
+                # linearized K
+                K_lin[i] = self.soil.conductivity_moisture(self.soil_q[i],i)/self.soil_q[i]
+                if (i==self.nz-2):
+                    K_lin[i+1] = soil.conductivity_moisture(self.soil_q[i+1],i+1)/self.soil_q[i+1]
+        
+            # get new dt
+            Dmax = np.max(D)
+            dt_q = dz2 / (2*Dmax)
+            t+=dt_q
 
 # main program to run the LSM
 if __name__ == "__main__":

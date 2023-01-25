@@ -56,7 +56,7 @@ class Soil(object):
         return conductivity
     
     # Compute soil thermal diffusivity
-    def diffusivityThermal(self, soil_q, level):
+    def diffusivity_thermal(self, soil_q, level):
         heat_cap     = self.heat_capacity(soil_q,level)
         conductivity = self.conductivity_thermal(soil_q, level)
         diffusivity  = conductivity / heat_cap
