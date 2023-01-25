@@ -267,6 +267,31 @@ class UtahLSM:
                 self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
                 break
     
+    # Compute the surface energy budget
+    def compute_seb(self, sfc_T):
+        
+        # Compute fluxes using passed in values
+        self.compute_fluxes(sfc_T,self.sfc_q_new);
+        
+        # Write sensible and latent heat fluxes in [W/m^2]
+        Qh = c.rho_air*c.Cp_air*self.flux_wT
+        Ql = c.rho_air*c.Lv*self.flux_wq
+        Qg = self.ghf
+        
+        # Compute surface energy balance
+        SEB = self.R_net - Qg - Qh - Ql
+        return SEB
+    
+    # Compute the derivative of the surface energy budget
+    def compute_dseb(self, sfc_T):
+        
+        # Compute derivative of SEB wrt temperature
+        heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
+        dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3)
+        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(z_s,z_t,self.obl[:])
+        + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
+        return dSEB_dT
+    
     # Solve the surface energy budget
     # TODO: write solve_seb function
     def solve_seb(): pass
@@ -287,14 +312,6 @@ class UtahLSM:
     # 1=heat, 2=moisture
     # TODO: write solve_diffusion function
     def solve_diffusion(diff_type): pass
-    
-    # Compute the surface energy budget
-    # TODO: write compute_seb function
-    def compute_seb(sfc_T): pass
-    
-    # Compute the derivative of the surface energy budget
-    # TODO: write compute_dseb function
-    def compute_dseb(sfc_T): pass
 
 # main program to run the LSM
 if __name__ == "__main__":
