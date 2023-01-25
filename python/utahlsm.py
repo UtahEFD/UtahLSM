@@ -162,10 +162,39 @@ class UtahLSM:
         if (self.atm_U==0): self.atm_U = 0.1
             
     # Run the model
-    # TODO: write run function
     def run(self):
+                
+        # Set initial new temp and moisture
+        self.sfc_T_new = self.soil_T[0];
+        self.sfc_q_new = self.soil_q[0];
+        
+        # Check if time to re-compute balances
+        if ( (self.step_count % self.dt_seb)==0 ):
+            pass
+            #self.solveSEB()
+            #self.solveSMB()
+        else:
+            # just return new fluxes
+            self.compute_fluxes(self.soil_T[0],self.soil_q[0])
+        
+        # Save current temperature and moisture
+        self.soil_T_last = self.soil_T
+        self.soil_q_last = self.soil_q
+        
+        # check if time to compute diffusion
+        if ( (self.step_count % self.dt_dif)==0 ):
+            pass
+            # Solve heat diffusion
+            #self.solve_diffusion_heat()
+        
+            # solve moisture diffusion
+            #self.solve_diffusion_mois()
+        
+        # Change flag of whether initial time
         if self.first: self.first = False
-        self.compute_fluxes(self.soil_T[0], self.soil_q[0])
+        
+        # Increment step counter
+        self.step_count += 1
         
     # Save output fields
     # TODO: write save function
