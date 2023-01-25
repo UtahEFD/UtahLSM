@@ -450,8 +450,115 @@ class UtahLSM:
             if (converged): break
     
     # Solve the diffusion equation for soil heat
-    # TODO: write solve_diffusion_heat function
-    def solve_diffusion_heat(): pass
+    def solve_diffusion_heat():
+        
+        # Local variables
+        AB  = 1.0
+        AF  = 1.0-AB
+        dz  = self.soil_z[0] - self.soil_z[1]
+        dz2 = dz**2
+        
+        K     = np.zeros(self.nz)
+        K_mid = np.zeros(self.nz-1)
+        z_mid = np.zeros(self.nz-1)
+        r     = np.zeros(self.nz-1)
+        e     = np.zeros(self.nz-1)
+        f     = np.zeros(self.nz-1)
+        g     = np.zeros(self.nz-1)
+        
+        for i in range(0,self.nz-1):
+            K[i]     = self.soil.diffusivity_thermal(self.soil_q[i],i)
+            K[i+1]   = self.soil.diffusivity_thermal(self.soil_q[i+1],i+1)
+            K_mid[i] = 0.5*(K[i]+K[i+1])
+            z_mid[i] = 0.5*(self.soil_z[i]+self.soil_z[i+1])
+        
+        # Get the time step restriction
+        dt_T = 1
+        
+        # Loop through diffusion by substep
+        t = 0
+        while (t<=self.tstep):
+                
+            # Set up and solve a tridiagonal matrix
+            # AT(n+1) = r(n), where n denotes the time level
+            # e, f, g the components of A matrix
+            # T(n+1)  the soil temperature vector at t=n+1
+            # r(n)    the soil temperature vector at t=n multiplied by coefficients
+        
+            # Matrix coefficients for first level below surface
+            Cp  = self.dt_dif * dt_T * K_mid[0] / dz2
+            Cm  = self.dt_dif * dt_T * K_mid[1] / dz2
+            CBp = -AB * Cp
+            CBm = -AB * Cm
+            CB  = 1 - CBp - CBm
+            CFp = AF * Cp
+            CFm = AF * Cm
+            CF  = 1 - CFp - CFm
+        
+            e[0] = 0
+            f[0] = CB
+            g[0] = CBm
+            r[0] = CFp * self.soil_T[0] + CF * self.soil_T[1] + CFm * self.soil_T[2] - CBp * self.sfc_T_new
+            
+            # Matrix coefficients for the interior levels
+            for i in range(1,self.nz-2):
+        
+                # for soil_T in this loop:
+                # i   -> j+1 level
+                # i+1 -> j   level
+                # i+2 -> j-1 level
+                Cp  = self.dt_dif * dt_T * K_mid[i] / dz2
+                Cm  = self.dt_dif * dt_T * K_mid[i+1] / dz2
+                CBp = -AB * Cp
+                CBm = -AB * Cm
+                CB  = 1 - CBp - CBm
+                CFp = AF * Cp
+                CFm = AF * Cm
+                CF  = 1 - CFp - CFm
+        
+                e[i] = CBp
+                f[i] = CB
+                g[i] = CBm
+                r[i] = CFp * self.soil_T[i] + CF * self.soil_T[i+1] + CFm * self.soil_T[i+2]
+        
+            # Matrix coefficients for bottom level
+            j = nsoilz-2
+        
+            Cp  = self.dt_dif * dt_T * K_mid[j] / dz2
+            Cm  = self.dt_dif * dt_T * K_mid[j] / dz2
+            CBp = -AB * Cp
+            CBm = -AB * Cm
+            CB  = 1 - CBp - CBm
+            CFp = AF * Cp
+            CFm = AF * Cm
+            CF  = 1 - CFp - CFm
+        
+            e[j] = (CBp - CBm)
+            f[j] = (CB + 2 * CBm)
+            g[j] = 0
+            r[j] = (CFp - CFm) * self.soil_T[j] + (CF + 2* CFm) * self.soil_T[j+1]
+                    
+            # now we can add new sfc T to column array
+            self.soil_T[0] = self.sfc_T_new
+        
+            # Solve the tridiagonal system
+            try:
+                # we only need to send the layers below surface
+                matrix.tridiagonal(e,f,g,r,self.soil_T[1::])
+            except:
+                sys.exit(0)
+        
+            # solve K for this step to get a new dt
+            for i in range(0, self.nz-1):
+                K[i]     = self.soil.diffusivity_thermal(self.soil_q[i],i)
+                K[i+1]   = self.soil.diffusivity_thermal(self.soil_q[i+1],i+1)
+                K_mid[i] = 0.5*(K[i]+K[i+1])
+                z_mid[i] = 0.5*(self.soil_z[i]+self.soil_z[i+1])
+        
+            # Get the time step restriction
+            Kmax = np.max(K)
+            dt_T = dz2 / (2*Kmax)
+            t+=dt_T
     
     # Solve the diffusion equation for soil moisture
     # TODO: write solve_diffusion_mois function
