@@ -46,7 +46,7 @@ class Soil(object):
         return hum_spec
     
     # Compute soil thermal conductivity
-    def conductivity_thermal(soil_q, level):
+    def conductivity_thermal(self, soil_q, level):
         psi = 100.*self.water_potential(soil_q,level)
         pf = np.log10(np.abs(psi))
         if (pf <= 5.1):
@@ -56,7 +56,7 @@ class Soil(object):
         return conductivity
     
     # Compute soil thermal diffusivity
-    def diffusivityThermal(soil_q, level):
+    def diffusivityThermal(self, soil_q, level):
         heat_cap     = self.heat_capacity(soil_q,level)
         conductivity = self.conductivity_thermal(soil_q, level)
         diffusivity  = conductivity / heat_cap

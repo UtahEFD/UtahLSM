@@ -11,7 +11,7 @@ class BrooksCorey(Soil):
         super().__init__(input)
     
     # Compute soil surface moisture
-    def surface_water_content(psi):
+    def surface_water_content(self, psi):
         b        = self.properties[0].b
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
@@ -21,7 +21,7 @@ class BrooksCorey(Soil):
         return soil_q
     
     # Estimate soil surface moisture from surface mixing ratio
-    def surface_water_content_estimate(sfc_T, sfc_q, atm_p):
+    def surface_water_content_estimate(self, sfc_T, sfc_q, atm_p):
         b        = self.properties[0].b
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
@@ -34,7 +34,7 @@ class BrooksCorey(Soil):
         return soil_q
     
     # Compute soil water potential (single level)
-    def water_potential(soil_q, level):
+    def water_potential(self, soil_q, level):
         b        = self.properties[level].b
         psi_sat  = self.properties[level].psi_sat
         porosity = self.properties[level].porosity
@@ -54,7 +54,7 @@ class BrooksCorey(Soil):
         return psi
     
     # Computes soil moisture conductivity.
-    def conductivity_moisture(soil_q, level):
+    def conductivity_moisture(self, soil_q, level):
         b            = self.properties[level].b
         porosity     = self.properties[level].porosity
         residual     = self.properties[level].residual
@@ -64,7 +64,7 @@ class BrooksCorey(Soil):
         return conductivity
     
     # Computes soil moisture diffusivity
-    def diffusivity_moisture(soil_q, level):
+    def diffusivity_moisture(self, soil_q, level):
         b            = self.properties[level].b
         psi_sat      = self.properties[level].psi_sat
         porosity     = self.properties[level].porosity

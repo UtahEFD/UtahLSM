@@ -64,7 +64,7 @@ class SurfaceMOST(Surface):
         return 2*np.log((1+x)/2)+np.log((1+x**2)/2)-2*np.arctan(x)+np.pi/2
     
     # integral stability correction for scalars
-    def psih(self,z,obukLT):
+    def psih(self,z,obukL):
         
         # z/L
         zeta = 0 if obukL==0 else z/obukL
@@ -83,11 +83,10 @@ class SurfaceMOST(Surface):
     
     # common log-law function for momentum
     def fm(self, z1, z0, obukL):
-        vk = constants.vonk
         fm = c.vonk / (np.log(z1/z0) - self.psim(z1,obukL) + self.psim(z0,obukL))
         return fm
     
     # common log-law function for heat
     def fh(self, z1, z0h, obukL):
-        fh = c.vk / (np.log(z1/z0h) - self.psih(z1,obukL) + self.psih(z0h,obukL))
+        fh = c.vonk / (np.log(z1/z0h) - self.psih(z1,obukL) + self.psih(z0h,obukL))
         return fh

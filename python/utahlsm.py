@@ -5,7 +5,7 @@ import os
 import sys
 import time
 from physics import Radiation, Soil, Surface
-from util import constants, io, matrix
+from util import constants as c, io, matrix
 
 # custom error message for user case entry
 class InvalidCase(Exception):
@@ -94,11 +94,13 @@ class UtahLSM:
 
         print("[UtahLSM: Setup] \t Creating additional fields")
         # initialize flux arrays
-        self.obl = np.zeros(1)
-        self.ust = np.zeros(1)
-        self.shf = np.zeros(1)
-        self.lhf = np.zeros(1)
-        self.ghf = np.zeros(1)
+        self.ust     = np.array([ustar])
+        self.flux_wT = np.array([flux_wT])
+        self.flux_wq = np.array([flux_wq])
+        self.obl     = np.zeros(1)
+        self.shf     = np.zeros(1)
+        self.lhf     = np.zeros(1)
+        self.ghf     = np.zeros(1)
         
         # Local atmospheric data
         self.atm_U = 0
@@ -161,14 +163,80 @@ class UtahLSM:
             
     # Run the model
     # TODO: write run function
-    def run(): pass
+    def run(self):
+        if self.first: self.first = False
+        self.compute_fluxes(self.soil_T[0], self.soil_q[0])
         
     # Save output fields
     # TODO: write save function
     def save(): pass
     
     # Compute fluxes using similarity theory
-    def computeFluxes(sfc_T, sfc_q): pass
+    # TODO: Clean compute_fluxes up
+    def compute_fluxes(self, sfc_T, sfc_q):
+        
+        # Local variables
+        max_iterations = 200
+        converged      = False
+        last_L         = 0.1
+        criteria       = 0.1
+        ref_T          = 300
+        
+        # Compute surface mixing ratio
+        gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
+        
+        # Sensible flux, latent flux, ustar, and L
+        for i in range(0,max_iterations):
+            # First time through we estimate based on Santanello and Friedl (2003)
+            if self.first:
+                if (self.soil_q[0]>=0.4):
+                    A = 0.31
+                    B = 74000
+                elif (self.soil_q[0]<0.4 and self.soil_q[0] >= 0.25):
+                    A = 0.33
+                    B = 85000
+                else:
+                    A = 0.35
+                    B = 100000
+                self.ghf = self.R_net*A*np.cos((2*c.pi*(utc)+10800)/B)
+            else:
+                K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
+                K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
+                Kmid     = 0.5*(K0 + K1)
+                self.ghf[:] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
+            
+            # Compute friction velocity
+            self.ust[:] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[:])
+            
+            # Compute heat flux
+            self.flux_wT[:] = (sfc_T-self.atm_T)*self.ust[:]*self.sfc.fh(self.z_s, self.z_t, self.obl[:])
+            
+            # Compute latent flux
+            if ( (self.first) and (i == 0)):
+                self.flux_wq[:] = (self.R_net - self.ghf[:] - self.flux_wT[:]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
+                gnd_q = self.atm_q + self.flux_wq[:] / (self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
+                self.soil_q[0] = self.soil.surface_water_content_estimate(self.soil_T[0],gnd_q, self.atm_p)
+                self.sfc_q_new = self.soil_q[0]
+            else:
+                self.flux_wq[:] = (gnd_q-self.atm_q)*self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
+            
+            # Compute virtual heat flux
+            flux_wTv = self.flux_wT[:] + ref_T*0.61*self.flux_wq[:]
+            
+            # Compute L
+            last_L = self.obl[:]
+            self.obl[:] = -(self.ust[:]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
+            
+            # Bounds check on L
+            if (self.z_m/self.obl[:] > 5.):  self.obl[:] = 5.
+            if (self.z_m/self.obl[:] < -5.): self.obl[:] = 5.
+
+            # Check for convergence
+            converged = np.abs(last_L-self.obl[:]) <= criteria
+            if (converged):
+                self.shf[:] = c.rho_air*c.Cp_air*self.flux_wT[:]
+                self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
+                break
     
     # Solve the surface energy budget
     # TODO: write solve_seb function
@@ -272,7 +340,7 @@ if __name__ == "__main__":
         
         # update user-specified fields
         lsm.update_fields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
-        
+        lsm.run()
         # loop through each lsm instance
         #for j in range(0,ny):
         #    for i in range(0,nx):
