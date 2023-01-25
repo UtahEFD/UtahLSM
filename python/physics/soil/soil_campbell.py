@@ -1,4 +1,6 @@
+import numpy as np
 from .soil import Soil
+from util import constants as c
 
 class Campbell(Soil):
 

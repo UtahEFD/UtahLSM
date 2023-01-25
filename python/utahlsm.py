@@ -59,20 +59,20 @@ class UtahLSM:
         self.sfc_q_new = self.soil_q[0]
         
         # Initialize history arrays for first run
-        soil_T_last = self.soil_T
-        soil_q_last = self.soil_q
+        self.soil_T_last = self.soil_T
+        self.soil_q_last = self.soil_q
         
         # Modify soil levels to be negative
         self.soil_z = -1*self.soil_z
         
         # Input radiation section
-        self.comp_rad = self.input.comp_rad
+        self.comp_rad   = self.input.comp_rad
+        self.albedo     = self.input.albedo
+        self.emissivity = self.input.emissivity
+        self.latitude   = self.input.latitude
+        self.longitude  = self.input.longitude
         if (self.comp_rad==1):
             print("[UtahLSM: Setup] \t Creating radiation model")
-            self.albedo     = self.input.albedo
-            self.emissivity = self.input.emissivity
-            self.latitude   = self.input.latitude
-            self.longitude  = self.input.longitude
             self.julian_day = self.input.julian_day
             
             # convert latitude and longitude into radians
@@ -142,7 +142,7 @@ class UtahLSM:
         self.output.save(self.output_fields,0,0,initial=True)
         
     # Update atmospheric quantities prior to solving
-    def update_fields(self,dt, u, T, q, p, rad=0):
+    def update_fields(self, dt, u, T, q, p, rad=0):
         self.tstep    = dt
         self.atm_U    = u
         self.atm_T    = T
@@ -171,8 +171,8 @@ class UtahLSM:
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
             pass
-            #self.solveSEB()
-            #self.solveSMB()
+            self.solve_seb()
+            self.solve_smb()
         else:
             # just return new fluxes
             self.compute_fluxes(self.soil_T[0],self.soil_q[0])
@@ -182,13 +182,13 @@ class UtahLSM:
         self.soil_q_last = self.soil_q
         
         # check if time to compute diffusion
-        if ( (self.step_count % self.dt_dif)==0 ):
+        #if ( (self.step_count % self.dt_dif)==0 ):
             
             # Solve heat diffusion
-            self.solve_diffusion_heat()
+            #self.solve_diffusion_heat()
         
             # solve moisture diffusion
-            self.solve_diffusion_mois()
+            #self.solve_diffusion_mois()
         
         # Change flag of whether initial time
         if self.first: self.first = False
@@ -197,8 +197,12 @@ class UtahLSM:
         self.step_count += 1
         
     # Save output fields
-    # TODO: write save function
-    def save(): pass
+    def save(self):
+        # write output
+        self.output.save(self.output_fields,self.step_count,self.runtime,initial=False)
+        # 
+        # # close output file       
+        # self.output.close()
     
     # Compute fluxes using similarity theory
     # TODO: Clean compute_fluxes up
@@ -227,7 +231,7 @@ class UtahLSM:
                 else:
                     A = 0.35
                     B = 100000
-                self.ghf = self.R_net*A*np.cos((2*c.pi*(utc)+10800)/B)
+                self.ghf[:] = self.R_net*A*np.cos((2*c.pi*(utc)+10800)/B)
             else:
                 K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
                 K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
@@ -288,7 +292,7 @@ class UtahLSM:
         # Compute derivative of SEB wrt temperature
         heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
         dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3)
-        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(z_s,z_t,self.obl[:])
+        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
         return dSEB_dT
     
@@ -341,7 +345,8 @@ class UtahLSM:
             temp_h = temp_1
         
         # Prepare for convergence looping
-        dTs = np.abs(temp_h-temp_l)
+        dTs     = np.abs(temp_h-temp_l)
+        dTs_old = dTs
         
         # Convergence loop for flux
         for ff in range(0,max_iter_flux):
@@ -436,7 +441,7 @@ class UtahLSM:
             # Update soil moisture
             sfc_q_new = self.soil.surface_water_content(psi0)
             gnd_q     = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
-            E = c.rho_air*(gnd_q-self.atm_q)*self.ust*self.sfc.fh(z_s, z_t,self.obl[:])
+            E = c.rho_air*(gnd_q-self.atm_q)*self.ust*self.sfc.fh(self.z_s, self.z_t,self.obl[:])
             
             # Update soil moisture transfer
             K0    = self.soil.conductivity_moisture(self.sfc_q_new,0)
@@ -449,6 +454,7 @@ class UtahLSM:
             if (converged): break
     
     # Solve the diffusion equation for soil heat
+    # TODO: Fix code, check matrix
     def solve_diffusion_heat(self):
         
         # Local variables
@@ -560,6 +566,7 @@ class UtahLSM:
             t+=dt_T
     
     # Solve the diffusion equation for soil moisture
+    # TODO: Fix code, check matrix
     def solve_diffusion_mois(self):
         # Local variables
         AB  = 1.0
@@ -792,17 +799,7 @@ if __name__ == "__main__":
         # update user-specified fields
         lsm.update_fields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
         lsm.run()
-        # loop through each lsm instance
-        #for j in range(0,ny):
-        #    for i in range(0,nx):
-                # update user-specified fields
-                #global_utah_lsm[k].update_fields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
-                
-                # run the model
-                #global_utah_lsm[k].run()
-                
-                # save output
-                #global_utah_lsm[k].save(outputLSM)
+        lsm.save()
     
     # time info
     t2 = time.time()
