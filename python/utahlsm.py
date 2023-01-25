@@ -293,8 +293,106 @@ class UtahLSM:
         return dSEB_dT
     
     # Solve the surface energy budget
-    # TODO: write solve_seb function
-    def solve_seb(): pass
+    def solve_seb():
+        
+        # Local variables
+        max_iter_temp = 200
+        max_iter_flux = 200
+        temp_1        = self.soil_T[0] - 1
+        temp_2        = self.soil_T[0] + 1
+        temp_criteria = 0.001
+        flux_criteria = 0.001
+        
+        # Compute SEB using current bracketed temperatures
+        SEB_l = self.compute_seb(temp_1)
+        SEB_h = self.compute_seb(temp_2)
+        
+        # Dynamic bracket adjustments
+        out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
+        
+        while (out_of_bracket):
+            
+            # Expand brackets by 1 K
+            temp_1 -= 1
+            temp_2 += 1
+            
+            # Recompute SEB at brackets
+            SEB_l = self.compute_seb(temp_1)
+            SEB_h = self.compute_seb(temp_2)
+            
+            # Check for proper brackets
+            out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
+        
+        if ((SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)):
+            throw("Please adjust brackets for Ts")
+        
+        # If SEB from low bracket Ts = 0, then that value of Ts is solution
+        if (SEB_l == 0.0): self.sfc_T_new = temp_1
+        
+        # If SEB from high bracket Ts = 0, then that value of Ts is solution
+        if (SEB_h == 0.0): self.sfc_T_new = temp_2
+        
+        # Orient the solutions such that SEB(temp_l) < 0;
+        if (SEB_l < 0.0):
+            temp_l = temp_1
+            temp_h = temp_2
+        else:
+            temp_l = temp_2
+            temp_h = temp_1
+        
+        # Prepare for convergence looping
+        dTs = np.abs(temp_h-temp_l)
+        
+        # Convergence loop for flux
+        for ff in range(0,max_iter_flux):
+                    
+            # Convergence loop for temperature
+            for tt in range(0,max_iter_temp):
+                
+                # Compute SEB and dSEB_dTs
+                SEB     = self.compute_seb(self.sfc_T_new);
+                dSEB_dT = self.compute_dseb(self.sfc_T_new)
+                
+                # Update brackets
+                if (SEB<0.): temp_l = self.sfc_T_new
+                if (SEB>0.): temp_h = self.sfc_T_new
+                
+                # Bracket and bisect temperature if Newton out of range
+                if ((((self.sfc_T_new-temp_h)*dSEB_dT-SEB)*((self.sfc_T_new-temp_l)*dSEB_dT-SEB)>0.0)
+                    or (np.abs(2*SEB) > np.abs(dTs_old*dSEB_dT))):
+                    dTs_old   = dTs
+                    dTs       = 0.5*(temp_h-temp_l)
+                    last_T    = self.sfc_T_new
+                    self.sfc_T_new = temp_l + dTs
+                    if (temp_l == self.sfc_T_new): break
+                else:
+                    dTs_old   = dTs
+                    dTs       = SEB / dSEB_dT
+                    last_T    = self.sfc_T_new
+                    self.sfc_T_new = self.sfc_T_new - dTs
+                    if (last_T == self.sfc_T_new): break
+                
+                # Check for convergence
+                if (np.abs( (self.sfc_T_new-last_T)/last_T) <= temp_criteria): break
+                
+                # If convergence fails, recompute flux
+                # computeFluxes(soil_T[0],soil_q[0]);
+            
+            # Save current flux for convergence criteria
+            last_F = self.flux_wT
+            
+            # Recompute heat flux using new temperature
+            self.compute_fluxes(self.sfc_T_new,self.sfc_q_new)
+            
+            # Check for convergence
+            if (np.abs(self.flux_wT-last_F) <= flux_criteria):
+                Qh = c.rho_air*c.Cp_air*self.flux_wT
+                Ql = c.rho_air*c.Lv*self.flux_wq
+                Qg = self.ghf
+                break
+            
+            # If flux fails to converge, split temperature difference
+            self.sfc_T_new = 0.5*(self.sfc_T_new + last_T)
     
     # Solve the surface moisture budget
     # TODO: write solve_smb function
