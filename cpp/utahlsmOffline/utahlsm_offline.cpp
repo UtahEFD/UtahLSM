@@ -65,20 +65,20 @@ int main () {
     std::vector<double> R_net;
     
     // read offline input file
-    Input* inputOffline = new Input("inputOffline.json");
+    Input* inputOffline = new Input("lsm_offline.nc","netcdf");
 
     // get offline input data
-    inputOffline->getItem(ntime,"time","ntime");
-    inputOffline->getItem(tstep,"time","tstep");
-    inputOffline->getItem(atm_U,"data","atm_U");
-    inputOffline->getItem(atm_T,"data","atm_T");
-    inputOffline->getItem(atm_q,"data","atm_q");
-    inputOffline->getItem(atm_p,"data","atm_p");
-    inputOffline->getItem(R_net,"data","R_net");
+    inputOffline->getDim(ntime,"ntime");
+    inputOffline->getItem(tstep,"tstep");
+    inputOffline->getItem(atm_U,"atm_U");
+    inputOffline->getItem(atm_T,"atm_T");
+    inputOffline->getItem(atm_q,"atm_q");
+    inputOffline->getItem(atm_p,"atm_p");
+    inputOffline->getItem(R_net,"R_net");
     
     // initialize an instance of UtahLSM input and output
-    Input* inputLSM  = new Input("lsm_namelist.json");
-    Output* outputLSM = new Output("lsm.nc");
+    Input* inputLSM  = new Input("lsm_namelist.json","json");
+    Output* outputLSM = new Output("lsm_cpp.nc");
     
     // Get grid information
     inputLSM->getItem(nx,"grid","nx");
@@ -125,6 +125,7 @@ int main () {
             }
         }
     }
+    
     // compute run time information
     clock_gettime(CLOCK_MONOTONIC, &finish);
     elapsed = (finish.tv_sec - start.tv_sec);

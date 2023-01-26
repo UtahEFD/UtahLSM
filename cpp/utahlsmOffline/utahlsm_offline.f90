@@ -19,8 +19,8 @@ program p
    include "utahlsm_interface.f90"
  
    ! input/output filename variables
-   character*50 :: input_offline_file = 'inputOffline.json'//char(0)
-   character*50 :: input_file = 'inputLSM.json'//char(0)
+   character*50 :: input_offline_file = 'lsm_offline.nc'//char(0)
+   character*50 :: input_file = 'lsm_namelist.json'//char(0)
    character*50 :: output_file = 'lsm_f.nc'//char(0)
    
    ! input/output pointer objects

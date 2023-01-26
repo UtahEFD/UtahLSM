@@ -135,6 +135,7 @@ macro (NetCDF_check_interface lang header libs)
 endmacro (NetCDF_check_interface)
 
 NetCDF_check_interface (CXX netcdf netcdf-cxx4)  # header for CXX does not have .h
+NetCDF_check_interface (CXX netcdf netcdf_c++4)  # header for CXX does not have .h
 NetCDF_check_interface (F77 netcdf.inc  netcdff)
 NetCDF_check_interface (F90 netcdf.mod  netcdff)
 

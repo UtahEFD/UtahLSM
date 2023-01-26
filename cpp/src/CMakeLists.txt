@@ -20,6 +20,7 @@ add_library(lsm
   most.cpp
   output.cpp
   radiation.cpp
+  settings.cpp
   soil.cpp
   soil_brookscorey.cpp
   soil_campbell.cpp

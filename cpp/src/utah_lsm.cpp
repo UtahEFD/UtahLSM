@@ -31,6 +31,7 @@
 #include "most.hpp"
 #include "output.hpp"
 #include "radiation.hpp"
+#include "settings.hpp"
 #include "soil.hpp"
 
 using json = nlohmann::json;
@@ -59,7 +60,7 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     input->getItem(z_t,"length","z_t");
     input->getItem(z_m,"length","z_m");
     input->getItem(z_s,"length","z_s");
-                 
+    
     // Input soil section
     input->getItem(nsoilz,"soil","nsoil");
     input->getItem(soil_param,"soil","param");
