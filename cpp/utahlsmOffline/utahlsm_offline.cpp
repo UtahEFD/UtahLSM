@@ -24,6 +24,7 @@
 #include "input.hpp"
 #include "json.hpp"
 #include "output.hpp"
+#include "settings.hpp"
 #include "utah_lsm.hpp"
 
 using json = nlohmann::json;
@@ -65,24 +66,25 @@ int main () {
     std::vector<double> R_net;
     
     // read offline input file
-    Input* inputOffline = new Input("lsm_offline.nc","netcdf");
+    Input* inputOffline = new Input("lsm_offline.nc");
 
     // get offline input data
-    inputOffline->getDim(ntime,"ntime");
-    inputOffline->getItem(tstep,"tstep");
-    inputOffline->getItem(atm_U,"atm_U");
-    inputOffline->getItem(atm_T,"atm_T");
-    inputOffline->getItem(atm_q,"atm_q");
-    inputOffline->getItem(atm_p,"atm_p");
-    inputOffline->getItem(R_net,"R_net");
+    inputOffline->getDim(ntime,"t");
+    inputOffline->getData(tstep,"tstep");
+    inputOffline->getData(atm_U,"atm_U");
+    inputOffline->getData(atm_T,"atm_T");
+    inputOffline->getData(atm_q,"atm_q");
+    inputOffline->getData(atm_p,"atm_p");
+    inputOffline->getData(R_net,"R_net");
     
     // initialize an instance of UtahLSM input and output
-    Input* inputLSM  = new Input("lsm_namelist.json","json");
-    Output* outputLSM = new Output("lsm_cpp.nc");
+    Input* inputLSM       = new Input("lsm_init.nc");
+    Settings* settingsLSM = new Settings("lsm_namelist.json");
+    Output* outputLSM     = new Output("lsm_cpp.nc");
     
     // Get grid information
-    inputLSM->getItem(nx,"grid","nx");
-    inputLSM->getItem(ny,"grid","ny");
+    settingsLSM->getItem(nx,"grid","nx");
+    settingsLSM->getItem(ny,"grid","ny");
     
     // Initialize a vector of UtahLSM instances
     std::vector<UtahLSM*> globalUtahLSM(ny*nx);
@@ -91,7 +93,7 @@ int main () {
     int k = 0;
     for (int j=0; j<ny; j++) {
         for (int i=0; i<nx; i++) {
-            globalUtahLSM[k] = new UtahLSM(inputLSM,outputLSM,ustar,flux_wT,flux_wq,j,i);
+            globalUtahLSM[k] = new UtahLSM(settingsLSM,inputLSM,outputLSM,ustar,flux_wT,flux_wq,j,i);
             k++;
         }
     }

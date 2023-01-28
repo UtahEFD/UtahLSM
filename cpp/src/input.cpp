@@ -26,7 +26,6 @@ using namespace netCDF::exceptions;
 
 // Constructor for Input class
 Input :: Input(std::string input_file) {
-    
     input = new NcFile(input_file, NcFile::read);
 }
 
@@ -73,7 +72,7 @@ void Input :: getData(std::vector<double>& external, std::string name) {
 //////////////////////////////////////////////////////////////
 
 // C-style wrapper for the Input constructor
-InputObject GetInput(char* input_file, char* input_type) {
+InputObject GetInput(char* input_file) {
     
     // Convert from char* to std::string
     std::string inputFile(input_file);
@@ -86,6 +85,24 @@ InputObject GetInput(char* input_file, char* input_type) {
     Input *input = new Input(inputFile);
 
     return (InputObject)input;
+}
+
+// C-style wrapper for the getDim function
+void GetDim(InputObject input, int* external, char* name) {
+   
+   // Get Input object
+   Input* input_obj = (Input*)input;
+   
+   // Convert from char* to std::string
+   std::string dimName(name);
+    
+   // Remove trailing spaces sent from Fortran
+    while(dimName.size() && isspace(dimName.back())) 
+        dimName.pop_back();
+   
+   // Get Data from Input object
+    input_obj->getDim(*external,dimName);
+    
 }
 
 // C-style wrapper for the getData function for an integer

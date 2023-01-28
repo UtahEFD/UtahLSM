@@ -41,34 +41,36 @@ namespace {
 }
 
 // Constructor for UtahLSM class
-UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
-                   double& flux_wq, int j, int i) : ustar(ustar),
-                   flux_wT(flux_wT),flux_wq(flux_wq), j(j), i(i) {
+UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output, 
+                   double& ustar, double& flux_wT, double& flux_wq, int j, int i) : 
+                   ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq), j(j), i(i) {
 
     std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
 
-    // Input time section
-    input->getItem(step_seb,"time","step_seb");
-    input->getItem(step_dif,"time","step_dif");
+    // Settings time section
+    settings->getItem(step_seb,"time","step_seb");
+    settings->getItem(step_dif,"time","step_dif");
 
-    // Input grid section
-    input->getItem(nx,"grid","nx");
-    input->getItem(ny,"grid","ny");
+    // Settings grid section
+    settings->getItem(nx,"grid","nx");
+    settings->getItem(ny,"grid","ny");
     
-    // Input length scale section
-    input->getItem(z_o,"length","z_o");
-    input->getItem(z_t,"length","z_t");
-    input->getItem(z_m,"length","z_m");
-    input->getItem(z_s,"length","z_s");
+    // Settings length scale section
+    settings->getItem(z_o,"length","z_o");
+    settings->getItem(z_t,"length","z_t");
+    settings->getItem(z_m,"length","z_m");
+    settings->getItem(z_s,"length","z_s");
     
-    // Input soil section
-    input->getItem(nsoilz,"soil","nsoil");
-    input->getItem(soil_param,"soil","param");
-    input->getItem(soil_model,"soil","model");
-    input->getItem(soil_z,"soil","soil_z");
-    input->getItem(soil_type,"soil","soil_type");
-    input->getItem(soil_T,"soil","soil_T");
-    input->getItem(soil_q,"soil","soil_q");
+    // Settings soil section
+    settings->getItem(nsoilz,"soil","nsoil");
+    settings->getItem(soil_param,"soil","param");
+    settings->getItem(soil_model,"soil","model");
+    
+    // Initialization data for soil
+    input->getData(soil_z,"soil_z");
+    input->getData(soil_type,"soil_type");
+    input->getData(soil_T,"soil_T");
+    input->getData(soil_q,"soil_q");
                        
     // Initialize new surface values for first run
     sfc_T_new = soil_T[0];
@@ -81,15 +83,15 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
                    std::bind(std::multiplies<double>(), std::placeholders::_1, -1.0));
     
-    // Input radiation section
-    input->getItem(comp_rad,"radiation","comp_rad");
+    // Settings radiation section
+    settings->getItem(comp_rad,"radiation","comp_rad");
     if (comp_rad==1) {
-        input->getItem(utc_start,"radiation","utc_start");
-        input->getItem(albedo,"radiation","albedo");
-        input->getItem(emissivity,"radiation","emissivity");
-        input->getItem(latitude,"radiation","latitude");
-        input->getItem(longitude,"radiation","longitude");
-        input->getItem(julian_day,"radiation","julian_day");
+        settings->getItem(utc_start,"radiation","utc_start");
+        settings->getItem(albedo,"radiation","albedo");
+        settings->getItem(emissivity,"radiation","emissivity");
+        settings->getItem(latitude,"radiation","latitude");
+        settings->getItem(longitude,"radiation","longitude");
+        settings->getItem(julian_day,"radiation","julian_day");
         
         // set initial time
         utc = utc_start;
@@ -104,12 +106,12 @@ UtahLSM :: UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
     // Create soil class
     soil = Soil::getModel(soil_type,soil_param,soil_model,nsoilz);
 
-    // Input output section
-    input->getItem(save_output, "output", "save");
+    // Settings output section
+    settings->getItem(save_output, "output", "save");
     if (save_output) {
         
         // Get fields to save from user
-        input->getItem(output_fields,"output","fields");
+        settings->getItem(output_fields,"output","fields");
         if (output_fields[0]=="all") {
             output_fields.erase(output_fields.begin());
             output_fields = {"ust","shf","lhf","ghf","obl","soilt","soilq"};
@@ -734,7 +736,7 @@ void UtahLSM :: solveDiffusionHeat() {
         // Solve the tridiagonal system
         try {
             // we only need to send the layers below surface
-            std::span<double> subsfc_T(soil_T.cbegin() + 1, soil_T.size() - 1);
+            std::span<double> subsfc_T{soil_T.data()+1, std::size(soil_T) - 1};
             matrix::tridiagonal(e,f,g,r,subsfc_T);
         } catch(std::string &e) {
             std::cout<<e<<std::endl;
@@ -931,16 +933,17 @@ void UtahLSM :: solveDiffusionMois() {
 //////////////////////////////////////////////////////////////
 
 // C-style wrapper for the UtahLSM constructor
-LSMObject GetLSM(InputObject input, OutputObject output,
+LSMObject GetLSM(SettingsObject settings, InputObject input, OutputObject output,
                  double* ustar, double* flux_wT, 
                  double* flux_wq, int* j, int* i) {
     
     // Get input and output objects
+    Settings* settings_obj = (Settings*)settings;
     Input* input_obj = (Input*)input;
     Output* output_obj = (Output*)output;
     
     // Create lsm object
-    UtahLSM* lsm = new UtahLSM(input_obj,output_obj,*ustar,*flux_wT,*flux_wq,*j,*i);
+    UtahLSM* lsm = new UtahLSM(settings_obj,input_obj,output_obj,*ustar,*flux_wT,*flux_wq,*j,*i);
 
     return (LSMObject)lsm;
 }

@@ -24,6 +24,7 @@ using namespace netCDF::exceptions;
 
 class Input;
 class Output;
+class Settings;
 class Soil;
 class Radiation;
 
@@ -41,6 +42,7 @@ class UtahLSM {
         /**
          * Constructs a UtahLSM object.
          *
+         * @param[in]     settings Settings object
          * @param[in]     input Input object
          * @param[in]     output Output object
          * @param[in,out] ustar friction velocity
@@ -49,8 +51,8 @@ class UtahLSM {
          * @param[in]     j y-index of UtahLSM column if in a grid
          * @param[in]     i x-index of UtahLSM column if in a grid
          */
-        UtahLSM(Input* input, Output* output, double& ustar, double& flux_wT,
-                double& flux_wq, int j=0, int i=0);
+        UtahLSM(Settings* settings, Input* input, Output* output, double& ustar, 
+                double& flux_wT,double& flux_wq, int j=0, int i=0);
     
         /**
          * Update atmospheric quantities prior to solving.
@@ -243,9 +245,10 @@ class UtahLSM {
         double computeDSEB(double sfc_T);
 };
 
-typedef void * LSMObject;    ///< Pointer representing UtahLSM object 
-typedef void * InputObject;  ///< Pointer representing Input object 
-typedef void * OutputObject; ///< Pointer representing Output object 
+typedef void * LSMObject;      ///< Pointer representing UtahLSM object 
+typedef void * SettingsObject; ///< Pointer representing Settings object 
+typedef void * InputObject;    ///< Pointer representing Input object 
+typedef void * OutputObject;   ///< Pointer representing Output object 
 
 /** 
  * C-style interface for compatibility with other languages.
@@ -254,6 +257,7 @@ extern "C" {
     /**
      * C-style wrapper for the UtahLSM constructor.
      *
+     * @param[in]     settings Settings object
      * @param[in]     input Input object
      * @param[in]     output Output object
      * @param[in,out] ustar friction velocity
@@ -262,7 +266,7 @@ extern "C" {
      * @param[in]     j y-index of UtahLSM column if in a grid
      * @param[in]     i x-index of UtahLSM column if in a grid
      */
-    LSMObject GetLSM(InputObject input, OutputObject output,
+    LSMObject GetLSM(SettingsObject settings,InputObject input, OutputObject output,
                      double* ustar, double* flux_wT, 
                      double* flux_wq, int* j, int* i);
     

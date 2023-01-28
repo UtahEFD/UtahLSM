@@ -26,6 +26,18 @@ interface
     
     end function GetInput
     
+    function GetSettings( settings_file ) result( optr )bind(C, name="GetSettings")
+        import :: c_char, c_ptr
+        implicit none
+        
+        ! Argument list
+        character(len=1,kind=c_char), intent(in) :: settings_file
+    
+        ! Function result
+        type(c_ptr) :: optr
+    
+    end function GetSettings
+    
     function GetOutput( output_file ) result( optr )bind(C, name="GetOutput")
         
         import :: c_char, c_ptr
@@ -57,7 +69,32 @@ interface
     
     end function GetLSM
     
-    subroutine GetItemInt(input,field,section,name) bind(C, name="GetItemInt")
+    subroutine GetItemInt(settings,field,section,name) bind(C, name="GetItemInt")
+        
+        import :: c_int, c_char, c_ptr
+        implicit none
+        
+        ! Argument list
+        type(c_ptr), value, intent(in) :: settings
+        integer(c_int), intent(in) :: field
+        character(len=1,kind=c_char), intent(in) :: section
+        character(len=1,kind=c_char), intent(in) :: name
+    
+    end subroutine GetItemInt
+    
+    subroutine GetDim(input,field,name) bind(C, name="GetDim")
+        
+        import :: c_int, c_char, c_ptr
+        implicit none
+         
+        ! Argument list
+        type(c_ptr), value, intent(in) :: input
+        integer(c_int), intent(in) :: field
+        character(len=1,kind=c_char), intent(in) :: name
+        
+    end subroutine GetDim
+    
+    subroutine GetDataInt(input,field,name) bind(C, name="GetDataInt")
         
         import :: c_int, c_char, c_ptr
         implicit none
@@ -65,12 +102,24 @@ interface
         ! Argument list
         type(c_ptr), value, intent(in) :: input
         integer(c_int), intent(in) :: field
+        character(len=1,kind=c_char), intent(in) :: name
+    
+    end subroutine GetDataInt
+    
+    subroutine GetItemDbl(settings,field,section,name) bind(C, name="GetItemDbl")
+        
+        import :: c_double, c_char, c_ptr
+        implicit none
+        
+        ! Argument list
+        type(c_ptr), value, intent(in) :: settings
+        real(c_double), intent(in) :: field
         character(len=1,kind=c_char), intent(in) :: section
         character(len=1,kind=c_char), intent(in) :: name
     
-    end subroutine GetItemInt
+    end subroutine GetItemDbl
     
-    subroutine GetItemDbl(input,field,section,name) bind(C, name="GetItemDbl")
+    subroutine GetDataDbl(input,field,name) bind(C, name="GetDataDbl")
         
         import :: c_double, c_char, c_ptr
         implicit none
@@ -78,12 +127,52 @@ interface
         ! Argument list
         type(c_ptr), value, intent(in) :: input
         real(c_double), intent(in) :: field
+        character(len=1,kind=c_char), intent(in) :: name
+    
+    end subroutine GetDataDbl
+    
+    subroutine GetItemIntArr(settings,field,size,section,name) bind(C, name="GetItemIntArr")
+        
+        import :: c_char, c_ptr, c_int
+        implicit none
+        
+        ! Argument list
+        type(c_ptr), value, intent(in) :: settings
+        integer(c_int), intent(in) :: field(*)
+        integer(c_int), intent(in) :: size
         character(len=1,kind=c_char), intent(in) :: section
         character(len=1,kind=c_char), intent(in) :: name
     
-    end subroutine GetItemDbl
+    end subroutine GetItemIntArr
     
-    subroutine GetItemDblArr(input,field,size,section,name) bind(C, name="GetItemDblArr")
+    subroutine GetDataIntArr(input,field,size,name) bind(C, name="GetDataIntArr")
+        
+        import :: c_char, c_ptr, c_int
+        implicit none
+        
+        ! Argument list
+        type(c_ptr), value, intent(in) :: input
+        integer(c_int), intent(in) :: field(*)
+        integer(c_int), intent(in) :: size
+        character(len=1,kind=c_char), intent(in) :: name
+    
+    end subroutine GetDataIntArr
+    
+    subroutine GetItemDblArr(settings,field,size,section,name) bind(C, name="GetItemDblArr")
+        
+        import :: c_double, c_char, c_ptr, c_int
+        implicit none
+        
+        ! Argument list
+        type(c_ptr), value, intent(in) :: settings
+        real(c_double), intent(in) :: field(*)
+        integer(c_int), intent(in) :: size
+        character(len=1,kind=c_char), intent(in) :: section
+        character(len=1,kind=c_char), intent(in) :: name
+    
+    end subroutine GetItemDblArr
+    
+    subroutine GetDataDblArr(input,field,size,name) bind(C, name="GetDataDblArr")
         
         import :: c_double, c_char, c_ptr, c_int
         implicit none
@@ -92,10 +181,9 @@ interface
         type(c_ptr), value, intent(in) :: input
         real(c_double), intent(in) :: field(*)
         integer(c_int), intent(in) :: size
-        character(len=1,kind=c_char), intent(in) :: section
         character(len=1,kind=c_char), intent(in) :: name
     
-    end subroutine GetItemDblArr
+    end subroutine GetDataDblArr
     
     subroutine UpdateFields(lsm,dt,u,T,q,p,rad) bind(C, name="UpdateFields")
         

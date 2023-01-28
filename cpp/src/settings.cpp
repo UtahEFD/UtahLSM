@@ -130,6 +130,36 @@ void GetItemDbl(SettingsObject settings, double* external, char* section, char* 
 }
 
 // C-style wrapper for the getItem function for a vector<double>
+void GetItemIntArr(SettingsObject settings, double external[], int* size, char* section, char* name) {
+    
+    // Get Settings object
+    Settings* settings_obj = (Settings*)settings;
+        
+    // Create a local vector
+    std::vector<int> local(*size);
+    
+    // Convert from char* to std::string
+    std::string settingsSection(section);
+    std::string settingsName(name);
+    
+    // Remove trailing spaces sent from Fortran
+    while(settingsSection.size() && isspace(settingsSection.back())) 
+        settingsSection.pop_back();
+    while(settingsName.size() && isspace(settingsName.back())) 
+        settingsName.pop_back();
+    
+    // Get item from Settings object
+    settings_obj->getItem(local,settingsSection,settingsName);
+    
+    // Copy values from local vector to external array
+    for (int i=0;i<*size;i++) {
+        external[i] = local[i];
+    }
+    
+    return; 
+}
+
+// C-style wrapper for the getItem function for a vector<double>
 void GetItemDblArr(SettingsObject settings, double external[], int* size, char* section, char* name) {
     
     // Get Settings object

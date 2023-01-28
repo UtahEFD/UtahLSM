@@ -142,6 +142,17 @@ extern "C" {
      * @param[in]  section name of the section where the requested item resides in the json file
      * @param[in]  name name of the requested field in the json file
      */
+    void GetItemIntArr(SettingsObject settings, int external[], int* size, char* section, char* name);
+    
+    /**
+     * C-style wrapper for the getItem function for a vector<double>.
+     *
+     * @param[in]  settings Settings object
+     * @param[out] external external array pointer to fill with requested data
+     * @param[in]  size number of elements in external array
+     * @param[in]  section name of the section where the requested item resides in the json file
+     * @param[in]  name name of the requested field in the json file
+     */
     void GetItemDblArr(SettingsObject settings, double external[], int* size, char* section, char* name);
 }
 
