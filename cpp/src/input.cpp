@@ -37,21 +37,21 @@ void Input :: getDim(int& external, std::string name) {
 }
 
 // Retrieve the requested int from the input netcdf file
-void Input :: getItem(int& external, std::string name) {
+void Input :: getData(int& external, std::string name) {
     NcVar var = input->getVar(name);
     std::vector<size_t> var_index = {0};
     var.getVar(var_index,&external);
 }
 
 // Retrieve the requested double from the input netcdf file
-void Input :: getItem(double& external, std::string name) {
+void Input :: getData(double& external, std::string name) {
     NcVar var = input->getVar(name);
     std::vector<size_t> var_index = {0};
     var.getVar(var_index,&external);
 }
 
 // Retrieve the requested vector<int> from the input netcdf file
-void Input :: getItem(std::vector<int>& external, std::string name) {
+void Input :: getData(std::vector<int>& external, std::string name) {
    NcVar var = input->getVar(name);
    int countp = var.getDim(0).getSize();
    std::vector<size_t> var_index = {0};
@@ -60,7 +60,7 @@ void Input :: getItem(std::vector<int>& external, std::string name) {
 }
 
 // Retrieve the requested vector<double> from the input netcdf file
-void Input :: getItem(std::vector<double>& external, std::string name) {
+void Input :: getData(std::vector<double>& external, std::string name) {
    NcVar var = input->getVar(name);
    int countp = var.getDim(0).getSize();
    std::vector<size_t> var_index = {0};
@@ -88,8 +88,8 @@ InputObject GetInput(char* input_file, char* input_type) {
     return (InputObject)input;
 }
 
-// C-style wrapper for the getItem function for an integer
-void GetItemInt(InputObject input, int* external, char* name) {
+// C-style wrapper for the getData function for an integer
+void GetDataInt(InputObject input, int* external, char* name) {
     
     // Get Input object
     Input* input_obj = (Input*)input;
@@ -101,14 +101,14 @@ void GetItemInt(InputObject input, int* external, char* name) {
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from Input object
-    input_obj->getItem(*external,inputName);
+    // Get Data from Input object
+    input_obj->getData(*external,inputName);
     
     return; 
 }
 
-// C-style wrapper for the getItem function for a double
-void GetItemDbl(InputObject input, double* external, char* name) {
+// C-style wrapper for the getData function for a double
+void GetDataDbl(InputObject input, double* external, char* name) {
     
     // Get Input object
     Input* input_obj = (Input*)input;
@@ -120,14 +120,14 @@ void GetItemDbl(InputObject input, double* external, char* name) {
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from Input object
-    input_obj->getItem(*external,inputName);
+    // Get Data from Input object
+    input_obj->getData(*external,inputName);
     
     return; 
 }
 
-// C-style wrapper for the getItem function for a vector<double>
-void GetItemIntArr(InputObject input, int external[], int* size, char* name) {
+// C-style wrapper for the getData function for a vector<double>
+void GetDataIntArr(InputObject input, int external[], int* size, char* name) {
     
     // Get Input object
     Input* input_obj = (Input*)input;
@@ -142,8 +142,8 @@ void GetItemIntArr(InputObject input, int external[], int* size, char* name) {
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from Input object
-    input_obj->getItem(local,inputName);
+    // Get Data from Input object
+    input_obj->getData(local,inputName);
     
     // Copy values from local vector to external array
     for (int i=0;i<*size;i++) {
@@ -153,8 +153,8 @@ void GetItemIntArr(InputObject input, int external[], int* size, char* name) {
     return; 
 }
 
-// C-style wrapper for the getItem function for a vector<double>
-void GetItemDblArr(InputObject input, double external[], int* size, char* name) {
+// C-style wrapper for the getData function for a vector<double>
+void GetDataDblArr(InputObject input, double external[], int* size, char* name) {
     
     // Get Input object
     Input* input_obj = (Input*)input;
@@ -169,8 +169,8 @@ void GetItemDblArr(InputObject input, double external[], int* size, char* name) 
     while(inputName.size() && isspace(inputName.back())) 
         inputName.pop_back();
     
-    // Get item from Input object
-    input_obj->getItem(local,inputName);
+    // Get Data from Input object
+    input_obj->getData(local,inputName);
     
     // Copy values from local vector to external array
     for (int i=0;i<*size;i++) {

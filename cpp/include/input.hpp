@@ -58,7 +58,7 @@ class Input {
          * @param[out] external external integer pointer to fill with requested data
          * @param[in]  name name of the requested field in the json file
          */
-        void getItem(int& external, std::string name);
+        void getData(int& external, std::string name);
         
         /**
          * Retrieves the requested double from the input file and 
@@ -67,7 +67,7 @@ class Input {
          * @param[out] external external double pointer to fill with requested data
          * @param[in] name name of the requested field in the netcdf file
          */
-        void getItem(double& external, std::string name);
+        void getData(double& external, std::string name);
         
         /**
          * Retrieves the requested vector<int> from the input file and 
@@ -76,7 +76,7 @@ class Input {
          * @param[out] external external vector<int> pointer to fill with requested data
          * @param[in]  name name of the requested field in the json file
          */
-        void getItem(std::vector<int>& external, std::string name);
+        void getData(std::vector<int>& external, std::string name);
         
         /**
          * Retrieves the requested vector<double> from the input file and 
@@ -85,7 +85,7 @@ class Input {
          * @param[out] external external vector<double> pointer to fill with requested data
          * @param[in]  name name of the requested field in the netcdf file
          */
-        void getItem(std::vector<double>& external, std::string name);
+        void getData(std::vector<double>& external, std::string name);
 };
 
 typedef void * InputObject; ///< Pointer representing Input object 
@@ -103,42 +103,42 @@ extern "C" {
     InputObject GetInput(char* input_file);
 
     /**
-     * C-style wrapper for the getItem function for an integer.
+     * C-style wrapper for the getData function for an integer.
      *
      * @param[in]  input Input object
      * @param[out] external external integer pointer to fill with requested data
      * @param[in]  name name of the requested field in the json file
      */
-    void GetItemInt(InputObject input, int* external, char* name);
+    void GetDataInt(InputObject input, int* external, char* name);
     
     /**
-     * C-style wrapper for the getItem function for a double.
+     * C-style wrapper for the getData function for a double.
      *
      * @param[in] input Input object
      * @param[out] external external double pointer to fill with requested data
      * @param[in] name name of the requested field in the json file
      */
-    void GetItemDbl(InputObject input, double* external, char* name);
+    void GetDataDbl(InputObject input, double* external, char* name);
     
     /**
-     * C-style wrapper for the getItem function for a vector<double>.
+     * C-style wrapper for the getData function for a vector<double>.
      *
      * @param[in]  input Input object
      * @param[out] external external array pointer to fill with requested data
      * @param[in]  size number of elements in external array
      * @param[in]  name name of the requested field in the json file
      */
-    void GetItemIntArr(InputObject input, double external[], int* size, char* name);
+    void GetDataIntArr(InputObject input, double external[], int* size, char* name);
     
     /**
-     * C-style wrapper for the getItem function for a vector<double>.
+     * C-style wrapper for the getData function for a vector<double>.
      *
      * @param[in]  input Input object
      * @param[out] external external array pointer to fill with requested data
      * @param[in]  size number of elements in external array
      * @param[in]  name name of the requested field in the json file
      */
-    void GetItemDblArr(InputObject input, double external[], int* size, char* name);
+    void GetDataDblArr(InputObject input, double external[], int* size, char* name);
 }
 
 #endif
