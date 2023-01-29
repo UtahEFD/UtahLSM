@@ -67,6 +67,11 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     settings->getItem(soil_model,"soil","model");
     
     // Initialization data for soil
+    input->getDim(nsoilz,"z");
+    soil_z.resize(nsoilz);
+    soil_type.resize(nsoilz);
+    soil_T.resize(nsoilz);
+    soil_q.resize(nsoilz);
     input->getData(soil_z,"soil_z");
     input->getData(soil_type,"soil_type");
     input->getData(soil_T,"soil_T");
@@ -654,7 +659,6 @@ void UtahLSM :: solveDiffusionHeat() {
     std::vector<double> e(nsoilz-1,0.0);
     std::vector<double> f(nsoilz-1,0.0);
     std::vector<double> g(nsoilz-1,0.0);
-    std::cout<<"IN solveDiffusionHeat"<<std::endl;
     for (int i=0; i<nsoilz-1; i++) {
 
         K[i]     = soil->diffusivityThermal(soil_q[i],i);

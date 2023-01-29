@@ -51,20 +51,20 @@ void Input :: getData(double& external, std::string name) {
 
 // Retrieve the requested vector<int> from the input netcdf file
 void Input :: getData(std::vector<int>& external, std::string name) {
-   NcVar var = input->getVar(name);
-   int countp = var.getDim(0).getSize();
-   std::vector<size_t> var_index = {0};
-   std::vector<size_t> var_size  = {static_cast<unsigned long>(countp)};
-   var.getVar(var_index,var_size,&external[0]);
+    NcVar var = input->getVar(name);
+    int countp = var.getDim(0).getSize();
+    std::vector<size_t> var_index = {0};
+    std::vector<size_t> var_size  = {static_cast<unsigned long>(countp)};
+    var.getVar(var_index,var_size,&external[0]);
 }
 
 // Retrieve the requested vector<double> from the input netcdf file
 void Input :: getData(std::vector<double>& external, std::string name) {
-   NcVar var = input->getVar(name);
-   int countp = var.getDim(0).getSize();
-   std::vector<size_t> var_index = {0};
-   std::vector<size_t> var_size  = {static_cast<unsigned long>(countp)};
-   var.getVar(var_index,var_size,&external[0]);
+    NcVar var = input->getVar(name);
+    int countp = var.getDim(0).getSize();
+    std::vector<size_t> var_index = {0};
+    std::vector<size_t> var_size  = {static_cast<unsigned long>(countp)};
+    var.getVar(var_index,var_size,&external[0]);
 }
 
 //////////////////////////////////////////////////////////////

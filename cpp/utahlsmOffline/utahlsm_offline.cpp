@@ -59,26 +59,27 @@ int main () {
     int nx, ny;
     
     // input meteorology
-    std::vector<double> atm_U;
-    std::vector<double> atm_T;
-    std::vector<double> atm_q;
-    std::vector<double> atm_p;
-    std::vector<double> R_net;
+    
     
     // read offline input file
     Input* inputOffline = new Input("lsm_offline.nc");
-
+        
     // get offline input data
     inputOffline->getDim(ntime,"t");
     inputOffline->getData(tstep,"tstep");
+    std::vector<double> atm_U(ntime);
+    std::vector<double> atm_T(ntime);
+    std::vector<double> atm_q(ntime);
+    std::vector<double> atm_p(ntime);
+    std::vector<double> R_net(ntime);
     inputOffline->getData(atm_U,"atm_U");
     inputOffline->getData(atm_T,"atm_T");
     inputOffline->getData(atm_q,"atm_q");
     inputOffline->getData(atm_p,"atm_p");
     inputOffline->getData(R_net,"R_net");
-    
+
     // initialize an instance of UtahLSM input and output
-    Input* inputLSM       = new Input("lsm_init.nc");
+    Input* inputLSM       = new Input("lsm_init.nc");    
     Settings* settingsLSM = new Settings("lsm_namelist.json");
     Output* outputLSM     = new Output("lsm_cpp.nc");
     
