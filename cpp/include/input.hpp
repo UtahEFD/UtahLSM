@@ -101,7 +101,16 @@ extern "C" {
      * @param[in] input_type filetype of input file
      */
     InputObject GetInput(char* input_file);
-
+    
+    /**
+     * C-style wrapper for the getDim function
+     *
+     * @param[in]  input Input object
+     * @param[out] external external integer pointer to fill with requested data
+     * @param[in]  name name of the requested dimension
+     */
+    void GetDim(InputObject input, int* external, char* name);
+    
     /**
      * C-style wrapper for the getData function for an integer.
      *

@@ -51,12 +51,13 @@ interface
     
     end function GetOutput
     
-    function GetLSM( input,output,ustar,flux_wT,flux_wq,j,i ) result( optr )bind(C, name="GetLSM")
+    function GetLSM( settings,input,output,ustar,flux_wT,flux_wq,j,i ) result( optr )bind(C, name="GetLSM")
         
         import :: c_double, c_int, c_ptr
         implicit none
         
         ! Argument list
+        type(c_ptr), value, intent(in) :: settings
         type(c_ptr), value, intent(in) :: input
         type(c_ptr), value, intent(in) :: output
         real(c_double), intent(in) :: ustar

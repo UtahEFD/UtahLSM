@@ -20,17 +20,18 @@ program p
  
    ! input/output filename variables
    character*50 :: input_offline_file = 'lsm_offline.nc'//char(0)
-   character*50 :: input_file = 'lsm_namelist.json'//char(0)
-   character*50 :: output_file = 'lsm_f.nc'//char(0)
+   character*50 :: settings_file = 'lsm_namelist.json'//char(0)
+   character*50 :: input_file = 'lsm_init.nc'//char(0)
+   character*50 :: output_file = 'lsm_fortran.nc'//char(0)
    
    ! input/output pointer objects
    type(c_ptr) :: input_offline_obj = c_null_ptr
+   type(c_ptr) :: settings_obj = c_null_ptr
    type(c_ptr) :: input_obj = c_null_ptr
    type(c_ptr) :: output_obj = c_null_ptr
    
    ! namelist time section
-   character*50 :: sect_time = 'time'//char(0)
-   character*50 :: name_ntime = 'ntime'//char(0)
+   character*50 :: name_ntime = 't'//char(0)
    character*50 :: name_tstep = 'tstep'//char(0)
    
    integer :: ntime
@@ -73,19 +74,22 @@ program p
    ! Create C++ object representing offline case
    input_offline_obj = GetInput( input_file=input_offline_file )
    
-   ! Create C++ object representing model input
+   ! Create C++ object representing model settings
+   settings_obj = GetSettings( settings_file=settings_file )
+   
+   ! Create C++ object representing model init data
    input_obj = GetInput( input_file=input_file )
    
    ! Create C++ object representing model output
    output_obj = GetOutput( output_file=output_file )
       
    ! Get time items from offline input
-   call GetItemInt( input_offline_obj, ntime, sect_time, name_ntime)
-   call GetItemDbl( input_offline_obj, tstep, sect_time, name_tstep)
+   call GetDim( input_offline_obj, ntime, name_ntime)
+   call GetDataDbl( input_offline_obj, tstep, name_tstep)
    
    ! Get grid items from offline input
-   call GetItemInt( input_obj, i_max, sect_grid, name_imax)
-   call GetItemInt( input_obj, j_max, sect_grid, name_jmax)
+   call GetItemInt( settings_obj, i_max, sect_grid, name_imax)
+   call GetItemInt( settings_obj, j_max, sect_grid, name_jmax)
    allocate(globalUtahLSM(i_max*j_max))
    
    ! Get items from offline atmospheric data
@@ -95,17 +99,17 @@ program p
    allocate(atm_p(ntime))
    allocate(R_net(ntime))
    
-   call GetItemDblArr( input_offline_obj, atm_U, ntime, sect_data, name_atmu)
-   call GetItemDblArr( input_offline_obj, atm_T, ntime, sect_data, name_atmt)
-   call GetItemDblArr( input_offline_obj, atm_q, ntime, sect_data, name_atmq)
-   call GetItemDblArr( input_offline_obj, atm_p, ntime, sect_data, name_atmp)
-   call GetItemDblArr( input_offline_obj, R_net, ntime, sect_data, name_rnet)
+   call GetDataDblArr( input_offline_obj, atm_U, ntime, name_atmu)
+   call GetDataDblArr( input_offline_obj, atm_T, ntime, name_atmt)
+   call GetDataDblArr( input_offline_obj, atm_q, ntime, name_atmq)
+   call GetDataDblArr( input_offline_obj, atm_p, ntime, name_atmp)
+   call GetDataDblArr( input_offline_obj, R_net, ntime, name_rnet)
    
    ! fill array with LSM instances
    k = 1
    do j = 1, j_max
     do i = 1, i_max
-        globalUtahLSM(k) = GetLSM( input_obj, output_obj, ustar, flux_wT, flux_wq, j-1, i-1 )
+        globalUtahLSM(k) = GetLSM( settings_obj, input_obj, output_obj, ustar, flux_wT, flux_wq, j-1, i-1 )
         k = k+1
     enddo
    enddo
@@ -132,7 +136,7 @@ program p
     enddo
    enddo
    
-   ! compuet run time information
+   ! compute run time information
    call cpu_time(stop_time)
    elapsed = stop_time - start_time
    write(*,*) creturn
