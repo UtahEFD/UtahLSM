@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+# 
+# UtahLSM
+# 
+# Copyright (c) 2017–2023 Jeremy A. Gibbs
+# Copyright (c) 2017–2023 Rob Stoll
+# Copyright (c) 2017–2023 Eric Pardyjak
+# Copyright (c) 2017–2023 Pete Willemsen
+# 
+# This file is part of UtahLSM.
+# 
+# This software is free and is distributed under the MIT License.
+# See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
+# 
+
 import argparse
 import numpy as np
 import os
@@ -182,13 +196,13 @@ class UtahLSM:
         self.soil_q_last = self.soil_q
         
         # check if time to compute diffusion
-        #if ( (self.step_count % self.dt_dif)==0 ):
+        if ( (self.step_count % self.dt_dif)==0 ):
             
             # Solve heat diffusion
-            #self.solve_diffusion_heat()
+            self.solve_diffusion_heat()
         
             # solve moisture diffusion
-            #self.solve_diffusion_mois()
+            self.solve_diffusion_mois()
         
         # Change flag of whether initial time
         if self.first: self.first = False
