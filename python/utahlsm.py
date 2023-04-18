@@ -50,8 +50,8 @@ class UtahLSM:
         self.julian_day = self.input.julian_day
         
         # Input grid section
-        self.nx = inputLSM.nx
-        self.ny = inputLSM.ny
+        self.nx = self.input.nx
+        self.ny = self.input.ny
         
         # Input length scale section
         self.z_o = self.input.z_o
@@ -60,9 +60,9 @@ class UtahLSM:
         self.z_s = self.input.z_s
         
         # Input soil section
-        self.nz             = self.input.nsoil
-        self.soil_param     = self.input.param
-        self.soil_model     = self.input.model
+        self.nz         = self.input.nsoil
+        self.soil_param = self.input.param
+        self.soil_model = self.input.model
         
         print("[UtahLSM: Setup] \t Reading input data")
         self.soil_z    = self.input.soil_z
@@ -229,13 +229,10 @@ class UtahLSM:
         last_L         = 0.1
         criteria       = 0.1
         ref_T          = 300
-        
-        print('---COMPUTEFLUXES---')
-        print('%0.5f'%sfc_T,' ','%.5f'%sfc_q)
-        
+                
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
-        print('%0.5f'%gnd_q)
+
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             # First time through we estimate based on Santanello and Friedl (2003)
@@ -250,10 +247,6 @@ class UtahLSM:
                     A = 0.35
                     B = 100000
                 self.ghf[:] = self.R_net*A*np.cos((2*c.pi*(self.utc)+10800)/B)
-                print(A,B)
-                print('%0.5f'%self.R_net)
-                print('%0.5f'%self.utc)
-                print('%0.5f'%self.ghf[:])
             else:
                 K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
                 K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
@@ -274,12 +267,12 @@ class UtahLSM:
                 self.sfc_q_new = self.soil_q[0]
             else:
                 self.flux_wq[:] = (gnd_q-self.atm_q)*self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
-            
+                
             # Compute virtual heat flux
             flux_wTv = self.flux_wT[:] + ref_T*0.61*self.flux_wq[:]
-            
+                
             # Compute L
-            last_L = self.obl[:]
+            last_L = self.obl[:].copy()
             self.obl[:] = -(self.ust[:]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
             
             # Bounds check on L
@@ -298,14 +291,20 @@ class UtahLSM:
         
         # Compute fluxes using passed in values
         self.compute_fluxes(sfc_T,self.sfc_q_new);
-        
         # Write sensible and latent heat fluxes in [W/m^2]
         Qh = c.rho_air*c.Cp_air*self.flux_wT
         Ql = c.rho_air*c.Lv*self.flux_wq
         Qg = self.ghf
-        
+        print()
+        print('---COMPUTESEB---')
+        print('Qh: %.5f'%Qh)
+        print('Ql: %.5f'%Ql)
+        print('Qg: %.5f'%Qg)
+        print('Rn: %.5f'%self.R_net)
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
+        print('Rn: %.5f'%SEB)
+        print("---------------")
         return SEB
     
     # Compute the derivative of the surface energy budget

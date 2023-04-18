@@ -33,7 +33,7 @@ class Radiation;
  * 
  * This class is responsible for solving the surface energy 
  * and moisture budgets to compute the associated fluxes 
- * of momentum, heat, and mositure.
+ * of momentum, heat, and moisture.
  */
 class UtahLSM {
     
@@ -98,7 +98,7 @@ class UtahLSM {
         // Input time section
         int step_seb;   ///< steps between calls to energy balance
         int step_dif;   ///< steps between calls to diffusion
-        int utc_start;  ///< time in UTC at simulation start
+        int utc;        ///< time in UTC at simulation start
         int julian_day; ///< Julian day at simulation start
 
         // Input grid section
@@ -155,7 +155,6 @@ class UtahLSM {
         int step_count=0; ///< number of times the LSM has been called
         double tstep=0;   ///< current time step
         double runtime=0; ///< current elapsed time
-        double utc=0;     ///< current time in UTC
         
         // Local output information
         bool master;                     ///< flag whether UtahLSM column is first in a grid

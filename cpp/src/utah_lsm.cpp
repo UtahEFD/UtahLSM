@@ -361,11 +361,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     double heat_cap, dT, dz, K0, K1;
     
     // Compute surface mixing ratio
-    std::cout<<"---COMPUTEFLUXES---"<<std::endl;
-    std::cout<<std::setprecision(5)<<sfc_T<<" "<<std::setprecision(5)<<sfc_q<<std::endl;
-    
     gnd_q  = soil->surfaceMixingRatio(sfc_T,sfc_q,atm_p);
-    std::cout<<std::setprecision(5)<<gnd_q<<std::endl;
     
     // Sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
@@ -385,10 +381,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
                 B = 100000;
             }
             flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
-            std::cout<<A<<" "<<B<<std::endl;
-            std::cout<<std::setprecision(5)<<R_net<<std::endl;
-            std::cout<<std::setprecision(5)<<utc<<std::endl;
-            std::cout<<std::setprecision(5)<<flux_gr<<std::endl;
         } else {
             double K0 = soil->conductivityThermal(soil_q[0],0);
             double K1 = soil->conductivityThermal(soil_q[1],1);
@@ -398,7 +390,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
         // Compute friction velocity
         ustar = atm_U*most::fm(z_m/z_o,zeta_m,zeta_o);
-        
+
         // Compute heat flux
         flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
@@ -411,14 +403,14 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
-        
+
         // Compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
-        
+
         // Compute L
         last_L = L;
         L      = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
-        
+
         // Bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
@@ -442,7 +434,6 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         std::cout<<std::endl;
         std::cout<<"[Fluxes] \t Converge failed"<<std::endl;
         std::cout<<L<<" "<<flux_wq<<std::endl;
-        throw(1);
     }
 }
 
@@ -572,9 +563,15 @@ double UtahLSM :: computeSEB(double sfc_T) {
     Qh = c::rho_air*c::Cp_air*flux_wT;
     Ql = c::rho_air*c::Lv*flux_wq;
     Qg = flux_gr;
-    
+    std::cout<<"---COMPUTESEB---"<<std::endl;
+    std::cout<<std::setprecision(5)<<"Qh: "<<Qh<<std::endl;
+    std::cout<<std::setprecision(5)<<"Ql: "<<Ql<<std::endl;
+    std::cout<<std::setprecision(5)<<"Qh: "<<Qg<<std::endl;
+    std::cout<<std::setprecision(5)<<"Rn: "<<R_net<<std::endl;
     // Compute surface energy balance
     SEB = R_net - Qg - Qh - Ql;
+    std::cout<<std::setprecision(5)<<"SEB: "<<SEB<<std::endl;
+    std::cout<<"---------------"<<std::endl;
     return SEB;
 }
 
