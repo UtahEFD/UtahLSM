@@ -44,8 +44,10 @@ class UtahLSM:
         
         print("[UtahLSM: Setup] \t Reading input settings")
         # Input time section
-        self.dt_seb = inputLSM.step_seb
-        self.dt_dif = inputLSM.step_dif
+        self.dt_seb     = self.input.step_seb
+        self.dt_dif     = self.input.step_dif
+        self.utc        = self.input.utc_start
+        self.julian_day = self.input.julian_day
         
         # Input grid section
         self.nx = inputLSM.nx
@@ -87,8 +89,7 @@ class UtahLSM:
         self.longitude  = self.input.longitude
         if (self.comp_rad==1):
             print("[UtahLSM: Setup] \t Creating radiation model")
-            self.julian_day = self.input.julian_day
-            
+                        
             # convert latitude and longitude into radians
             self.latitude  = self.latitude * constants.pi / 180.0
             self.longitude = self.longitude * constants.pi / 180.0
@@ -163,12 +164,12 @@ class UtahLSM:
         self.atm_q    = q
         self.atm_p    = p
         self.runtime += tstep
+        self.utc      = np.fmod(self.runtime,86400)
         
         # Run radiation model and update time/date if needed
         if (self.comp_rad==1):
-            utc         = np.fmod(self.runtime,86400)
             julian_day += int(runtime/86400);
-            self.R_net  = self.rad.computeNet(julian_day,utc,self.soil_T[0])
+            self.R_net  = self.rad.computeNet(julian_day,self.utc,self.soil_T[0])
         else:
             self.R_net = rad
         
@@ -181,7 +182,7 @@ class UtahLSM:
         # Set initial new temp and moisture
         self.sfc_T_new = self.soil_T[0];
         self.sfc_q_new = self.soil_q[0];
-        
+                
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
             pass
@@ -200,9 +201,9 @@ class UtahLSM:
             
             # Solve heat diffusion
             self.solve_diffusion_heat()
-        
+            sys.exit()
             # solve moisture diffusion
-            self.solve_diffusion_mois()
+            #self.solve_diffusion_mois()
         
         # Change flag of whether initial time
         if self.first: self.first = False
@@ -216,7 +217,7 @@ class UtahLSM:
         self.output.save(self.output_fields,self.step_count,self.runtime,initial=False)
         # 
         # # close output file       
-        # self.output.close()
+        #self.output.close()
     
     # Compute fluxes using similarity theory
     # TODO: Clean compute_fluxes up
@@ -229,9 +230,12 @@ class UtahLSM:
         criteria       = 0.1
         ref_T          = 300
         
+        print('---COMPUTEFLUXES---')
+        print('%0.5f'%sfc_T,' ','%.5f'%sfc_q)
+        
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
-        
+        print('%0.5f'%gnd_q)
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             # First time through we estimate based on Santanello and Friedl (2003)
@@ -245,7 +249,11 @@ class UtahLSM:
                 else:
                     A = 0.35
                     B = 100000
-                self.ghf[:] = self.R_net*A*np.cos((2*c.pi*(utc)+10800)/B)
+                self.ghf[:] = self.R_net*A*np.cos((2*c.pi*(self.utc)+10800)/B)
+                print(A,B)
+                print('%0.5f'%self.R_net)
+                print('%0.5f'%self.utc)
+                print('%0.5f'%self.ghf[:])
             else:
                 K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
                 K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
@@ -471,6 +479,13 @@ class UtahLSM:
     # TODO: Fix code, check matrix
     def solve_diffusion_heat(self):
         
+        print("----BEFORE----")
+        print(self.sfc_T_new)
+        print('{:.5f}'.format(self.sfc_T_new))
+        for ii in range(self.nz):
+            print('{:.5f}'.format(self.soil_T[ii]))
+        print("--------------")
+        
         # Local variables
         AB  = 1.0
         AF  = 1.0-AB
@@ -578,7 +593,10 @@ class UtahLSM:
             Kmax = np.max(K)
             dt_T = dz2 / (2*Kmax)
             t+=dt_T
-    
+        print("----AFTER----")
+        for ii in range(self.nz):
+            print('{:.5f}'.format(self.soil_T[ii]))
+        print("--------------")
     # Solve the diffusion equation for soil moisture
     # TODO: Fix code, check matrix
     def solve_diffusion_mois(self):

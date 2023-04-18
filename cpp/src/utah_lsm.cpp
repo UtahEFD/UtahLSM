@@ -50,6 +50,8 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     // Settings time section
     settings->getItem(step_seb,"time","step_seb");
     settings->getItem(step_dif,"time","step_dif");
+    settings->getItem(utc,"time","utc_start");
+    settings->getItem(julian_day,"time","julian_day");
 
     // Settings grid section
     settings->getItem(nx,"grid","nx");
@@ -91,15 +93,10 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     // Settings radiation section
     settings->getItem(comp_rad,"radiation","comp_rad");
     if (comp_rad==1) {
-        settings->getItem(utc_start,"radiation","utc_start");
         settings->getItem(albedo,"radiation","albedo");
         settings->getItem(emissivity,"radiation","emissivity");
         settings->getItem(latitude,"radiation","latitude");
         settings->getItem(longitude,"radiation","longitude");
-        settings->getItem(julian_day,"radiation","julian_day");
-        
-        // set initial time
-        utc = utc_start;
         
         // convert latitude and longitude into radians
         latitude  = latitude * c::pi / 180.0;
@@ -224,12 +221,15 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     atm_q = q;
     atm_p = p;
     R_net = rad;
+    
     runtime += tstep;
+    utc = std::fmod(runtime,86400);
+    julian_day += int(runtime/86400);
+    
+    std::cout<<utc<<std::endl;
     
     // Run radiation model and update time/date if needed
     if (comp_rad==1) {
-        utc = std::fmod(runtime,86400);
-        julian_day += int(runtime/86400);
         R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
     }
     
@@ -247,6 +247,9 @@ void UtahLSM :: run() {
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {
         solveSEB();
+        
+        std::exit(1);
+        
         solveSMB();
     } else {
         // just return new fluxes
@@ -262,6 +265,8 @@ void UtahLSM :: run() {
 
         // Solve heat diffusion
         solveDiffusionHeat();
+        
+        std::exit(1);
 
         // solve moisture diffusion
         solveDiffusionMois();
@@ -288,8 +293,7 @@ void UtahLSM :: save(Output* output) {
         scalar_index = {static_cast<unsigned long>(output_counter)};
         vector_index = {static_cast<size_t>(output_counter), 0};
         vector_size  = {1, static_cast<unsigned long>(nsoilz)};
-    }
-    else if (ny>1 && nx==1) {
+    } else if (ny>1 && nx==1) {
         scalar_index   = {static_cast<unsigned long>(output_counter), static_cast<unsigned long>(j)};
         vector_index   = {static_cast<size_t>(output_counter), 0, static_cast<unsigned long>(j)};
         vector_size    = {1, static_cast<unsigned long>(nsoilz), 1};
@@ -357,9 +361,12 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     double heat_cap, dT, dz, K0, K1;
     
     // Compute surface mixing ratio
+    std::cout<<"---COMPUTEFLUXES---"<<std::endl;
+    std::cout<<std::setprecision(5)<<sfc_T<<" "<<std::setprecision(5)<<sfc_q<<std::endl;
+    
     gnd_q  = soil->surfaceMixingRatio(sfc_T,sfc_q,atm_p);
-    // std::cout<<"computeFluxes, sfc mix ratio: "<<gnd_q<<std::endl;
-    // std::cin.get();
+    std::cout<<std::setprecision(5)<<gnd_q<<std::endl;
+    
     // Sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
         
@@ -378,6 +385,10 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
                 B = 100000;
             }
             flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
+            std::cout<<A<<" "<<B<<std::endl;
+            std::cout<<std::setprecision(5)<<R_net<<std::endl;
+            std::cout<<std::setprecision(5)<<utc<<std::endl;
+            std::cout<<std::setprecision(5)<<flux_gr<<std::endl;
         } else {
             double K0 = soil->conductivityThermal(soil_q[0],0);
             double K1 = soil->conductivityThermal(soil_q[1],1);
@@ -673,7 +684,14 @@ void UtahLSM :: solveDiffusionHeat() {
 
     // Loop through diffusion by substep
     for (int t=0; t<=tstep; t+=dt_T) {
-
+        
+        std::cout<<"----BEFORE----"<<std::endl;
+        std::cout<<std::setprecision(5)<<sfc_T_new<<std::endl;
+        for (int ii=0; ii<nsoilz; ii+=1) {
+            std::cout<<std::setprecision(5)<<soil_T[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
+        
         // Set up and solve a tridiagonal matrix
         // AT(n+1) = r(n), where n denotes the time level
         // e, f, g the components of A matrix
@@ -689,7 +707,7 @@ void UtahLSM :: solveDiffusionHeat() {
         CFp = AF * Cp;
         CFm = AF * Cm;
         CF  = 1 - CFp - CFm;
-
+        
         e[0] = 0;
         f[0] = CB;
         g[0] = CBm;
@@ -761,6 +779,12 @@ void UtahLSM :: solveDiffusionHeat() {
         Kmax = *std::max_element(K.begin(), K.end());
         dt_T = dz2 / (2*Kmax); 
     }
+    
+    std::cout<<"----AFTER----"<<std::endl;
+    for (int ii=0; ii<nsoilz; ii+=1) {
+        std::cout<<std::setprecision(5)<<soil_T[ii]<<std::endl;
+    }
+    std::cout<<"--------------"<<std::endl;
 }
 
 void UtahLSM :: solveDiffusionMois() {

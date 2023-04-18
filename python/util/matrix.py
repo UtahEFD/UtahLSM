@@ -22,6 +22,10 @@ def tridiagonal(a,b,c,r,u):
 	n   = len(a)
 	gam = np.zeros(n)
 	bet = b[0]
+	print("----MATRIX----")
+	for ii in range(n):
+		print('{:.5f}'.format(u[ii]))
+	print("--------------")
 	
 	# Make sure diagonal band is not zero
 	if (bet == 0.0):
@@ -30,7 +34,7 @@ def tridiagonal(a,b,c,r,u):
 	
 	# Initialize first element of solution vector
 	u[0] = r[0]/(bet)
-	
+	print('%.5f %.5f %.5f %.5f'%(a[0],b[0],c[0],r[0]))
 	# Forward sweep 
 	for j in range(1,n):
 		gam[j] = c[j-1]/bet
@@ -43,3 +47,8 @@ def tridiagonal(a,b,c,r,u):
 	# Backward sweep
 	for j in range(n-2,-1,-1):
 		u[j] -= gam[j+1]*u[j+1]
+	
+	print("----MATRIX 2----")
+	for ii in range(n):
+		print('{:.5f}'.format(u[ii]))
+	print("--------------")

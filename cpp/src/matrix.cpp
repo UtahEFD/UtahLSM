@@ -13,6 +13,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <span>
 
@@ -24,15 +25,24 @@ namespace matrix {
                      std::span<double> u) {
         
         // Local variables
-        int j,n=int(a.size());
+        int j;
+        int n=int(a.size());
         double bet;
         std::vector<double> gam(n);
+        
+        std::cout<<"----MATRIX----"<<std::endl;
+        for (int ii=0; ii<n; ii+=1) {
+            std::cout<<std::setprecision(5)<<u[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
         
         // Make sure diagonal band is not zero
         if (b[0] == 0.0) throw(std::string("Error 1 in tridag"));
 
         // Initialize first element of solution vector
         u[0] = r[0]/(bet=b[0]);
+        
+        std::cout<<a[0]<<' '<<b[0]<<' '<<c[0]<<' '<<r[0]<<std::endl;
         
         // Forward sweep 
         for (j=1;j<n;j++) {
@@ -49,5 +59,11 @@ namespace matrix {
         // Backward sweep
         for (j=(n-2);j>=0;j--)
             u[j] -= gam[j+1]*u[j+1];
+        
+        std::cout<<"----MATRIX 2----"<<std::endl;
+        for (int ii=0; ii<n; ii+=1) {
+            std::cout<<std::setprecision(5)<<u[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
     }
 };

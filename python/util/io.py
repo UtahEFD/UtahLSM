@@ -34,6 +34,8 @@ class Input(object):
 			# time section
 			self.step_seb   = data["time"]["step_seb"]
 			self.step_dif   = data["time"]["step_dif"]
+			self.utc_start  = data["time"]["utc_start"]
+			self.julian_day = data["time"]["julian_day"]
 			
 			# grid section
 			self.nx         = data["grid"]["nx"]
@@ -51,13 +53,11 @@ class Input(object):
 			self.model      = data["soil"]["model"]
 			
 			# radiation section
-			self.utc_start  =  data["radiation"]["utc_start"]
 			self.comp_rad   =  data["radiation"]["comp_rad"]
 			self.albedo     =  data["radiation"]["albedo"]
 			self.emissivity =  data["radiation"]["emissivity"]
 			self.latitude   =  data["radiation"]["latitude"]
 			self.longitude  =  data["radiation"]["longitude"]
-			self.julian_day =  data["radiation"]["julian_day"]
 			
 			# output section
 			self.save       = data["output"]["save"]

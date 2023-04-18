@@ -96,8 +96,10 @@ class UtahLSM {
         double flux_lh;  ///< latent heat flux
 
         // Input time section
-        int step_seb; ///< steps between calls to energy balance
-        int step_dif; ///< steps between calls to diffusion
+        int step_seb;   ///< steps between calls to energy balance
+        int step_dif;   ///< steps between calls to diffusion
+        int utc_start;  ///< time in UTC at simulation start
+        int julian_day; ///< Julian day at simulation start
 
         // Input grid section
         int nx; ///< number of points in x-direction
@@ -119,8 +121,6 @@ class UtahLSM {
         std::vector<double> soil_q; ///< soil moisture at each level
 
         // Input radiation section
-        int utc_start;     ///< time in UTC at simulation start
-        int julian_day;    ///< julian day at simulation start
         int comp_rad;      ///< flag whether to run radiation model or not
         double albedo;     ///< surface albedo at site
         double emissivity; ///< surface emissivity at site
