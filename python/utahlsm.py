@@ -261,6 +261,7 @@ class UtahLSM:
             
             # Compute latent flux
             if ( (self.first) and (i == 0)):
+                print()
                 print('---COMPUTELATENTFLUX---')
                 self.flux_wq[:] = (self.R_net - self.ghf[:] - self.flux_wT[:]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
                 gnd_q = self.atm_q + self.flux_wq[:] / (self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
@@ -302,14 +303,14 @@ class UtahLSM:
         Qg = self.ghf
         print()
         print('---COMPUTESEB---')
-        print('Ts: %.5f'%sfc_T)
-        print('Qh: %.5f'%Qh)
-        print('Ql: %.5f'%Ql)
-        print('Qg: %.5f'%Qg)
-        print('Rn: %.5f'%self.R_net)
+        print('Ts: %.10f'%sfc_T)
+        print('Qh: %.10f'%Qh)
+        print('Ql: %.10f'%Ql)
+        print('Qg: %.10f'%Qg)
+        print('Rn: %.10f'%self.R_net)
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
-        print('Rn: %.5f'%SEB)
+        print('SEB: %.10f'%SEB)
         print("----------------")
         return SEB
     
@@ -318,14 +319,21 @@ class UtahLSM:
         
         # Compute derivative of SEB wrt temperature
         heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
-        dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3)
-        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
+        dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3) \
+        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:]) \
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
+        
         print('---COMPUTEDSEB---')
-        print('Ts: %.5f'%sfc_T)
-        print('qs: %.5f'%self.sfc_q_new)
-        print('Ks: %.5f'%heat_cap)
-        print('dS: %.5f'%dSEB_dT)
+        print('ts: %.10f'%self.tstep)
+        print('Ts: %.10f'%sfc_T)
+        print('qs: %.10f'%self.sfc_q_new)
+        print('Ks: %.10f'%heat_cap)
+        print('dS: %.10f'%dSEB_dT)
+        print('em: %.10f'%self.emissivity)
+        print('sb: %.10f'%c.sb)
+        print('t3: %.10f'%(sfc_T**3))
+        print('us: %.10f'%(self.ust))
+        print('fh: %.10f'%self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
         print('-----------------')
         return dSEB_dT
     

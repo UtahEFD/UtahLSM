@@ -42,10 +42,12 @@ class Input(object):
 			self.ny         = data["grid"]["ny"]
 			
 			# length section
-			self.z_o        = data["length"]["z_o"]
-			self.z_t        = data["length"]["z_t"]
-			self.z_m        = data["length"]["z_m"]
-			self.z_s        = data["length"]["z_s"]
+			self.z_o        = data["surface"]["z_o"]
+			self.z_t        = data["surface"]["z_t"]
+			self.z_m        = data["surface"]["z_m"]
+			self.z_s        = data["surface"]["z_s"]
+			self.albedo     = data["surface"]["albedo"]
+			self.emissivity = data["surface"]["emissivity"]
 			
 			# soil section
 			self.nsoil      = data["soil"]["nsoil"]
@@ -54,8 +56,6 @@ class Input(object):
 			
 			# radiation section
 			self.comp_rad   =  data["radiation"]["comp_rad"]
-			self.albedo     =  data["radiation"]["albedo"]
-			self.emissivity =  data["radiation"]["emissivity"]
 			self.latitude   =  data["radiation"]["latitude"]
 			self.longitude  =  data["radiation"]["longitude"]
 			

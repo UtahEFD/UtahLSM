@@ -58,10 +58,12 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     settings->getItem(ny,"grid","ny");
     
     // Settings length scale section
-    settings->getItem(z_o,"length","z_o");
-    settings->getItem(z_t,"length","z_t");
-    settings->getItem(z_m,"length","z_m");
-    settings->getItem(z_s,"length","z_s");
+    settings->getItem(z_o,"surface","z_o");
+    settings->getItem(z_t,"surface","z_t");
+    settings->getItem(z_m,"surface","z_m");
+    settings->getItem(z_s,"surface","z_s");
+    settings->getItem(albedo,"surface","albedo");
+    settings->getItem(emissivity,"surface","emissivity");
     
     // Settings soil section
     settings->getItem(nsoilz,"soil","nsoil");
@@ -93,8 +95,6 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     // Settings radiation section
     settings->getItem(comp_rad,"radiation","comp_rad");
     if (comp_rad==1) {
-        settings->getItem(albedo,"radiation","albedo");
-        settings->getItem(emissivity,"radiation","emissivity");
         settings->getItem(latitude,"radiation","latitude");
         settings->getItem(longitude,"radiation","longitude");
         
@@ -225,9 +225,7 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     runtime += tstep;
     utc = std::fmod(runtime,86400);
     julian_day += int(runtime/86400);
-    
-    std::cout<<utc<<std::endl;
-    
+        
     // Run radiation model and update time/date if needed
     if (comp_rad==1) {
         R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
@@ -396,6 +394,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
         // Compute latent flux
         if ( (first) && (i == 0)) {
+            std::cout<<std::endl;
             std::cout<<"---COMPUTELATENTFLUX---"<<std::endl;
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
@@ -404,6 +403,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             std::cout<<std::setprecision(10)<<"wq: "<<flux_wq<<std::endl;
             std::cout<<std::setprecision(10)<<"qg " <<gnd_q<<std::endl;
             std::cout<<std::setprecision(10)<<"qs: "<<soil_q[0]<<std::endl;
+            std::cout<<"----------------------"<<std::endl;
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -513,6 +513,7 @@ void UtahLSM :: solveSEB() {
             // Compute SEB and dSEB_dTs
             SEB     = computeSEB(sfc_T_new);
             dSEB_dT = computeDSEB(sfc_T_new);
+            std::exit(1);
             
             // Update brackets
             if (SEB<0.) temp_l = sfc_T_new;
@@ -599,10 +600,16 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     + c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
     + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
     std::cout<<"---COMPUTEDSEB---"<<std::endl;
-    std::cout<<"Ts: "<<sfc_T<<std::endl;
-    std::cout<<std::setprecision(5)<<"qs: "<<sfc_q_new<<std::endl;
-    std::cout<<std::setprecision(5)<<"Ks: "<<heat_cap<<std::endl;
-    std::cout<<std::setprecision(5)<<"dS: "<<dSEB_dT<<std::endl;
+    std::cout<<std::setprecision(10)<<"ts: "<<tstep<<std::endl;
+    std::cout<<std::setprecision(10)<<"Ts: "<<sfc_T<<std::endl;
+    std::cout<<std::setprecision(10)<<"qs: "<<sfc_q_new<<std::endl;
+    std::cout<<std::setprecision(10)<<"Ks: "<<heat_cap<<std::endl;
+    std::cout<<std::setprecision(10)<<"dS: "<<dSEB_dT<<std::endl;
+    std::cout<<std::setprecision(10)<<"em: "<<emissivity<<std::endl;
+    std::cout<<std::setprecision(10)<<"sb: "<<c::sb<<std::endl;
+    std::cout<<std::setprecision(10)<<"t3: "<<std::pow(sfc_T,3.)<<std::endl;
+    std::cout<<std::setprecision(10)<<"us: "<<ustar<<std::endl;
+    std::cout<<std::setprecision(10)<<"fh: "<<most::fh(z_s/z_t,zeta_s,zeta_t)<<std::endl;
     std::cout<<"-----------------"<<std::endl;
     return dSEB_dT;
 }

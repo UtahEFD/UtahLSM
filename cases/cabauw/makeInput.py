@@ -225,41 +225,41 @@ metr.close()
 namelist = {}
 namelist['time'] = {}
 namelist['grid'] = {}
-namelist['length'] = {}
+namelist['surface'] = {}
 namelist['soil'] = {}
 namelist['radiation'] = {}
 namelist['output'] = {}
 
 # time section
-namelist['time']['step_seb'] = 1
-namelist['time']['step_dif'] = 1
+namelist['time']['step_seb']   = 1
+namelist['time']['step_dif']   = 1
+namelist['time']['utc_start']  = t_utc[0]
+namelist['time']['julian_day'] = 244
 
 # grid section
 namelist['grid']['nx'] = 1
 namelist['grid']['ny'] = 1
 
-# length scale section
-namelist['length']['z_o'] = 0.15
-namelist['length']['z_t'] = 0.0015
-namelist['length']['z_m'] = 10.0
-namelist['length']['z_s'] = 2.0
+# surface section
+namelist['surface']['z_o']        = 0.15
+namelist['surface']['z_t']        = 0.0015
+namelist['surface']['z_m']        = 10.0
+namelist['surface']['z_s']        = 2.0
+namelist['surface']['albedo']     = 0.33
+namelist['surface']['emissivity'] = 0.99
 
 # soil section
-namelist['soil']['nsoil']     = nsoil
-namelist['soil']['param']     = 1
-namelist['soil']['model']     = 2
+namelist['soil']['nsoil'] = nsoil
+namelist['soil']['param'] = 1
+namelist['soil']['model'] = 2
 
 # radiation section
-namelist['radiation']['utc_start']  = t_utc[0]
-namelist['radiation']['comp_rad']   = 0
-namelist['radiation']['albedo']     = 0.33
-namelist['radiation']['emissivity'] = 0.99
-namelist['radiation']['latitude']   = 51.9711
-namelist['radiation']['longitude']  = -4.9267
-namelist['radiation']['julian_day'] = 244
+namelist['radiation']['comp_rad']  = 0
+namelist['radiation']['latitude']  = 51.9711
+namelist['radiation']['longitude'] = -4.9267
 
 # output section
-namelist['output']['save'] = 1
+namelist['output']['save']   = 1
 namelist['output']['fields'] = ['all']
 
 with open('lsm_namelist.json', 'w') as outfile:

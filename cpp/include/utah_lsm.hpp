@@ -105,11 +105,13 @@ class UtahLSM {
         int nx; ///< number of points in x-direction
         int ny; ///< number of points in y-direction
         
-        // Input length section
-        double z_o; ///< roughness height for momentum
-        double z_t; ///< roughness height for scalars
-        double z_m; ///< measurement height for momentum
-        double z_s; ///< measurement height for scalars
+        // Input surface section
+        double z_o;        ///< roughness height for momentum
+        double z_t;        ///< roughness height for scalars
+        double z_m;        ///< measurement height for momentum
+        double z_s;        ///< measurement height for scalars
+        double albedo;     ///< surface albedo at site
+        double emissivity; ///< surface emissivity at site
         
         // Input soil section
         int soil_param;             ///< soil parameter set
@@ -122,8 +124,6 @@ class UtahLSM {
 
         // Input radiation section
         int comp_rad;      ///< flag whether to run radiation model or not
-        double albedo;     ///< surface albedo at site
-        double emissivity; ///< surface emissivity at site
         double latitude;   ///< latitude at site
         double longitude;  ///< longitude at site
     
@@ -146,7 +146,7 @@ class UtahLSM {
         // Local atmospheric data
         double atm_U; ///< wind speed
         double atm_T; ///< temperature
-        double atm_q; ///< mizing ratio
+        double atm_q; ///< mixing ratio
         double atm_p; ///< pressure
         double R_net; ///< net surface radiation
     
