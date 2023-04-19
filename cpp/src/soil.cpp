@@ -42,16 +42,15 @@ double Soil::heatCapacity(const double soil_q, const int level) {
     double porosity = properties[level]->porosity;
     double Ci = properties[level]->ci;
     std::cout<<"---heatCapacity---"<<std::endl;
-    std::cout<<std::setprecision(10)<<(1-porosity)*Ci<<std::endl;
-    std::cout<<std::setprecision(10)<<soil_q*c::Ci_wat<<std::endl;
-    std::cout<<std::setprecision(10)<<(porosity-soil_q)*c::Cp_air<<std::endl;
-
-    std::cout<<std::setprecision(10)<<"qs: "<<soil_q<<std::endl;
-    std::cout<<std::setprecision(10)<<"Po: "<<porosity<<std::endl;
-    std::cout<<std::setprecision(10)<<"Ci: "<<Ci<<std::endl;
-    std::cout<<std::setprecision(10)<<"Cw: "<<c::Ci_wat<<std::endl;
-    std::cout<<std::setprecision(10)<<"Cp: "<<c::Cp_air<<std::endl;
-    std::cout<<std::setprecision(10)<<"Ks: "<<(1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air<<std::endl;
+    std::cout<<std::setprecision(17)<<(1-porosity)*Ci<<std::endl;
+    std::cout<<std::setprecision(17)<<soil_q*c::Ci_wat<<' '<<soil_q<<' '<<c::Ci_wat<<std::endl;
+    std::cout<<std::setprecision(17)<<(porosity-soil_q)*c::Cp_air<<std::endl;
+    std::cout<<std::setprecision(17)<<"qs: "<<soil_q<<std::endl;
+    std::cout<<std::setprecision(17)<<"Po: "<<porosity<<std::endl;
+    std::cout<<std::setprecision(17)<<"Ci: "<<Ci<<std::endl;
+    std::cout<<std::setprecision(17)<<"Cw: "<<c::Ci_wat<<std::endl;
+    std::cout<<std::setprecision(17)<<"Cp: "<<c::Cp_air<<std::endl;
+    std::cout<<std::setprecision(17)<<"Ks: "<<(1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air<<std::endl;
     std::cout<<"-----------------"<<std::endl;
     return (1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air;
 }
@@ -59,13 +58,13 @@ double Soil::heatCapacity(const double soil_q, const int level) {
 // Compute surface mixing ratio
 double Soil::surfaceMixingRatio(const double sfc_T, const double sfc_q,
                                 const double atm_p) {
-    
+                                    
     double psi      = waterPotential(sfc_q, 0);
     double h        = std::exp(c::grav*psi/(c::Rv*sfc_T));
     double es       = 6.1078*std::exp(17.269*(sfc_T-273.15)/(sfc_T-35.86));
     double hum_sat  = 0.622*(es/(atm_p-0.378*es));
     double hum_spec = h*hum_sat;
-    //std::cout<<"IN surfaceMixingRatio"<<std::endl;
+    
     return hum_spec;
 }
 

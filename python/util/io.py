@@ -100,11 +100,11 @@ class Input(object):
 				try:
 					self.ntime = len(metfile.dimensions['t'])
 					self.tstep = metfile.variables['tstep'][:]
-					self.atm_U = metfile.variables['atm_U'][:]
-					self.atm_T = metfile.variables['atm_T'][:]
-					self.atm_q = metfile.variables['atm_q'][:]
-					self.atm_p = metfile.variables['atm_p'][:]
-					self.r_net = metfile.variables['R_net'][:]
+					self.atm_U = metfile.variables['atm_U'][:].astype('float')
+					self.atm_T = metfile.variables['atm_T'][:].astype('float')
+					self.atm_q = metfile.variables['atm_q'][:].astype('float')
+					self.atm_p = metfile.variables['atm_p'][:].astype('float')
+					self.r_net = metfile.variables['R_net'][:].astype('float')
 				# report a netcdf dictionary error to user and exit program
 				except (KeyError) as e:
 					print("There was an issue accessing data from \'%s\'"%inputfile)

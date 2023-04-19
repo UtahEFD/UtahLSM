@@ -73,7 +73,7 @@ class Sand(SoilType):
             self.porosity = 0.395
             self.residual = 0.0000
             self.K_sat    = 1.76e-04
-            self.ci       = 1470000
+            self.ci       = 1470000.0
         
         # Cosby et al. (1984)
         if (dataset==2):
@@ -82,7 +82,7 @@ class Sand(SoilType):
             self.porosity = 0.339
             self.residual = 0.0000
             self.K_sat    = 1.60e-05
-            self.ci       = 1470000
+            self.ci       = 1470000.0
         
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -91,7 +91,7 @@ class Sand(SoilType):
             self.porosity = 0.437
             self.residual = 0.0200
             self.K_sat    = 5.83e-05
-            self.ci       = 1470000
+            self.ci       = 1470000.0
 
 # properties for loamy sand (type=2)
 class LoamySand(SoilType):
@@ -108,7 +108,7 @@ class LoamySand(SoilType):
             self.porosity = 0.410
             self.residual = 0.0000
             self.K_sat    = 1.56e-04
-            self.ci       = 1410000
+            self.ci       = 1410000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -117,7 +117,7 @@ class LoamySand(SoilType):
             self.porosity = 0.421
             self.residual = 0.0000
             self.K_sat    = 9.52e-06
-            self.ci       = 1410000
+            self.ci       = 1410000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -126,7 +126,7 @@ class LoamySand(SoilType):
             self.porosity = 0.437
             self.residual = 0.0350
             self.K_sat    = 1.70e-05
-            self.ci       = 1410000
+            self.ci       = 1410000.0
 
 # properties for sandy loam (type=3)
 class SandyLoam(SoilType):
@@ -143,7 +143,7 @@ class SandyLoam(SoilType):
             self.porosity = 0.435
             self.residual = 0.0000
             self.K_sat    = 3.41e-05
-            self.ci       = 1340000
+            self.ci       = 1340000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -152,7 +152,7 @@ class SandyLoam(SoilType):
             self.porosity = 0.434
             self.residual = 0.0000
             self.K_sat    = 6.19e-06
-            self.ci       = 1340000
+            self.ci       = 1340000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -161,7 +161,7 @@ class SandyLoam(SoilType):
             self.porosity = 0.453
             self.residual = 0.0410
             self.K_sat    = 7.19e-06
-            self.ci       = 1340000
+            self.ci       = 1340000.0
 
 # properties for silty loam (type=4)
 class SiltyLoam(SoilType):
@@ -178,7 +178,7 @@ class SiltyLoam(SoilType):
             self.porosity = 0.485
             self.residual = 0.0000
             self.K_sat    = 7.20e-06
-            self.ci       = 1270000
+            self.ci       = 1270000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -187,7 +187,7 @@ class SiltyLoam(SoilType):
             self.porosity = 0.476
             self.residual = 0.0000
             self.K_sat    = 4.73e-06
-            self.ci       = 1270000
+            self.ci       = 1270000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -196,7 +196,7 @@ class SiltyLoam(SoilType):
             self.porosity = 0.463
             self.residual = 0.0270
             self.K_sat    = 1.89e-06
-            self.ci       = 1270000
+            self.ci       = 1270000.0
 
 # properties for loam (type=5)
 class Loam(SoilType):
@@ -213,7 +213,7 @@ class Loam(SoilType):
             self.porosity = 0.451
             self.residual = 0.0000
             self.K_sat    = 7.00e-06
-            self.ci       = 1210000
+            self.ci       = 1210000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -222,7 +222,7 @@ class Loam(SoilType):
             self.porosity = 0.439
             self.residual = 0.0000
             self.K_sat    = 5.12e-06
-            self.ci       = 1210000
+            self.ci       = 1210000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -231,7 +231,7 @@ class Loam(SoilType):
             self.porosity = 0.501
             self.residual = 0.0150
             self.K_sat    = 3.67e-06
-            self.ci       = 1210000
+            self.ci       = 1210000.0
 
 # properties for sandy clay loam (type=6)
 class SandyClayLoam(SoilType):
@@ -248,7 +248,7 @@ class SandyClayLoam(SoilType):
             self.porosity = 0.420
             self.residual = 0.0000
             self.K_sat    = 6.30e-06
-            self.ci       = 1180000
+            self.ci       = 1180000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -257,7 +257,7 @@ class SandyClayLoam(SoilType):
             self.porosity = 0.404
             self.residual = 0.0000
             self.K_sat    = 5.78e-06
-            self.ci       = 1180000
+            self.ci       = 1180000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -266,7 +266,7 @@ class SandyClayLoam(SoilType):
             self.porosity = 0.398
             self.residual = 0.0680
             self.K_sat    = 1.19e-06
-            self.ci       = 1180000
+            self.ci       = 1180000.0
 
 # properties for silty clay loam (type=7)
 class SiltyClayLoam(SoilType):
@@ -283,7 +283,7 @@ class SiltyClayLoam(SoilType):
             self.porosity = 0.477
             self.residual = 0.0000
             self.K_sat    = 1.70e-06
-            self.ci       = 1320000
+            self.ci       = 1320000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -292,7 +292,7 @@ class SiltyClayLoam(SoilType):
             self.porosity = 0.464
             self.residual = 0.0000
             self.K_sat    = 4.11e-06
-            self.ci       = 1320000
+            self.ci       = 1320000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -301,7 +301,7 @@ class SiltyClayLoam(SoilType):
             self.porosity = 0.464
             self.residual = 0.0750
             self.K_sat    = 6.39e-07
-            self.ci       = 1320000
+            self.ci       = 1320000.0
 
 # properties for clay loam (type=8)
 class ClayLoam(SoilType):
@@ -318,7 +318,7 @@ class ClayLoam(SoilType):
             self.porosity = 0.476
             self.residual = 0.0000
             self.K_sat    = 2.50e-06
-            self.ci       = 1230000
+            self.ci       = 1230000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -327,7 +327,7 @@ class ClayLoam(SoilType):
             self.porosity = 0.465
             self.residual = 0.0000
             self.K_sat    = 4.45e-06
-            self.ci       = 1230000
+            self.ci       = 1230000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -336,7 +336,7 @@ class ClayLoam(SoilType):
             self.porosity = 0.471
             self.residual = 0.0400
             self.K_sat    = 4.17e-07
-            self.ci       = 1230000
+            self.ci       = 1230000.0
 
 # properties for sandy clay (type=9)
 class SandyClay(SoilType):
@@ -353,7 +353,7 @@ class SandyClay(SoilType):
             self.porosity = 0.426
             self.residual = 0.0000
             self.K_sat    = 2.20e-06
-            self.ci       = 1180000
+            self.ci       = 1180000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -362,7 +362,7 @@ class SandyClay(SoilType):
             self.porosity = 0.406
             self.residual = 0.0000
             self.K_sat    = 7.12e-05
-            self.ci       = 1180000
+            self.ci       = 1180000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -371,7 +371,7 @@ class SandyClay(SoilType):
             self.porosity = 0.430
             self.residual = 0.1090
             self.K_sat    = 3.33e-07
-            self.ci       = 1180000
+            self.ci       = 1180000.0
 
 # properties for silty clay (type=10)
 class SiltyClay(SoilType):
@@ -388,7 +388,7 @@ class SiltyClay(SoilType):
             self.porosity = 0.492
             self.residual = 0.0000
             self.K_sat    = 1.00e-06
-            self.ci       = 1150000
+            self.ci       = 1150000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -397,7 +397,7 @@ class SiltyClay(SoilType):
             self.porosity = 0.468
             self.residual = 0.0000
             self.K_sat    = 3.43e-06
-            self.ci       = 1150000
+            self.ci       = 1150000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -406,7 +406,7 @@ class SiltyClay(SoilType):
             self.porosity = 0.479
             self.residual = 0.0560
             self.K_sat    = 2.50e-07
-            self.ci       = 1150000
+            self.ci       = 1150000.0
 
 # properties for clay (type=11)
 class Clay(SoilType):
@@ -423,7 +423,7 @@ class Clay(SoilType):
             self.porosity = 0.482
             self.residual = 0.0000
             self.K_sat    = 1.30e-06
-            self.ci       = 1090000
+            self.ci       = 1090000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -432,7 +432,7 @@ class Clay(SoilType):
             self.porosity = 0.468
             self.residual = 0.0000
             self.K_sat    = 2.99e-06
-            self.ci       = 1090000
+            self.ci       = 1090000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -441,7 +441,7 @@ class Clay(SoilType):
             self.porosity = 0.475
             self.residual = 0.0900
             self.K_sat    = 1.67e-07
-            self.ci       = 1090000
+            self.ci       = 1090000.0
 
 # properties for clay (type=12)
 class Peat(SoilType):
@@ -458,7 +458,7 @@ class Peat(SoilType):
             self.porosity = 0.863
             self.residual = 0.0000
             self.K_sat    = 8.00e-06
-            self.ci       = 840000
+            self.ci       = 840000.0
        
         # Cosby et al. (1984)
         if (dataset==2):
@@ -467,7 +467,7 @@ class Peat(SoilType):
             self.porosity = 0.863
             self.residual = 0.0000
             self.K_sat    = 8.00e-06
-            self.ci       = 840000
+            self.ci       = 840000.0
        
         # Rawls and Brakensiek (1982)
         if (dataset==3):
@@ -476,7 +476,7 @@ class Peat(SoilType):
             self.porosity = 0.863
             self.residual = 0.1763
             self.K_sat    = 8.00e-06
-            self.ci       = 840000
+            self.ci       = 840000.0
 
 # properties for B11 (type=13)
 class B11(SoilType):
@@ -493,7 +493,7 @@ class B11(SoilType):
             self.porosity = 0.591
             self.residual = 0.01
             self.K_sat    = 7.30e-07
-            self.ci       = 1090000
+            self.ci       = 1090000.0
 
 # properties for O12 (type=14)
 class O12(SoilType):
@@ -510,7 +510,7 @@ class O12(SoilType):
             self.porosity = 0.561
             self.residual = 0.01
             self.K_sat    = 1.25e-07
-            self.ci       = 1090000
+            self.ci       = 1090000.0
 
 # properties for O16 (type=15)
 class O16(SoilType):
@@ -527,4 +527,4 @@ class O16(SoilType):
             self.porosity = 0.889
             self.residual = 0.00
             self.K_sat    = 1.69e-07
-            self.ci       = 1090000
+            self.ci       = 1090000.0

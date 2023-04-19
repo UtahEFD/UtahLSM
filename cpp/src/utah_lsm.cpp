@@ -241,7 +241,7 @@ void UtahLSM :: run() {
     // Set initial new temp and moisture
     sfc_T_new = soil_T[0];
     sfc_q_new = soil_q[0];
-
+    
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {
         solveSEB();
@@ -366,8 +366,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
         // Compute ground flux
         // First time through we estimate based on Santanello and Friedl (2003)
-        if ( (first)) {
-            float A,B;
+        if ( (!first)) {
+            double A,B;
             if (soil_q[0]>=0.4) {
                 A = 0.31;
                 B = 74000;
@@ -384,6 +384,14 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             double K1 = soil->conductivityThermal(soil_q[1],1);
             double Kmid = 0.5*(K0 + K1);
             flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
+            std::cout<<std::endl;
+            std::cout<<"computeFluxes----"<<std::endl;
+            std::cout<<std::setprecision(17)<<"K0: "<<K0<<std::endl;
+            std::cout<<std::setprecision(17)<<"K1: "<<K1<<std::endl;
+            std::cout<<std::setprecision(17)<<"Kmid: "<<Kmid<<std::endl;
+            std::cout<<std::setprecision(17)<<"flux_gr: "<<flux_gr<<std::endl;
+            std::cout<<"-----------------"<<std::endl;
+            std::exit(1);
         }
         
         // Compute friction velocity
@@ -400,9 +408,9 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
             sfc_q_new = soil_q[0];
-            std::cout<<std::setprecision(10)<<"wq: "<<flux_wq<<std::endl;
-            std::cout<<std::setprecision(10)<<"qg " <<gnd_q<<std::endl;
-            std::cout<<std::setprecision(10)<<"qs: "<<soil_q[0]<<std::endl;
+            std::cout<<std::setprecision(17)<<"wq: "<<flux_wq<<std::endl;
+            std::cout<<std::setprecision(17)<<"qg " <<gnd_q<<std::endl;
+            std::cout<<std::setprecision(17)<<"qs: "<<soil_q[0]<<std::endl;
             std::cout<<"----------------------"<<std::endl;
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);

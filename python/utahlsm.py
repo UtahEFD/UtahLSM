@@ -71,9 +71,9 @@ class UtahLSM:
         self.soil_type = self.input.soil_type
         
         # Initialize new surface values for first run
-        self.sfc_T_new = self.soil_T[0]
-        self.sfc_q_new = self.soil_q[0]
-        
+        self.sfc_T_new = self.soil_T.item(0)
+        self.sfc_q_new = self.soil_q.item(0)
+
         # Initialize history arrays for first run
         self.soil_T_last = self.soil_T
         self.soil_q_last = self.soil_q
@@ -180,9 +180,9 @@ class UtahLSM:
     def run(self):
                 
         # Set initial new temp and moisture
-        self.sfc_T_new = self.soil_T[0];
-        self.sfc_q_new = self.soil_q[0];
-                
+        self.sfc_T_new = self.soil_T.item(0)
+        self.sfc_q_new = self.soil_q.item(0)
+        
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
             self.solve_seb()
@@ -229,29 +229,37 @@ class UtahLSM:
         last_L         = 0.1
         criteria       = 0.1
         ref_T          = 300
-                
+        
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
-
+        
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             # First time through we estimate based on Santanello and Friedl (2003)
-            if self.first:
+            if  not self.first:
                 if (self.soil_q[0]>=0.4):
-                    A = 0.31
+                    A = 0.31000
                     B = 74000
                 elif (self.soil_q[0]<0.4 and self.soil_q[0] >= 0.25):
-                    A = 0.33
+                    A = 0.33000
                     B = 85000
                 else:
                     A = 0.35
                     B = 100000
+                    
                 self.ghf[:] = self.R_net*A*np.cos((2*c.pi*(self.utc)+10800)/B)
             else:
                 K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
                 K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
                 Kmid     = 0.5*(K0 + K1)
                 self.ghf[:] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
+                print("computeFluxes----")
+                print('K0: %.17f'%K0)
+                print('K1: %.17f'%K1)
+                print('Kmid: %.17f'%Kmid)
+                print('flux_gr: %.17f'%self.ghf[:])
+                print("-----------------")
+                sys.exit() 
             
             # Compute friction velocity
             self.ust[:] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[:])
@@ -264,11 +272,11 @@ class UtahLSM:
                 print()
                 print('---COMPUTELATENTFLUX---')
                 self.flux_wq[:] = (self.R_net - self.ghf[:] - self.flux_wT[:]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
-                gnd_q = self.atm_q + self.flux_wq[:] / (self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
-                self.sfc_q_new = self.soil.surface_water_content_estimate(self.soil_T[0],gnd_q, self.atm_p)
+                gnd_q = self.atm_q + self.flux_wq.item(0) / (self.ust.item(0)*self.sfc.fh(self.z_s,self.z_t,self.obl.item(0)))
+                self.sfc_q_new = self.soil.surface_water_content_estimate(self.soil_T.item(0),gnd_q, self.atm_p)
                 self.soil_q[0] = self.sfc_q_new
                 print('wq: %.10f'%self.flux_wq[:])
-                print('qg: %.10f'%gnd_q[:])
+                print('qg: %.10f'%gnd_q)
                 print('qs: %.10f'%self.sfc_q_new)
                 print('----------------------')
             else:
@@ -291,51 +299,6 @@ class UtahLSM:
                 self.shf[:] = c.rho_air*c.Cp_air*self.flux_wT[:]
                 self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
                 break
-    
-    # Compute the surface energy budget
-    def compute_seb(self, sfc_T):
-        
-        # Compute fluxes using passed in values
-        self.compute_fluxes(sfc_T,self.sfc_q_new);
-        # Write sensible and latent heat fluxes in [W/m^2]
-        Qh = c.rho_air*c.Cp_air*self.flux_wT
-        Ql = c.rho_air*c.Lv*self.flux_wq
-        Qg = self.ghf
-        print()
-        print('---COMPUTESEB---')
-        print('Ts: %.10f'%sfc_T)
-        print('Qh: %.10f'%Qh)
-        print('Ql: %.10f'%Ql)
-        print('Qg: %.10f'%Qg)
-        print('Rn: %.10f'%self.R_net)
-        # Compute surface energy balance
-        SEB = self.R_net - Qg - Qh - Ql
-        print('SEB: %.10f'%SEB)
-        print("----------------")
-        return SEB
-    
-    # Compute the derivative of the surface energy budget
-    def compute_dseb(self, sfc_T):
-        
-        # Compute derivative of SEB wrt temperature
-        heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
-        dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3) \
-        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:]) \
-        + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
-        
-        print('---COMPUTEDSEB---')
-        print('ts: %.10f'%self.tstep)
-        print('Ts: %.10f'%sfc_T)
-        print('qs: %.10f'%self.sfc_q_new)
-        print('Ks: %.10f'%heat_cap)
-        print('dS: %.10f'%dSEB_dT)
-        print('em: %.10f'%self.emissivity)
-        print('sb: %.10f'%c.sb)
-        print('t3: %.10f'%(sfc_T**3))
-        print('us: %.10f'%(self.ust))
-        print('fh: %.10f'%self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
-        print('-----------------')
-        return dSEB_dT
     
     # Solve the surface energy budget
     def solve_seb(self):
@@ -442,6 +405,51 @@ class UtahLSM:
             
             # If flux fails to converge, split temperature difference
             self.sfc_T_new = 0.5*(self.sfc_T_new + last_T)
+    
+    # Compute the surface energy budget
+    def compute_seb(self, sfc_T):
+
+        # Compute fluxes using passed in values
+        self.compute_fluxes(sfc_T,self.sfc_q_new);
+        # Write sensible and latent heat fluxes in [W/m^2]
+        Qh = c.rho_air*c.Cp_air*self.flux_wT
+        Ql = c.rho_air*c.Lv*self.flux_wq
+        Qg = self.ghf
+        print()
+        print('---COMPUTESEB---')
+        print('Ts: %.10f'%sfc_T)
+        print('Qh: %.10f'%Qh)
+        print('Ql: %.10f'%Ql)
+        print('Qg: %.10f'%Qg)
+        print('Rn: %.10f'%self.R_net)
+        # Compute surface energy balance
+        SEB = self.R_net - Qg - Qh - Ql
+        print('SEB: %.10f'%SEB)
+        print("----------------")
+        return SEB
+    
+    # Compute the derivative of the surface energy budget
+    def compute_dseb(self, sfc_T):
+        
+        # Compute derivative of SEB wrt temperature
+        heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
+        dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3) \
+        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:]) \
+        + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
+        
+        print('---COMPUTEDSEB---')
+        print('ts: %.10f'%self.tstep)
+        print('Ts: %.10f'%sfc_T)
+        print('qs: %.10f'%self.sfc_q_new)
+        print('Ks: %.10f'%heat_cap)
+        print('dS: %.10f'%dSEB_dT)
+        print('em: %.10f'%self.emissivity)
+        print('sb: %.10f'%c.sb)
+        print('t3: %.10f'%(sfc_T**3))
+        print('us: %.10f'%(self.ust))
+        print('fh: %.10f'%self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
+        print('-----------------')
+        return dSEB_dT
     
     # Solve the surface moisture budget
     def solve_smb(self):

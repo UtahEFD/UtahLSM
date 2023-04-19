@@ -47,13 +47,14 @@ double Campbell::surfaceWaterContentEstimate(const double sfc_T, const double sf
     double qs       = 0.622*(es/(atm_p-0.378*es));
     double ln       = std::log(sfc_q/qs);
     double soil_q   = porosity*std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),-1./b);
-    std::cout<<std::setprecision(10)<<"b: "<<b<<std::endl;
-    std::cout<<std::setprecision(10)<<"psis: " <<psi_sat<<std::endl;
-    std::cout<<std::setprecision(10)<<"por: "<<porosity<<std::endl;
-    std::cout<<std::setprecision(10)<<"es: "<<es<<std::endl;
-    std::cout<<std::setprecision(10)<<"qs: " <<qs<<std::endl;
-    std::cout<<std::setprecision(10)<<"ln: "<<ln<<std::endl;
-    std::cout<<std::setprecision(10)<<"soilq: "<<soil_q<<std::endl;
+    std::cout<<std::setprecision(17)<<"b: "<<b<<std::endl;
+    std::cout<<std::setprecision(17)<<"psis: " <<psi_sat<<std::endl;
+    std::cout<<std::setprecision(17)<<"por: "<<porosity<<std::endl;
+    std::cout<<std::setprecision(17)<<"es: "<<es<<std::endl;
+    std::cout<<std::setprecision(17)<<"qs: " <<qs<<std::endl;
+    std::cout<<std::setprecision(17)<<"ln: "<<ln<<std::endl;
+    std::cout<<std::setprecision(17)<<"sfcq: "<<sfc_q<<std::endl;
+    std::cout<<std::setprecision(17)<<"soilq: "<<soil_q<<std::endl;
     std::cout<<"----------------------"<<std::endl;
     return soil_q;
 }

@@ -49,17 +49,18 @@ class Soil(object):
         porosity = self.properties[level].porosity
         Ci       = self.properties[level].ci
         print('---heatCapacity---')
-        print((1.-porosity)*Ci)
-        print(soil_q*c.Ci_wat)
-        print((porosity-soil_q)*c.Cp_air)
+        print('%.17f'%((1.-porosity)*Ci))
+        print('%.17f'%(soil_q*c.Ci_wat),' ',soil_q, ' ',c.Ci_wat)
+        print('%.17f'%((porosity-soil_q)*c.Cp_air))
         Ks       = (1.-porosity)*Ci + soil_q*c.Ci_wat + (porosity-soil_q)*c.Cp_air
-        print('qs: %.10f'%soil_q)
-        print('Po: %.10f'%porosity)
-        print('Ci: %.10f'%Ci)
-        print('Cw: %.10f'%c.Ci_wat)
-        print('Cp: %.10f'%c.Cp_air)
-        print('Ks: %.10f'%Ks)
+        print('qs: %.17f'%soil_q)
+        print('Po: %.17f'%porosity)
+        print('Ci: %.17f'%Ci)
+        print('Cw: %.17f'%c.Ci_wat)
+        print('Cp: %.17f'%c.Cp_air)
+        print('Ks: %.17f'%Ks)
         print("----------------")
+        print(type(porosity),type(Ci),type(soil_q),type(c.Ci_wat),type(c.Cp_air))
         return Ks
 
         
@@ -70,6 +71,7 @@ class Soil(object):
         es       = 6.1078*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
         hum_sat  = 0.622*(es/(atm_p-0.378*es))
         hum_spec = h*hum_sat
+         
         return hum_spec
     
     # Compute soil thermal conductivity
