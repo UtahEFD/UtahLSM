@@ -396,10 +396,14 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
         // Compute latent flux
         if ( (first) && (i == 0)) {
+            std::cout<<"---COMPUTELATENTFLUX---"<<std::endl;
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
             sfc_q_new = soil_q[0];
+            std::cout<<std::setprecision(10)<<"wq: "<<flux_wq<<std::endl;
+            std::cout<<std::setprecision(10)<<"qg " <<gnd_q<<std::endl;
+            std::cout<<std::setprecision(10)<<"qs: "<<soil_q[0]<<std::endl;
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -454,10 +458,15 @@ void UtahLSM :: solveSEB() {
     // Compute SEB using current bracketed temperatures
     SEB_l = computeSEB(temp_1);
     SEB_h = computeSEB(temp_2);
+    
+    std::cout<<"----SOLVESEB----"<<std::endl;
+    std::cout<<std::setprecision(5)<<"SEB_l: "<<SEB_l<<std::endl;
+    std::cout<<std::setprecision(5)<<"SEB_h: "<<SEB_h<<std::endl;
+    std::cout<<"----------------"<<std::endl;
 
     // Dynamic bracket adjustments
     bool out_of_bracket = (SEB_l > 0.0 && SEB_h > 0.0) || (SEB_l < 0.0 && SEB_h < 0.0);
-    
+
     while (out_of_bracket) {
         
         // Expand brackets by 1 K
@@ -492,8 +501,9 @@ void UtahLSM :: solveSEB() {
     }
     
     // Prepare for convergence looping
-    dTs = std::abs(temp_h-temp_l);
-    
+    dTs     = std::abs(temp_h-temp_l);
+    dTs_old = dTs;
+
     // Convergence loop for flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
         
@@ -563,7 +573,9 @@ double UtahLSM :: computeSEB(double sfc_T) {
     Qh = c::rho_air*c::Cp_air*flux_wT;
     Ql = c::rho_air*c::Lv*flux_wq;
     Qg = flux_gr;
+    std::cout<<std::endl;
     std::cout<<"---COMPUTESEB---"<<std::endl;
+    std::cout<<std::setprecision(5)<<"Ts: "<<sfc_T<<std::endl;
     std::cout<<std::setprecision(5)<<"Qh: "<<Qh<<std::endl;
     std::cout<<std::setprecision(5)<<"Ql: "<<Ql<<std::endl;
     std::cout<<std::setprecision(5)<<"Qh: "<<Qg<<std::endl;
@@ -571,7 +583,7 @@ double UtahLSM :: computeSEB(double sfc_T) {
     // Compute surface energy balance
     SEB = R_net - Qg - Qh - Ql;
     std::cout<<std::setprecision(5)<<"SEB: "<<SEB<<std::endl;
-    std::cout<<"---------------"<<std::endl;
+    std::cout<<"----------------"<<std::endl;
     return SEB;
 }
 
@@ -586,6 +598,12 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
     + c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
     + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
+    std::cout<<"---COMPUTEDSEB---"<<std::endl;
+    std::cout<<"Ts: "<<sfc_T<<std::endl;
+    std::cout<<std::setprecision(5)<<"qs: "<<sfc_q_new<<std::endl;
+    std::cout<<std::setprecision(5)<<"Ks: "<<heat_cap<<std::endl;
+    std::cout<<std::setprecision(5)<<"dS: "<<dSEB_dT<<std::endl;
+    std::cout<<"-----------------"<<std::endl;
     return dSEB_dT;
 }
 
@@ -757,7 +775,7 @@ void UtahLSM :: solveDiffusionHeat() {
             // we only need to send the layers below surface
             const std::size_t offset = 1;
             const std::size_t size = nsoilz-1;
-            std::span<double> subsfc_T{soil_T.data()+1, nsoilz-1};
+            std::span<double> subsfc_T{soil_T.data()+1, size};
             matrix::tridiagonal(e,f,g,r,subsfc_T);
         } catch(std::string &e) {
             std::cout<<e<<std::endl;

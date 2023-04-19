@@ -41,6 +41,15 @@ class Campbell(Soil):
         qs       = 0.622*(es/(atm_p-0.378*es))
         ln       = np.log(sfc_q/qs)
         soil_q   = porosity*((c.Rv*sfc_T*ln/(c.grav*psi_sat))**(-1./b))
+        print('---SFCWATERCONTENT---')
+        print('b: %.10f'%b)
+        print('psi: %.10f'%psi_sat)
+        print('por: %.10f'%porosity)
+        print('es: %.10f'%es)
+        print('qs: %.10f'%qs)
+        print('ln: %.10f'%ln)
+        print('soilq: %.10f'%soil_q)
+        print('----------------------')
         return soil_q
     
     # Compute soil water potential (single level)

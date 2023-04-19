@@ -48,8 +48,21 @@ class Soil(object):
     def heat_capacity(self, soil_q, level):
         porosity = self.properties[level].porosity
         Ci       = self.properties[level].ci
-        return (1-porosity)*Ci + soil_q*c.Ci_wat + (porosity-soil_q)*c.Cp_air
-    
+        print('---heatCapacity---')
+        print((1.-porosity)*Ci)
+        print(soil_q*c.Ci_wat)
+        print((porosity-soil_q)*c.Cp_air)
+        Ks       = (1.-porosity)*Ci + soil_q*c.Ci_wat + (porosity-soil_q)*c.Cp_air
+        print('qs: %.10f'%soil_q)
+        print('Po: %.10f'%porosity)
+        print('Ci: %.10f'%Ci)
+        print('Cw: %.10f'%c.Ci_wat)
+        print('Cp: %.10f'%c.Cp_air)
+        print('Ks: %.10f'%Ks)
+        print("----------------")
+        return Ks
+
+        
     # Compute surface mixing ratio
     def surface_mixing_ratio(self, sfc_T, sfc_q, atm_p):
         psi      = self.water_potential(sfc_q, 0)

@@ -185,8 +185,8 @@ class UtahLSM:
                 
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
-            pass
             self.solve_seb()
+            sys.exit()
             self.solve_smb()
         else:
             # just return new fluxes
@@ -261,10 +261,15 @@ class UtahLSM:
             
             # Compute latent flux
             if ( (self.first) and (i == 0)):
+                print('---COMPUTELATENTFLUX---')
                 self.flux_wq[:] = (self.R_net - self.ghf[:] - self.flux_wT[:]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
                 gnd_q = self.atm_q + self.flux_wq[:] / (self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
-                self.soil_q[0] = self.soil.surface_water_content_estimate(self.soil_T[0],gnd_q, self.atm_p)
-                self.sfc_q_new = self.soil_q[0]
+                self.sfc_q_new = self.soil.surface_water_content_estimate(self.soil_T[0],gnd_q, self.atm_p)
+                self.soil_q[0] = self.sfc_q_new
+                print('wq: %.10f'%self.flux_wq[:])
+                print('qg: %.10f'%gnd_q[:])
+                print('qs: %.10f'%self.sfc_q_new)
+                print('----------------------')
             else:
                 self.flux_wq[:] = (gnd_q-self.atm_q)*self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
                 
@@ -297,6 +302,7 @@ class UtahLSM:
         Qg = self.ghf
         print()
         print('---COMPUTESEB---')
+        print('Ts: %.5f'%sfc_T)
         print('Qh: %.5f'%Qh)
         print('Ql: %.5f'%Ql)
         print('Qg: %.5f'%Qg)
@@ -304,7 +310,7 @@ class UtahLSM:
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
         print('Rn: %.5f'%SEB)
-        print("---------------")
+        print("----------------")
         return SEB
     
     # Compute the derivative of the surface energy budget
@@ -315,6 +321,12 @@ class UtahLSM:
         dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3)
         + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
+        print('---COMPUTEDSEB---')
+        print('Ts: %.5f'%sfc_T)
+        print('qs: %.5f'%self.sfc_q_new)
+        print('Ks: %.5f'%heat_cap)
+        print('dS: %.5f'%dSEB_dT)
+        print('-----------------')
         return dSEB_dT
     
     # Solve the surface energy budget
@@ -332,9 +344,12 @@ class UtahLSM:
         SEB_l = self.compute_seb(temp_1)
         SEB_h = self.compute_seb(temp_2)
         
+        print('----SOLVESEB----')
+        print('SEB_l: %.5f'%SEB_l)
+        print('SEB_h: %.5f'%SEB_h)
+        print("----------------")
         # Dynamic bracket adjustments
         out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
-        
         while (out_of_bracket):
             
             # Expand brackets by 1 K
@@ -378,7 +393,7 @@ class UtahLSM:
                 # Compute SEB and dSEB_dTs
                 SEB     = self.compute_seb(self.sfc_T_new);
                 dSEB_dT = self.compute_dseb(self.sfc_T_new)
-                
+                sys.exit()
                 # Update brackets
                 if (SEB<0.): temp_l = self.sfc_T_new
                 if (SEB>0.): temp_h = self.sfc_T_new
