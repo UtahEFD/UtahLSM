@@ -11,9 +11,9 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-
-import sys
+import numpy as np
 from .soil import Soil
+from util import constants as c
 
 class BrooksCorey(Soil):
 
@@ -45,6 +45,16 @@ class BrooksCorey(Soil):
         ln       = np.log(sfc_q/qs)
         soil_e   = porosity-residual
         soil_q   = residual+soil_e*( ( (c.Rv*sfc_T*ln) / (c.grav*psi_sat) )**(-1./b) )
+        print('---SFCWATERCONTENT---')
+        print('b:   %.17f'%b)
+        print('psi: %.17f'%psi_sat)
+        print('por: %.17f'%porosity)
+        print('es:  %.17f'%es)
+        print('qs:  %.17f'%qs)
+        print('ln:  %.17f'%ln)
+        print('sfcq:  %.17f'%sfc_q)
+        print('soilq: %.17f'%soil_q)
+        print('----------------------')
         return soil_q
     
     # Compute soil water potential (single level)

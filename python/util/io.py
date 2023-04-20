@@ -75,9 +75,9 @@ class Input(object):
 		else:
 			# load initial data from netcdf into local variables
 			try:
-				self.soil_z    = inifile.variables['soil_z'][:]
-				self.soil_T    = inifile.variables['soil_T'][:]
-				self.soil_q    = inifile.variables['soil_q'][:]
+				self.soil_z    = inifile.variables['soil_z'][:].astype('float')
+				self.soil_T    = inifile.variables['soil_T'][:].astype('float')
+				self.soil_q    = inifile.variables['soil_q'][:].astype('float')
 				self.soil_type = inifile.variables['soil_type'][:].astype('int')
 			# report a netcdf dictionary error to user and exit program
 			except (KeyError) as e:

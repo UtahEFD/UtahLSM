@@ -41,17 +41,7 @@ double Soil::heatCapacity(const double soil_q, const int level) {
 
     double porosity = properties[level]->porosity;
     double Ci = properties[level]->ci;
-    std::cout<<"---heatCapacity---"<<std::endl;
-    std::cout<<std::setprecision(17)<<(1-porosity)*Ci<<std::endl;
-    std::cout<<std::setprecision(17)<<soil_q*c::Ci_wat<<' '<<soil_q<<' '<<c::Ci_wat<<std::endl;
-    std::cout<<std::setprecision(17)<<(porosity-soil_q)*c::Cp_air<<std::endl;
-    std::cout<<std::setprecision(17)<<"qs: "<<soil_q<<std::endl;
-    std::cout<<std::setprecision(17)<<"Po: "<<porosity<<std::endl;
-    std::cout<<std::setprecision(17)<<"Ci: "<<Ci<<std::endl;
-    std::cout<<std::setprecision(17)<<"Cw: "<<c::Ci_wat<<std::endl;
-    std::cout<<std::setprecision(17)<<"Cp: "<<c::Cp_air<<std::endl;
-    std::cout<<std::setprecision(17)<<"Ks: "<<(1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air<<std::endl;
-    std::cout<<"-----------------"<<std::endl;
+    
     return (1-porosity)*Ci + soil_q*c::Ci_wat + (porosity-soil_q)*c::Cp_air;
 }
 

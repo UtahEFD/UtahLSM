@@ -244,11 +244,9 @@ void UtahLSM :: run() {
     
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {
-        solveSEB();
-        
-        std::exit(1);
-        
+        solveSEB();        
         solveSMB();
+        std::exit(1);
     } else {
         // just return new fluxes
         computeFluxes(soil_T[0],soil_q[0]);
@@ -384,34 +382,20 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             double K1 = soil->conductivityThermal(soil_q[1],1);
             double Kmid = 0.5*(K0 + K1);
             flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
-            std::cout<<std::endl;
-            std::cout<<"computeFluxes----"<<std::endl;
-            std::cout<<std::setprecision(17)<<"K0: "<<K0<<std::endl;
-            std::cout<<std::setprecision(17)<<"K1: "<<K1<<std::endl;
-            std::cout<<std::setprecision(17)<<"Kmid: "<<Kmid<<std::endl;
-            std::cout<<std::setprecision(17)<<"flux_gr: "<<flux_gr<<std::endl;
-            std::cout<<"-----------------"<<std::endl;
-            std::exit(1);
         }
         
         // Compute friction velocity
         ustar = atm_U*most::fm(z_m/z_o,zeta_m,zeta_o);
-
+        
         // Compute heat flux
         flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         
         // Compute latent flux
         if ( (first) && (i == 0)) {
-            std::cout<<std::endl;
-            std::cout<<"---COMPUTELATENTFLUX---"<<std::endl;
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
             gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
             sfc_q_new = soil_q[0];
-            std::cout<<std::setprecision(17)<<"wq: "<<flux_wq<<std::endl;
-            std::cout<<std::setprecision(17)<<"qg " <<gnd_q<<std::endl;
-            std::cout<<std::setprecision(17)<<"qs: "<<soil_q[0]<<std::endl;
-            std::cout<<"----------------------"<<std::endl;
         } else {
             flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
         }
@@ -422,7 +406,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         // Compute L
         last_L = L;
         L      = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
-
+        
         // Bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
@@ -442,10 +426,11 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         }
     }
     
+    // Exit if L convergence fails
     if (!converged) {
         std::cout<<std::endl;
         std::cout<<"[Fluxes] \t Converge failed"<<std::endl;
-        std::cout<<L<<" "<<flux_wq<<std::endl;
+        std::exit(1);
     }
 }
 
@@ -465,12 +450,7 @@ void UtahLSM :: solveSEB() {
     
     // Compute SEB using current bracketed temperatures
     SEB_l = computeSEB(temp_1);
-    SEB_h = computeSEB(temp_2);
-    
-    std::cout<<"----SOLVESEB----"<<std::endl;
-    std::cout<<std::setprecision(5)<<"SEB_l: "<<SEB_l<<std::endl;
-    std::cout<<std::setprecision(5)<<"SEB_h: "<<SEB_h<<std::endl;
-    std::cout<<"----------------"<<std::endl;
+    SEB_h = computeSEB(temp_2);    
 
     // Dynamic bracket adjustments
     bool out_of_bracket = (SEB_l > 0.0 && SEB_h > 0.0) || (SEB_l < 0.0 && SEB_h < 0.0);
@@ -521,7 +501,6 @@ void UtahLSM :: solveSEB() {
             // Compute SEB and dSEB_dTs
             SEB     = computeSEB(sfc_T_new);
             dSEB_dT = computeDSEB(sfc_T_new);
-            std::exit(1);
             
             // Update brackets
             if (SEB<0.) temp_l = sfc_T_new;
@@ -561,6 +540,12 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
+            std::cout<<std::endl;
+            std::cout<<"solveSEB--------"<<std::endl;
+            std::cout<<std::setprecision(17)<<"Qh: "<<Qh<<std::endl;
+            std::cout<<std::setprecision(17)<<"Ql: "<<Ql<<std::endl;
+            std::cout<<std::setprecision(17)<<"Qg: "<<Qg<<std::endl;
+            std::cout<<"----------------"<<std::endl;
             break;
         }
         
@@ -582,17 +567,10 @@ double UtahLSM :: computeSEB(double sfc_T) {
     Qh = c::rho_air*c::Cp_air*flux_wT;
     Ql = c::rho_air*c::Lv*flux_wq;
     Qg = flux_gr;
-    std::cout<<std::endl;
-    std::cout<<"---COMPUTESEB---"<<std::endl;
-    std::cout<<std::setprecision(5)<<"Ts: "<<sfc_T<<std::endl;
-    std::cout<<std::setprecision(5)<<"Qh: "<<Qh<<std::endl;
-    std::cout<<std::setprecision(5)<<"Ql: "<<Ql<<std::endl;
-    std::cout<<std::setprecision(5)<<"Qh: "<<Qg<<std::endl;
-    std::cout<<std::setprecision(5)<<"Rn: "<<R_net<<std::endl;
+    
     // Compute surface energy balance
     SEB = R_net - Qg - Qh - Ql;
-    std::cout<<std::setprecision(5)<<"SEB: "<<SEB<<std::endl;
-    std::cout<<"----------------"<<std::endl;
+    
     return SEB;
 }
 
@@ -607,18 +585,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
     + c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
     + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
-    std::cout<<"---COMPUTEDSEB---"<<std::endl;
-    std::cout<<std::setprecision(10)<<"ts: "<<tstep<<std::endl;
-    std::cout<<std::setprecision(10)<<"Ts: "<<sfc_T<<std::endl;
-    std::cout<<std::setprecision(10)<<"qs: "<<sfc_q_new<<std::endl;
-    std::cout<<std::setprecision(10)<<"Ks: "<<heat_cap<<std::endl;
-    std::cout<<std::setprecision(10)<<"dS: "<<dSEB_dT<<std::endl;
-    std::cout<<std::setprecision(10)<<"em: "<<emissivity<<std::endl;
-    std::cout<<std::setprecision(10)<<"sb: "<<c::sb<<std::endl;
-    std::cout<<std::setprecision(10)<<"t3: "<<std::pow(sfc_T,3.)<<std::endl;
-    std::cout<<std::setprecision(10)<<"us: "<<ustar<<std::endl;
-    std::cout<<std::setprecision(10)<<"fh: "<<most::fh(z_s/z_t,zeta_s,zeta_t)<<std::endl;
-    std::cout<<"-----------------"<<std::endl;
+    
     return dSEB_dT;
 }
 
@@ -676,9 +643,11 @@ void UtahLSM :: solveSMB() {
         K_avg = 0.5*(K0+K1);
         
         // Check for convergence
-        converged = std::abs((E + flux_sm)/E) <=flux_criteria;
-
-        if (converged) {
+        if (std::abs((E + flux_sm)/E) <=flux_criteria) {
+            std::cout<<std::endl;
+            std::cout<<"solveSMB--------"<<std::endl;
+            std::cout<<std::setprecision(17)<<"E: "<<E<<std::endl;
+            std::cout<<"----------------"<<std::endl;
             break;
         }
     }

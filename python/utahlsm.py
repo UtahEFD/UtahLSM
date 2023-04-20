@@ -253,13 +253,6 @@ class UtahLSM:
                 K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
                 Kmid     = 0.5*(K0 + K1)
                 self.ghf[:] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
-                print("computeFluxes----")
-                print('K0: %.17f'%K0)
-                print('K1: %.17f'%K1)
-                print('Kmid: %.17f'%Kmid)
-                print('flux_gr: %.17f'%self.ghf[:])
-                print("-----------------")
-                sys.exit() 
             
             # Compute friction velocity
             self.ust[:] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[:])
@@ -269,16 +262,10 @@ class UtahLSM:
             
             # Compute latent flux
             if ( (self.first) and (i == 0)):
-                print()
-                print('---COMPUTELATENTFLUX---')
                 self.flux_wq[:] = (self.R_net - self.ghf[:] - self.flux_wT[:]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
                 gnd_q = self.atm_q + self.flux_wq.item(0) / (self.ust.item(0)*self.sfc.fh(self.z_s,self.z_t,self.obl.item(0)))
                 self.sfc_q_new = self.soil.surface_water_content_estimate(self.soil_T.item(0),gnd_q, self.atm_p)
                 self.soil_q[0] = self.sfc_q_new
-                print('wq: %.10f'%self.flux_wq[:])
-                print('qg: %.10f'%gnd_q)
-                print('qs: %.10f'%self.sfc_q_new)
-                print('----------------------')
             else:
                 self.flux_wq[:] = (gnd_q-self.atm_q)*self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
                 
@@ -299,6 +286,11 @@ class UtahLSM:
                 self.shf[:] = c.rho_air*c.Cp_air*self.flux_wT[:]
                 self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
                 break
+        
+        # Exit if L convergence fails
+        if not converged:
+            print("[UtahLSM: Fluxes] \t Converge failed")
+            sys.exit()
     
     # Solve the surface energy budget
     def solve_seb(self):
@@ -314,11 +306,7 @@ class UtahLSM:
         # Compute SEB using current bracketed temperatures
         SEB_l = self.compute_seb(temp_1)
         SEB_h = self.compute_seb(temp_2)
-        
-        print('----SOLVESEB----')
-        print('SEB_l: %.5f'%SEB_l)
-        print('SEB_h: %.5f'%SEB_h)
-        print("----------------")
+
         # Dynamic bracket adjustments
         out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
         while (out_of_bracket):
@@ -330,7 +318,7 @@ class UtahLSM:
             # Recompute SEB at brackets
             SEB_l = self.compute_seb(temp_1)
             SEB_h = self.compute_seb(temp_2)
-            
+
             # Check for proper brackets
             out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
         
@@ -364,7 +352,7 @@ class UtahLSM:
                 # Compute SEB and dSEB_dTs
                 SEB     = self.compute_seb(self.sfc_T_new);
                 dSEB_dT = self.compute_dseb(self.sfc_T_new)
-                sys.exit()
+
                 # Update brackets
                 if (SEB<0.): temp_l = self.sfc_T_new
                 if (SEB>0.): temp_h = self.sfc_T_new
@@ -391,7 +379,7 @@ class UtahLSM:
                 # computeFluxes(soil_T[0],soil_q[0]);
             
             # Save current flux for convergence criteria
-            last_F = self.flux_wT
+            last_F = self.flux_wT.copy()
             
             # Recompute heat flux using new temperature
             self.compute_fluxes(self.sfc_T_new,self.sfc_q_new)
@@ -401,6 +389,12 @@ class UtahLSM:
                 Qh = c.rho_air*c.Cp_air*self.flux_wT
                 Ql = c.rho_air*c.Lv*self.flux_wq
                 Qg = self.ghf
+                print()
+                print('solveSEB---------')
+                print('Qh: %.17f'%Qh)
+                print('Ql: %.17f'%Ql)
+                print('Qg: %.17f'%Qg)
+                print('-----------------')
                 break
             
             # If flux fails to converge, split temperature difference
@@ -411,21 +405,15 @@ class UtahLSM:
 
         # Compute fluxes using passed in values
         self.compute_fluxes(sfc_T,self.sfc_q_new);
+        
         # Write sensible and latent heat fluxes in [W/m^2]
         Qh = c.rho_air*c.Cp_air*self.flux_wT
         Ql = c.rho_air*c.Lv*self.flux_wq
         Qg = self.ghf
-        print()
-        print('---COMPUTESEB---')
-        print('Ts: %.10f'%sfc_T)
-        print('Qh: %.10f'%Qh)
-        print('Ql: %.10f'%Ql)
-        print('Qg: %.10f'%Qg)
-        print('Rn: %.10f'%self.R_net)
+        
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
-        print('SEB: %.10f'%SEB)
-        print("----------------")
+        
         return SEB
     
     # Compute the derivative of the surface energy budget
@@ -437,18 +425,6 @@ class UtahLSM:
         + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:]) \
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
         
-        print('---COMPUTEDSEB---')
-        print('ts: %.10f'%self.tstep)
-        print('Ts: %.10f'%sfc_T)
-        print('qs: %.10f'%self.sfc_q_new)
-        print('Ks: %.10f'%heat_cap)
-        print('dS: %.10f'%dSEB_dT)
-        print('em: %.10f'%self.emissivity)
-        print('sb: %.10f'%c.sb)
-        print('t3: %.10f'%(sfc_T**3))
-        print('us: %.10f'%(self.ust))
-        print('fh: %.10f'%self.sfc.fh(self.z_s,self.z_t,self.obl[:]))
-        print('-----------------')
         return dSEB_dT
     
     # Solve the surface moisture budget

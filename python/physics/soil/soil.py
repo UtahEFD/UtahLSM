@@ -48,19 +48,8 @@ class Soil(object):
     def heat_capacity(self, soil_q, level):
         porosity = self.properties[level].porosity
         Ci       = self.properties[level].ci
-        print('---heatCapacity---')
-        print('%.17f'%((1.-porosity)*Ci))
-        print('%.17f'%(soil_q*c.Ci_wat),' ',soil_q, ' ',c.Ci_wat)
-        print('%.17f'%((porosity-soil_q)*c.Cp_air))
         Ks       = (1.-porosity)*Ci + soil_q*c.Ci_wat + (porosity-soil_q)*c.Cp_air
-        print('qs: %.17f'%soil_q)
-        print('Po: %.17f'%porosity)
-        print('Ci: %.17f'%Ci)
-        print('Cw: %.17f'%c.Ci_wat)
-        print('Cp: %.17f'%c.Cp_air)
-        print('Ks: %.17f'%Ks)
-        print("----------------")
-        print(type(porosity),type(Ci),type(soil_q),type(c.Ci_wat),type(c.Cp_air))
+        
         return Ks
 
         

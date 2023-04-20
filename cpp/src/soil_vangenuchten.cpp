@@ -15,6 +15,7 @@
 #include "soil_vangenuchten.hpp"
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 
 #include "constants.hpp"

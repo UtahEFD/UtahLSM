@@ -33,13 +33,11 @@ double Campbell::surfaceWaterContent(const double psi) {
     double soil_q   = porosity*std::pow(std::abs(psi_sat/psi),(1./b));
     
     return soil_q;
-    
 }
 
 // Estimate soil surface moisture from surface mixing ratio
 double Campbell::surfaceWaterContentEstimate(const double sfc_T, const double sfc_q,
                                              const double atm_p) {
-    std::cout<<"---SFCWATERCONTENT---"<<std::endl;
     double b        = properties[0]->b;
     double psi_sat  = properties[0]->psi_sat;
     double porosity = properties[0]->porosity;
@@ -47,15 +45,7 @@ double Campbell::surfaceWaterContentEstimate(const double sfc_T, const double sf
     double qs       = 0.622*(es/(atm_p-0.378*es));
     double ln       = std::log(sfc_q/qs);
     double soil_q   = porosity*std::pow(c::Rv*sfc_T*ln/(c::grav*psi_sat),-1./b);
-    std::cout<<std::setprecision(17)<<"b: "<<b<<std::endl;
-    std::cout<<std::setprecision(17)<<"psis: " <<psi_sat<<std::endl;
-    std::cout<<std::setprecision(17)<<"por: "<<porosity<<std::endl;
-    std::cout<<std::setprecision(17)<<"es: "<<es<<std::endl;
-    std::cout<<std::setprecision(17)<<"qs: " <<qs<<std::endl;
-    std::cout<<std::setprecision(17)<<"ln: "<<ln<<std::endl;
-    std::cout<<std::setprecision(17)<<"sfcq: "<<sfc_q<<std::endl;
-    std::cout<<std::setprecision(17)<<"soilq: "<<soil_q<<std::endl;
-    std::cout<<"----------------------"<<std::endl;
+    
     return soil_q;
 }
 
