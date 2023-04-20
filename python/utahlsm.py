@@ -187,13 +187,15 @@ class UtahLSM:
         if ( (self.step_count % self.dt_seb)==0 ):
             self.solve_seb()
             self.solve_smb()
+            print('%.17f'%self.sfc_q_new)
+            sys.exit()
         else:
             # just return new fluxes
             self.compute_fluxes(self.soil_T[0],self.soil_q[0])
         
         # Save current temperature and moisture
-        self.soil_T_last = self.soil_T
-        self.soil_q_last = self.soil_q
+        self.soil_T_last = self.soil_T.copy()
+        self.soil_q_last = self.soil_q.copy()
         
         # check if time to compute diffusion
         if ( (self.step_count % self.dt_dif)==0 ):
@@ -203,7 +205,7 @@ class UtahLSM:
             
             # solve moisture diffusion
             self.solve_diffusion_mois()
-        
+            sys.exit()
         # Change flag of whether initial time
         if self.first: self.first = False
         
@@ -469,6 +471,7 @@ class UtahLSM:
             
             # Update soil moisture
             self.sfc_q_new = self.soil.surface_water_content(psi0)
+            sys.exit()
             gnd_q     = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
             E = c.rho_air*(gnd_q-self.atm_q)*self.ust*self.sfc.fh(self.z_s, self.z_t,self.obl[:])
             
@@ -481,7 +484,7 @@ class UtahLSM:
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
             
             if (converged): break
-    
+
     # Solve the diffusion equation for soil heat
     # TODO: Fix code, check matrix
     def solve_diffusion_heat(self):
@@ -607,7 +610,7 @@ class UtahLSM:
     # Solve the diffusion equation for soil moisture
     # TODO: Fix code, check matrix
     def solve_diffusion_mois(self):
-        
+        print(self.sfc_q_new)
         print("----BEFOREM---")
         print('%0.17f'%self.sfc_q_new)
         for ii in range(self.nz):
@@ -671,7 +674,7 @@ class UtahLSM:
             f[0] = CB
             g[0] = CBm
             r[0] = CFp * self.soil_q[0] + CF * self.soil_q[1] + CFm * self.soil_q[2] - CBp * self.sfc_q_new
-        
+            
             # interior soil levels
             for i in range(1,self.nz-2):
                 # for soil_T in this loop:
@@ -708,7 +711,7 @@ class UtahLSM:
                 f[i] = CB
                 g[i] = CBm
                 r[i] = CFp * self.soil_q[i] + CF * self.soil_q[i+1] + CFm * self.soil_q[i+2]
-        
+                
             # Matrix coefficients for bottom level
             j = self.nz-2
         
@@ -741,14 +744,14 @@ class UtahLSM:
             f[j] = (CB + 2 * CBm)
             g[j] = 0
             r[j] = (CFp - CFm) * self.soil_q[j] + (CF + 2 * CFm) * self.soil_q[j+1]
-        
+            
             # now we can add new sfc q to column array
             self.soil_q[0] = self.sfc_q_new
-        
+            print(self.soil_q[0])
             # Solve the tridiagonal system
             try:
                 # we only need the layers below the surface
-                matrix.tridiagonal(e,f,g,r,soil_q[1::])
+                matrix.tridiagonal(e,f,g,r,self.soil_q[1::])
             except:
                 sys.exit(0)
 
@@ -758,17 +761,25 @@ class UtahLSM:
                 D[i+1]   = self.soil.diffusivity_moisture(self.soil_q[i+1],i+1)
                 D_mid[i] = 0.5*(D[i]+D[i+1])
                 z_mid[i] = 0.5*(self.soil_z[i]+self.soil_z[i+1])
-        
+                
+                print()        
+                print("diffMOIS--------")
+                print("D: %.17f"%D[i])
+                print("D1: %.17f"%D[i+1])
+                print("Dm: %.17f"%D_mid[i])
+                print("zm: %.17f"%z_mid[i])
+                print("----------------")
+                sys.exit()
+                
                 # linearized K
                 K_lin[i] = self.soil.conductivity_moisture(self.soil_q[i],i)/self.soil_q[i]
                 if (i==self.nz-2):
-                    K_lin[i+1] = soil.conductivity_moisture(self.soil_q[i+1],i+1)/self.soil_q[i+1]
+                    K_lin[i+1] = self.soil.conductivity_moisture(self.soil_q[i+1],i+1)/self.soil_q[i+1]
         
             # get new dt
             Dmax = np.max(D)
             dt_q = dz2 / (2*Dmax)
             t+=dt_q
-            print(t)
         print("----AFTERM---")
         for ii in range(self.nz):
             print('{:.17f}'.format(self.soil_q[ii]))
