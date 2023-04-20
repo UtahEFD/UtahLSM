@@ -11,7 +11,7 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-
+import sys
 import numpy as np
 from .soil import Soil
 from util import constants as c
@@ -30,6 +30,7 @@ class Campbell(Soil):
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
         soil_q   = porosity*(np.abs(psi_sat/psi)**(1./b))
+        
         return soil_q
 
     # Estimate soil surface moisture from surface mixing ratio
@@ -58,6 +59,7 @@ class Campbell(Soil):
         porosity     = self.properties[level].porosity
         K_sat        = self.properties[level].K_sat
         conductivity = K_sat*( (soil_q/porosity)**(2.*b+3.) )
+        
         return conductivity
     
     # Computes soil moisture diffusivity
@@ -67,4 +69,5 @@ class Campbell(Soil):
         porosity     = self.properties[level].porosity
         K_sat        = self.properties[level].K_sat
         diffusivity  = -b*K_sat*psi_sat*( (soil_q/porosity)**(b+2.) ) / porosity
+        
         return diffusivity

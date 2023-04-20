@@ -246,7 +246,6 @@ void UtahLSM :: run() {
     if ( (step_count % step_seb)==0 ) {
         solveSEB();        
         solveSMB();
-        std::exit(1);
     } else {
         // just return new fluxes
         computeFluxes(soil_T[0],soil_q[0]);
@@ -262,8 +261,6 @@ void UtahLSM :: run() {
         // Solve heat diffusion
         solveDiffusionHeat();
         
-        std::exit(1);
-
         // solve moisture diffusion
         solveDiffusionMois();
     }
@@ -606,13 +603,15 @@ void UtahLSM :: solveSMB() {
     // Compute initial soil moisture flux
     K0    = soil->conductivityMoisture(soil_q[0],0);
     K1    = soil->conductivityMoisture(soil_q[1],1);
+    
     K_avg = 0.5*(K0+K1);
     D0    = soil->diffusivityMoisture(soil_q[0],0);
     D1    = soil->diffusivityMoisture(soil_q[1],1);
+    
     D_avg = 0.5*(D0+D1);
     flux_sm  = c::rho_wat*K_avg*((psi0 - psi1)/(soil_z[0]-soil_z[1]) + 1);
-    flux_sm = c::rho_wat*D_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
-               + c::rho_wat*K_avg;
+    //flux_sm = c::rho_wat*D_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
+    //           + c::rho_wat*K_avg;
     
     // Compute evaporation
     E = c::rho_air*flux_wq;
@@ -643,13 +642,7 @@ void UtahLSM :: solveSMB() {
         K_avg = 0.5*(K0+K1);
         
         // Check for convergence
-        if (std::abs((E + flux_sm)/E) <=flux_criteria) {
-            std::cout<<std::endl;
-            std::cout<<"solveSMB--------"<<std::endl;
-            std::cout<<std::setprecision(17)<<"E: "<<E<<std::endl;
-            std::cout<<"----------------"<<std::endl;
-            break;
-        }
+        if (std::abs((E + flux_sm)/E) <=flux_criteria) break;
     }
 }
 
@@ -685,9 +678,9 @@ void UtahLSM :: solveDiffusionHeat() {
     for (int t=0; t<=tstep; t+=dt_T) {
         
         std::cout<<"----BEFORE----"<<std::endl;
-        std::cout<<std::setprecision(5)<<sfc_T_new<<std::endl;
+        std::cout<<std::setprecision(17)<<sfc_T_new<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<std::setprecision(5)<<soil_T[ii]<<std::endl;
+            std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
         }
         std::cout<<"--------------"<<std::endl;
         
@@ -781,7 +774,7 @@ void UtahLSM :: solveDiffusionHeat() {
     
     std::cout<<"----AFTER----"<<std::endl;
     for (int ii=0; ii<nsoilz; ii+=1) {
-        std::cout<<std::setprecision(5)<<soil_T[ii]<<std::endl;
+        std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
     }
     std::cout<<"--------------"<<std::endl;
 }
@@ -814,7 +807,14 @@ void UtahLSM :: solveDiffusionMois() {
     
     // Loop through diffusion by substep
     for (int t=0; t<=tstep; t+=dt_q) {
-
+        
+        std::cout<<"----BEFORE----"<<std::endl;
+        std::cout<<std::setprecision(17)<<sfc_q_new<<std::endl;
+        for (int ii=0; ii<nsoilz; ii+=1) {
+            std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
+        
         // Set up and solve a tridiagonal matrix
         // AT(n+1) = r(n), where n denotes the time level
         // e, f, g the components of A matrix
@@ -955,6 +955,11 @@ void UtahLSM :: solveDiffusionMois() {
         Dmax = *std::max_element(D.begin(), D.end());
         dt_q = dz2 / (2*Dmax); 
     }
+    std::cout<<"----AFTER----"<<std::endl;
+    for (int ii=0; ii<nsoilz; ii+=1) {
+        std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+    }
+    std::cout<<"--------------"<<std::endl;
 }
 
 //////////////////////////////////////////////////////////////

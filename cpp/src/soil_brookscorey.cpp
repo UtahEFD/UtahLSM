@@ -33,6 +33,7 @@ double BrooksCorey::surfaceWaterContent(const double psi) {
     double residual = properties[0]->residual;
     double soil_e   = porosity-residual;
     double soil_q   = residual+soil_e*std::pow(psi_sat/psi,1./b);
+    
     return soil_q;
 }
 
@@ -61,11 +62,7 @@ double BrooksCorey::waterPotential(const double soil_q, const int level) {
     double residual = properties[level]->residual;
     double Se       = (soil_q-residual)/(porosity-residual);
     double psi      = psi_sat*std::pow(Se,-b);
-    
-    if (psi>psi_sat) {
-        psi = psi_sat;
-        //std::cout<<"Error in PSI"<<std::endl;
-    }
+    if (psi>psi_sat) psi = psi_sat;
     
     if (Se<0) {
         std::exit(0);
@@ -87,6 +84,7 @@ double BrooksCorey::conductivityMoisture(const double soil_q, const int level) {
     double K_sat        = properties[level]->K_sat;
     double Se           = (soil_q-residual)/(porosity-residual);
     double conductivity = K_sat*std::pow(Se,(2.*b+3.));
+    
     return conductivity;
 }
 
@@ -100,5 +98,6 @@ double BrooksCorey::diffusivityMoisture(const double soil_q, const int level) {
     double K_sat        = properties[level]->K_sat;
     double Se           = (soil_q-residual)/(porosity-residual);
     double diffusivity  = -b*K_sat*psi_sat*std::pow(Se,(b+2.))/(porosity-residual);
+    
     return diffusivity;
 }

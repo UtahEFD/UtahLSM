@@ -11,6 +11,7 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+import sys
 import numpy as np
 from .soil import Soil
 from util import constants as c
@@ -34,7 +35,8 @@ class VanGenuchten(Soil):
         residual = self.properties[0].residual
         soil_e   = porosity-residual
         m        = 1 / (1+b)
-        soil_q   = residual + soil_e* ( ( (1 + ( (psi/psi_sat)**(1/(1-m)))  ))**(-m) )
+        soil_q   = residual + soil_e * (1 / ( 1 + (psi/psi_sat)**(1/(1-m)) ))**(m)
+        
         return soil_q
     
     # Estimate soil surface moisture from surface mixing ratio
@@ -72,6 +74,7 @@ class VanGenuchten(Soil):
         Se           = (soil_q-residual)/(porosity-residual)
         m            = 1 / (1+b)
         conductivity = K_sat*np.sqrt(Se)*( (1 - (1 - (Se**(1/m)) )**m )**2 )
+        
         return conductivity
     
     # Computes soil moisture diffusivity
@@ -85,6 +88,7 @@ class VanGenuchten(Soil):
         soil_e       = porosity-residual
         m            = 1 / (1+b)
         A            = (1-m)*K_sat*psi_sat / (m*soil_e)
-        C            = (Se**(0.5-1/m)*( ( (1-( Se**(1/m))**(-m)) ) + ((1-( Se**(1/m)))**m)) - 2 )
+        C            = Se**(0.5-(1/m))*( (1 - Se**(1/m))**(-m) + (1- Se**(1/m))**m - 2 )
         diffusivity  = A*C
+        
         return diffusivity

@@ -186,7 +186,6 @@ class UtahLSM:
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
             self.solve_seb()
-            sys.exit()
             self.solve_smb()
         else:
             # just return new fluxes
@@ -201,9 +200,9 @@ class UtahLSM:
             
             # Solve heat diffusion
             self.solve_diffusion_heat()
-            sys.exit()
+            
             # solve moisture diffusion
-            #self.solve_diffusion_mois()
+            self.solve_diffusion_mois()
         
         # Change flag of whether initial time
         if self.first: self.first = False
@@ -432,7 +431,7 @@ class UtahLSM:
         
         # Local variables
         max_iter_flux = 200
-        delta         = 0.5 
+        delta         = 0.8 
         flux_criteria = .001
         
         # Moisture potential at first two levels below ground
@@ -442,12 +441,14 @@ class UtahLSM:
         # Compute initial soil moisture flux
         K0    = self.soil.conductivity_moisture(self.soil_q[0],0)
         K1    = self.soil.conductivity_moisture(self.soil_q[1],1)
+        
         K_avg = 0.5*(K0+K1)
         D0    = self.soil.diffusivity_moisture(self.soil_q[0],0)
         D1    = self.soil.diffusivity_moisture(self.soil_q[1],1)
+        
         D_avg = 0.5*(D0+D1)
         flux_sm  = c.rho_wat*K_avg*((psi0 - psi1)/(self.soil_z[0]-self.soil_z[1]) + 1)
-        flux_sm = c.rho_wat*D_avg*(self.soil_q[0]-self.soil_q[1])/(self.soil_z[0]-self.soil_z[1]) + c.rho_wat*K_avg
+        #flux_sm  = c.rho_wat*D_avg*(self.soil_q[0]-self.soil_q[1])/(self.soil_z[0]-self.soil_z[1]) + c.rho_wat*K_avg
         
         # Compute evaporation
         E = c.rho_air*self.flux_wq
@@ -467,7 +468,7 @@ class UtahLSM:
                 psi0 = self.soil.properties[0].psi_sat
             
             # Update soil moisture
-            sfc_q_new = self.soil.surface_water_content(psi0)
+            self.sfc_q_new = self.soil.surface_water_content(psi0)
             gnd_q     = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
             E = c.rho_air*(gnd_q-self.atm_q)*self.ust*self.sfc.fh(self.z_s, self.z_t,self.obl[:])
             
@@ -478,18 +479,17 @@ class UtahLSM:
             
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
-        
+            
             if (converged): break
     
     # Solve the diffusion equation for soil heat
     # TODO: Fix code, check matrix
     def solve_diffusion_heat(self):
         
-        print("----BEFORE----")
-        print(self.sfc_T_new)
-        print('{:.5f}'.format(self.sfc_T_new))
+        print("----BEFORET---")
+        print('%0.17f'%self.sfc_T_new)
         for ii in range(self.nz):
-            print('{:.5f}'.format(self.soil_T[ii]))
+            print('{:.17f}'.format(self.soil_T[ii]))
         print("--------------")
         
         # Local variables
@@ -599,13 +599,21 @@ class UtahLSM:
             Kmax = np.max(K)
             dt_T = dz2 / (2*Kmax)
             t+=dt_T
-        print("----AFTER----")
+        print("----AFTERT---")
         for ii in range(self.nz):
-            print('{:.5f}'.format(self.soil_T[ii]))
+            print('{:.17f}'.format(self.soil_T[ii]))
         print("--------------")
+    
     # Solve the diffusion equation for soil moisture
     # TODO: Fix code, check matrix
     def solve_diffusion_mois(self):
+        
+        print("----BEFOREM---")
+        print('%0.17f'%self.sfc_q_new)
+        for ii in range(self.nz):
+            print('{:.17f}'.format(self.soil_q[ii]))
+        print("--------------")
+        
         # Local variables
         AB  = 1.0
         AF  = 1.0-AB
@@ -627,7 +635,6 @@ class UtahLSM:
         # Loop through diffusion by substep
         t = 0
         while (t<=self.tstep):
-        
             # Set up and solve a tridiagonal matrix
             # AT(n+1) = r(n), where n denotes the time level
             # e, f, g the components of A matrix
@@ -667,7 +674,6 @@ class UtahLSM:
         
             # interior soil levels
             for i in range(1,self.nz-2):
-        
                 # for soil_T in this loop:
                 # i   -> j+1 level
                 # i+1 -> j   level
@@ -745,7 +751,7 @@ class UtahLSM:
                 matrix.tridiagonal(e,f,g,r,soil_q[1::])
             except:
                 sys.exit(0)
-        
+
             # solve for D to get new dt
             for i in range(0,self.nz-1):
                 D[i]     = self.soil.diffusivity_moisture(self.soil_q[i],i)
@@ -762,6 +768,11 @@ class UtahLSM:
             Dmax = np.max(D)
             dt_q = dz2 / (2*Dmax)
             t+=dt_q
+            print(t)
+        print("----AFTERM---")
+        for ii in range(self.nz):
+            print('{:.17f}'.format(self.soil_q[ii]))
+        print("--------------")
 
 # main program to run the LSM
 if __name__ == "__main__":

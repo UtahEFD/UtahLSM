@@ -11,6 +11,7 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+import sys
 import numpy as np
 from .soil import Soil
 from util import constants as c
@@ -32,6 +33,7 @@ class BrooksCorey(Soil):
         residual = self.properties[0].residual
         soil_e   = porosity-residual
         soil_q   = residual+soil_e*( (psi_sat/psi)**(1./b) )
+        
         return soil_q
     
     # Estimate soil surface moisture from surface mixing ratio
@@ -45,16 +47,6 @@ class BrooksCorey(Soil):
         ln       = np.log(sfc_q/qs)
         soil_e   = porosity-residual
         soil_q   = residual+soil_e*( ( (c.Rv*sfc_T*ln) / (c.grav*psi_sat) )**(-1./b) )
-        print('---SFCWATERCONTENT---')
-        print('b:   %.17f'%b)
-        print('psi: %.17f'%psi_sat)
-        print('por: %.17f'%porosity)
-        print('es:  %.17f'%es)
-        print('qs:  %.17f'%qs)
-        print('ln:  %.17f'%ln)
-        print('sfcq:  %.17f'%sfc_q)
-        print('soilq: %.17f'%soil_q)
-        print('----------------------')
         return soil_q
     
     # Compute soil water potential (single level)
@@ -85,6 +77,7 @@ class BrooksCorey(Soil):
         K_sat        = self.properties[level].K_sat
         Se           = (soil_q-residual)/(porosity-residual)
         conductivity = K_sat*( Se**(2.*b+3.) )
+        
         return conductivity
     
     # Computes soil moisture diffusivity
@@ -96,4 +89,5 @@ class BrooksCorey(Soil):
         K_sat        = self.properties[level].K_sat
         Se           = (soil_q-residual)/(porosity-residual)
         diffusivity  = -b*K_sat*psi_sat*( Se**(b+2.) ) / (porosity-residual)
+        
         return diffusivity
