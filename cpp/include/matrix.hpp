@@ -37,7 +37,7 @@ namespace matrix {
      */
     void tridiagonal(const std::vector<double>& a,const std::vector<double>& b,
                      const std::vector<double>& c,const std::vector<double>& r,
-                     std::span<double> u);
+                     std::span<double>& u);
 };
 
 #endif

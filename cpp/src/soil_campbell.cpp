@@ -31,13 +31,7 @@ double Campbell::surfaceWaterContent(const double psi) {
     double psi_sat  = properties[0]->psi_sat;
     double porosity = properties[0]->porosity;
     double soil_q   = porosity*std::pow(std::abs(psi_sat/psi),(1./b));
-    std::cout<<"SWC-------------"<<std::endl;
-    std::cout<<std::setprecision(17)<<"b: "<<b<<std::endl;
-    std::cout<<std::setprecision(17)<<"psi: "<<psi<<std::endl;
-    std::cout<<std::setprecision(17)<<"psis: "<<psi_sat<<std::endl;
-    std::cout<<std::setprecision(17)<<"porosity: "<<porosity<<std::endl;
-    std::cout<<std::setprecision(17)<<"soil_q: "<<soil_q<<std::endl;
-    std::cout<<"----------------"<<std::endl;
+    
     return soil_q;
 }
 
@@ -86,18 +80,6 @@ double Campbell::diffusivityMoisture(const double soil_q, const int level) {
     double porosity     = properties[level]->porosity;
     double K_sat        = properties[level]->K_sat;
     double diffusivity  = -b*K_sat*psi_sat*std::pow(soil_q/porosity,(b+2.))/porosity;
-    
-    
-    std::cout<<std::endl;
-    std::cout<<"SDM-------------"<<std::endl;
-    std::cout<<std::setprecision(17)<<"b: "<<b<<std::endl;
-    std::cout<<std::setprecision(17)<<"psis: "<<psi_sat<<std::endl;
-    std::cout<<std::setprecision(17)<<"porosity: "<<porosity<<std::endl;
-    std::cout<<std::setprecision(17)<<"K_sat: "<<K_sat<<std::endl;
-    std::cout<<std::setprecision(17)<<"soil_q: "<<soil_q<<std::endl;
-    std::cout<<std::setprecision(17)<<"diff: "<<diffusivity<<std::endl;
-    std::cout<<"----------------"<<std::endl;
-    
     
     return diffusivity;
 }

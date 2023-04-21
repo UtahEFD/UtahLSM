@@ -31,15 +31,6 @@ class Campbell(Soil):
         porosity = self.properties[0].porosity
         soil_q   = porosity*(np.abs(psi_sat/psi)**(1./b))
         
-        print()        
-        print("SWC-------------")
-        print("b: %.17f"%b)
-        print("psi: %.17f"%psi)
-        print("psis: %.17f"%psi_sat)
-        print("porosity: %.17f"%porosity)
-        print("soil_q: %.17f"%soil_q)
-        print("----------------")
-        
         return soil_q
 
     # Estimate soil surface moisture from surface mixing ratio
@@ -79,13 +70,4 @@ class Campbell(Soil):
         K_sat        = self.properties[level].K_sat
         diffusivity  = -b*K_sat*psi_sat*( (soil_q/porosity)**(b+2.) ) / porosity
         
-        print()        
-        print("SDM-------------")
-        print("b: %.17f"%b)
-        print("psis: %.17f"%psi_sat)
-        print("porosity: %.17f"%porosity)
-        print("K_sat: %.17f"%K_sat)
-        print("soil_q: %.17f"%soil_q)
-        print("diff: %.17f"%diffusivity)
-        print("----------------")
         return diffusivity
