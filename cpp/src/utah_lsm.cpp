@@ -649,6 +649,13 @@ void UtahLSM :: solveSMB() {
 
 void UtahLSM :: solveDiffusionHeat() {
     
+    std::cout<<"----BEFORET---"<<std::endl;
+    std::cout<<std::setprecision(17)<<sfc_T_new<<std::endl;
+    for (int ii=0; ii<nsoilz; ii+=1) {
+        std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+    }
+    std::cout<<"--------------"<<std::endl;
+    
     // Local variables
     double AB  = 1.0;
     double AF  = 1.0-AB;
@@ -674,17 +681,11 @@ void UtahLSM :: solveDiffusionHeat() {
     // Get the time step restriction
     double Kmax, dt_T;
     dt_T = 1;
+    
+    // Loop through diffusion by sub-step
+    double t=0;
+    while (t<=tstep) {
 
-    // Loop through diffusion by substep
-    for (int t=0; t<=tstep; t+=dt_T) {
-        
-        std::cout<<"----BEFORET---"<<std::endl;
-        std::cout<<std::setprecision(17)<<sfc_T_new<<std::endl;
-        for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
-        }
-        std::cout<<"--------------"<<std::endl;
-        
         // Set up and solve a tridiagonal matrix
         // AT(n+1) = r(n), where n denotes the time level
         // e, f, g the components of A matrix
@@ -760,17 +761,29 @@ void UtahLSM :: solveDiffusionHeat() {
             std::exit(0);
         }
 
-        // solve K for this step to get a new dt
+        // update conductivities for sub-step
         for (int i=0; i<nsoilz-1; i++) {
             K[i]     = soil->diffusivityThermal(soil_q[i],i);
             K[i+1]   = soil->diffusivityThermal(soil_q[i+1],i+1);
             K_mid[i] = 0.5*(K[i]+K[i+1]);
             z_mid[i] = 0.5*(soil_z[i]+soil_z[i+1]);
         }
-
-        // Get the time step restriction
-        Kmax = *std::max_element(K.begin(), K.end());
-        dt_T = dz2 / (2*Kmax); 
+        
+        // adjust time step if not at final time
+        if (t!=tstep) {
+        
+            // compute new diffusion time step
+            Kmax = *std::max_element(K.begin(), K.end());
+            dt_T = dz2 / (2*Kmax); 
+            
+            // check if we need to relax dt to meet end time exactly
+            if (t+dt_T>tstep) {
+                dt_T = tstep-t;
+            }
+        }
+        
+        // update time
+        t += dt_T;
     }
     
     std::cout<<"----AFTERT----"<<std::endl;

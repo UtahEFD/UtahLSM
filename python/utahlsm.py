@@ -37,7 +37,6 @@ class UtahLSM:
     def __init__(self,inputLSM, outputLSM, ustar, flux_wT, flux_wq):
         """Constructor method
         """
-        # TODO: finish writing main init function
         # set the input and output fields
         self.input  = inputLSM
         self.output = outputLSM
@@ -219,7 +218,6 @@ class UtahLSM:
         #self.output.close()
     
     # Compute fluxes using similarity theory
-    # TODO: Clean compute_fluxes up
     def compute_fluxes(self, sfc_T, sfc_q):
         
         # Local variables
@@ -483,7 +481,6 @@ class UtahLSM:
             if (converged): break
 
     # Solve the diffusion equation for soil heat
-    # TODO: Fix code, check matrix
     def solve_diffusion_heat(self):
         
         print("----BEFORET---")
@@ -518,7 +515,7 @@ class UtahLSM:
         # loop through diffusion by sub-step
         t = 0
         while (t<=self.tstep):
-                
+
             # Set up and solve a tridiagonal matrix
             # AT(n+1) = r(n), where n denotes the time level
             # e, f, g the components of A matrix
@@ -587,25 +584,34 @@ class UtahLSM:
                 matrix.tridiagonal(e,f,g,r,self.soil_T[1::])
             except:
                 sys.exit(0)
-        
-            # solve K for this step to get a new dt
+            
+            # update conductivities for sub-step
             for i in range(0, self.nz-1):
                 K[i]     = self.soil.diffusivity_thermal(self.soil_q[i],i)
                 K[i+1]   = self.soil.diffusivity_thermal(self.soil_q[i+1],i+1)
                 K_mid[i] = 0.5*(K[i]+K[i+1])
                 z_mid[i] = 0.5*(self.soil_z[i]+self.soil_z[i+1])
-        
-            # Get the time step restriction
-            Kmax = np.max(K)
-            dt_T = dz2 / (2*Kmax)
+            
+            # adjust time step if not at final time
+            if (t!=self.tstep):
+                
+                # compute new diffusion time step
+                Kmax = np.max(K)
+                dt_T = dz2 / (2*Kmax)
+                
+                # check if we need to relax dt to meet end time exactly
+                if (t+dt_T>self.tstep):
+                    dt_T = self.tstep - t
+            
+            # update time
             t+=dt_T
+        
         print("----AFTERT---")
         for ii in range(self.nz):
             print('{:.17f}'.format(self.soil_T[ii]))
         print("--------------")
     
     # Solve the diffusion equation for soil moisture
-    # TODO: Fix code, check matrix
     def solve_diffusion_mois(self):
         
         # Local variables
