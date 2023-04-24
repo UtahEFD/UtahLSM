@@ -515,7 +515,7 @@ class UtahLSM:
         # Get the time step restriction
         dt_T = 1
         
-        # Loop through diffusion by substep
+        # loop through diffusion by sub-step
         t = 0
         while (t<=self.tstep):
                 
@@ -633,7 +633,7 @@ class UtahLSM:
             print('{:.17f}'.format(self.soil_q[ii]))
         print("--------------")
         
-        # Loop through diffusion by substep
+        # loop through diffusion by sub-step
         t = 0
         while (t<=self.tstep):
             # Set up and solve a tridiagonal matrix
@@ -746,14 +746,14 @@ class UtahLSM:
             # now we can add new sfc q to column array
             self.soil_q[0] = self.sfc_q_new
             
-            # Solve the tridiagonal system
+            # solve the tridiagonal system
             try:
                 # we only need the layers below the surface
                 matrix.tridiagonal(e,f,g,r,self.soil_q[1::])
             except:
                 sys.exit(0)
                 
-            # solve for D to get new dt
+            # update diffusivities and conductivities for sub-step
             for i in range(0,self.nz-1):
                 D[i]     = self.soil.diffusivity_moisture(self.soil_q[i],i)
                 D[i+1]   = self.soil.diffusivity_moisture(self.soil_q[i+1],i+1)
@@ -765,24 +765,20 @@ class UtahLSM:
                 if (i==self.nz-2):
                     K_lin[i+1] = self.soil.conductivity_moisture(self.soil_q[i+1],i+1)/self.soil_q[i+1]
             
-            # get new dt
-            Dmax = np.max(D)
-            dt_q = dz2 / (2*Dmax)
             
-            # check if we need to relax to met end time
-            if (t!=self.tstep and t+dt_q>self.tstep):
-                dt_q = self.tstep - t
-                print(self.tstep, t, self.tstep - t)
-                print("poop")
-                print("dm: %.17f"%(Dmax))
-                print("dt: %.17f"%(dt_q))
-                print("t: %.17f"%(t))
+            # adjust time step if not at final time
+            if (t!=self.tstep):
+                
+                # compute new diffusion time step
+                Dmax = np.max(D)
+                dt_q = dz2 / (2*Dmax)
+                
+                # check if we need to relax dt to meet end time exactly
+                if (t+dt_q>self.tstep):
+                    dt_q = self.tstep - t
             
+            # update time
             t+=dt_q
-            
-            print("dm: %.17f"%(Dmax))
-            print("dt: %.17f"%(dt_q))
-            print("t: %.17f"%(t))
             
         print("----AFTERM---")
         for ii in range(self.nz):

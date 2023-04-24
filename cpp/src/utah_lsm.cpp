@@ -813,10 +813,10 @@ void UtahLSM :: solveDiffusionMois() {
     }
     std::cout<<"--------------"<<std::endl;
     
-    // Loop through diffusion by substep
+    // loop through diffusion by sub-step
     double t=0;
-    while (t<tstep) {
-    //for (int t=0; t<=tstep; t+=dt_q) {
+    while (t<=tstep) {        
+        //for (int t=0; t<=tstep; t+=dt_q) {
         // Set up and solve a tridiagonal matrix
         // AT(n+1) = r(n), where n denotes the time level
         // e, f, g the components of A matrix
@@ -893,7 +893,7 @@ void UtahLSM :: solveDiffusionMois() {
             r[i] = CFp * soil_q[i] + CF * soil_q[i+1] + CFm * soil_q[i+2];
         }
 
-        // Matrix coefficients for bottom level
+        // matrix coefficients for bottom level
         int j = nsoilz-2;
 
         // common coefficients
@@ -929,7 +929,7 @@ void UtahLSM :: solveDiffusionMois() {
         // now we can add new sfc q to column array
         soil_q[0] = sfc_q_new;
 
-        // Solve the tridiagonal system
+        // solve the tridiagonal system
         try {
             // we only need the layers below the surface
             std::span<double> subsfc_q(soil_q.data() + 1, soil_q.size() - 1);   
@@ -939,7 +939,7 @@ void UtahLSM :: solveDiffusionMois() {
             std::exit(0);
         }
 
-        // solve for D to get new dt
+        // update diffusivities and conductivities for sub-step
         for (int i=0; i<nsoilz-1; i++) {
             D[i]     = soil->diffusivityMoisture(soil_q[i],i);
             D[i+1]   = soil->diffusivityMoisture(soil_q[i+1],i+1);
@@ -952,20 +952,22 @@ void UtahLSM :: solveDiffusionMois() {
                 K_lin[i+1] = soil->conductivityMoisture(soil_q[i+1],i+1)/soil_q[i+1];
             }
         }
-
-        // get new dt
-        Dmax = *std::max_element(D.begin(), D.end());
-        dt_q = dz2 / (2*Dmax);
         
-        // check if we need to relax to meet end time
-        if (t+dt_q>tstep) {
-            dt_q = tstep-t;
+        // adjust time step if not at final time
+        if (t!=tstep) {
+
+            // compute new diffusion time step
+            Dmax = *std::max_element(D.begin(), D.end());
+            dt_q = dz2 / (2*Dmax);
+            
+            // check if we need to relax dt to meet end time exactly
+            if (t+dt_q>tstep) {
+                dt_q = tstep-t;
+            }
         }
         
-        t   += dt_q; 
-        std::cout<<"dm ("<<j<<"): "<<std::setprecision(17)<<Dmax<<std::endl;
-        std::cout<<"dt ("<<j<<"): "<<std::setprecision(17)<<dt_q<<std::endl;
-        std::cout<<"t ("<<j<<"): "<<std::setprecision(17)<<t<<std::endl;
+        // update time
+        t += dt_q; 
     }
     std::cout<<"----AFTERM----"<<std::endl;
     for (int ii=0; ii<nsoilz; ii+=1) {
