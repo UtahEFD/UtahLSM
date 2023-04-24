@@ -219,7 +219,8 @@ class UtahLSM:
     
     # Compute fluxes using similarity theory
     def compute_fluxes(self, sfc_T, sfc_q):
-        
+        print("----------------")
+        print("COMPUTING FLUXES")
         # Local variables
         max_iterations = 200
         converged      = False
@@ -276,16 +277,19 @@ class UtahLSM:
             # Bounds check on L
             if (self.z_m/self.obl[:] > 5.):  self.obl[:] = 5.
             if (self.z_m/self.obl[:] < -5.): self.obl[:] = 5.
-
+            
             # Check for convergence
-            converged = np.abs(last_L-self.obl[:]) <= criteria
+            print(self.runtime, np.abs(last_L-self.obl).item(0),criteria)
+            converged = np.abs(last_L-self.obl[:]).item(0) <= criteria
             if (converged):
+                print(self.runtime, "FUCK YEAH")
+                print("----------------")
                 self.shf[:] = c.rho_air*c.Cp_air*self.flux_wT[:]
                 self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
                 break
-        
+
         # Exit if L convergence fails
-        if not converged:
+        if (not converged):
             print("[UtahLSM: Fluxes] \t Converge failed")
             sys.exit()
     
