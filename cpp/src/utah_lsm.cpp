@@ -263,7 +263,6 @@ void UtahLSM :: run() {
         
         // solve moisture diffusion
         solveDiffusionMois();
-        std::exit(1);
     }
     
     // Change flag of whether initial time
@@ -383,19 +382,19 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         }
         
         // Compute friction velocity
-        ustar = atm_U*most::fm(z_m/z_o,zeta_m,zeta_o);
+        ustar = atm_U*most::fm(z_m,z_o,L);
         
         // Compute heat flux
-        flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s,z_t,L);
         
         // Compute latent flux
         if ( (first) && (i == 0)) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
-            gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s/z_t,zeta_s,zeta_t));
+            gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s,z_t,L));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
             sfc_q_new = soil_q[0];
         } else {
-            flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+            flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s,z_t,L);
         }
 
         // Compute virtual heat flux
@@ -581,7 +580,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     // Compute derivative of SEB wrt temperature
     heat_cap = soil->heatCapacity(sfc_q_new,0);
     dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
-    + c::rho_air*c::Cp_air*ustar*most::fh(z_s/z_t,zeta_s,zeta_t)
+    + c::rho_air*c::Cp_air*ustar*most::fh(z_s,z_t,L)
     + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
     
     return dSEB_dT;
@@ -635,7 +634,7 @@ void UtahLSM :: solveSMB() {
         // Update soil moisture
         sfc_q_new = soil->surfaceWaterContent(psi0);
         double gnd_q  = soil->surfaceMixingRatio(sfc_T_new,sfc_q_new,atm_p);
-        E = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s/z_t,zeta_s,zeta_t);
+        E = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s,z_t,L);
         
         // Update soil moisture transfer
         K0    = soil->conductivityMoisture(sfc_q_new,0);
@@ -987,7 +986,6 @@ void UtahLSM :: solveDiffusionMois() {
         std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
     }
     std::cout<<"--------------"<<std::endl;
-    std::exit(1);
 }
 
 //////////////////////////////////////////////////////////////

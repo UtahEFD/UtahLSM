@@ -790,7 +790,6 @@ class UtahLSM:
         for ii in range(self.nz):
             print('{:.17f}'.format(self.soil_q[ii]))
         print("--------------")
-        sys.exit()
 
 # main program to run the LSM
 if __name__ == "__main__":

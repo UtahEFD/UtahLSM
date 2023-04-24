@@ -24,10 +24,11 @@ namespace most {
     /**
      * Computes gradient momentum function.
      *
-     * @param[in] zeta ratio zeta = z/L
+     * @param[in] z height of the measurement
+     * @param[in] obukL Obukhov length
      * @return the solution to gradient momentum function
      */
-    double phim(const double zeta);
+    double phim(const double z, const double obukL);
     
     /**
      * Helper function for phim when zeta >= 0 (neutral or stable) 
@@ -48,10 +49,11 @@ namespace most {
     /**
      * Computes gradient scalar function.
      *
-     * @param[in] zeta ratio zeta = z/L
+     * @param[in] z height of the measurement
+     * @param[in] obukL Obukhov length
      * @return the solution to gradient scalar function
      */
-    double phih(const double zeta);
+    double phih(const double z, const double obukL);
     
     /**
      * Helper function for phih when zeta >= 0 (neutral or stable) 
@@ -72,10 +74,11 @@ namespace most {
     /**
      * Computes the integral stability correction for momentum.
      *
-     * @param[in] zeta ratio zeta = z/L
+     * @param[in] z height of the measurement
+     * @param[in] obukL Obukhov length
      * @return the solution to integral stability correction for momentum
      */
-    double psim(const double zeta);
+    double psim(const double z, const double obukL);
     
     /**
      * Helper function for psim when zeta >= 0 (neutral or stable) 
@@ -96,10 +99,11 @@ namespace most {
     /**
      * Computes the integral stability correction for scalars.
      *
-     * @param[in] zeta ratio zeta = z/L
+     * @param[in] z height of the measurement
+     * @param[in] obukL Obukhov length
      * @return the solution to integral stability correction for scalars
      */
-    double psih(const double zeta);
+    double psih(const double z, const double obukL);
     
     /**
      * Helper function for psih when zeta >= 0 (neutral or stable) 
@@ -122,24 +126,24 @@ namespace most {
      * zm is measurement height of momentum and zo is roughness 
      * height for momentum.
      *
-     * @param[in] zm_over_zo ratio zm_over_zo = zm / zo
-     * @param[in] zeta_m ratio zeta_m = zm/L
-     * @param[in] zeta_o ratio zeta_o = zo/L
+     * @param[in] z1 height of upper measurement
+     * @param[in] z0 height of lower measurement
+     * @param[in] obukL Obukhov length
      * @return the solution to log-law function for momentum
      */
-    double fm(const double zm_over_zo, const double zeta_m, const double zeta_o);
+    double fm(const double z1, const double z0, const double obukL);
     
     /**
      * Computes common log-law function for scalars. Here, 
      * zs is measurement height of scalars and zt is roughness 
      * height for scalars.
      *
-     * @param[in] zs_over_zt ratio zs_over_zt = zs / zt
-     * @param[in] zeta_s ratio zeta_s = zs/L
-     * @param[in] zeta_t ratio zeta_t = zt/L
+     * @param[in] z1 height of upper measurement
+     * @param[in] z0 height of lower measurement
+     * @param[in] obukL Obukhov length
      * @return the solution to log-law function for scalars
      */
-    double fh(const double zs_over_zt, const double zeta_s, const double zeta_t);
+    double fh(const double z1, const double z0, const double obukL);
 };
 
 #endif

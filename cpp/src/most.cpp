@@ -26,7 +26,8 @@ namespace {
 namespace most {
     
     // Gradient momentum function
-    double phim(const double zeta) {
+    double phim(const double z, const double obukL) {
+        double zeta = (obukL == 0) ? 0 : z/obukL; 
         return (zeta >= 0.) ? phimStable(zeta) : phimUnstable(zeta);
     }
 
@@ -41,7 +42,8 @@ namespace most {
     }
     
     // Gradient momentum function
-    double phih(const double zeta) {
+    double phih(const double z, const double obukL) {
+        double zeta = (obukL == 0) ? 0 : z/obukL; 
         return (zeta >= 0.) ? phihStable(zeta) : phihUnstable(zeta);
     }
     // Gradient scalar function under neutral/stable conditions
@@ -55,7 +57,8 @@ namespace most {
     }
 
     // Integral stability correction for momentum
-    double psim(const double zeta) {
+    double psim(const double z, const double obukL) {
+        double zeta = (obukL == 0) ? 0 : z/obukL; 
         return (zeta >= 0.) ? psimStable(zeta) : psimUnstable(zeta);
     }
 
@@ -71,7 +74,8 @@ namespace most {
     }
     
     // Integral stability correction for scalars
-    double psih(const double zeta) {
+    double psih(const double z, const double obukL) {
+        double zeta = (obukL == 0) ? 0 : z/obukL;
         return (zeta >= 0.) ? psihStable(zeta) : psihUnstable(zeta);
     }
 
@@ -87,12 +91,12 @@ namespace most {
     }
     
     // Common log-law function for momentum
-    double fm(const double zm_over_zo, const double zeta_m, const double zeta_o) {
-        return c::vonk / (std::log(zm_over_zo) - psim(zeta_m) + psim(zeta_o));
+    double fm(const double z1, const double z0, const double obukL) {
+        return c::vonk / (std::log(z1/z0) - psim(z1,obukL) + psim(z0,obukL));
     }
 
     // Common log-law function for heat
-    double fh(const double zs_over_zt, const double zeta_s, const double zeta_t) {
-        return c::vonk / (std::log(zs_over_zt) - psih(zeta_s) + psih(zeta_t));
+    double fh(const double z1, const double z0, const double obukL) {
+        return c::vonk / (std::log(z1/z0) - psih(z1,obukL) + psih(z0,obukL));
     }
 };
