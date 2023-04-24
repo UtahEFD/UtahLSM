@@ -607,12 +607,6 @@ class UtahLSM:
     # Solve the diffusion equation for soil moisture
     # TODO: Fix code, check matrix
     def solve_diffusion_mois(self):
-        print(self.sfc_q_new)
-        print("----BEFOREM---")
-        print('%0.17f'%self.sfc_q_new)
-        for ii in range(self.nz):
-            print('{:.17f}'.format(self.soil_q[ii]))
-        print("--------------")
         
         # Local variables
         AB  = 1.0
@@ -631,6 +625,13 @@ class UtahLSM:
         
         # Get the time step restriction
         dt_q = 1
+        
+        print(self.sfc_q_new)
+        print("----BEFOREM---")
+        print('%0.17f'%self.sfc_q_new)
+        for ii in range(self.nz):
+            print('{:.17f}'.format(self.soil_q[ii]))
+        print("--------------")
         
         # Loop through diffusion by substep
         t = 0
@@ -768,6 +769,11 @@ class UtahLSM:
             Dmax = np.max(D)
             dt_q = dz2 / (2*Dmax)
             t+=dt_q
+            
+            print("dm: %.17f"%(Dmax))
+            print("dt: %.17f"%(dt_q))
+            print("t: %.17f"%(t))
+            
         print("----AFTERM---")
         for ii in range(self.nz):
             print('{:.17f}'.format(self.soil_q[ii]))

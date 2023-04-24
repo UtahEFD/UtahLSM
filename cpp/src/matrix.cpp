@@ -39,9 +39,12 @@ namespace matrix {
 
         // Initialize first element of solution vector
         u[0] = r[0]/(bet);
+        std::cout<<"----------------"<<std::endl;
         std::cout<<std::setprecision(17)<<"uj (0): "<<u[0]<<std::endl;
+        std::cout<<std::setprecision(17)<<"rj (0): "<<r[0]<<std::endl;
+        std::cout<<std::setprecision(17)<<"bj (0): "<<bet<<std::endl;
         
-        // Forward sweep 
+        // Forward sweep
         for (j=1;j<n;j++) {
             std::cout<<"----------------"<<std::endl;
             gam[j] = c[j-1]/bet;
@@ -51,8 +54,11 @@ namespace matrix {
             if (bet == 0.0) throw(std::string("Error 2 in tridag"));
 
             u[j]=(r[j]-a[j]*u[j-1])/bet;
-            std::cout<<"gm ("<<j<<"): "<<std::setprecision(17)<<gam[j]<<std::endl;
+            std::cout<<"aj ("<<j<<"): "<<std::setprecision(17)<<a[j]<<std::endl;
+            std::cout<<"bj ("<<j<<"): "<<std::setprecision(17)<<b[j]<<std::endl;
+            std::cout<<"cj ("<<j<<"): "<<std::setprecision(17)<<c[j-1]<<std::endl;
             std::cout<<"bt ("<<j<<"): "<<std::setprecision(17)<<bet<<std::endl;
+            std::cout<<"gm ("<<j<<"): "<<std::setprecision(17)<<gam[j]<<std::endl;
             std::cout<<"uj ("<<j<<"): "<<std::setprecision(17)<<u[j]<<std::endl;
         }
         std::cout<<"----------------"<<std::endl;
@@ -60,6 +66,8 @@ namespace matrix {
         // Backward sweep
         for (j=(n-2);j>=0;j--) {
             u[j] -= gam[j+1]*u[j+1];
+            // std::cout<<"gj ("<<j<<"): "<<std::setprecision(17)<<gam[j+1]<<std::endl;
+            // std::cout<<"uj ("<<j<<"): "<<std::setprecision(17)<<gam[j+1]<<std::endl;
         }
     }
 };

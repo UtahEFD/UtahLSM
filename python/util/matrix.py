@@ -35,6 +35,8 @@ def tridiagonal(a,b,c,r,u):
 	# Initialize first element of solution vector
 	u[0] = r[0]/(bet)
 	print("uj (0): %.17f"%(u[0]))
+	print("rj (0): %.17f"%(r[0]))
+	print("bj (0): %.17f"%bet)
 	# Forward sweep 
 	for j in range(1,n):
 		print("----------------")
@@ -44,8 +46,11 @@ def tridiagonal(a,b,c,r,u):
 			print("Error 2 in tridiag")
 			sys.exit()
 		u[j]=(r[j]-a[j]*u[j-1])/bet
-		print("gm (%d): %.17f"%(j,gam[j]))
+		print("aj (%d): %.17f"%(j,a[j]))
+		print("bj (%d): %.17f"%(j,b[j]))
+		print("cj (%d): %.17f"%(j,c[j-1]))
 		print("bt (%d): %.17f"%(j,bet))
+		print("gm (%d): %.17f"%(j,gam[j]))
 		print("uj (%d): %.17f"%(j,u[j]))
 	print("----------------")
 	# Backward sweep

@@ -814,7 +814,9 @@ void UtahLSM :: solveDiffusionMois() {
     std::cout<<"--------------"<<std::endl;
     
     // Loop through diffusion by substep
-    for (int t=0; t<=tstep; t+=dt_q) {
+    double t=0;
+    while (t<tstep) {
+    //for (int t=0; t<=tstep; t+=dt_q) {
         // Set up and solve a tridiagonal matrix
         // AT(n+1) = r(n), where n denotes the time level
         // e, f, g the components of A matrix
@@ -953,7 +955,11 @@ void UtahLSM :: solveDiffusionMois() {
 
         // get new dt
         Dmax = *std::max_element(D.begin(), D.end());
-        dt_q = dz2 / (2*Dmax); 
+        dt_q = dz2 / (2*Dmax);
+        t   += dt_q; 
+        std::cout<<"dm ("<<j<<"): "<<std::setprecision(17)<<Dmax<<std::endl;
+        std::cout<<"dt ("<<j<<"): "<<std::setprecision(17)<<dt_q<<std::endl;
+        std::cout<<"t ("<<j<<"): "<<std::setprecision(17)<<t<<std::endl;
     }
     std::cout<<"----AFTERM----"<<std::endl;
     for (int ii=0; ii<nsoilz; ii+=1) {
