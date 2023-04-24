@@ -641,14 +641,14 @@ class UtahLSM:
             # e, f, g the components of A matrix
             # T(n+1)  the soil temperature vector at t=n+1
             # r(n)    the soil temperature vector at t=n multiplied by coefficients
-        
+            
             # first soil level below the surface
             # common coefficients
             Cpd  = self.dt_dif * dt_q * D_mid[0] / dz2
             Cmd  = self.dt_dif * dt_q * D_mid[1] / dz2
             Cpk  = self.dt_dif * dt_q * K_lin[0] / (2*dz)
             Cmk  = self.dt_dif * dt_q * K_lin[2] / (2*dz)
-        
+            
             # coefficients for backward scheme
             CBpd = -AB * Cpd
             CBmd = -AB * Cmd
@@ -657,7 +657,7 @@ class UtahLSM:
             CB   = (1 - CBpd - CBmd)
             CBp  = CBpd + CBpk
             CBm  = CBmd - CBmk
-        
+            
             # coefficients for forward scheme
             CFpd = AF * Cpd
             CFmd = AF * Cmd
@@ -666,7 +666,7 @@ class UtahLSM:
             CF   = (1 - CFpd - CFmd)
             CFp  = CFpd + CFpk
             CFm  = CFmd - CFmk
-        
+            
             # matrix components
             e[0] = 0
             f[0] = CB
@@ -685,7 +685,7 @@ class UtahLSM:
                 Cmd  = self.dt_dif * dt_q * D_mid[i+1] / dz2
                 Cpk  = self.dt_dif * dt_q * K_lin[i] / (2*dz)
                 Cmk  = self.dt_dif * dt_q * K_lin[i+2] / (2*dz)
-        
+                
                 # coefficients for backward scheme
                 CBpd = -AB * Cpd
                 CBmd = -AB * Cmd
@@ -694,7 +694,7 @@ class UtahLSM:
                 CB   = (1 - CBpd - CBmd)
                 CBp  = CBpd + CBpk
                 CBm  = CBmd - CBmk
-        
+                
                 # coefficients for forward scheme
                 CFpd = AF * Cpd
                 CFmd = AF * Cmd
@@ -703,7 +703,7 @@ class UtahLSM:
                 CF   = (1 - CFpd - CFmd)
                 CFp  = CFpd + CFpk
                 CFm  = CFmd - CFmk
-        
+                
                 # matrix components
                 e[i] = CBp
                 f[i] = CB
@@ -712,13 +712,13 @@ class UtahLSM:
             
             # Matrix coefficients for bottom level
             j = self.nz-2
-        
+            
             # common coefficients
             Cpd  = self.dt_dif * dt_q * D_mid[j] / dz2
             Cmd  = self.dt_dif * dt_q * D_mid[j] / dz2
             Cpk  = self.dt_dif * dt_q * K_lin[j] / (2*dz)
             Cmk  = self.dt_dif * dt_q * K_lin[j] / (2*dz)
-        
+            
             # coefficients for backward scheme
             CBpd = -AB * Cpd
             CBmd = -AB * Cmd
@@ -727,7 +727,7 @@ class UtahLSM:
             CB   = (1 - CBpd - CBmd)
             CBp  = CBpd + CBpk
             CBm  = CBmd - CBmk
-        
+            
             # coefficients for forward scheme
             CFpd = AF * Cpd
             CFmd = AF * Cmd
@@ -736,7 +736,7 @@ class UtahLSM:
             CF   = (1 - CFpd - CFmd)
             CFp  = CFpd + CFpk
             CFm  = CFmd - CFmk
-        
+            
             # matrix components
             e[j] = (CBp - CBm)
             f[j] = (CB + 2 * CBm)
@@ -752,7 +752,7 @@ class UtahLSM:
                 matrix.tridiagonal(e,f,g,r,self.soil_q[1::])
             except:
                 sys.exit(0)
-
+                
             # solve for D to get new dt
             for i in range(0,self.nz-1):
                 D[i]     = self.soil.diffusivity_moisture(self.soil_q[i],i)
@@ -764,10 +764,20 @@ class UtahLSM:
                 K_lin[i] = self.soil.conductivity_moisture(self.soil_q[i],i)/self.soil_q[i]
                 if (i==self.nz-2):
                     K_lin[i+1] = self.soil.conductivity_moisture(self.soil_q[i+1],i+1)/self.soil_q[i+1]
-        
+            
             # get new dt
             Dmax = np.max(D)
             dt_q = dz2 / (2*Dmax)
+            
+            # check if we need to relax to met end time
+            if (t!=self.tstep and t+dt_q>self.tstep):
+                dt_q = self.tstep - t
+                print(self.tstep, t, self.tstep - t)
+                print("poop")
+                print("dm: %.17f"%(Dmax))
+                print("dt: %.17f"%(dt_q))
+                print("t: %.17f"%(t))
+            
             t+=dt_q
             
             print("dm: %.17f"%(Dmax))

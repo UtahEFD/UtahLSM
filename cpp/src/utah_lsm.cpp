@@ -956,6 +956,12 @@ void UtahLSM :: solveDiffusionMois() {
         // get new dt
         Dmax = *std::max_element(D.begin(), D.end());
         dt_q = dz2 / (2*Dmax);
+        
+        // check if we need to relax to meet end time
+        if (t+dt_q>tstep) {
+            dt_q = tstep-t;
+        }
+        
         t   += dt_q; 
         std::cout<<"dm ("<<j<<"): "<<std::setprecision(17)<<Dmax<<std::endl;
         std::cout<<"dt ("<<j<<"): "<<std::setprecision(17)<<dt_q<<std::endl;
