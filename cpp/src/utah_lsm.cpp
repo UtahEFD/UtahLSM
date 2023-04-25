@@ -273,8 +273,6 @@ void UtahLSM :: run() {
 
     // Increment step counter
     step_count += 1;
-    
-    if (runtime==1200) std::exit(1);
 }
 
 // Save current fields to the output file
@@ -350,9 +348,6 @@ void UtahLSM :: save(Output* output) {
 // Compute surface fluxes using Monin-Obukhov w/Dyer-Hicks
 void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     
-    std::cout<<"----------------"<<std::endl;
-    std::cout<<"COMPUTING FLUXES"<<std::endl;
-    
     // Local variables
     int max_iterations = 200;
     bool converged = false;
@@ -418,10 +413,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
         // Check for convergence
         converged = std::abs(last_L-L) <= criteria;
-        std::cout<<runtime<< " "<<std::abs(last_L-L)<<" "<<criteria<<std::endl;
         if (converged) {
-            std::cout<<runtime<<" FUCK YEAH"<<std::endl;
-            std::cout<<"----------------"<<std::endl;
             flux_sh = c::rho_air*c::Cp_air*flux_wT;
             flux_lh = c::rho_air*c::Lv*flux_wq;
             break;
@@ -543,10 +535,12 @@ void UtahLSM :: solveSEB() {
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
             std::cout<<std::endl;
+            std::cout<<std::defaultfloat;
+            std::cout<<std::setprecision(17);
             std::cout<<"solveSEB--------"<<std::endl;
-            std::cout<<std::setprecision(17)<<"Qh: "<<Qh<<std::endl;
-            std::cout<<std::setprecision(17)<<"Ql: "<<Ql<<std::endl;
-            std::cout<<std::setprecision(17)<<"Qg: "<<Qg<<std::endl;
+            std::cout<<"Qh: "<<Qh<<std::endl;
+            std::cout<<"Ql: "<<Ql<<std::endl;
+            std::cout<<"Qg: "<<Qg<<std::endl;
             std::cout<<"----------------"<<std::endl;
             break;
         }
@@ -654,10 +648,12 @@ void UtahLSM :: solveSMB() {
 void UtahLSM :: solveDiffusionHeat() {
     
     if (false) {
+        std::cout<<std::defaultfloat;
+        std::cout<<std::setprecision(17);
         std::cout<<"----BEFORET---"<<std::endl;
-        std::cout<<std::setprecision(17)<<sfc_T_new<<std::endl;
+        std::cout<<sfc_T_new<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+            std::cout<<soil_T[ii]<<std::endl;
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -792,9 +788,11 @@ void UtahLSM :: solveDiffusionHeat() {
         t += dt_T;
     }
     if (false) {
+        std::cout<<std::defaultfloat;
+        std::cout<<std::setprecision(17);
         std::cout<<"----AFTERT----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+            std::cout<<soil_T[ii]<<std::endl;
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -827,10 +825,12 @@ void UtahLSM :: solveDiffusionMois() {
     dt_q = 1;
     
     if (false) {
+        std::cout<<std::defaultfloat;
+        std::cout<<std::setprecision(17);
         std::cout<<"----BEFOREM---"<<std::endl;
-        std::cout<<std::setprecision(17)<<sfc_q_new<<std::endl;
+        std::cout<<sfc_q_new<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+            std::cout<<soil_q[ii]<<std::endl;
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -992,9 +992,11 @@ void UtahLSM :: solveDiffusionMois() {
         t += dt_q; 
     }
     if (false) {
+        std::cout<<std::defaultfloat;
+        std::cout<<std::setprecision(17);
         std::cout<<"----AFTERM----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+            std::cout<<soil_q[ii]<<std::endl;
         }
         std::cout<<"--------------"<<std::endl;
     }

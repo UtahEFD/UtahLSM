@@ -219,8 +219,7 @@ class UtahLSM:
     
     # Compute fluxes using similarity theory
     def compute_fluxes(self, sfc_T, sfc_q):
-        print("----------------")
-        print("COMPUTING FLUXES")
+        
         # Local variables
         max_iterations = 200
         converged      = False
@@ -233,6 +232,7 @@ class UtahLSM:
         
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
+            
             # First time through we estimate based on Santanello and Friedl (2003)
             if  not self.first:
                 if (self.soil_q[0]>=0.4):
@@ -275,15 +275,12 @@ class UtahLSM:
             self.obl[:] = -(self.ust[:]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
             
             # Bounds check on L
-            if (self.z_m/self.obl[:] > 5.):  self.obl[:] = 5.
-            if (self.z_m/self.obl[:] < -5.): self.obl[:] = 5.
+            if (self.z_m/self.obl[:] > 5.):  self.obl[:] = self.z_m/5.
+            if (self.z_m/self.obl[:] < -5.): self.obl[:] = self.z_m/5.
             
             # Check for convergence
-            print(self.runtime, np.abs(last_L-self.obl).item(0),criteria)
             converged = np.abs(last_L-self.obl[:]).item(0) <= criteria
             if (converged):
-                print(self.runtime, "FUCK YEAH")
-                print("----------------")
                 self.shf[:] = c.rho_air*c.Cp_air*self.flux_wT[:]
                 self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
                 break
@@ -392,9 +389,9 @@ class UtahLSM:
                 Qg = self.ghf
                 print()
                 print('solveSEB---------')
-                print('Qh: %.17f'%Qh)
-                print('Ql: %.17f'%Ql)
-                print('Qg: %.17f'%Qg)
+                print('Qh: %.17g'%Qh)
+                print('Ql: %.17g'%Ql)
+                print('Qg: %.17g'%Qg)
                 print('-----------------')
                 break
             

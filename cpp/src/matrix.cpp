@@ -38,7 +38,6 @@ namespace matrix {
         
         if (false) {
             std::cout<<std::endl;
-            std::cout << std::fixed;
             std::cout<<"tridiag---------"<<std::endl;
             std::cout<<"n: "<<n<<std::endl;
             std::cout<<"----------------"<<std::endl;
