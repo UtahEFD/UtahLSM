@@ -28,10 +28,10 @@
 #include "json.hpp"
 #include "input.hpp"
 #include "matrix.hpp"
-#include "most.hpp"
 #include "output.hpp"
 #include "radiation.hpp"
 #include "settings.hpp"
+#include "sfc.hpp"
 #include "soil.hpp"
 
 using json = nlohmann::json;
@@ -107,6 +107,9 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     }
     // Create soil class
     soil = Soil::getModel(soil_type,soil_param,soil_model,nsoilz);
+    
+    // Create surface class
+    sfc = Surface::getModel(1);
 
     // Settings output section
     settings->getItem(save_output, "output", "save");
@@ -270,6 +273,8 @@ void UtahLSM :: run() {
 
     // Increment step counter
     step_count += 1;
+    
+    if (runtime==1200) std::exit(1);
 }
 
 // Save current fields to the output file
@@ -345,6 +350,9 @@ void UtahLSM :: save(Output* output) {
 // Compute surface fluxes using Monin-Obukhov w/Dyer-Hicks
 void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     
+    std::cout<<"----------------"<<std::endl;
+    std::cout<<"COMPUTING FLUXES"<<std::endl;
+    
     // Local variables
     int max_iterations = 200;
     bool converged = false;
@@ -382,19 +390,19 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         }
         
         // Compute friction velocity
-        ustar = atm_U*most::fm(z_m,z_o,L);
+        ustar = atm_U*sfc->fm(z_m,z_o,L);
         
         // Compute heat flux
-        flux_wT = (sfc_T-atm_T)*ustar*most::fh(z_s,z_t,L);
+        flux_wT = (sfc_T-atm_T)*ustar*sfc->fh(z_s,z_t,L);
         
         // Compute latent flux
         if ( (first) && (i == 0)) {
             flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
-            gnd_q = atm_q + flux_wq / (ustar*most::fh(z_s,z_t,L));
+            gnd_q = atm_q + flux_wq / (ustar*sfc->fh(z_s,z_t,L));
             soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
             sfc_q_new = soil_q[0];
         } else {
-            flux_wq = (gnd_q-atm_q)*ustar*most::fh(z_s,z_t,L);
+            flux_wq = (gnd_q-atm_q)*ustar*sfc->fh(z_s,z_t,L);
         }
 
         // Compute virtual heat flux
@@ -408,15 +416,12 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
         
-        // Update zeta terms
-        zeta_m = z_m/L;
-        zeta_s = z_s/L;
-        zeta_o = z_o/L;
-        zeta_t = z_t/L;
-        
         // Check for convergence
         converged = std::abs(last_L-L) <= criteria;
+        std::cout<<runtime<< " "<<std::abs(last_L-L)<<" "<<criteria<<std::endl;
         if (converged) {
+            std::cout<<runtime<<" FUCK YEAH"<<std::endl;
+            std::cout<<"----------------"<<std::endl;
             flux_sh = c::rho_air*c::Cp_air*flux_wT;
             flux_lh = c::rho_air*c::Lv*flux_wq;
             break;
@@ -580,7 +585,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     // Compute derivative of SEB wrt temperature
     heat_cap = soil->heatCapacity(sfc_q_new,0);
     dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
-    + c::rho_air*c::Cp_air*ustar*most::fh(z_s,z_t,L)
+    + c::rho_air*c::Cp_air*ustar*sfc->fh(z_s,z_t,L)
     + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
     
     return dSEB_dT;
@@ -634,7 +639,7 @@ void UtahLSM :: solveSMB() {
         // Update soil moisture
         sfc_q_new = soil->surfaceWaterContent(psi0);
         double gnd_q  = soil->surfaceMixingRatio(sfc_T_new,sfc_q_new,atm_p);
-        E = c::rho_air*(gnd_q-atm_q)*ustar*most::fh(z_s,z_t,L);
+        E = c::rho_air*(gnd_q-atm_q)*ustar*sfc->fh(z_s,z_t,L);
         
         // Update soil moisture transfer
         K0    = soil->conductivityMoisture(sfc_q_new,0);
@@ -648,12 +653,14 @@ void UtahLSM :: solveSMB() {
 
 void UtahLSM :: solveDiffusionHeat() {
     
-    std::cout<<"----BEFORET---"<<std::endl;
-    std::cout<<std::setprecision(17)<<sfc_T_new<<std::endl;
-    for (int ii=0; ii<nsoilz; ii+=1) {
-        std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+    if (false) {
+        std::cout<<"----BEFORET---"<<std::endl;
+        std::cout<<std::setprecision(17)<<sfc_T_new<<std::endl;
+        for (int ii=0; ii<nsoilz; ii+=1) {
+            std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
     }
-    std::cout<<"--------------"<<std::endl;
     
     // Local variables
     double AB  = 1.0;
@@ -784,12 +791,13 @@ void UtahLSM :: solveDiffusionHeat() {
         // update time
         t += dt_T;
     }
-    
-    std::cout<<"----AFTERT----"<<std::endl;
-    for (int ii=0; ii<nsoilz; ii+=1) {
-        std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+    if (false) {
+        std::cout<<"----AFTERT----"<<std::endl;
+        for (int ii=0; ii<nsoilz; ii+=1) {
+            std::cout<<std::setprecision(17)<<soil_T[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
     }
-    std::cout<<"--------------"<<std::endl;
 }
 
 void UtahLSM :: solveDiffusionMois() {
@@ -818,12 +826,14 @@ void UtahLSM :: solveDiffusionMois() {
     double Dmax, dt_q;
     dt_q = 1;
     
-    std::cout<<"----BEFOREM---"<<std::endl;
-    std::cout<<std::setprecision(17)<<sfc_q_new<<std::endl;
-    for (int ii=0; ii<nsoilz; ii+=1) {
-        std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+    if (false) {
+        std::cout<<"----BEFOREM---"<<std::endl;
+        std::cout<<std::setprecision(17)<<sfc_q_new<<std::endl;
+        for (int ii=0; ii<nsoilz; ii+=1) {
+            std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
     }
-    std::cout<<"--------------"<<std::endl;
     
     // loop through diffusion by sub-step
     double t=0;
@@ -981,11 +991,13 @@ void UtahLSM :: solveDiffusionMois() {
         // update time
         t += dt_q; 
     }
-    std::cout<<"----AFTERM----"<<std::endl;
-    for (int ii=0; ii<nsoilz; ii+=1) {
-        std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+    if (false) {
+        std::cout<<"----AFTERM----"<<std::endl;
+        for (int ii=0; ii<nsoilz; ii+=1) {
+            std::cout<<std::setprecision(17)<<soil_q[ii]<<std::endl;
+        }
+        std::cout<<"--------------"<<std::endl;
     }
-    std::cout<<"--------------"<<std::endl;
 }
 
 //////////////////////////////////////////////////////////////

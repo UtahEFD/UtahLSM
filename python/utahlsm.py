@@ -487,11 +487,12 @@ class UtahLSM:
     # Solve the diffusion equation for soil heat
     def solve_diffusion_heat(self):
         
-        print("----BEFORET---")
-        print('%0.17f'%self.sfc_T_new)
-        for ii in range(self.nz):
-            print('{:.17f}'.format(self.soil_T[ii]))
-        print("--------------")
+        if False:
+            print("----BEFORET---")
+            print('%0.17f'%self.sfc_T_new)
+            for ii in range(self.nz):
+                print('{:.17f}'.format(self.soil_T[ii]))
+            print("--------------")
         
         # Local variables
         AB  = 1.0
@@ -609,11 +610,11 @@ class UtahLSM:
             
             # update time
             t+=dt_T
-        
-        print("----AFTERT---")
-        for ii in range(self.nz):
-            print('{:.17f}'.format(self.soil_T[ii]))
-        print("--------------")
+        if False:
+            print("----AFTERT---")
+            for ii in range(self.nz):
+                print('{:.17f}'.format(self.soil_T[ii]))
+            print("--------------")
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -636,12 +637,12 @@ class UtahLSM:
         # Get the time step restriction
         dt_q = 1
         
-        print(self.sfc_q_new)
-        print("----BEFOREM---")
-        print('%0.17f'%self.sfc_q_new)
-        for ii in range(self.nz):
-            print('{:.17f}'.format(self.soil_q[ii]))
-        print("--------------")
+        if False:  
+            print("----BEFOREM---")
+            print('%0.17f'%self.sfc_q_new)
+            for ii in range(self.nz):
+                print('{:.17f}'.format(self.soil_q[ii]))
+            print("--------------")
         
         # loop through diffusion by sub-step
         t = 0
@@ -789,11 +790,12 @@ class UtahLSM:
             
             # update time
             t+=dt_q
-            
-        print("----AFTERM---")
-        for ii in range(self.nz):
-            print('{:.17f}'.format(self.soil_q[ii]))
-        print("--------------")
+        
+        if False:   
+            print("----AFTERM---")
+            for ii in range(self.nz):
+                print('{:.17f}'.format(self.soil_q[ii]))
+            print("--------------")
 
 # main program to run the LSM
 if __name__ == "__main__":

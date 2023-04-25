@@ -26,6 +26,7 @@ class Input;
 class Output;
 class Settings;
 class Soil;
+class Surface;
 class Radiation;
 
 /**
@@ -82,6 +83,7 @@ class UtahLSM {
 
         // Classes 
         Soil* soil;
+        Surface* sfc;
         Radiation* radiation;
 
         // Diffusion time step restrictions

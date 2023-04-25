@@ -17,10 +17,11 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_library(lsm
   input.cpp
   matrix.cpp
-  most.cpp
   output.cpp
   radiation.cpp
   settings.cpp
+  sfc.cpp
+  sfc_most.cpp
   soil.cpp
   soil_brookscorey.cpp
   soil_campbell.cpp
