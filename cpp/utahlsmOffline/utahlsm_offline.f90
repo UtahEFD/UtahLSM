@@ -109,7 +109,7 @@ program p
    input_obj = GetInput( input_file="../cases/"//trim(case_name)//"/"//input_file )
    
    ! Create C++ object representing model output
-   output_obj = GetOutput( output_file=output_file )
+   output_obj = GetOutput( output_file=trim(output_file) )
       
    ! Get time items from offline input
    call GetDim( input_offline_obj, ntime, name_ntime)
