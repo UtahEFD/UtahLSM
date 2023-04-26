@@ -2,6 +2,7 @@
 bin/
 doc/
 build/
+output/
 *utahlsm
 lsm*.nc
 .vscode/

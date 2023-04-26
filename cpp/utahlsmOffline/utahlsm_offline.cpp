@@ -78,7 +78,8 @@ int main (int argc, char *argv[]) {
     int nx, ny;    
     
     // read offline input file
-    Input* inputOffline = new Input("lsm_offline.nc");
+    std::string offline = "../cases/"+case_name+"/lsm_offline.nc";
+    Input* inputOffline = new Input(offline);
         
     // get offline input data
     inputOffline->getDim(ntime,"t");
@@ -93,11 +94,14 @@ int main (int argc, char *argv[]) {
     inputOffline->getData(atm_q,"atm_q");
     inputOffline->getData(atm_p,"atm_p");
     inputOffline->getData(R_net,"R_net");
-
+    
     // initialize an instance of UtahLSM input and output
-    Input* inputLSM       = new Input("lsm_init.nc");    
-    Settings* settingsLSM = new Settings("lsm_namelist.json");
-    Output* outputLSM     = new Output("lsm_cpp.nc");
+    std::string settings = "../cases/"+case_name+"/lsm_namelist.json";
+    std::string initfile = "../cases/"+case_name+"/lsm_init.nc";
+
+    Input* inputLSM       = new Input(initfile);    
+    Settings* settingsLSM = new Settings(settings);
+    Output* outputLSM     = new Output(outf_name);
     
     // Get grid information
     settingsLSM->getItem(nx,"grid","nx");
