@@ -36,7 +36,7 @@ namespace {
     namespace c = constants;
 }
 
-int main () {
+int main (int argc, char *argv[]) {
     
     // print a nice little welcome message
     std::cout << std::endl;
@@ -48,6 +48,25 @@ int main () {
     std::cout<<"#                                                            #"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;
     
+    // process command line arguments
+    std::string case_name, outf_name;
+    
+    if (argc <= 1) {
+        throw std::runtime_error("No case name mode specified");
+    }
+    else {
+        // get case name
+        case_name = argv[1];
+        
+        // get the name of the output file
+        if (argc > 2) {
+            outf_name = argv[2];
+        } else {
+            outf_name = "lsm_"+case_name+"_cpp.nc";
+        }
+    }
+    std::cout<<"[UtahLSM: Info] \t Running offline for the "+case_name+" case"<<std::endl;
+    
     // declare local variables
     double ustar,flux_wT,flux_wq;
     
@@ -56,10 +75,7 @@ int main () {
     double tstep;
     
     // input grid
-    int nx, ny;
-    
-    // input meteorology
-    
+    int nx, ny;    
     
     // read offline input file
     Input* inputOffline = new Input("lsm_offline.nc");
