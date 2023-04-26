@@ -25,12 +25,22 @@ class Soil(object):
         # TODO: implement error check on models
         
         self.input = input    
-        nz = self.input.nsoil
+        nz         = self.input.nsoil
+        dataset    = self.input.param
+        
+        if dataset==1:
+            set_name = "Clapp/Hornberger"
+        elif dataset==2:
+            set_name = "Cosby et al"
+        elif dataset==3:
+            set_name="Rawls/Brakensiek"
+        
+        print("[UtahLSM: Soil] \t --- the %s dataset"%set_name)
         
         # fill properties
         self.properties = np.empty(nz).astype(np.object_)
         for k in range(0,nz):
-            self.properties[k] = SoilType.get_properties(self.input.param,self.input.soil_type[k])
+            self.properties[k] = SoilType.get_properties(dataset,self.input.soil_type[k])
     
     @staticmethod
     def get_model(key,input):

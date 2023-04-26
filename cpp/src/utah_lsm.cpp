@@ -45,8 +45,8 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
                    double& ustar, double& flux_wT, double& flux_wq, int j, int i) : 
                    ustar(ustar),flux_wT(flux_wT),flux_wq(flux_wq), j(j), i(i) {
 
-    std::cout<<"[UtahLSM] \t Preparing to run"<<std::endl;
-
+    std::cout<<"[UtahLSM: Setup] \t Reading input settings"<<std::endl;
+    
     // Settings time section
     settings->getItem(step_seb,"time","step_seb");
     settings->getItem(step_dif,"time","step_dif");
@@ -70,6 +70,8 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     settings->getItem(soil_param,"soil","param");
     settings->getItem(soil_model,"soil","model");
     
+    std::cout<<"[UtahLSM: Setup] \t Reading input data"<<std::endl;
+    
     // Initialization data for soil
     input->getDim(nsoilz,"z");
     soil_z.resize(nsoilz);
@@ -89,12 +91,14 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     soil_T_last = soil_T;
     soil_q_last = soil_q;
     
+    // Modify soil levels to be negative away from surface
     std::transform(soil_z.begin(), soil_z.end(), soil_z.begin(),
                    std::bind(std::multiplies<double>(), std::placeholders::_1, -1.0));
     
     // Settings radiation section
     settings->getItem(comp_rad,"radiation","comp_rad");
     if (comp_rad==1) {
+        std::cout<<"[UtahLSM: Radiation] \t Creating radiation model"<<std::endl;
         settings->getItem(latitude,"radiation","latitude");
         settings->getItem(longitude,"radiation","longitude");
         
@@ -104,14 +108,20 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
 
         // Create radiation class
         radiation = new Radiation(latitude,longitude,albedo,emissivity);
+    } else {
+        std::cout<<"[UtahLSM: Radiation] \t Using offline data, no model"<<std::endl;
     }
+    
     // Create soil class
+    std::cout<<"[UtahLSM: Soil] \t Creating soil model"<<std::endl;
     soil = Soil::getModel(soil_type,soil_param,soil_model,nsoilz);
     
     // Create surface class
+    std::cout<<"[UtahLSM: Surface] \t Creating surface model"<<std::endl;
     sfc = Surface::getModel(1);
 
     // Settings output section
+    std::cout<<"[UtahLSM: Setup] \t Creating output file"<<std::endl;
     settings->getItem(save_output, "output", "save");
     if (save_output) {
         
@@ -534,14 +544,16 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
-            std::cout<<std::endl;
-            std::cout<<std::defaultfloat;
-            std::cout<<std::setprecision(17);
-            std::cout<<"solveSEB--------"<<std::endl;
-            std::cout<<"Qh: "<<Qh<<std::endl;
-            std::cout<<"Ql: "<<Ql<<std::endl;
-            std::cout<<"Qg: "<<Qg<<std::endl;
-            std::cout<<"----------------"<<std::endl;
+            if (false) {
+                std::cout<<std::endl;
+                std::cout<<std::defaultfloat;
+                std::cout<<std::setprecision(17);
+                std::cout<<"solveSEB--------"<<std::endl;
+                std::cout<<"Qh: "<<Qh<<std::endl;
+                std::cout<<"Ql: "<<Ql<<std::endl;
+                std::cout<<"Qg: "<<Qg<<std::endl;
+                std::cout<<"----------------"<<std::endl;
+            }
             break;
         }
         

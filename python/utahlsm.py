@@ -77,7 +77,7 @@ class UtahLSM:
         self.soil_T_last = self.soil_T
         self.soil_q_last = self.soil_q
         
-        # Modify soil levels to be negative
+        # Modify soil levels to be negative away from surface
         self.soil_z = -1*self.soil_z
         
         # Input radiation section
@@ -106,7 +106,7 @@ class UtahLSM:
         # choose surface model
         self.sfc = Surface.get_model(1)
 
-        print("[UtahLSM: Setup] \t Creating additional fields")
+        print("[UtahLSM: Setup] \t Creating output file")    
         # initialize flux arrays
         self.ust     = np.array([ustar])
         self.flux_wT = np.array([flux_wT])
@@ -130,7 +130,6 @@ class UtahLSM:
         self.runtime    = 0    # current elapsed time
         self.utc        = 0    # current time in UTC
 
-        print("[UtahLSM: Setup] \t Creating output file")    
         # set reference to output dimensions
         self.output_dims = {
             't':0,
@@ -387,12 +386,13 @@ class UtahLSM:
                 Qh = c.rho_air*c.Cp_air*self.flux_wT
                 Ql = c.rho_air*c.Lv*self.flux_wq
                 Qg = self.ghf
-                print()
-                print('solveSEB---------')
-                print('Qh: %.17g'%Qh)
-                print('Ql: %.17g'%Ql)
-                print('Qg: %.17g'%Qg)
-                print('-----------------')
+                if False:
+                    print()
+                    print('solveSEB---------')
+                    print('Qh: %.17g'%Qh)
+                    print('Ql: %.17g'%Ql)
+                    print('Qg: %.17g'%Qg)
+                    print('-----------------')
                 break
             
             # If flux fails to converge, split temperature difference
@@ -873,5 +873,5 @@ if __name__ == "__main__":
     # time info
     t2 = time.time()
     tt = t2 - t1
-    print("\n[UtahLSM: Run] \t\t Done! Completed in %0.2f seconds"%tt)
+    print("\n[UtahLSM: Run] \t\t Done! Completed in %0.4f seconds"%tt)
     print("##############################################################")

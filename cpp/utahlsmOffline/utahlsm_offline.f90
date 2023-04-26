@@ -121,7 +121,7 @@ program p
    utc = 0
    do t=1,ntime
         utc = utc + tstep
-        write(6,'(a,a,f0.2)',advance='no') creturn, '[UtahLSM]        Running for time: ', utc
+        write(6,'(a,a,f0.2,a,f0.2)',advance='no') creturn, '[UtahLSM: Run]           Running for time: ', utc, ' of ', ntime*tstep 
         flush(6)
     
     ! loop through each LSM instance
@@ -140,7 +140,7 @@ program p
    call cpu_time(stop_time)
    elapsed = stop_time - start_time
    write(*,*) creturn
-   write(6,'(a,f0.2,a)') "[UtahLSM]        Finished in ",elapsed, " seconds!"
+   write(6,'(a,f0.4,a)') "[UtahLSM: Run]           Finished in ",elapsed, " seconds!"
    write(*,'(a)') '##############################################################'
 
 end program p

@@ -20,7 +20,7 @@ class Campbell(Soil):
 
     # class initialization
     def __init__(self,input):
-        print("[UtahLSM: Soil] \t --- using the Campbell model")
+        print("[UtahLSM: Soil] \t --- using the Campbell model with")
         # initialize parent class
         super().__init__(input)
     

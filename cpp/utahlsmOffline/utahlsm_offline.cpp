@@ -108,7 +108,7 @@ int main () {
 
         // set time
         utc += tstep;
-        std::cout<<std::fixed<<"\r[UtahLSM] \t Running for time: "<<std::setprecision(2)<<utc<<std::flush;
+        std::cout<<std::fixed<<"\r[UtahLSM: Run] \t\t Running for time: "<<std::setprecision(2)<<utc<<" of "<<ntime*tstep<<std::flush;
         
         // loop through each LSM instance
         int k = 0;
@@ -134,7 +134,8 @@ int main () {
     elapsed = (finish.tv_sec - start.tv_sec);
     elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
     std::cout<<std::endl;
-    std::cout<<"[UtahLSM] \t Finished in "<<elapsed<<" seconds!"<<std::endl;
+    std::cout<<std::setprecision(4);
+    std::cout<<"[UtahLSM: Run] \t\t Done! Finished in "<<elapsed<<" seconds!"<<std::endl;
     std::cout<<"##############################################################"<<std::endl;
 
     return 0;

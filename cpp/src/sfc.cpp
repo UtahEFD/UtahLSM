@@ -31,10 +31,10 @@ Surface::Surface(const int sfc_model) {};
 Surface* Surface::getModel(const int sfc_model) {
 
     if (sfc_model==1) {
-        std::cout<<"[Surface] \t\t Using the MOST model"<<std::endl;
+        std::cout<<"[UtahLSM: Surface] \t --- using the MOST model"<<std::endl;
         return new MOST(sfc_model);
     } else {
-        std::cout<<"[Surface] \t\t Invalid surface model: must be =1"<<std::endl;
+        std::cout<<"[UtahLSM: Surface] \t Invalid surface model: must be =1"<<std::endl;
         throw(1);
     }
 }

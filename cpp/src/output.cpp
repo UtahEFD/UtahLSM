@@ -23,7 +23,6 @@ using namespace netCDF::exceptions;
 Output :: Output(std::string output_file) {
     
     // create output file
-    std::cout<<"[Output] \t Creating "<<output_file<<std::endl;
     outfile = new NcFile(output_file, NcFile::replace);
 }
 

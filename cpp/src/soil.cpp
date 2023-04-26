@@ -87,24 +87,24 @@ double Soil::diffusivityThermal(const double soil_q, const int level) {
 Soil* Soil::getModel(const std::vector<int>& soil_type, const int soil_param, 
                      const int soil_model, const int levels) {
     if (soil_param==1) {
-        std::cout<<"[Soil] \t\t Using the Clapp and Hornberger dataset"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- the Clapp/Hornberger dataset"<<std::endl;
     } else if (soil_param==2) {
-        std::cout<<"[Soil] \t\t Using the Cosby et al. dataset"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- the Cosby et al. dataset"<<std::endl;
     } else if (soil_param==3) {
-        std::cout<<"[Soil] \t\t Using the Rawls and Brakensiek dataset"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- the Rawls/Brakensiek dataset"<<std::endl;
     }
 
     if (soil_model==1) {
-        std::cout<<"[Soil] \t\t Using the Brooks-Corey model"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- using the Brooks-Corey model with"<<std::endl;
         return new BrooksCorey(soil_type, soil_param, soil_model, levels);
     } else if (soil_model==2) {
-        std::cout<<"[Soil] \t\t Using the Campbell model"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- using the Campbell model with"<<std::endl;
         return new Campbell(soil_type, soil_param, soil_model, levels);
     } else if (soil_model==3) {
-        std::cout<<"[Soil] \t\t Using the van Genuchten model"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- using the van Genuchten model with"<<std::endl;
         return new VanGenuchten(soil_type, soil_param, soil_model, levels);
     } else {
-        std::cout<<"[Soil] \t\t Invalid soil model: must be an integer 1, 2, or 3"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t Invalid soil model: must be an integer 1, 2, or 3"<<std::endl;
         throw(1);
     }
 }
