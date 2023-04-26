@@ -17,12 +17,18 @@ program p
    use, intrinsic :: iso_c_binding, only : c_char, c_ptr, c_null_ptr, c_associated, c_double, c_int
    
    include "utahlsm_interface.f90"
- 
+   
+   ! command line variables
+   character*50 :: arg, arg_case, arg_out
+   integer :: ii
+   logical :: jump = .false.
+   
    ! input/output filename variables
    character*50 :: input_offline_file = 'lsm_offline.nc'//char(0)
    character*50 :: settings_file = 'lsm_namelist.json'//char(0)
    character*50 :: input_file = 'lsm_init.nc'//char(0)
-   character*50 :: output_file = 'lsm_fortran.nc'//char(0)
+   character*50 :: output_file
+   character*50 :: case_name
    
    ! input/output pointer objects
    type(c_ptr) :: input_offline_obj = c_null_ptr
@@ -71,14 +77,36 @@ program p
    write(*,'(a)')'#                                                            #'
    write(*,'(a)')'##############################################################'
    
+   ! Parse command line arguments
+   do ii = 1, command_argument_count()
+        if (jump) then
+            jump = .false.
+            cycle
+        endif
+        call get_command_argument(ii, arg)
+        select case (arg)
+           case ('-c', '--case')
+              call get_command_argument(ii+1, case_name)
+              case_name = case_name//char(0)
+              jump = .true.
+           case ('-o', '--output')
+              call get_command_argument(ii+1, output_file)
+              output_file = output_file//char(0)
+              jump = .true.
+           case default
+              print '(a,a,/)', 'Unrecognized command-line option: ', arg
+              stop
+        end select
+     end do
+   write(*,'(a,a,a)') "[UtahLSM: Info]          Running offline for the ", trim(case_name), " case"
    ! Create C++ object representing offline case
-   input_offline_obj = GetInput( input_file=input_offline_file )
+   input_offline_obj = GetInput( input_file="../cases/"//trim(case_name)//"/"//input_offline_file )
    
    ! Create C++ object representing model settings
-   settings_obj = GetSettings( settings_file=settings_file )
+   settings_obj = GetSettings( settings_file="../cases/"//trim(case_name)//"/"//settings_file )
    
    ! Create C++ object representing model init data
-   input_obj = GetInput( input_file=input_file )
+   input_obj = GetInput( input_file="../cases/"//trim(case_name)//"/"//input_file )
    
    ! Create C++ object representing model output
    output_obj = GetOutput( output_file=output_file )
