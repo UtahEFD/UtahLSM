@@ -303,7 +303,7 @@ class UtahLSM:
         # Compute SEB using current bracketed temperatures
         SEB_l = self.compute_seb(temp_1)
         SEB_h = self.compute_seb(temp_2)
-
+        
         # Dynamic bracket adjustments
         out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
         while (out_of_bracket):
@@ -349,7 +349,7 @@ class UtahLSM:
                 # Compute SEB and dSEB_dTs
                 SEB     = self.compute_seb(self.sfc_T_new);
                 dSEB_dT = self.compute_dseb(self.sfc_T_new)
-
+                
                 # Update brackets
                 if (SEB<0.): temp_l = self.sfc_T_new
                 if (SEB>0.): temp_h = self.sfc_T_new
@@ -376,7 +376,7 @@ class UtahLSM:
                 # computeFluxes(soil_T[0],soil_q[0]);
             
             # Save current flux for convergence criteria
-            last_F = self.flux_wT.copy()
+            last_F = self.flux_wT.item(0)
             
             # Recompute heat flux using new temperature
             self.compute_fluxes(self.sfc_T_new,self.sfc_q_new)
@@ -386,13 +386,6 @@ class UtahLSM:
                 Qh = c.rho_air*c.Cp_air*self.flux_wT
                 Ql = c.rho_air*c.Lv*self.flux_wq
                 Qg = self.ghf
-                if True:
-                    print()
-                    print('solveSEB---------')
-                    print('Qh: %.17g'%Qh)
-                    print('Ql: %.17g'%Ql)
-                    print('Qg: %.17g'%Qg)
-                    print('-----------------')
                 break
             
             # If flux fails to converge, split temperature difference
@@ -422,7 +415,6 @@ class UtahLSM:
         dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3) \
         + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:]) \
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
-        
         return dSEB_dT
     
     # Solve the surface moisture budget
@@ -440,18 +432,28 @@ class UtahLSM:
         # Compute initial soil moisture flux
         K0    = self.soil.conductivity_moisture(self.soil_q[0],0)
         K1    = self.soil.conductivity_moisture(self.soil_q[1],1)
-        
         K_avg = 0.5*(K0+K1)
-        D0    = self.soil.diffusivity_moisture(self.soil_q[0],0)
-        D1    = self.soil.diffusivity_moisture(self.soil_q[1],1)
         
+        D0    = self.soil.diffusivity_moisture(self.soil_q[0],0)
+        D1    = self.soil.diffusivity_moisture(self.soil_q[1],1) 
         D_avg = 0.5*(D0+D1)
+        
         flux_sm  = c.rho_wat*K_avg*((psi0 - psi1)/(self.soil_z[0]-self.soil_z[1]) + 1)
         #flux_sm  = c.rho_wat*D_avg*(self.soil_q[0]-self.soil_q[1])/(self.soil_z[0]-self.soil_z[1]) + c.rho_wat*K_avg
         
         # Compute evaporation
         E = c.rho_air*self.flux_wq
-        
+        io.Logger.print_number(psi0,"psi0")
+        io.Logger.print_number(psi1,"psi1")
+        io.Logger.print_number(K0,"K0")
+        io.Logger.print_number(K1,"K1")   
+        io.Logger.print_number(K_avg,"K_avg")
+        io.Logger.print_number(D0,"D0")
+        io.Logger.print_number(D1,"D1")   
+        io.Logger.print_number(D_avg,"D_avg")
+        io.Logger.print_number(flux_sm,"flux_sm")
+        io.Logger.print_number(E,"E")
+        sys.exit()
         # Convergence loop for moisture flux
         for ff in range(0,max_iter_flux):
             
@@ -858,16 +860,6 @@ if __name__ == "__main__":
     flux_wT = 0.0
     lsm     = UtahLSM(inputLSM,outputLSM,ustar,flux_wq,flux_wT)
     
-    x = 0.00000000000181903048445 * 0.00000000000181903048445;
-    y = 0.00000000000181903048445 * 0.00000000000181903048445;
-    
-    for i in range(0,30):
-        x = x * 2
-        y = y * float(2)
-    
-    io.Logger.print_number(x,"Integer")
-    io.Logger.print_number(y, "Float cast")
-    sys.exit()
     # Loop through each time
     utc = 0
     for t in range(0,ntime):

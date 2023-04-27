@@ -33,6 +33,7 @@
 #include "settings.hpp"
 #include "sfc.hpp"
 #include "soil.hpp"
+#include "logger.hpp"
 
 using json = nlohmann::json;
 
@@ -119,7 +120,7 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     // Create surface class
     std::cout<<"[UtahLSM: Surface] \t Creating surface model"<<std::endl;
     sfc = Surface::getModel(1);
-
+    
     // Settings output section
     std::cout<<"[UtahLSM: Setup] \t Creating output file"<<std::endl;
     settings->getItem(save_output, "output", "save");
@@ -223,6 +224,8 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
             }
         }
     }
+    
+    logger = new Logger();
 }
 
 // Update atmospheric quantities prior to solving
@@ -455,7 +458,7 @@ void UtahLSM :: solveSEB() {
     // Compute SEB using current bracketed temperatures
     SEB_l = computeSEB(temp_1);
     SEB_h = computeSEB(temp_2);    
-
+    
     // Dynamic bracket adjustments
     bool out_of_bracket = (SEB_l > 0.0 && SEB_h > 0.0) || (SEB_l < 0.0 && SEB_h < 0.0);
 
@@ -523,6 +526,7 @@ void UtahLSM :: solveSEB() {
                 dTs       = SEB / dSEB_dT;
                 last_T    = sfc_T_new;
                 sfc_T_new = sfc_T_new - dTs;
+                
                 if (last_T == sfc_T_new) break;
             }
             
@@ -544,16 +548,6 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
-            if (true) {
-                std::cout<<std::endl;
-                std::cout<<std::defaultfloat;
-                std::cout<<std::setprecision(17);
-                std::cout<<"solveSEB--------"<<std::endl;
-                std::cout<<"Qh: "<<Qh<<std::endl;
-                std::cout<<"Ql: "<<Ql<<std::endl;
-                std::cout<<"Qg: "<<Qg<<std::endl;
-                std::cout<<"----------------"<<std::endl;
-            }
             break;
         }
         
@@ -614,18 +608,30 @@ void UtahLSM :: solveSMB() {
     // Compute initial soil moisture flux
     K0    = soil->conductivityMoisture(soil_q[0],0);
     K1    = soil->conductivityMoisture(soil_q[1],1);
-    
     K_avg = 0.5*(K0+K1);
+    
     D0    = soil->diffusivityMoisture(soil_q[0],0);
     D1    = soil->diffusivityMoisture(soil_q[1],1);
-    
     D_avg = 0.5*(D0+D1);
+    
     flux_sm  = c::rho_wat*K_avg*((psi0 - psi1)/(soil_z[0]-soil_z[1]) + 1);
     //flux_sm = c::rho_wat*D_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
     //           + c::rho_wat*K_avg;
     
     // Compute evaporation
     E = c::rho_air*flux_wq;
+    
+    logger->print_number(psi0,"psi0");
+    logger->print_number(psi1,"psi1");
+    logger->print_number(K0,"K0");
+    logger->print_number(K1,"K1");   
+    logger->print_number(K_avg,"K_avg");
+    logger->print_number(D0,"D0");
+    logger->print_number(D1,"D1");   
+    logger->print_number(D_avg,"D_avg");
+    logger->print_number(flux_sm,"flux_sm");
+    logger->print_number(E,"E");
+    std::exit(1);
     
     // Convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {

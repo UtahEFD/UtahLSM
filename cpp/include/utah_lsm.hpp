@@ -23,6 +23,7 @@ using namespace netCDF;
 using namespace netCDF::exceptions;
 
 class Input;
+class Logger;
 class Output;
 class Settings;
 class Soil;
@@ -85,6 +86,7 @@ class UtahLSM {
         Soil* soil;
         Surface* sfc;
         Radiation* radiation;
+        Logger* logger;
 
         // Diffusion time step restrictions
         double dt_T; ///< diffusion time step for temperature

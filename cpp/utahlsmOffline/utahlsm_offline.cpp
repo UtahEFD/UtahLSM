@@ -76,9 +76,7 @@ int main (int argc, char *argv[]) {
     double tstep;
     
     // input grid
-    int nx, ny;    
-    
-    Logger* logger = new Logger();
+    int nx, ny;
     
     // read offline input file
     std::string offline = "../cases/"+case_name+"/lsm_offline.nc";
