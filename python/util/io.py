@@ -241,3 +241,12 @@ class Output(object):
 	# function to close the output file
 	def close(self):
 		self.outfile.close()
+	
+class Logger(object):
+	
+	def print_number(x,label=False):
+		
+		if label:
+			print('LOG -> %s: %0.17g'%(label,x))
+		else:
+			print('LOG -> %0.17g'%x)

@@ -544,7 +544,7 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
-            if (false) {
+            if (true) {
                 std::cout<<std::endl;
                 std::cout<<std::defaultfloat;
                 std::cout<<std::setprecision(17);

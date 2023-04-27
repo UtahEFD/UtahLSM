@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "constants.hpp"
+#include "logger.hpp"
 #include "input.hpp"
 #include "json.hpp"
 #include "output.hpp"
@@ -76,6 +77,8 @@ int main (int argc, char *argv[]) {
     
     // input grid
     int nx, ny;    
+    
+    Logger* logger = new Logger();
     
     // read offline input file
     std::string offline = "../cases/"+case_name+"/lsm_offline.nc";

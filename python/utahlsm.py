@@ -386,7 +386,7 @@ class UtahLSM:
                 Qh = c.rho_air*c.Cp_air*self.flux_wT
                 Ql = c.rho_air*c.Lv*self.flux_wq
                 Qg = self.ghf
-                if False:
+                if True:
                     print()
                     print('solveSEB---------')
                     print('Qh: %.17g'%Qh)
@@ -858,6 +858,16 @@ if __name__ == "__main__":
     flux_wT = 0.0
     lsm     = UtahLSM(inputLSM,outputLSM,ustar,flux_wq,flux_wT)
     
+    x = 0.00000000000181903048445 * 0.00000000000181903048445;
+    y = 0.00000000000181903048445 * 0.00000000000181903048445;
+    
+    for i in range(0,30):
+        x = x * 2
+        y = y * float(2)
+    
+    io.Logger.print_number(x,"Integer")
+    io.Logger.print_number(y, "Float cast")
+    sys.exit()
     # Loop through each time
     utc = 0
     for t in range(0,ntime):

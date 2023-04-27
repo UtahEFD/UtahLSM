@@ -16,6 +16,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(lsm
   input.cpp
+  logger.cpp
   matrix.cpp
   output.cpp
   radiation.cpp
