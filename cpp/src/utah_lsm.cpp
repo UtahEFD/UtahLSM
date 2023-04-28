@@ -130,7 +130,7 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
         settings->getItem(output_fields,"output","fields");
         if (output_fields[0]=="all") {
             output_fields.erase(output_fields.begin());
-            output_fields = {"ust","shf","lhf","ghf","obl","soilt","soilq"};
+            output_fields = {"soil_T","soil_q","ust","obl","shf","lhf","ghf"};
         }
         
         // Decide if master UtahLSM column or not
@@ -174,15 +174,15 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
         }
 
         // Attributes for each field
-        AttScalar att_time  = {&runtime, "time",  "time",               "s",     dim_scalar_t};
-        AttScalar att_ust   = {&ustar,   "ust",   "friction velocity",  "m s-1", dim_scalar_t};
-        AttScalar att_shf   = {&flux_sh, "shf",   "sensible heat flux", "W m-2", dim_scalar_t};
-        AttScalar att_lhf   = {&flux_lh, "lhf",   "latent heat flux",   "W m-2", dim_scalar_t};
-        AttScalar att_ghf   = {&flux_gr, "ghf",   "ground heat flux",   "W m-2", dim_scalar_t};
-        AttScalar att_obl   = {&L,       "obl",   "Obukhov length",     "m",     dim_scalar_t};
-        AttVector att_soilz = {&soil_z,  "soilz", "soil depth",         "m",     dim_scalar_z};
-        AttVector att_soilt = {&soil_T,  "soilt", "soil temperature",   "K",     dim_vector};
-        AttVector att_soilq = {&soil_q,  "soilq", "soil moisture",      "m3 m-3",dim_vector};
+        AttScalar att_time  = {&runtime, "time",   "time",               "s",     dim_scalar_t};
+        AttScalar att_ust   = {&ustar,   "ust",    "friction velocity",  "m s-1", dim_scalar_t};
+        AttScalar att_shf   = {&flux_sh, "shf",    "sensible heat flux", "W m-2", dim_scalar_t};
+        AttScalar att_lhf   = {&flux_lh, "lhf",    "latent heat flux",   "W m-2", dim_scalar_t};
+        AttScalar att_ghf   = {&flux_gr, "ghf",    "ground heat flux",   "W m-2", dim_scalar_t};
+        AttScalar att_obl   = {&L,       "obl",    "Obukhov length",     "m",     dim_scalar_t};
+        AttVector att_soilz = {&soil_z,  "soil_z", "soil depth",         "m",     dim_scalar_z};
+        AttVector att_soilt = {&soil_T,  "soil_T", "soil temperature",   "K",     dim_vector};
+        AttVector att_soilq = {&soil_q,  "soil_q", "soil moisture",      "m3 m-3",dim_vector};
         
         // Map the name to attributes
         map_att_scalar.emplace("time", att_time);
@@ -191,13 +191,13 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
         map_att_scalar.emplace("lhf",  att_lhf);
         map_att_scalar.emplace("ghf",  att_ghf);
         map_att_scalar.emplace("obl",  att_obl);
-        map_att_vector.emplace("soilz",att_soilz);
-        map_att_vector.emplace("soilt",att_soilt);
-        map_att_vector.emplace("soilq",att_soilq);
+        map_att_vector.emplace("soil_z",att_soilz);
+        map_att_vector.emplace("soil_T",att_soilt);
+        map_att_vector.emplace("soil_q",att_soilq);
         
         // We will always save time and depth
         output_scalar.push_back(map_att_scalar["time"]);
-        output_vector.push_back(map_att_vector["soilz"]);
+        output_vector.push_back(map_att_vector["soil_z"]);
         
         // Create list of fields to save
         for (int i=0; i<output_fields.size(); i++) {
@@ -223,6 +223,9 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
                 output->addField(att.name, att.units, att.long_name, att.dimensions);
             }
         }
+        
+        // save fields
+        save(output);
     }
     
     logger = new Logger();
@@ -280,6 +283,12 @@ void UtahLSM :: run() {
         // solve moisture diffusion
         solveDiffusionMois();
     }
+    std::cout<<"----------"<<std::endl;
+    logger->print_number(flux_wT,"flux_wT");
+    logger->print_number(flux_wq,"flux_wq");
+    logger->print_number(flux_gr,"flux_gr");
+    std::cout<<"----------"<<std::endl;
+    //std::exit(1);
     
     // Change flag of whether initial time
     if (first) first=false;
@@ -597,7 +606,7 @@ void UtahLSM :: solveSMB() {
     // Local variables
     bool converged;
     int max_iter_flux = 200;
-    double E,flux_sm_last, flux_sm, flux_sm2;;
+    double E,flux_sm_last, flux_sm, flux_sm2, gnd_q;
     double psi0, psi1, K0, K1, K_avg, D0, D1, D_avg;
     double delta = 0.5, flux_criteria = .001; 
     
@@ -621,18 +630,6 @@ void UtahLSM :: solveSMB() {
     // Compute evaporation
     E = c::rho_air*flux_wq;
     
-    logger->print_number(psi0,"psi0");
-    logger->print_number(psi1,"psi1");
-    logger->print_number(K0,"K0");
-    logger->print_number(K1,"K1");   
-    logger->print_number(K_avg,"K_avg");
-    logger->print_number(D0,"D0");
-    logger->print_number(D1,"D1");   
-    logger->print_number(D_avg,"D_avg");
-    logger->print_number(flux_sm,"flux_sm");
-    logger->print_number(E,"E");
-    std::exit(1);
-    
     // Convergence loop for moisture flux
     for (int ff = 0; ff < max_iter_flux; ff++) {
         
@@ -650,7 +647,7 @@ void UtahLSM :: solveSMB() {
         
         // Update soil moisture
         sfc_q_new = soil->surfaceWaterContent(psi0);
-        double gnd_q  = soil->surfaceMixingRatio(sfc_T_new,sfc_q_new,atm_p);
+        gnd_q  = soil->surfaceMixingRatio(sfc_T_new,sfc_q_new,atm_p);
         E = c::rho_air*(gnd_q-atm_q)*ustar*sfc->fh(z_s,z_t,L);
         
         // Update soil moisture transfer
@@ -666,12 +663,10 @@ void UtahLSM :: solveSMB() {
 void UtahLSM :: solveDiffusionHeat() {
     
     if (false) {
-        std::cout<<std::defaultfloat;
-        std::cout<<std::setprecision(17);
         std::cout<<"----BEFORET---"<<std::endl;
-        std::cout<<sfc_T_new<<std::endl;
+        logger->print_number(sfc_T_new,"sfc_T_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<soil_T[ii]<<std::endl;
+            logger->print_number(soil_T[ii],"soil_T");
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -806,13 +801,12 @@ void UtahLSM :: solveDiffusionHeat() {
         t += dt_T;
     }
     if (false) {
-        std::cout<<std::defaultfloat;
-        std::cout<<std::setprecision(17);
         std::cout<<"----AFTERT----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<soil_T[ii]<<std::endl;
+            logger->print_number(soil_T[ii],"soil_T");
         }
         std::cout<<"--------------"<<std::endl;
+        std::exit(1);
     }
 }
 
@@ -843,12 +837,10 @@ void UtahLSM :: solveDiffusionMois() {
     dt_q = 1;
     
     if (false) {
-        std::cout<<std::defaultfloat;
-        std::cout<<std::setprecision(17);
-        std::cout<<"----BEFOREM---"<<std::endl;
-        std::cout<<sfc_q_new<<std::endl;
+        std::cout<<"----BEFOREQ---"<<std::endl;
+        logger->print_number(sfc_q_new,"sfc_q_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<soil_q[ii]<<std::endl;
+            logger->print_number(soil_q[ii],"soil_q");
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -1010,13 +1002,12 @@ void UtahLSM :: solveDiffusionMois() {
         t += dt_q; 
     }
     if (false) {
-        std::cout<<std::defaultfloat;
-        std::cout<<std::setprecision(17);
-        std::cout<<"----AFTERM----"<<std::endl;
+        std::cout<<"----AFTERQ----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            std::cout<<soil_q[ii]<<std::endl;
+            logger->print_number(soil_q[ii],"soil_q");
         }
         std::cout<<"--------------"<<std::endl;
+        std::exit(1);
     }
 }
 

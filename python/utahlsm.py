@@ -139,15 +139,14 @@ class UtahLSM:
 
         # set reference to output fields
         self.output_fields = {
-            'soil_z':self.soil_z,
-            'soil_T':self.soil_T,
-            'soil_q':self.soil_q,
-            'soil_type':self.soil_type,
             'ust':self.ust,
             'obl':self.obl,
             'shf':self.shf,
             'lhf':self.lhf,
-            'ghf':self.ghf
+            'ghf':self.ghf,
+            'soil_z':self.soil_z,
+            'soil_T':self.soil_T,
+            'soil_q':self.soil_q,
         }
         self.output.set_fields(self.output_fields)
 
@@ -201,6 +200,12 @@ class UtahLSM:
             
             # solve moisture diffusion
             self.solve_diffusion_mois()
+        
+        print("----------")
+        io.Logger.print_number(self.flux_wT[0],"flux_wT")
+        io.Logger.print_number(self.flux_wq[0],"flux_wq")
+        io.Logger.print_number(self.ghf[0],"flux_gr")
+        print("----------")
 
         # Change flag of whether initial time
         if self.first: self.first = False
@@ -443,17 +448,7 @@ class UtahLSM:
         
         # Compute evaporation
         E = c.rho_air*self.flux_wq
-        io.Logger.print_number(psi0,"psi0")
-        io.Logger.print_number(psi1,"psi1")
-        io.Logger.print_number(K0,"K0")
-        io.Logger.print_number(K1,"K1")   
-        io.Logger.print_number(K_avg,"K_avg")
-        io.Logger.print_number(D0,"D0")
-        io.Logger.print_number(D1,"D1")   
-        io.Logger.print_number(D_avg,"D_avg")
-        io.Logger.print_number(flux_sm,"flux_sm")
-        io.Logger.print_number(E,"E")
-        sys.exit()
+        
         # Convergence loop for moisture flux
         for ff in range(0,max_iter_flux):
             
@@ -488,9 +483,9 @@ class UtahLSM:
         
         if False:
             print("----BEFORET---")
-            print('%0.17f'%self.sfc_T_new)
+            io.Logger.print_number(self.sfc_T_new,"sfc_T_new")
             for ii in range(self.nz):
-                print('{:.17f}'.format(self.soil_T[ii]))
+                io.Logger.print_number(self.soil_T[ii],"soil_T")
             print("--------------")
         
         # Local variables
@@ -610,10 +605,11 @@ class UtahLSM:
             # update time
             t+=dt_T
         if False:
-            print("----AFTERT---")
+            print("----AFTERT----")
             for ii in range(self.nz):
-                print('{:.17f}'.format(self.soil_T[ii]))
+                io.Logger.print_number(self.soil_T[ii],"soil_T")
             print("--------------")
+            sys.exit()
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -636,11 +632,11 @@ class UtahLSM:
         # Get the time step restriction
         dt_q = 1
         
-        if False:  
-            print("----BEFOREM---")
-            print('%0.17f'%self.sfc_q_new)
+        if False:
+            print("----BEFOREQ---")
+            io.Logger.print_number(self.sfc_q_new,"sfc_q_new")
             for ii in range(self.nz):
-                print('{:.17f}'.format(self.soil_q[ii]))
+                io.Logger.print_number(self.soil_q[ii],"soil_q")
             print("--------------")
         
         # loop through diffusion by sub-step
@@ -790,11 +786,12 @@ class UtahLSM:
             # update time
             t+=dt_q
         
-        if False:   
-            print("----AFTERM---")
+        if False:
+            print("----AFTERQ----")
             for ii in range(self.nz):
-                print('{:.17f}'.format(self.soil_q[ii]))
+                io.Logger.print_number(self.soil_q[ii],"soil_q")
             print("--------------")
+            sys.exit()
 
 # main program to run the LSM
 if __name__ == "__main__":
