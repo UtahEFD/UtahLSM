@@ -244,7 +244,7 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     runtime += tstep;
     utc = std::fmod(runtime,86400);
     julian_day += int(runtime/86400);
-        
+    
     // Run radiation model and update time/date if needed
     if (comp_rad==1) {
         R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
@@ -283,12 +283,6 @@ void UtahLSM :: run() {
         // solve moisture diffusion
         solveDiffusionMois();
     }
-    std::cout<<"----------"<<std::endl;
-    logger->print_number(flux_wT,"flux_wT");
-    logger->print_number(flux_wq,"flux_wq");
-    logger->print_number(flux_gr,"flux_gr");
-    std::cout<<"----------"<<std::endl;
-    //std::exit(1);
     
     // Change flag of whether initial time
     if (first) first=false;
@@ -662,7 +656,7 @@ void UtahLSM :: solveSMB() {
 
 void UtahLSM :: solveDiffusionHeat() {
     
-    if (false) {
+    if (true) {
         std::cout<<"----BEFORET---"<<std::endl;
         logger->print_number(sfc_T_new,"sfc_T_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
@@ -695,7 +689,7 @@ void UtahLSM :: solveDiffusionHeat() {
 
     // Get the time step restriction
     double Kmax, dt_T;
-    dt_T = 1;
+    dt_T = 1.0;
     
     // Loop through diffusion by sub-step
     double t=0;
@@ -708,14 +702,14 @@ void UtahLSM :: solveDiffusionHeat() {
         // r(n)    the soil temperature vector at t=n multiplied by coefficients
 
         // Matrix coefficients for first level below surface
-        Cp  = step_dif * dt_T * K_mid[0] / dz2;
-        Cm  = step_dif * dt_T * K_mid[1] / dz2;
+        Cp  = (double)step_dif * dt_T * K_mid[0] / dz2;
+        Cm  = (double)step_dif * dt_T * K_mid[1] / dz2;
         CBp = -AB * Cp;
         CBm = -AB * Cm;
-        CB  = 1 - CBp - CBm;
+        CB  = 1.0 - CBp - CBm;
         CFp = AF * Cp;
         CFm = AF * Cm;
-        CF  = 1 - CFp - CFm;
+        CF  = 1.0 - CFp - CFm;
         
         e[0] = 0;
         f[0] = CB;
@@ -729,14 +723,14 @@ void UtahLSM :: solveDiffusionHeat() {
             // i   -> j+1 level
             // i+1 -> j   level
             // i+2 -> j-1 level
-            Cp  = step_dif * dt_T * K_mid[i] / dz2;
-            Cm  = step_dif * dt_T * K_mid[i+1] / dz2;
+            Cp  = (double)step_dif * dt_T * K_mid[i] / dz2;
+            Cm  = (double)step_dif * dt_T * K_mid[i+1] / dz2;
             CBp = -AB * Cp;
             CBm = -AB * Cm;
-            CB  = 1 - CBp - CBm;
+            CB  = 1.0 - CBp - CBm;
             CFp = AF * Cp;
             CFm = AF * Cm;
-            CF  = 1 - CFp - CFm;
+            CF  = 1.0 - CFp - CFm;
 
             e[i] = CBp;
             f[i] = CB;
@@ -747,19 +741,19 @@ void UtahLSM :: solveDiffusionHeat() {
         // Matrix coefficients for bottom level
         int j = nsoilz-2;
 
-        Cp  = step_dif * dt_T * K_mid[j] / dz2;
-        Cm  = step_dif * dt_T * K_mid[j] / dz2;
+        Cp  = double(step_dif) * dt_T * K_mid[j] / dz2;
+        Cm  = double(step_dif) * dt_T * K_mid[j] / dz2;
         CBp = -AB * Cp;
         CBm = -AB * Cm;
-        CB  = 1 - CBp - CBm;
+        CB  = 1.0 - CBp - CBm;
         CFp = AF * Cp;
         CFm = AF * Cm;
-        CF  = 1 - CFp - CFm;
+        CF  = 1.0 - CFp - CFm;
 
         e[j] = (CBp - CBm);
-        f[j] = (CB + 2 * CBm);
+        f[j] = (CB + 2.0 * CBm);
         g[j] = 0;
-        r[j] = (CFp - CFm) * soil_T[j] + (CF + 2* CFm) * soil_T[j+1];
+        r[j] = (CFp - CFm) * soil_T[j] + (CF + 2.0* CFm) * soil_T[j+1];
 
         // now we can add new sfc T to column array
         soil_T[0] = sfc_T_new;
@@ -789,7 +783,7 @@ void UtahLSM :: solveDiffusionHeat() {
         
             // compute new diffusion time step
             Kmax = *std::max_element(K.begin(), K.end());
-            dt_T = dz2 / (2*Kmax); 
+            dt_T = dz2 / (2.0*Kmax); 
             
             // check if we need to relax dt to meet end time exactly
             if (t+dt_T>tstep) {
@@ -800,13 +794,13 @@ void UtahLSM :: solveDiffusionHeat() {
         // update time
         t += dt_T;
     }
-    if (false) {
+    if (true) {
         std::cout<<"----AFTERT----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
             logger->print_number(soil_T[ii],"soil_T");
         }
         std::cout<<"--------------"<<std::endl;
-        std::exit(1);
+        if (runtime==29400) std::exit(1);
     }
 }
 
@@ -834,9 +828,9 @@ void UtahLSM :: solveDiffusionMois() {
 
     // Get the time step restriction
     double Dmax, dt_q;
-    dt_q = 1;
+    dt_q = 1.0;
     
-    if (false) {
+    if (true) {
         std::cout<<"----BEFOREQ---"<<std::endl;
         logger->print_number(sfc_q_new,"sfc_q_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
@@ -857,17 +851,17 @@ void UtahLSM :: solveDiffusionMois() {
 
         // first soil level below the surface
         // common coefficients
-        Cpd  = step_dif * dt_q * D_mid[0] / dz2;
-        Cmd  = step_dif * dt_q * D_mid[1] / dz2;
-        Cpk  = step_dif * dt_q * K_lin[0] / (2*dz);
-        Cmk  = step_dif * dt_q * K_lin[2] / (2*dz);
+        Cpd  = (double)step_dif * dt_q * D_mid[0] / dz2;
+        Cmd  = (double)step_dif * dt_q * D_mid[1] / dz2;
+        Cpk  = (double)step_dif * dt_q * K_lin[0] / (2.0*dz);
+        Cmk  = (double)step_dif * dt_q * K_lin[2] / (2.0*dz);
         
         // coefficients for backward scheme
         CBpd = -AB * Cpd;
         CBmd = -AB * Cmd;
         CBpk = -AB * Cpk;
         CBmk = -AB * Cmk;
-        CB   = (1 - CBpd - CBmd);
+        CB   = (1.0 - CBpd - CBmd);
         CBp  = CBpd + CBpk;
         CBm  = CBmd - CBmk;
 
@@ -876,7 +870,7 @@ void UtahLSM :: solveDiffusionMois() {
         CFmd = AF * Cmd;
         CFpk = AF * Cpk;
         CFmk = AF * Cmk;
-        CF   = (1 - CFpd - CFmd);
+        CF   = (1.0 - CFpd - CFmd);
         CFp  = CFpd + CFpk;
         CFm  = CFmd - CFmk;
 
@@ -895,17 +889,17 @@ void UtahLSM :: solveDiffusionMois() {
             // i+2 -> j-1 level
 
             // common coefficients
-            Cpd  = step_dif * dt_q * D_mid[i] / dz2;
-            Cmd  = step_dif * dt_q * D_mid[i+1] / dz2;
-            Cpk  = step_dif * dt_q * K_lin[i] / (2*dz);
-            Cmk  = step_dif * dt_q * K_lin[i+2] / (2*dz);
+            Cpd  = (double)step_dif * dt_q * D_mid[i] / dz2;
+            Cmd  = (double)step_dif * dt_q * D_mid[i+1] / dz2;
+            Cpk  = (double)step_dif * dt_q * K_lin[i] / (2.0*dz);
+            Cmk  = (double)step_dif * dt_q * K_lin[i+2] / (2.0*dz);
 
             // coefficients for backward scheme
             CBpd = -AB * Cpd;
             CBmd = -AB * Cmd;
             CBpk = -AB * Cpk;
             CBmk = -AB * Cmk;
-            CB   = (1 - CBpd - CBmd);
+            CB   = (1.0 - CBpd - CBmd);
             CBp  = CBpd + CBpk;
             CBm  = CBmd - CBmk;
 
@@ -914,7 +908,7 @@ void UtahLSM :: solveDiffusionMois() {
             CFmd = AF * Cmd;
             CFpk = AF * Cpk;
             CFmk = AF * Cmk;
-            CF   = (1 - CFpd - CFmd);
+            CF   = (1.0 - CFpd - CFmd);
             CFp  = CFpd + CFpk;
             CFm  = CFmd - CFmk;
 
@@ -929,17 +923,17 @@ void UtahLSM :: solveDiffusionMois() {
         int j = nsoilz-2;
 
         // common coefficients
-        Cpd  = step_dif * dt_q * D_mid[j] / dz2;
-        Cmd  = step_dif * dt_q * D_mid[j] / dz2;
-        Cpk  = step_dif * dt_q * K_lin[j] / (2*dz);
-        Cmk  = step_dif * dt_q * K_lin[j] / (2*dz);
+        Cpd  = (double)step_dif * dt_q * D_mid[j] / dz2;
+        Cmd  = (double)step_dif * dt_q * D_mid[j] / dz2;
+        Cpk  = (double)step_dif * dt_q * K_lin[j] / (2.0*dz);
+        Cmk  = (double)step_dif * dt_q * K_lin[j] / (2.0*dz);
 
         // coefficients for backward scheme
         CBpd = -AB * Cpd;
         CBmd = -AB * Cmd;
         CBpk = -AB * Cpk;
         CBmk = -AB * Cmk;
-        CB   = (1 - CBpd - CBmd);
+        CB   = (1.0 - CBpd - CBmd);
         CBp  = CBpd + CBpk;
         CBm  = CBmd - CBmk;
 
@@ -948,15 +942,15 @@ void UtahLSM :: solveDiffusionMois() {
         CFmd = AF * Cmd;
         CFpk = AF * Cpk;
         CFmk = AF * Cmk;
-        CF   = (1 - CFpd - CFmd);
+        CF   = (1.0 - CFpd - CFmd);
         CFp  = CFpd + CFpk;
         CFm  = CFmd - CFmk;
 
         // matrix components
         e[j] = (CBp - CBm);
-        f[j] = (CB + 2 * CBm);
+        f[j] = (CB + 2.0 * CBm);
         g[j] = 0;
-        r[j] = (CFp - CFm) * soil_q[j] + (CF + 2 * CFm) * soil_q[j+1];
+        r[j] = (CFp - CFm) * soil_q[j] + (CF + 2.0 * CFm) * soil_q[j+1];
         
         // now we can add new sfc q to column array
         soil_q[0] = sfc_q_new;
@@ -990,7 +984,7 @@ void UtahLSM :: solveDiffusionMois() {
 
             // compute new diffusion time step
             Dmax = *std::max_element(D.begin(), D.end());
-            dt_q = dz2 / (2*Dmax);
+            dt_q = dz2 / (2.0*Dmax);
             
             // check if we need to relax dt to meet end time exactly
             if (t+dt_q>tstep) {
@@ -1001,13 +995,13 @@ void UtahLSM :: solveDiffusionMois() {
         // update time
         t += dt_q; 
     }
-    if (false) {
+    if (true) {
         std::cout<<"----AFTERQ----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
             logger->print_number(soil_q[ii],"soil_q");
         }
         std::cout<<"--------------"<<std::endl;
-        std::exit(1);
+        if (runtime==29400) std::exit(1);
     }
 }
 

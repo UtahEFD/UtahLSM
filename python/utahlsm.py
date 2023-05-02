@@ -201,12 +201,6 @@ class UtahLSM:
             # solve moisture diffusion
             self.solve_diffusion_mois()
         
-        print("----------")
-        io.Logger.print_number(self.flux_wT[0],"flux_wT")
-        io.Logger.print_number(self.flux_wq[0],"flux_wq")
-        io.Logger.print_number(self.ghf[0],"flux_gr")
-        print("----------")
-
         # Change flag of whether initial time
         if self.first: self.first = False
         
@@ -481,7 +475,7 @@ class UtahLSM:
     # Solve the diffusion equation for soil heat
     def solve_diffusion_heat(self):
         
-        if False:
+        if True:
             print("----BEFORET---")
             io.Logger.print_number(self.sfc_T_new,"sfc_T_new")
             for ii in range(self.nz):
@@ -509,7 +503,7 @@ class UtahLSM:
             z_mid[i] = 0.5*(self.soil_z[i]+self.soil_z[i+1])
         
         # Get the time step restriction
-        dt_T = 1
+        dt_T = 1.0
         
         # loop through diffusion by sub-step
         t = 0
@@ -522,14 +516,14 @@ class UtahLSM:
             # r(n)    the soil temperature vector at t=n multiplied by coefficients
         
             # Matrix coefficients for first level below surface
-            Cp  = self.dt_dif * dt_T * K_mid[0] / dz2
-            Cm  = self.dt_dif * dt_T * K_mid[1] / dz2
+            Cp  = float(self.dt_dif) * dt_T * K_mid[0] / dz2
+            Cm  = float(self.dt_dif) * dt_T * K_mid[1] / dz2
             CBp = -AB * Cp
             CBm = -AB * Cm
-            CB  = 1 - CBp - CBm
+            CB  = 1.0 - CBp - CBm
             CFp = AF * Cp
             CFm = AF * Cm
-            CF  = 1 - CFp - CFm
+            CF  = 1.0 - CFp - CFm
         
             e[0] = 0
             f[0] = CB
@@ -543,14 +537,14 @@ class UtahLSM:
                 # i   -> j+1 level
                 # i+1 -> j   level
                 # i+2 -> j-1 level
-                Cp  = self.dt_dif * dt_T * K_mid[i] / dz2
-                Cm  = self.dt_dif * dt_T * K_mid[i+1] / dz2
+                Cp  = float(self.dt_dif) * dt_T * K_mid[i] / dz2
+                Cm  = float(self.dt_dif) * dt_T * K_mid[i+1] / dz2
                 CBp = -AB * Cp
                 CBm = -AB * Cm
-                CB  = 1 - CBp - CBm
+                CB  = 1.0 - CBp - CBm
                 CFp = AF * Cp
                 CFm = AF * Cm
-                CF  = 1 - CFp - CFm
+                CF  = 1.0 - CFp - CFm
         
                 e[i] = CBp
                 f[i] = CB
@@ -560,19 +554,19 @@ class UtahLSM:
             # Matrix coefficients for bottom level
             j = self.nz-2
         
-            Cp  = self.dt_dif * dt_T * K_mid[j] / dz2
-            Cm  = self.dt_dif * dt_T * K_mid[j] / dz2
+            Cp  = float(self.dt_dif) * dt_T * K_mid[j] / dz2
+            Cm  = float(self.dt_dif) * dt_T * K_mid[j] / dz2
             CBp = -AB * Cp
             CBm = -AB * Cm
-            CB  = 1 - CBp - CBm
+            CB  = 1.0 - CBp - CBm
             CFp = AF * Cp
             CFm = AF * Cm
-            CF  = 1 - CFp - CFm
+            CF  = 1.0 - CFp - CFm
         
             e[j] = (CBp - CBm)
-            f[j] = (CB + 2 * CBm)
+            f[j] = (CB + 2.0 * CBm)
             g[j] = 0
-            r[j] = (CFp - CFm) * self.soil_T[j] + (CF + 2* CFm) * self.soil_T[j+1]
+            r[j] = (CFp - CFm) * self.soil_T[j] + (CF + 2.0* CFm) * self.soil_T[j+1]
                     
             # now we can add new sfc T to column array
             self.soil_T[0] = self.sfc_T_new
@@ -596,7 +590,7 @@ class UtahLSM:
                 
                 # compute new diffusion time step
                 Kmax = np.max(K)
-                dt_T = dz2 / (2*Kmax)
+                dt_T = dz2 / (2.0*Kmax)
                 
                 # check if we need to relax dt to meet end time exactly
                 if (t+dt_T>self.tstep):
@@ -604,12 +598,12 @@ class UtahLSM:
             
             # update time
             t+=dt_T
-        if False:
+        if True:
             print("----AFTERT----")
             for ii in range(self.nz):
                 io.Logger.print_number(self.soil_T[ii],"soil_T")
             print("--------------")
-            sys.exit()
+            if self.runtime==29400.0: sys.exit()
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -630,9 +624,9 @@ class UtahLSM:
         g     = np.zeros(self.nz-1)
         
         # Get the time step restriction
-        dt_q = 1
+        dt_q = 1.0
         
-        if False:
+        if True:
             print("----BEFOREQ---")
             io.Logger.print_number(self.sfc_q_new,"sfc_q_new")
             for ii in range(self.nz):
@@ -650,17 +644,17 @@ class UtahLSM:
             
             # first soil level below the surface
             # common coefficients
-            Cpd  = self.dt_dif * dt_q * D_mid[0] / dz2
-            Cmd  = self.dt_dif * dt_q * D_mid[1] / dz2
-            Cpk  = self.dt_dif * dt_q * K_lin[0] / (2*dz)
-            Cmk  = self.dt_dif * dt_q * K_lin[2] / (2*dz)
+            Cpd  = float(self.dt_dif) * dt_q * D_mid[0] / dz2
+            Cmd  = float(self.dt_dif) * dt_q * D_mid[1] / dz2
+            Cpk  = float(self.dt_dif) * dt_q * K_lin[0] / (2*dz)
+            Cmk  = float(self.dt_dif) * dt_q * K_lin[2] / (2*dz)
             
             # coefficients for backward scheme
             CBpd = -AB * Cpd
             CBmd = -AB * Cmd
             CBpk = -AB * Cpk
             CBmk = -AB * Cmk
-            CB   = (1 - CBpd - CBmd)
+            CB   = (1.0 - CBpd - CBmd)
             CBp  = CBpd + CBpk
             CBm  = CBmd - CBmk
             
@@ -669,7 +663,7 @@ class UtahLSM:
             CFmd = AF * Cmd
             CFpk = AF * Cpk
             CFmk = AF * Cmk
-            CF   = (1 - CFpd - CFmd)
+            CF   = (1.0 - CFpd - CFmd)
             CFp  = CFpd + CFpk
             CFm  = CFmd - CFmk
             
@@ -687,17 +681,17 @@ class UtahLSM:
                 # i+2 -> j-1 level# 
                 
                 # common coefficients
-                Cpd  = self.dt_dif * dt_q * D_mid[i] / dz2
-                Cmd  = self.dt_dif * dt_q * D_mid[i+1] / dz2
-                Cpk  = self.dt_dif * dt_q * K_lin[i] / (2*dz)
-                Cmk  = self.dt_dif * dt_q * K_lin[i+2] / (2*dz)
+                Cpd  = float(self.dt_dif) * dt_q * D_mid[i] / dz2
+                Cmd  = float(self.dt_dif) * dt_q * D_mid[i+1] / dz2
+                Cpk  = float(self.dt_dif) * dt_q * K_lin[i] / (2*dz)
+                Cmk  = float(self.dt_dif) * dt_q * K_lin[i+2] / (2*dz)
                 
                 # coefficients for backward scheme
                 CBpd = -AB * Cpd
                 CBmd = -AB * Cmd
                 CBpk = -AB * Cpk
                 CBmk = -AB * Cmk
-                CB   = (1 - CBpd - CBmd)
+                CB   = (1.0 - CBpd - CBmd)
                 CBp  = CBpd + CBpk
                 CBm  = CBmd - CBmk
                 
@@ -706,7 +700,7 @@ class UtahLSM:
                 CFmd = AF * Cmd
                 CFpk = AF * Cpk
                 CFmk = AF * Cmk
-                CF   = (1 - CFpd - CFmd)
+                CF   = (1.0 - CFpd - CFmd)
                 CFp  = CFpd + CFpk
                 CFm  = CFmd - CFmk
                 
@@ -720,17 +714,17 @@ class UtahLSM:
             j = self.nz-2
             
             # common coefficients
-            Cpd  = self.dt_dif * dt_q * D_mid[j] / dz2
-            Cmd  = self.dt_dif * dt_q * D_mid[j] / dz2
-            Cpk  = self.dt_dif * dt_q * K_lin[j] / (2*dz)
-            Cmk  = self.dt_dif * dt_q * K_lin[j] / (2*dz)
+            Cpd  = float(self.dt_dif) * dt_q * D_mid[j] / dz2
+            Cmd  = float(self.dt_dif) * dt_q * D_mid[j] / dz2
+            Cpk  = float(self.dt_dif) * dt_q * K_lin[j] / (2*dz)
+            Cmk  = float(self.dt_dif) * dt_q * K_lin[j] / (2*dz)
             
             # coefficients for backward scheme
             CBpd = -AB * Cpd
             CBmd = -AB * Cmd
             CBpk = -AB * Cpk
             CBmk = -AB * Cmk
-            CB   = (1 - CBpd - CBmd)
+            CB   = (1.0 - CBpd - CBmd)
             CBp  = CBpd + CBpk
             CBm  = CBmd - CBmk
             
@@ -739,15 +733,15 @@ class UtahLSM:
             CFmd = AF * Cmd
             CFpk = AF * Cpk
             CFmk = AF * Cmk
-            CF   = (1 - CFpd - CFmd)
+            CF   = (1.0 - CFpd - CFmd)
             CFp  = CFpd + CFpk
             CFm  = CFmd - CFmk
             
             # matrix components
             e[j] = (CBp - CBm)
-            f[j] = (CB + 2 * CBm)
+            f[j] = (CB + 2.0 * CBm)
             g[j] = 0
-            r[j] = (CFp - CFm) * self.soil_q[j] + (CF + 2 * CFm) * self.soil_q[j+1]
+            r[j] = (CFp - CFm) * self.soil_q[j] + (CF + 2.0 * CFm) * self.soil_q[j+1]
             
             # now we can add new sfc q to column array
             self.soil_q[0] = self.sfc_q_new
@@ -777,7 +771,7 @@ class UtahLSM:
                 
                 # compute new diffusion time step
                 Dmax = np.max(D)
-                dt_q = dz2 / (2*Dmax)
+                dt_q = dz2 / (2.0*Dmax)
                 
                 # check if we need to relax dt to meet end time exactly
                 if (t+dt_q>self.tstep):
@@ -786,12 +780,12 @@ class UtahLSM:
             # update time
             t+=dt_q
         
-        if False:
+        if True:
             print("----AFTERQ----")
             for ii in range(self.nz):
                 io.Logger.print_number(self.soil_q[ii],"soil_q")
             print("--------------")
-            sys.exit()
+            if (self.runtime==29400.0): sys.exit();
 
 # main program to run the LSM
 if __name__ == "__main__":
