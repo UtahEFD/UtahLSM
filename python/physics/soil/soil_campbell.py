@@ -30,7 +30,7 @@ class Campbell(Soil):
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
         soil_q   = porosity*(np.abs(psi_sat/psi)**(1./b))
-        
+                
         return soil_q
 
     # Estimate soil surface moisture from surface mixing ratio

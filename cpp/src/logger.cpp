@@ -17,16 +17,28 @@
 #include <iostream>
 #include <iomanip>
 
-void Logger :: print_number(double x, std::string label) {
+void Logger :: print_double(double x, std::string label) {
 	std::cout<<std::endl;
     std::cout<<std::defaultfloat;
     std::cout<<std::setprecision(17);
     std::cout<<"LOG -> "<<label<<" "<<x<<std::endl;
 }
 
-void Logger :: print_number(double x) {
+void Logger :: print_double(double x) {
     std::cout<<std::endl;
     std::cout<<std::defaultfloat;
     std::cout<<std::setprecision(17);
 	std::cout<<"LOG -> "<<x<<std::endl;
+}
+
+void Logger :: print_hex(double x, std::string label) {
+    std::cout<<std::endl;
+    std::cout<<std::hexfloat;
+    std::cout<<"LOG -> "<<label<<" "<<x<<std::endl;
+}
+
+void Logger :: print_hex(double x) {
+    std::cout<<std::endl;
+    std::cout<<std::hexfloat;
+    std::cout<<"LOG -> "<<x<<std::endl;
 }

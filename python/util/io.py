@@ -245,7 +245,7 @@ class Output(object):
 	
 class Logger(object):
 	
-	def print_number(x,label=False):
+	def print_double(x,label=False):
 		
 		if label:
 			print()
@@ -253,3 +253,12 @@ class Logger(object):
 		else:
 			print()
 			print('LOG -> %0.17g'%x)
+	
+	def print_hex(x,label=False):
+		
+		if label:
+			print()
+			print('LOG -> %s: '%(label)+float.hex(x))
+		else:
+			print()
+			print('LOG -> '+float.hex(x))

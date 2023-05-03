@@ -617,7 +617,7 @@ void UtahLSM :: solveSMB() {
     D1    = soil->diffusivityMoisture(soil_q[1],1);
     D_avg = 0.5*(D0+D1);
     
-    flux_sm  = c::rho_wat*K_avg*((psi0 - psi1)/(soil_z[0]-soil_z[1]) + 1);
+    flux_sm  = c::rho_wat*K_avg*((psi0 - psi1)/(soil_z[0]-soil_z[1]) + 1.0);
     //flux_sm = c::rho_wat*D_avg*(soil_q[0]-soil_q[1])/(soil_z[0]-soil_z[1])
     //           + c::rho_wat*K_avg;
     
@@ -634,7 +634,7 @@ void UtahLSM :: solveSMB() {
         flux_sm = delta*flux_sm_last - (1.-delta)*E;
         
         // Re-compute moisture potential
-        psi0    = psi1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_avg))-1);
+        psi0    = psi1 + (soil_z[0]-soil_z[1])*((flux_sm/(c::rho_wat*K_avg))-1.0);
         if (psi0 > soil->properties[0]->psi_sat) {
             psi0 = soil->properties[0]->psi_sat;
         }
@@ -658,9 +658,9 @@ void UtahLSM :: solveDiffusionHeat() {
     
     if (true) {
         std::cout<<"----BEFORET---"<<std::endl;
-        logger->print_number(sfc_T_new,"sfc_T_new");
+        logger->print_hex(sfc_T_new,"sfc_T_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
-            logger->print_number(soil_T[ii],"soil_T");
+            logger->print_double(soil_T[ii],"soil_T");
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -702,8 +702,8 @@ void UtahLSM :: solveDiffusionHeat() {
         // r(n)    the soil temperature vector at t=n multiplied by coefficients
 
         // Matrix coefficients for first level below surface
-        Cp  = (double)step_dif * dt_T * K_mid[0] / dz2;
-        Cm  = (double)step_dif * dt_T * K_mid[1] / dz2;
+        Cp  = static_cast<double>(step_dif) * dt_T * K_mid[0] / dz2;
+        Cm  = static_cast<double>(step_dif) * dt_T * K_mid[1] / dz2;
         CBp = -AB * Cp;
         CBm = -AB * Cm;
         CB  = 1.0 - CBp - CBm;
@@ -723,8 +723,8 @@ void UtahLSM :: solveDiffusionHeat() {
             // i   -> j+1 level
             // i+1 -> j   level
             // i+2 -> j-1 level
-            Cp  = (double)step_dif * dt_T * K_mid[i] / dz2;
-            Cm  = (double)step_dif * dt_T * K_mid[i+1] / dz2;
+            Cp  = static_cast<double>(step_dif) * dt_T * K_mid[i] / dz2;
+            Cm  = static_cast<double>(step_dif) * dt_T * K_mid[i+1] / dz2;
             CBp = -AB * Cp;
             CBm = -AB * Cm;
             CB  = 1.0 - CBp - CBm;
@@ -797,10 +797,10 @@ void UtahLSM :: solveDiffusionHeat() {
     if (true) {
         std::cout<<"----AFTERT----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            logger->print_number(soil_T[ii],"soil_T");
+            logger->print_hex(soil_T[ii],"soil_T");
         }
         std::cout<<"--------------"<<std::endl;
-        if (runtime==29400) std::exit(1);
+        //if (runtime==29400) std::exit(1);
     }
 }
 
@@ -832,9 +832,9 @@ void UtahLSM :: solveDiffusionMois() {
     
     if (true) {
         std::cout<<"----BEFOREQ---"<<std::endl;
-        logger->print_number(sfc_q_new,"sfc_q_new");
+        logger->print_hex(sfc_q_new,"sfc_q_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
-            logger->print_number(soil_q[ii],"soil_q");
+            logger->print_hex(soil_q[ii],"soil_q");
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -851,10 +851,10 @@ void UtahLSM :: solveDiffusionMois() {
 
         // first soil level below the surface
         // common coefficients
-        Cpd  = (double)step_dif * dt_q * D_mid[0] / dz2;
-        Cmd  = (double)step_dif * dt_q * D_mid[1] / dz2;
-        Cpk  = (double)step_dif * dt_q * K_lin[0] / (2.0*dz);
-        Cmk  = (double)step_dif * dt_q * K_lin[2] / (2.0*dz);
+        Cpd  = static_cast<double>(step_dif) * dt_q * D_mid[0] / dz2;
+        Cmd  = static_cast<double>(step_dif) * dt_q * D_mid[1] / dz2;
+        Cpk  = static_cast<double>(step_dif) * dt_q * K_lin[0] / (2.0*dz);
+        Cmk  = static_cast<double>(step_dif) * dt_q * K_lin[2] / (2.0*dz);
         
         // coefficients for backward scheme
         CBpd = -AB * Cpd;
@@ -889,10 +889,10 @@ void UtahLSM :: solveDiffusionMois() {
             // i+2 -> j-1 level
 
             // common coefficients
-            Cpd  = (double)step_dif * dt_q * D_mid[i] / dz2;
-            Cmd  = (double)step_dif * dt_q * D_mid[i+1] / dz2;
-            Cpk  = (double)step_dif * dt_q * K_lin[i] / (2.0*dz);
-            Cmk  = (double)step_dif * dt_q * K_lin[i+2] / (2.0*dz);
+            Cpd  = static_cast<double>(step_dif) * dt_q * D_mid[i] / dz2;
+            Cmd  = static_cast<double>(step_dif) * dt_q * D_mid[i+1] / dz2;
+            Cpk  = static_cast<double>(step_dif) * dt_q * K_lin[i] / (2.0*dz);
+            Cmk  = static_cast<double>(step_dif) * dt_q * K_lin[i+2] / (2.0*dz);
 
             // coefficients for backward scheme
             CBpd = -AB * Cpd;
@@ -923,10 +923,10 @@ void UtahLSM :: solveDiffusionMois() {
         int j = nsoilz-2;
 
         // common coefficients
-        Cpd  = (double)step_dif * dt_q * D_mid[j] / dz2;
-        Cmd  = (double)step_dif * dt_q * D_mid[j] / dz2;
-        Cpk  = (double)step_dif * dt_q * K_lin[j] / (2.0*dz);
-        Cmk  = (double)step_dif * dt_q * K_lin[j] / (2.0*dz);
+        Cpd  = static_cast<double>(step_dif) * dt_q * D_mid[j] / dz2;
+        Cmd  = static_cast<double>(step_dif) * dt_q * D_mid[j] / dz2;
+        Cpk  = static_cast<double>(step_dif) * dt_q * K_lin[j] / (2.0*dz);
+        Cmk  = static_cast<double>(step_dif) * dt_q * K_lin[j] / (2.0*dz);
 
         // coefficients for backward scheme
         CBpd = -AB * Cpd;
@@ -998,7 +998,7 @@ void UtahLSM :: solveDiffusionMois() {
     if (true) {
         std::cout<<"----AFTERQ----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
-            logger->print_number(soil_q[ii],"soil_q");
+            logger->print_hex(soil_q[ii],"soil_q");
         }
         std::cout<<"--------------"<<std::endl;
         if (runtime==29400) std::exit(1);

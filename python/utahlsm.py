@@ -72,7 +72,7 @@ class UtahLSM:
         # Initialize new surface values for first run
         self.sfc_T_new = self.soil_T.item(0)
         self.sfc_q_new = self.soil_q.item(0)
-
+        
         # Initialize history arrays for first run
         self.soil_T_last = self.soil_T
         self.soil_q_last = self.soil_q
@@ -269,7 +269,7 @@ class UtahLSM:
             flux_wTv = self.flux_wT[:] + ref_T*0.61*self.flux_wq[:]
                 
             # Compute L
-            last_L = self.obl[:].copy()
+            last_L = self.obl.item(0)
             self.obl[:] = -(self.ust[:]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
             
             # Bounds check on L
@@ -395,15 +395,14 @@ class UtahLSM:
 
         # Compute fluxes using passed in values
         self.compute_fluxes(sfc_T,self.sfc_q_new);
-        
         # Write sensible and latent heat fluxes in [W/m^2]
-        Qh = c.rho_air*c.Cp_air*self.flux_wT
-        Ql = c.rho_air*c.Lv*self.flux_wq
-        Qg = self.ghf
+        Qh = c.rho_air*c.Cp_air*self.flux_wT.item(0)
+        Ql = c.rho_air*c.Lv*self.flux_wq.item(0)
+        Qg = self.ghf.item(0)
         
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
-        
+
         return SEB
     
     # Compute the derivative of the surface energy budget
@@ -412,8 +411,9 @@ class UtahLSM:
         # Compute derivative of SEB wrt temperature
         heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
         dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3) \
-        + c.rho_air*c.Cp_air*self.ust*self.sfc.fh(self.z_s,self.z_t,self.obl[:]) \
+        + c.rho_air*c.Cp_air*self.ust.item(0)*self.sfc.fh(self.z_s,self.z_t,self.obl.item(0)) \
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
+        
         return dSEB_dT
     
     # Solve the surface moisture budget
@@ -437,11 +437,11 @@ class UtahLSM:
         D1    = self.soil.diffusivity_moisture(self.soil_q[1],1) 
         D_avg = 0.5*(D0+D1)
         
-        flux_sm  = c.rho_wat*K_avg*((psi0 - psi1)/(self.soil_z[0]-self.soil_z[1]) + 1)
+        flux_sm  = c.rho_wat*K_avg*((psi0 - psi1)/(self.soil_z[0]-self.soil_z[1]) + 1.0)
         #flux_sm  = c.rho_wat*D_avg*(self.soil_q[0]-self.soil_q[1])/(self.soil_z[0]-self.soil_z[1]) + c.rho_wat*K_avg
         
         # Compute evaporation
-        E = c.rho_air*self.flux_wq
+        E = c.rho_air*self.flux_wq.item(0)
         
         # Convergence loop for moisture flux
         for ff in range(0,max_iter_flux):
@@ -453,14 +453,15 @@ class UtahLSM:
             flux_sm = delta*flux_sm_last - (1.-delta)*E
             
             # Re-compute moisture potential
-            psi0    = psi1 + (self.soil_z[0]-self.soil_z[1])*((flux_sm/(c.rho_wat*K_avg))-1)
+            psi0    = psi1 + (self.soil_z[0]-self.soil_z[1])*((flux_sm/(c.rho_wat*K_avg))-1.0)
             if (psi0 > self.soil.properties[0].psi_sat):
                 psi0 = self.soil.properties[0].psi_sat
             
             # Update soil moisture
             self.sfc_q_new = self.soil.surface_water_content(psi0)
+            
             gnd_q     = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
-            E = c.rho_air*(gnd_q-self.atm_q)*self.ust*self.sfc.fh(self.z_s, self.z_t,self.obl[:])
+            E = c.rho_air*(gnd_q-self.atm_q)*self.ust.item(0)*self.sfc.fh(self.z_s, self.z_t,self.obl.item(0))
             
             # Update soil moisture transfer
             K0    = self.soil.conductivity_moisture(self.sfc_q_new,0)
@@ -469,7 +470,7 @@ class UtahLSM:
             
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
-            
+        
             if (converged): break
 
     # Solve the diffusion equation for soil heat
@@ -477,9 +478,9 @@ class UtahLSM:
         
         if True:
             print("----BEFORET---")
-            io.Logger.print_number(self.sfc_T_new,"sfc_T_new")
+            io.Logger.print_hex(self.sfc_T_new,"sfc_T_new")
             for ii in range(self.nz):
-                io.Logger.print_number(self.soil_T[ii],"soil_T")
+                io.Logger.print_hex(self.soil_T[ii],"soil_T")
             print("--------------")
         
         # Local variables
@@ -601,9 +602,9 @@ class UtahLSM:
         if True:
             print("----AFTERT----")
             for ii in range(self.nz):
-                io.Logger.print_number(self.soil_T[ii],"soil_T")
+                io.Logger.print_hex(self.soil_T[ii],"soil_T")
             print("--------------")
-            if self.runtime==29400.0: sys.exit()
+            #if self.runtime==29400.0: sys.exit()
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -628,9 +629,9 @@ class UtahLSM:
         
         if True:
             print("----BEFOREQ---")
-            io.Logger.print_number(self.sfc_q_new,"sfc_q_new")
+            io.Logger.print_hex(self.sfc_q_new,"sfc_q_new")
             for ii in range(self.nz):
-                io.Logger.print_number(self.soil_q[ii],"soil_q")
+                io.Logger.print_hex(self.soil_q[ii],"soil_q")
             print("--------------")
         
         # loop through diffusion by sub-step
@@ -783,7 +784,7 @@ class UtahLSM:
         if True:
             print("----AFTERQ----")
             for ii in range(self.nz):
-                io.Logger.print_number(self.soil_q[ii],"soil_q")
+                io.Logger.print_hex(self.soil_q[ii],"soil_q")
             print("--------------")
             if (self.runtime==29400.0): sys.exit();
 

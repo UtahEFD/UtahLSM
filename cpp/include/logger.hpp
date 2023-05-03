@@ -22,9 +22,10 @@ class Logger {
 	
 	public:
 
-		void print_number(double x, std::string label);
-		
-		void print_number(double x);
+		void print_double(double x, std::string label);
+		void print_double(double x);
+        void print_hex(double x, std::string label);
+        void print_hex(double x);
 };
 
 #endif
