@@ -177,8 +177,13 @@ class UtahLSM:
     def run(self):
                 
         # Set initial new temp and moisture
-        self.sfc_T_new = self.soil_T.item(0)
-        self.sfc_q_new = self.soil_q.item(0)
+        self.sfc_T_new = self.soil_T[0]
+        self.sfc_q_new = self.soil_q[0]
+        
+        if (self.runtime==29400.0): 
+            print()
+            io.Logger.print_hex(self.sfc_T_new, 'sfc_T_new')
+            io.Logger.print_hex(self.sfc_q_new, 'sfc_q_new')
         
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
@@ -232,55 +237,55 @@ class UtahLSM:
         for i in range(0,max_iterations):
             
             # First time through we estimate based on Santanello and Friedl (2003)
-            if  not self.first:
+            if not self.first:
                 if (self.soil_q[0]>=0.4):
                     A = 0.31000
-                    B = 74000
+                    B = 74000.0
                 elif (self.soil_q[0]<0.4 and self.soil_q[0] >= 0.25):
                     A = 0.33000
-                    B = 85000
+                    B = 85000.0
                 else:
                     A = 0.35
-                    B = 100000
+                    B = 100000.0
                     
-                self.ghf[:] = self.R_net*A*np.cos((2*c.pi*(self.utc)+10800)/B)
+                self.ghf[0] = self.R_net*A*np.cos((2.0*c.pi*(self.utc)+10800.0)/B)
             else:
                 K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
                 K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
                 Kmid     = 0.5*(K0 + K1)
-                self.ghf[:] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
+                self.ghf[0] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
             
             # Compute friction velocity
-            self.ust[:] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[:])
+            self.ust[0] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[0])
             
             # Compute heat flux
-            self.flux_wT[:] = (sfc_T-self.atm_T)*self.ust[:]*self.sfc.fh(self.z_s, self.z_t, self.obl[:])
+            self.flux_wT[0] = (sfc_T-self.atm_T)*self.ust[0]*self.sfc.fh(self.z_s, self.z_t, self.obl[0])
             
             # Compute latent flux
             if ( (self.first) and (i == 0)):
-                self.flux_wq[:] = (self.R_net - self.ghf[:] - self.flux_wT[:]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
-                gnd_q = self.atm_q + self.flux_wq.item(0) / (self.ust.item(0)*self.sfc.fh(self.z_s,self.z_t,self.obl.item(0)))
-                self.sfc_q_new = self.soil.surface_water_content_estimate(self.soil_T.item(0),gnd_q, self.atm_p)
+                self.flux_wq[0] = (self.R_net - self.ghf[0] - self.flux_wT[0]*c.rho_air*c.Cp_air)/(c.rho_air*c.Lv)
+                gnd_q = self.atm_q + self.flux_wq.item(0) / (self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0]))
+                self.sfc_q_new = self.soil.surface_water_content_estimate(self.soil_T[0],gnd_q, self.atm_p)
                 self.soil_q[0] = self.sfc_q_new
             else:
-                self.flux_wq[:] = (gnd_q-self.atm_q)*self.ust[:]*self.sfc.fh(self.z_s,self.z_t,self.obl[:])
+                self.flux_wq[0] = (gnd_q-self.atm_q)*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0])
                 
             # Compute virtual heat flux
-            flux_wTv = self.flux_wT[:] + ref_T*0.61*self.flux_wq[:]
+            flux_wTv = self.flux_wT[0] + ref_T*0.61*self.flux_wq[0]
                 
             # Compute L
-            last_L = self.obl.item(0)
-            self.obl[:] = -(self.ust[:]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
+            last_L = self.obl[0]
+            self.obl[0] = -(self.ust[0]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
             
             # Bounds check on L
-            if (self.z_m/self.obl[:] > 5.):  self.obl[:] = self.z_m/5.
-            if (self.z_m/self.obl[:] < -5.): self.obl[:] = self.z_m/5.
+            if (self.z_m/self.obl[0] > 5.):  self.obl[0] = self.z_m/5.
+            if (self.z_m/self.obl[0] < -5.): self.obl[0] = self.z_m/5.
             
             # Check for convergence
-            converged = np.abs(last_L-self.obl[:]).item(0) <= criteria
+            converged = np.abs(last_L-self.obl[0]) <= criteria
             if (converged):
-                self.shf[:] = c.rho_air*c.Cp_air*self.flux_wT[:]
-                self.lhf[:] = c.rho_air*c.Lv*self.flux_wq[:]
+                self.shf[0] = c.rho_air*c.Cp_air*self.flux_wT[0]
+                self.lhf[0] = c.rho_air*c.Lv*self.flux_wq[0]
                 break
 
         # Exit if L convergence fails
@@ -355,16 +360,16 @@ class UtahLSM:
                 
                 # Bracket and bisect temperature if Newton out of range
                 if ((((self.sfc_T_new-temp_h)*dSEB_dT-SEB)*((self.sfc_T_new-temp_l)*dSEB_dT-SEB)>0.0)
-                    or (np.abs(2*SEB) > np.abs(dTs_old*dSEB_dT))):
-                    dTs_old   = dTs
-                    dTs       = 0.5*(temp_h-temp_l)
-                    last_T    = self.sfc_T_new
+                    or (np.abs(2.0*SEB) > np.abs(dTs_old*dSEB_dT))):
+                    dTs_old        = dTs
+                    dTs            = 0.5*(temp_h-temp_l)
+                    last_T         = self.sfc_T_new
                     self.sfc_T_new = temp_l + dTs
                     if (temp_l == self.sfc_T_new): break
                 else:
-                    dTs_old   = dTs
-                    dTs       = SEB / dSEB_dT
-                    last_T    = self.sfc_T_new
+                    dTs_old        = dTs
+                    dTs            = SEB / dSEB_dT
+                    last_T         = self.sfc_T_new
                     self.sfc_T_new = self.sfc_T_new - dTs
                     if (last_T == self.sfc_T_new): break
                 
@@ -375,16 +380,20 @@ class UtahLSM:
                 # computeFluxes(soil_T[0],soil_q[0]);
             
             # Save current flux for convergence criteria
-            last_F = self.flux_wT.item(0)
+            last_F = self.flux_wT[0]
             
             # Recompute heat flux using new temperature
             self.compute_fluxes(self.sfc_T_new,self.sfc_q_new)
             
             # Check for convergence
             if (np.abs(self.flux_wT-last_F) <= flux_criteria):
-                Qh = c.rho_air*c.Cp_air*self.flux_wT
-                Ql = c.rho_air*c.Lv*self.flux_wq
-                Qg = self.ghf
+                Qh = c.rho_air*c.Cp_air*self.flux_wT[0]
+                Ql = c.rho_air*c.Lv*self.flux_wq[0]
+                Qg = self.ghf[0]
+                if (self.runtime==29400.0): 
+                    io.Logger.print_hex(Qh, 'Qh')
+                    io.Logger.print_hex(Ql, 'Ql')
+                    io.Logger.print_hex(Qg, 'Qg')
                 break
             
             # If flux fails to converge, split temperature difference
@@ -395,10 +404,11 @@ class UtahLSM:
 
         # Compute fluxes using passed in values
         self.compute_fluxes(sfc_T,self.sfc_q_new);
+        
         # Write sensible and latent heat fluxes in [W/m^2]
-        Qh = c.rho_air*c.Cp_air*self.flux_wT.item(0)
-        Ql = c.rho_air*c.Lv*self.flux_wq.item(0)
-        Qg = self.ghf.item(0)
+        Qh = c.rho_air*c.Cp_air*self.flux_wT[0]
+        Ql = c.rho_air*c.Lv*self.flux_wq[0]
+        Qg = self.ghf[0]
         
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
@@ -410,9 +420,9 @@ class UtahLSM:
         
         # Compute derivative of SEB wrt temperature
         heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
-        dSEB_dT  = 4.*self.emissivity*c.sb*(sfc_T**3) \
-        + c.rho_air*c.Cp_air*self.ust.item(0)*self.sfc.fh(self.z_s,self.z_t,self.obl.item(0)) \
-        + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2*self.tstep)
+        dSEB_dT  = 4.0*self.emissivity*c.sb*(sfc_T**3) \
+        + c.rho_air*c.Cp_air*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0]) \
+        + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2.0*self.tstep)
         
         return dSEB_dT
     
@@ -441,7 +451,7 @@ class UtahLSM:
         #flux_sm  = c.rho_wat*D_avg*(self.soil_q[0]-self.soil_q[1])/(self.soil_z[0]-self.soil_z[1]) + c.rho_wat*K_avg
         
         # Compute evaporation
-        E = c.rho_air*self.flux_wq.item(0)
+        E = c.rho_air*self.flux_wq[0]
         
         # Convergence loop for moisture flux
         for ff in range(0,max_iter_flux):
@@ -450,18 +460,18 @@ class UtahLSM:
             flux_sm_last = flux_sm
             
             # Compute new weighted soil moisture flux
-            flux_sm = delta*flux_sm_last - (1.-delta)*E
+            flux_sm = delta*flux_sm_last - (1.0-delta)*E
             
             # Re-compute moisture potential
-            psi0    = psi1 + (self.soil_z[0]-self.soil_z[1])*((flux_sm/(c.rho_wat*K_avg))-1.0)
+            psi0 = psi1 + (self.soil_z[0]-self.soil_z[1])*((flux_sm/(c.rho_wat*K_avg))-1.0)
             if (psi0 > self.soil.properties[0].psi_sat):
                 psi0 = self.soil.properties[0].psi_sat
             
             # Update soil moisture
             self.sfc_q_new = self.soil.surface_water_content(psi0)
             
-            gnd_q     = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
-            E = c.rho_air*(gnd_q-self.atm_q)*self.ust.item(0)*self.sfc.fh(self.z_s, self.z_t,self.obl.item(0))
+            gnd_q = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_p)
+            E     = c.rho_air*(gnd_q-self.atm_q)*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0])
             
             # Update soil moisture transfer
             K0    = self.soil.conductivity_moisture(self.sfc_q_new,0)
@@ -471,7 +481,11 @@ class UtahLSM:
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
         
-            if (converged): break
+            if (converged): 
+                if (self.runtime==29400.0): 
+                    io.Logger.print_hex(E, 'E')
+                    io.Logger.print_hex(flux_sm, 'flux_sm')                
+                break
 
     # Solve the diffusion equation for soil heat
     def solve_diffusion_heat(self):

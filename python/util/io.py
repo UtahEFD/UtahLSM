@@ -248,17 +248,13 @@ class Logger(object):
 	def print_double(x,label=False):
 		
 		if label:
-			print()
 			print('LOG -> %s: %0.17g'%(label,x))
 		else:
-			print()
 			print('LOG -> %0.17g'%x)
 	
 	def print_hex(x,label=False):
 		
 		if label:
-			print()
 			print('LOG -> %s: '%(label)+float.hex(x))
 		else:
-			print()
 			print('LOG -> '+float.hex(x))

@@ -261,6 +261,12 @@ void UtahLSM :: run() {
     sfc_T_new = soil_T[0];
     sfc_q_new = soil_q[0];
     
+    if (runtime==29400) {
+        std::cout<<std::endl;
+        logger->print_hex(sfc_T_new,"sfc_T_new");
+        logger->print_hex(sfc_q_new,"sfc_q_new");
+    }
+    
     // Check if time to re-compute balances
     if ( (step_count % step_seb)==0 ) {
         solveSEB();        
@@ -384,15 +390,15 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
             double A,B;
             if (soil_q[0]>=0.4) {
                 A = 0.31;
-                B = 74000;
+                B = 74000.0;
             } else if (soil_q[0]<0.4 && soil_q[0] >= 0.25){
                 A = 0.33;
-                B = 85000;
+                B = 85000.0;
             } else {
                 A = 0.35;
-                B = 100000;
+                B = 100000.0;
             }
-            flux_gr = R_net*A*std::cos((2*c::pi*(utc)+10800)/B);
+            flux_gr = R_net*A*std::cos((2.0*c::pi*(utc)+10800.0)/B);
         } else {
             double K0 = soil->conductivityThermal(soil_q[0],0);
             double K1 = soil->conductivityThermal(soil_q[1],1);
@@ -518,7 +524,7 @@ void UtahLSM :: solveSEB() {
             
             // Bracket and bisect temperature if Newton out of range
             if ((((sfc_T_new-temp_h)*dSEB_dT-SEB)*((sfc_T_new-temp_l)*dSEB_dT-SEB)>0.0)
-                || (std::abs(2*SEB) > std::abs(dTs_old*dSEB_dT))) {
+                || (std::abs(2.0*SEB) > std::abs(dTs_old*dSEB_dT))) {
                 dTs_old   = dTs;
                 dTs       = 0.5*(temp_h-temp_l);
                 last_T    = sfc_T_new;
@@ -551,6 +557,11 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
+            if (runtime==29400) {
+                logger->print_hex(Qh,"Qh");
+                logger->print_hex(Ql,"Ql");
+                logger->print_hex(Qg,"Qg");
+            }
             break;
         }
         
@@ -587,9 +598,9 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     
     // Compute derivative of SEB wrt temperature
     heat_cap = soil->heatCapacity(sfc_q_new,0);
-    dSEB_dT = 4.*emissivity*c::sb*std::pow(sfc_T,3.)
+    dSEB_dT = 4.0*emissivity*c::sb*std::pow(sfc_T,3.)
     + c::rho_air*c::Cp_air*ustar*sfc->fh(z_s,z_t,L)
-    + heat_cap*(soil_z[0]-soil_z[1])/(2*tstep);
+    + heat_cap*(soil_z[0]-soil_z[1])/(2.0*tstep);
     
     return dSEB_dT;
 }
@@ -650,7 +661,13 @@ void UtahLSM :: solveSMB() {
         K_avg = 0.5*(K0+K1);
         
         // Check for convergence
-        if (std::abs((E + flux_sm)/E) <=flux_criteria) break;
+        if (std::abs((E + flux_sm)/E) <=flux_criteria) {
+            if (runtime==29400) {
+                logger->print_hex(E,"E");
+                logger->print_hex(flux_sm,"flux_sm");
+            }
+            break;
+        }
     }
 }
 
@@ -660,7 +677,7 @@ void UtahLSM :: solveDiffusionHeat() {
         std::cout<<"----BEFORET---"<<std::endl;
         logger->print_hex(sfc_T_new,"sfc_T_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
-            logger->print_double(soil_T[ii],"soil_T");
+            logger->print_hex(soil_T[ii],"soil_T");
         }
         std::cout<<"--------------"<<std::endl;
     }
