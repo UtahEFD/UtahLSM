@@ -96,7 +96,7 @@ class UtahLSM:
             # Create radiation model
             self.rad = Radiation.get_model(1,self.input)
         else:
-            print("[UtahLSM: Radiation] \t Using offline data, no model")
+            print("[UtahLSM: Radiation] \t --- using offline data, no model")
         
         # Create soil model
         print("[UtahLSM: Setup] \t Creating soil model")
@@ -175,15 +175,16 @@ class UtahLSM:
         
         # debugging
         if (self.runtime==29400.0):
-            print(type(self.tstep))
-            io.Logger.print_hex(self.tstep, "update_fields", "tstep")
-            io.Logger.print_hex(self.utc,   "update_fields", "t utc")
-            io.Logger.print_hex(self.atm_U, "update_fields", "atm_U")
-            io.Logger.print_hex(self.atm_T, "update_fields", "atm_T")
-            io.Logger.print_hex(self.atm_q, "update_fields", "atm_q")
-            io.Logger.print_hex(self.atm_p, "update_fields", "atm_p")
-            io.Logger.print_hex(self.R_net, "update_fields", "R_net")
-            
+            print('\r')
+            print("--------------")
+            io.Logger.print_hex(self.tstep, "update_fields\t\t", "tstep")
+            io.Logger.print_hex(self.utc,   "update_fields\t\t", "t utc")
+            io.Logger.print_hex(self.atm_U, "update_fields\t\t", "atm_U")
+            io.Logger.print_hex(self.atm_T, "update_fields\t\t", "atm_T")
+            io.Logger.print_hex(self.atm_q, "update_fields\t\t", "atm_q")
+            io.Logger.print_hex(self.atm_p, "update_fields\t\t", "atm_p")
+            io.Logger.print_hex(self.R_net, "update_fields\t\t", "R_net")
+            print("--------------")
         
     # Run the model
     def run(self):
@@ -192,9 +193,11 @@ class UtahLSM:
         self.sfc_T_new = self.soil_T[0]
         self.sfc_q_new = self.soil_q[0]
         
-        if (self.runtime==29400.0): 
-            io.Logger.print_hex(self.sfc_T_new, "run", 'sfc_T_new')
-            io.Logger.print_hex(self.sfc_q_new, "run", 'sfc_q_new')
+        if (self.runtime==29400.0):
+            print("--------------")
+            io.Logger.print_hex(self.sfc_T_new, "run\t\t\t\t\t", 'sfc_T_new')
+            io.Logger.print_hex(self.sfc_q_new, "run\t\t\t\t\t", 'sfc_q_new')
+            print("--------------")
         
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
@@ -244,9 +247,6 @@ class UtahLSM:
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
         
-        if (self.runtime==29400.0): 
-            io.Logger.print_hex(gnd_q, "compute_fluxes", 'gnd_q')
-        
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             
@@ -290,6 +290,17 @@ class UtahLSM:
             # Compute L
             last_L = self.obl[0]
             self.obl[0] = -(self.ust[0]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
+            
+            if (self.runtime==29400.0):
+                print("--------------")
+                io.Logger.print_hex(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
+                io.Logger.print_hex(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
+                io.Logger.print_hex(self.ust[0],     "compute_fluxes\t\t", 'ust')
+                io.Logger.print_hex(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
+                io.Logger.print_hex(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
+                io.Logger.print_hex(flux_wTv,        "compute_fluxes\t\t", 'wTv')
+                io.Logger.print_hex(self.obl[0],     "compute_fluxes\t\t", 'obl')
+                print("--------------")
             
             # Bounds check on L
             if (self.z_m/self.obl[0] > 5.):  self.obl[0] = self.z_m/5.
@@ -404,10 +415,12 @@ class UtahLSM:
                 Qh = c.rho_air*c.Cp_air*self.flux_wT[0]
                 Ql = c.rho_air*c.Lv*self.flux_wq[0]
                 Qg = self.ghf[0]
-                if (self.runtime==29400.0): 
-                    io.Logger.print_hex(Qh, 'Qh')
-                    io.Logger.print_hex(Ql, 'Ql')
-                    io.Logger.print_hex(Qg, 'Qg')
+                if (self.runtime==29400.0):
+                    print("--------------")
+                    io.Logger.print_hex(Qh, "compute_seb\t\t\t",'Qh')
+                    io.Logger.print_hex(Ql, "compute_seb\t\t\t",'Ql')
+                    io.Logger.print_hex(Qg, "compute_seb\t\t\t",'Qg')
+                    print("--------------")
                 break
             
             # If flux fails to converge, split temperature difference
@@ -426,7 +439,16 @@ class UtahLSM:
         
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
-
+        
+        if (self.runtime==29400.0):
+            print("--------------")
+            io.Logger.print_hex(Qh,         "compute_seb\t\t\t", 'Qh')
+            io.Logger.print_hex(Ql,         "compute_seb\t\t\t", 'Ql')
+            io.Logger.print_hex(Qg,         "compute_seb\t\t\t", 'Qg')
+            io.Logger.print_hex(self.R_net, "compute_seb\t\t\t", 'Rn')
+            io.Logger.print_hex(SEB,        "compute_seb\t\t\t", 'SEB')
+            print("--------------")
+        
         return SEB
     
     # Compute the derivative of the surface energy budget
@@ -437,6 +459,12 @@ class UtahLSM:
         dSEB_dT  = 4.0*self.emissivity*c.sb*(sfc_T**3) \
         + c.rho_air*c.Cp_air*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0]) \
         + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2.0*self.tstep)
+        
+        if (self.runtime==29400.0):
+            print("--------------")
+            io.Logger.print_hex(heat_cap, "compute_dseb\t\t", 'heat_cap')
+            io.Logger.print_hex(dSEB_dT,  "compute_dseb\t\t", 'dSEB_dT')
+            print("--------------")
         
         return dSEB_dT
     
@@ -494,21 +522,23 @@ class UtahLSM:
             
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
-        
+            if (self.runtime==29400.0): 
+                io.Logger.print_hex(E,       "solve_smb\t\t\t", 'E')
+                io.Logger.print_hex(flux_sm, "solve_smb\t\t\t", 'flux_sm')
             if (converged): 
-                if (self.runtime==29400.0): 
-                    io.Logger.print_hex(E, 'E')
-                    io.Logger.print_hex(flux_sm, 'flux_sm')                
+                # if (self.runtime==29400.0): 
+                #     io.Logger.print_hex(E,       'E')
+                #     io.Logger.print_hex(flux_sm, 'flux_sm')                
                 break
 
     # Solve the diffusion equation for soil heat
     def solve_diffusion_heat(self):
         
-        if True:
+        if (self.runtime==29400.0): 
             print("----BEFORET---")
-            io.Logger.print_hex(self.sfc_T_new,"sfc_T_new")
+            io.Logger.print_hex(self.sfc_T_new,"diffusion_heat\t\t","sfc_T_new")
             for ii in range(self.nz):
-                io.Logger.print_hex(self.soil_T[ii],"soil_T")
+                io.Logger.print_hex(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii) 
             print("--------------")
         
         # Local variables
@@ -627,12 +657,11 @@ class UtahLSM:
             
             # update time
             t+=dt_T
-        if True:
+        if (self.runtime==29400.0): 
             print("----AFTERT----")
             for ii in range(self.nz):
-                io.Logger.print_hex(self.soil_T[ii],"soil_T")
+                io.Logger.print_hex(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii)
             print("--------------")
-            #if self.runtime==29400.0: sys.exit()
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -655,11 +684,11 @@ class UtahLSM:
         # Get the time step restriction
         dt_q = 1.0
         
-        if True:
+        if (self.runtime==29400.0): 
             print("----BEFOREQ---")
-            io.Logger.print_hex(self.sfc_q_new,"sfc_q_new")
+            io.Logger.print_hex(self.sfc_q_new, "diffusion_mois\t\t","sfc_q_new")
             for ii in range(self.nz):
-                io.Logger.print_hex(self.soil_q[ii],"soil_q")
+                io.Logger.print_hex(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
             print("--------------")
         
         # loop through diffusion by sub-step
@@ -809,12 +838,11 @@ class UtahLSM:
             # update time
             t+=dt_q
         
-        if True:
+        if (self.runtime==29400.0): 
             print("----AFTERQ----")
             for ii in range(self.nz):
-                io.Logger.print_hex(self.soil_q[ii],"diffusion","soil_q")
+                io.Logger.print_hex(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
             print("--------------")
-            if (self.runtime==29400.0): sys.exit();
 
 # main program to run the LSM
 if __name__ == "__main__":
@@ -884,7 +912,7 @@ if __name__ == "__main__":
     utc = 0
     for t in range(0,ntime):
         utc += tstep
-        sys.stdout.write("\r[UtahLSM: Run] \t\t Running for time %05.2f of %05.2f"%(utc,ntime*tstep))
+        sys.stdout.write("\r[UtahLSM: Run] \t\t Running for time: %05.2f of %05.2f"%(utc,ntime*tstep))
         sys.stdout.flush()
         
         # update user-specified fields

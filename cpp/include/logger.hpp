@@ -19,12 +19,10 @@
 #include <vector>
 
 class Logger {
-	
-	public:
-
-		void print_double(double x, std::string label);
-		void print_double(double x);
-        void print_hex(double x, std::string label);
+    public:
+        void print_double(double x, std::string section, std::string label);
+        void print_double(double x);
+        void print_hex(double x, std::string section, std::string label);
         void print_hex(double x);
 };
 

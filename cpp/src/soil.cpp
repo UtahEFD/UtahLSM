@@ -86,25 +86,34 @@ double Soil::diffusivityThermal(const double soil_q, const int level) {
 // Factory method that returns the correct soil model
 Soil* Soil::getModel(const std::vector<int>& soil_type, const int soil_param, 
                      const int soil_model, const int levels) {
+    
+    std::string param_name = "";
     if (soil_param==1) {
-        std::cout<<"[UtahLSM: Soil] \t --- the Clapp/Hornberger dataset"<<std::endl;
+        param_name = "Clapp/Hornberger";
     } else if (soil_param==2) {
-        std::cout<<"[UtahLSM: Soil] \t --- the Cosby et al. dataset"<<std::endl;
+        param_name = "Cosby et al.";
     } else if (soil_param==3) {
-        std::cout<<"[UtahLSM: Soil] \t --- the Rawls/Brakensiek dataset"<<std::endl;
+        param_name = "Rawls/Brakensiek";
+    } else {
+        std::cout<<"[UtahLSM: Soil] \t Invalid soil parameter set: must be an integer 1, 2, or 3"<<std::endl;
+        throw(1);
     }
-
+    
     if (soil_model==1) {
         std::cout<<"[UtahLSM: Soil] \t --- using the Brooks-Corey model with"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- the "<<param_name<<" dataset"<<std::endl;
         return new BrooksCorey(soil_type, soil_param, soil_model, levels);
     } else if (soil_model==2) {
         std::cout<<"[UtahLSM: Soil] \t --- using the Campbell model with"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- the "<<param_name<<" dataset"<<std::endl;
         return new Campbell(soil_type, soil_param, soil_model, levels);
     } else if (soil_model==3) {
         std::cout<<"[UtahLSM: Soil] \t --- using the van Genuchten model with"<<std::endl;
+        std::cout<<"[UtahLSM: Soil] \t --- the "<<param_name<<" dataset"<<std::endl;
         return new VanGenuchten(soil_type, soil_param, soil_model, levels);
     } else {
         std::cout<<"[UtahLSM: Soil] \t Invalid soil model: must be an integer 1, 2, or 3"<<std::endl;
         throw(1);
     }
+
 }

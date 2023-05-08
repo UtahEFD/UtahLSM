@@ -21,7 +21,7 @@ class SurfaceMOST(Surface):
     # class initialization
     def __init__(self):
         
-        print("[UtahLSM: Surface] \t --- running with the MOST scheme")
+        print("[UtahLSM: Surface] \t --- using the MOST model")
         # initialize parent class
         super().__init__()
         

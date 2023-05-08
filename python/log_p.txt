@@ -1,3 +1,4 @@
+
 ##############################################################
 #                                                            #
 #                     Welcome to UtahLSM                     #
@@ -8,2670 +9,803 @@
 [UtahLSM: Info] 	 Running offline for the gabls3 case
 [UtahLSM: Setup] 	 Reading input settings
 [UtahLSM: Setup] 	 Reading input data
-[UtahLSM: Radiation] 	 Using offline data, no model
+[UtahLSM: Radiation] 	 --- using offline data, no model
 [UtahLSM: Setup] 	 Creating soil model
 [UtahLSM: Soil] 	 --- using the Campbell model with
 [UtahLSM: Soil] 	 --- the Rawls/Brakensiek dataset
 [UtahLSM: Setup] 	 Creating surface model
-[UtahLSM: Surface] 	 --- running with the MOST scheme
+[UtahLSM: Surface] 	 --- using the MOST model
 [UtahLSM: Setup] 	 Creating output file
-[UtahLSM: Run] 		 Running for time 600.00 of 33000.00----BEFORET---
-LOG -> 0x1.2445eadce9ccep+8
-LOG -> 0x1.2439500000000p+8
-LOG -> 0x1.24dc100000000p+8
-LOG -> 0x1.24bf360000000p+8
-LOG -> 0x1.247ee20000000p+8
-LOG -> 0x1.2403840000000p+8
-LOG -> 0x1.2390c40000000p+8
-LOG -> 0x1.231e060000000p+8
-LOG -> 0x1.22a5f80000000p+8
-LOG -> 0x1.222dec0000000p+8
-LOG -> 0x1.21b5e00000000p+8
-LOG -> 0x1.213dd20000000p+8
---------------
-----AFTERT----
-LOG -> 0x1.2445eadce9ccep+8
-LOG -> 0x1.24d3a30554be6p+8
-LOG -> 0x1.24bb02adc630cp+8
-LOG -> 0x1.2476682365b9dp+8
-LOG -> 0x1.23fde1df49062p+8
-LOG -> 0x1.23896fadb6223p+8
-LOG -> 0x1.2314a441825b1p+8
-LOG -> 0x1.22a184c84abbcp+8
-LOG -> 0x1.222f18d26daefp+8
-LOG -> 0x1.21b73967bfb5ap+8
-LOG -> 0x1.213dd20000001p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9eb352dcaf22bp-3
-LOG -> 0x1.05f6abb4283e6p-3
-LOG -> 0x1.9eb6e00000000p-3
-LOG -> 0x1.d058800000000p-3
-LOG -> 0x1.00fd100000000p-2
-LOG -> 0x1.346afc0000000p-2
-LOG -> 0x1.67d8e80000000p-2
-LOG -> 0x1.9b46d40000000p-2
-LOG -> 0x1.dedc5a0000000p-2
-LOG -> 0x1.1138f00000000p-1
-LOG -> 0x1.3303b40000000p-1
-LOG -> 0x1.3240b40000000p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9eb352dcaf22bp-3
-diffusion -> 	 soil_q: 0x1.9ebdc8d413a0dp-3
-diffusion -> 	 soil_q: 0x1.d062db3f8c0a9p-3
-diffusion -> 	 soil_q: 0x1.013f20afbd6a3p-2
-diffusion -> 	 soil_q: 0x1.35546fcf0b90cp-2
-diffusion -> 	 soil_q: 0x1.6b7fd83e26b4cp-2
-diffusion -> 	 soil_q: 0x1.ac8736b6b6320p-2
-diffusion -> 	 soil_q: 0x1.f3eb0a61220aep-2
-diffusion -> 	 soil_q: 0x1.114239e90552dp-1
-diffusion -> 	 soil_q: 0x1.21bc8129c253dp-1
-diffusion -> 	 soil_q: 0x1.313a705469d63p-1
---------------
-[UtahLSM: Run] 		 Running for time 1200.00 of 33000.00----BEFORET---
-LOG -> 0x1.18d5eadce9ccep+8
-LOG -> 0x1.2445eadce9ccep+8
-LOG -> 0x1.24d3a30554be6p+8
-LOG -> 0x1.24bb02adc630cp+8
-LOG -> 0x1.2476682365b9dp+8
-LOG -> 0x1.23fde1df49062p+8
-LOG -> 0x1.23896fadb6223p+8
-LOG -> 0x1.2314a441825b1p+8
-LOG -> 0x1.22a184c84abbcp+8
-LOG -> 0x1.222f18d26daefp+8
-LOG -> 0x1.21b73967bfb5ap+8
-LOG -> 0x1.213dd20000001p+8
---------------
-----AFTERT----
-LOG -> 0x1.18d5eadce9ccep+8
-LOG -> 0x1.24323bcd9d775p+8
-LOG -> 0x1.24ad5a387e6dbp+8
-LOG -> 0x1.246db698c562fp+8
-LOG -> 0x1.23f76b17d3fc4p+8
-LOG -> 0x1.238121d4178b6p+8
-LOG -> 0x1.230cb4a8f39dep+8
-LOG -> 0x1.229e1cf05d7e5p+8
-LOG -> 0x1.222ed0e912eb7p+8
-LOG -> 0x1.21b7efb76c353p+8
-LOG -> 0x1.213dd20000001p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ebabdcb440c2p-3
-LOG -> 0x1.9eb352dcaf22bp-3
-LOG -> 0x1.9ebdc8d413a0dp-3
-LOG -> 0x1.d062db3f8c0a9p-3
-LOG -> 0x1.013f20afbd6a3p-2
-LOG -> 0x1.35546fcf0b90cp-2
-LOG -> 0x1.6b7fd83e26b4cp-2
-LOG -> 0x1.ac8736b6b6320p-2
-LOG -> 0x1.f3eb0a61220aep-2
-LOG -> 0x1.114239e90552dp-1
-LOG -> 0x1.21bc8129c253dp-1
-LOG -> 0x1.313a705469d63p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ebabdcb440c2p-3
-diffusion -> 	 soil_q: 0x1.9ec4b37349b03p-3
-diffusion -> 	 soil_q: 0x1.d06d7d01326b4p-3
-diffusion -> 	 soil_q: 0x1.0184097b9cc3ap-2
-diffusion -> 	 soil_q: 0x1.36769131409f8p-2
-diffusion -> 	 soil_q: 0x1.72217bdf37359p-2
-diffusion -> 	 soil_q: 0x1.bdd21890d1097p-2
-diffusion -> 	 soil_q: 0x1.fac0ee203976cp-2
-diffusion -> 	 soil_q: 0x1.10e7c59ba002ap-1
-diffusion -> 	 soil_q: 0x1.209c846828b70p-1
-diffusion -> 	 soil_q: 0x1.304936f091227p-1
---------------
-[UtahLSM: Run] 		 Running for time 1800.00 of 33000.00----BEFORET---
-LOG -> 0x1.1815eadce9ccep+8
-LOG -> 0x1.18d5eadce9ccep+8
-LOG -> 0x1.24323bcd9d775p+8
-LOG -> 0x1.24ad5a387e6dbp+8
-LOG -> 0x1.246db698c562fp+8
-LOG -> 0x1.23f76b17d3fc4p+8
-LOG -> 0x1.238121d4178b6p+8
-LOG -> 0x1.230cb4a8f39dep+8
-LOG -> 0x1.229e1cf05d7e5p+8
-LOG -> 0x1.222ed0e912eb7p+8
-LOG -> 0x1.21b7efb76c353p+8
-LOG -> 0x1.213dd20000001p+8
---------------
-----AFTERT----
-LOG -> 0x1.1815eadce9ccep+8
-LOG -> 0x1.23978b3787673p+8
-LOG -> 0x1.2497cc2ba674ep+8
-LOG -> 0x1.24642bed72907p+8
-LOG -> 0x1.23effa79c9814p+8
-LOG -> 0x1.23784896919a5p+8
-LOG -> 0x1.23063a1a6d536p+8
-LOG -> 0x1.229b74019b4dcp+8
-LOG -> 0x1.222df7fe0607fp+8
-LOG -> 0x1.21b82c0bbbdccp+8
-LOG -> 0x1.213dd20000000p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ec1ab609e707p-3
-LOG -> 0x1.9ebabdcb440c2p-3
-LOG -> 0x1.9ec4b37349b03p-3
-LOG -> 0x1.d06d7d01326b4p-3
-LOG -> 0x1.0184097b9cc3ap-2
-LOG -> 0x1.36769131409f8p-2
-LOG -> 0x1.72217bdf37359p-2
-LOG -> 0x1.bdd21890d1097p-2
-LOG -> 0x1.fac0ee203976cp-2
-LOG -> 0x1.10e7c59ba002ap-1
-LOG -> 0x1.209c846828b70p-1
-LOG -> 0x1.304936f091227p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ec1ab609e707p-3
-diffusion -> 	 soil_q: 0x1.9ecb9fe536a71p-3
-diffusion -> 	 soil_q: 0x1.d07869bc4a981p-3
-diffusion -> 	 soil_q: 0x1.01ccf93e2634bp-2
-diffusion -> 	 soil_q: 0x1.380a2c0ab7750p-2
-diffusion -> 	 soil_q: 0x1.7bc44ba66e2bfp-2
-diffusion -> 	 soil_q: 0x1.caa0a6f5d190dp-2
-diffusion -> 	 soil_q: 0x1.fed2588d3d7a2p-2
-diffusion -> 	 soil_q: 0x1.1130347ffc0e1p-1
-diffusion -> 	 soil_q: 0x1.202f235401943p-1
-diffusion -> 	 soil_q: 0x1.2f656a65d2efbp-1
---------------
-[UtahLSM: Run] 		 Running for time 2400.00 of 33000.00----BEFORET---
-LOG -> 0x1.1755eadce9ccep+8
-LOG -> 0x1.1815eadce9ccep+8
-LOG -> 0x1.23978b3787673p+8
-LOG -> 0x1.2497cc2ba674ep+8
-LOG -> 0x1.24642bed72907p+8
-LOG -> 0x1.23effa79c9814p+8
-LOG -> 0x1.23784896919a5p+8
-LOG -> 0x1.23063a1a6d536p+8
-LOG -> 0x1.229b74019b4dcp+8
-LOG -> 0x1.222df7fe0607fp+8
-LOG -> 0x1.21b82c0bbbdccp+8
-LOG -> 0x1.213dd20000000p+8
---------------
-----AFTERT----
-LOG -> 0x1.1755eadce9ccep+8
-LOG -> 0x1.23026db88f134p+8
-LOG -> 0x1.247b9e3eabdfbp+8
-LOG -> 0x1.245953e8be18ep+8
-LOG -> 0x1.23e779b73f908p+8
-LOG -> 0x1.236f7468b2e02p+8
-LOG -> 0x1.2300cc224fec2p+8
-LOG -> 0x1.22992df5f0503p+8
-LOG -> 0x1.222ce1002cc2dp+8
-LOG -> 0x1.21b80d29b0a5fp+8
-LOG -> 0x1.213dd20000001p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ec896edb66f5p-3
-LOG -> 0x1.9ec1ab609e707p-3
-LOG -> 0x1.9ecb9fe536a71p-3
-LOG -> 0x1.d07869bc4a981p-3
-LOG -> 0x1.01ccf93e2634bp-2
-LOG -> 0x1.380a2c0ab7750p-2
-LOG -> 0x1.7bc44ba66e2bfp-2
-LOG -> 0x1.caa0a6f5d190dp-2
-LOG -> 0x1.fed2588d3d7a2p-2
-LOG -> 0x1.1130347ffc0e1p-1
-LOG -> 0x1.202f235401943p-1
-LOG -> 0x1.2f656a65d2efbp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ec896edb66f5p-3
-diffusion -> 	 soil_q: 0x1.9ed28e3bd95e9p-3
-diffusion -> 	 soil_q: 0x1.d083a7fef90dap-3
-diffusion -> 	 soil_q: 0x1.021c36e8d74bep-2
-diffusion -> 	 soil_q: 0x1.3a5c1cf6157a8p-2
-diffusion -> 	 soil_q: 0x1.873957ba91706p-2
-diffusion -> 	 soil_q: 0x1.d39315bc21f49p-2
-diffusion -> 	 soil_q: 0x1.00f0a4f8e5bdap-1
-diffusion -> 	 soil_q: 0x1.117b2abab0b06p-1
-diffusion -> 	 soil_q: 0x1.1fd4e1788c01dp-1
-diffusion -> 	 soil_q: 0x1.2e8d550c32664p-1
---------------
-[UtahLSM: Run] 		 Running for time 3000.00 of 33000.00----BEFORET---
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.1755eadce9ccep+8
-LOG -> 0x1.23026db88f134p+8
-LOG -> 0x1.247b9e3eabdfbp+8
-LOG -> 0x1.245953e8be18ep+8
-LOG -> 0x1.23e779b73f908p+8
-LOG -> 0x1.236f7468b2e02p+8
-LOG -> 0x1.2300cc224fec2p+8
-LOG -> 0x1.22992df5f0503p+8
-LOG -> 0x1.222ce1002cc2dp+8
-LOG -> 0x1.21b80d29b0a5fp+8
-LOG -> 0x1.213dd20000001p+8
---------------
-----AFTERT----
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.2271ef962c5e8p+8
-LOG -> 0x1.2459d769650b6p+8
-LOG -> 0x1.244cddc0126aap+8
-LOG -> 0x1.23ddeeb8c5cefp+8
-LOG -> 0x1.2366f9ce8a8ebp+8
-LOG -> 0x1.22fc200c8d674p+8
-LOG -> 0x1.22970fe35b639p+8
-LOG -> 0x1.222ba77127aa0p+8
-LOG -> 0x1.21b7b0e024e99p+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ecf844d18ca1p-3
-LOG -> 0x1.9ec896edb66f5p-3
-LOG -> 0x1.9ed28e3bd95e9p-3
-LOG -> 0x1.d083a7fef90dap-3
-LOG -> 0x1.021c36e8d74bep-2
-LOG -> 0x1.3a5c1cf6157a8p-2
-LOG -> 0x1.873957ba91706p-2
-LOG -> 0x1.d39315bc21f49p-2
-LOG -> 0x1.00f0a4f8e5bdap-1
-LOG -> 0x1.117b2abab0b06p-1
-LOG -> 0x1.1fd4e1788c01dp-1
-LOG -> 0x1.2e8d550c32664p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ecf844d18ca1p-3
-diffusion -> 	 soil_q: 0x1.9ed97e8b7c5ecp-3
-diffusion -> 	 soil_q: 0x1.d08f421eccbb1p-3
-diffusion -> 	 soil_q: 0x1.0275b4f61eba7p-2
-diffusion -> 	 soil_q: 0x1.3dc054be7e06bp-2
-diffusion -> 	 soil_q: 0x1.930a62a9b0e89p-2
-diffusion -> 	 soil_q: 0x1.d9fccf33003bbp-2
-diffusion -> 	 soil_q: 0x1.0219b03496ba7p-1
-diffusion -> 	 soil_q: 0x1.11afa2f7b58a4p-1
-diffusion -> 	 soil_q: 0x1.1f7ab88e8f0ccp-1
-diffusion -> 	 soil_q: 0x1.2dbfec1811b78p-1
---------------
-[UtahLSM: Run] 		 Running for time 3600.00 of 33000.00----BEFORET---
-LOG -> 0x1.16d5eadce9ccep+8
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.2271ef962c5e8p+8
-LOG -> 0x1.2459d769650b6p+8
-LOG -> 0x1.244cddc0126aap+8
-LOG -> 0x1.23ddeeb8c5cefp+8
-LOG -> 0x1.2366f9ce8a8ebp+8
-LOG -> 0x1.22fc200c8d674p+8
-LOG -> 0x1.22970fe35b639p+8
-LOG -> 0x1.222ba77127aa0p+8
-LOG -> 0x1.21b7b0e024e99p+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----AFTERT----
-LOG -> 0x1.16d5eadce9ccep+8
-LOG -> 0x1.21f297ac111d5p+8
-LOG -> 0x1.2434138af0816p+8
-LOG -> 0x1.243ea39b8e9c8p+8
-LOG -> 0x1.23d3792f1b04ap+8
-LOG -> 0x1.235ef34cd1698p+8
-LOG -> 0x1.22f7f6f5238cep+8
-LOG -> 0x1.2294fe079d009p+8
-LOG -> 0x1.222a57a945e36p+8
-LOG -> 0x1.21b72c6fbeb43p+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ed674c203de4p-3
-LOG -> 0x1.9ecf844d18ca1p-3
-LOG -> 0x1.9ed97e8b7c5ecp-3
-LOG -> 0x1.d08f421eccbb1p-3
-LOG -> 0x1.0275b4f61eba7p-2
-LOG -> 0x1.3dc054be7e06bp-2
-LOG -> 0x1.930a62a9b0e89p-2
-LOG -> 0x1.d9fccf33003bbp-2
-LOG -> 0x1.0219b03496ba7p-1
-LOG -> 0x1.11afa2f7b58a4p-1
-LOG -> 0x1.1f7ab88e8f0ccp-1
-LOG -> 0x1.2dbfec1811b78p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ed674c203de4p-3
-diffusion -> 	 soil_q: 0x1.9ee070ebb3598p-3
-diffusion -> 	 soil_q: 0x1.d09b48d4d0c92p-3
-diffusion -> 	 soil_q: 0x1.02dfcbe391355p-2
-diffusion -> 	 soil_q: 0x1.427a61e03d58bp-2
-diffusion -> 	 soil_q: 0x1.9e14aa9a588ecp-2
-diffusion -> 	 soil_q: 0x1.ded5b09438958p-2
-diffusion -> 	 soil_q: 0x1.02fa84647d640p-1
-diffusion -> 	 soil_q: 0x1.11cc919f6c840p-1
-diffusion -> 	 soil_q: 0x1.1f1dc51555cddp-1
-diffusion -> 	 soil_q: 0x1.2cfc44f40c1c0p-1
---------------
-[UtahLSM: Run] 		 Running for time 4200.00 of 33000.00----BEFORET---
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.16d5eadce9ccep+8
-LOG -> 0x1.21f297ac111d5p+8
-LOG -> 0x1.2434138af0816p+8
-LOG -> 0x1.243ea39b8e9c8p+8
-LOG -> 0x1.23d3792f1b04ap+8
-LOG -> 0x1.235ef34cd1698p+8
-LOG -> 0x1.22f7f6f5238cep+8
-LOG -> 0x1.2294fe079d009p+8
-LOG -> 0x1.222a57a945e36p+8
-LOG -> 0x1.21b72c6fbeb43p+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----AFTERT----
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.217bab2cf9df4p+8
-LOG -> 0x1.240b364d8fb95p+8
-LOG -> 0x1.242e995107ea3p+8
-LOG -> 0x1.23c845c9f376bp+8
-LOG -> 0x1.2357589a88dccp+8
-LOG -> 0x1.22f41c06e302cp+8
-LOG -> 0x1.2292eb3c06b78p+8
-LOG -> 0x1.2228f7ef5854ep+8
-LOG -> 0x1.21b68dde85cacp+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9edd67a2a8875p-3
-LOG -> 0x1.9ed674c203de4p-3
-LOG -> 0x1.9ee070ebb3598p-3
-LOG -> 0x1.d09b48d4d0c92p-3
-LOG -> 0x1.02dfcbe391355p-2
-LOG -> 0x1.427a61e03d58bp-2
-LOG -> 0x1.9e14aa9a588ecp-2
-LOG -> 0x1.ded5b09438958p-2
-LOG -> 0x1.02fa84647d640p-1
-LOG -> 0x1.11cc919f6c840p-1
-LOG -> 0x1.1f1dc51555cddp-1
-LOG -> 0x1.2cfc44f40c1c0p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9edd67a2a8875p-3
-diffusion -> 	 soil_q: 0x1.9ee7657928a4ap-3
-diffusion -> 	 soil_q: 0x1.d0a7d718512b5p-3
-diffusion -> 	 soil_q: 0x1.03641b2179f30p-2
-diffusion -> 	 soil_q: 0x1.48a36067a97fbp-2
-diffusion -> 	 soil_q: 0x1.a7b5eb96e6616p-2
-diffusion -> 	 soil_q: 0x1.e2ab6f0cbc5dap-2
-diffusion -> 	 soil_q: 0x1.03a6e1105954cp-1
-diffusion -> 	 soil_q: 0x1.11d68309430bcp-1
-diffusion -> 	 soil_q: 0x1.1ebe8636a2cd7p-1
-diffusion -> 	 soil_q: 0x1.2c418d0ee07e2p-1
---------------
-[UtahLSM: Run] 		 Running for time 4800.00 of 33000.00----BEFORET---
-LOG -> 0x1.1555eadce9ccep+8
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.217bab2cf9df4p+8
-LOG -> 0x1.240b364d8fb95p+8
-LOG -> 0x1.242e995107ea3p+8
-LOG -> 0x1.23c845c9f376bp+8
-LOG -> 0x1.2357589a88dccp+8
-LOG -> 0x1.22f41c06e302cp+8
-LOG -> 0x1.2292eb3c06b78p+8
-LOG -> 0x1.2228f7ef5854ep+8
-LOG -> 0x1.21b68dde85cacp+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----AFTERT----
-LOG -> 0x1.1555eadce9ccep+8
-LOG -> 0x1.20fec28694577p+8
-LOG -> 0x1.23df2f724f708p+8
-LOG -> 0x1.241cb995e2f2ep+8
-LOG -> 0x1.23bc7f4361760p+8
-LOG -> 0x1.23501169c9a3ap+8
-LOG -> 0x1.22f064ce332d6p+8
-LOG -> 0x1.2290cee69d84cp+8
-LOG -> 0x1.22278b2d6e195p+8
-LOG -> 0x1.21b5ddfba0376p+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ee45dc3a37c1p-3
-LOG -> 0x1.9edd67a2a8875p-3
-LOG -> 0x1.9ee7657928a4ap-3
-LOG -> 0x1.d0a7d718512b5p-3
-LOG -> 0x1.03641b2179f30p-2
-LOG -> 0x1.48a36067a97fbp-2
-LOG -> 0x1.a7b5eb96e6616p-2
-LOG -> 0x1.e2ab6f0cbc5dap-2
-LOG -> 0x1.03a6e1105954cp-1
-LOG -> 0x1.11d68309430bcp-1
-LOG -> 0x1.1ebe8636a2cd7p-1
-LOG -> 0x1.2c418d0ee07e2p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ee45dc3a37c1p-3
-diffusion -> 	 soil_q: 0x1.9eee5c594e6d6p-3
-diffusion -> 	 soil_q: 0x1.d0b517980f480p-3
-diffusion -> 	 soil_q: 0x1.0410851680d3bp-2
-diffusion -> 	 soil_q: 0x1.501da1d7211f2p-2
-diffusion -> 	 soil_q: 0x1.afc025a74b416p-2
-diffusion -> 	 soil_q: 0x1.e5c82251559aep-2
-diffusion -> 	 soil_q: 0x1.042cff20dd7a5p-1
-diffusion -> 	 soil_q: 0x1.11d2685679f2ep-1
-diffusion -> 	 soil_q: 0x1.1e5e4ea41db19p-1
-diffusion -> 	 soil_q: 0x1.2b8f08d73b5d3p-1
---------------
-[UtahLSM: Run] 		 Running for time 5400.00 of 33000.00----BEFORET---
-LOG -> 0x1.1615eadce9ccep+8
-LOG -> 0x1.1555eadce9ccep+8
-LOG -> 0x1.20fec28694577p+8
-LOG -> 0x1.23df2f724f708p+8
-LOG -> 0x1.241cb995e2f2ep+8
-LOG -> 0x1.23bc7f4361760p+8
-LOG -> 0x1.23501169c9a3ap+8
-LOG -> 0x1.22f064ce332d6p+8
-LOG -> 0x1.2290cee69d84cp+8
-LOG -> 0x1.22278b2d6e195p+8
-LOG -> 0x1.21b5ddfba0376p+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1615eadce9ccep+8
-LOG -> 0x1.2097001ce315dp+8
-LOG -> 0x1.23b1873c84358p+8
-LOG -> 0x1.2409243baf33fp+8
-LOG -> 0x1.23b04702906d0p+8
-LOG -> 0x1.2349002969725p+8
-LOG -> 0x1.22ecb12bbd339p+8
-LOG -> 0x1.228ea14a99081p+8
-LOG -> 0x1.2226120c7ae0cp+8
-LOG -> 0x1.21b521fddc1a3p+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9eeb52dac8cb1p-3
-LOG -> 0x1.9ee45dc3a37c1p-3
-LOG -> 0x1.9eee5c594e6d6p-3
-LOG -> 0x1.d0b517980f480p-3
-LOG -> 0x1.0410851680d3bp-2
-LOG -> 0x1.501da1d7211f2p-2
-LOG -> 0x1.afc025a74b416p-2
-LOG -> 0x1.e5c82251559aep-2
-LOG -> 0x1.042cff20dd7a5p-1
-LOG -> 0x1.11d2685679f2ep-1
-LOG -> 0x1.1e5e4ea41db19p-1
-LOG -> 0x1.2b8f08d73b5d3p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9eeb52dac8cb1p-3
-diffusion -> 	 soil_q: 0x1.9ef555be0f22fp-3
-diffusion -> 	 soil_q: 0x1.d0c34c9a49567p-3
-diffusion -> 	 soil_q: 0x1.04f8088f27d45p-2
-diffusion -> 	 soil_q: 0x1.589c90d2fc52ep-2
-diffusion -> 	 soil_q: 0x1.b6526c93935fep-2
-diffusion -> 	 soil_q: 0x1.e854ee0da5a04p-2
-diffusion -> 	 soil_q: 0x1.0495ffd9e99a5p-1
-diffusion -> 	 soil_q: 0x1.11c3f1dbf88aap-1
-diffusion -> 	 soil_q: 0x1.1dfe226fc9c6dp-1
-diffusion -> 	 soil_q: 0x1.2ae411c2c0531p-1
---------------
-[UtahLSM: Run] 		 Running for time 6000.00 of 33000.00----BEFORET---
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1615eadce9ccep+8
-LOG -> 0x1.2097001ce315dp+8
-LOG -> 0x1.23b1873c84358p+8
-LOG -> 0x1.2409243baf33fp+8
-LOG -> 0x1.23b04702906d0p+8
-LOG -> 0x1.2349002969725p+8
-LOG -> 0x1.22ecb12bbd339p+8
-LOG -> 0x1.228ea14a99081p+8
-LOG -> 0x1.2226120c7ae0cp+8
-LOG -> 0x1.21b521fddc1a3p+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.203b5979d5da6p+8
-LOG -> 0x1.238311f6b7728p+8
-LOG -> 0x1.23f40c760ab3cp+8
-LOG -> 0x1.23a3b7a6be4afp+8
-LOG -> 0x1.2342277ecde3cp+8
-LOG -> 0x1.22e8eadf88306p+8
-LOG -> 0x1.228c3b9500edcp+8
-LOG -> 0x1.222484cc6aef2p+8
-LOG -> 0x1.21b45b484ce27p+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ef24c09b617dp-3
-LOG -> 0x1.9eeb52dac8cb1p-3
-LOG -> 0x1.9ef555be0f22fp-3
-LOG -> 0x1.d0c34c9a49567p-3
-LOG -> 0x1.04f8088f27d45p-2
-LOG -> 0x1.589c90d2fc52ep-2
-LOG -> 0x1.b6526c93935fep-2
-LOG -> 0x1.e854ee0da5a04p-2
-LOG -> 0x1.0495ffd9e99a5p-1
-LOG -> 0x1.11c3f1dbf88aap-1
-LOG -> 0x1.1dfe226fc9c6dp-1
-LOG -> 0x1.2ae411c2c0531p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ef24c09b617dp-3
-diffusion -> 	 soil_q: 0x1.9efc51ecdcfb3p-3
-diffusion -> 	 soil_q: 0x1.d0d2db076f92ap-3
-diffusion -> 	 soil_q: 0x1.0632f6753ad86p-2
-diffusion -> 	 soil_q: 0x1.61b9592890ca5p-2
-diffusion -> 	 soil_q: 0x1.bbaf4ee66ab88p-2
-diffusion -> 	 soil_q: 0x1.ea6db256219cdp-2
-diffusion -> 	 soil_q: 0x1.04e7c8e6c9fb1p-1
-diffusion -> 	 soil_q: 0x1.11ad84976d5bfp-1
-diffusion -> 	 soil_q: 0x1.1d9e7e5e45b50p-1
-diffusion -> 	 soil_q: 0x1.2a40134790d03p-1
---------------
-[UtahLSM: Run] 		 Running for time 6600.00 of 33000.00----BEFORET---
-LOG -> 0x1.1715eadce9ccep+8
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.203b5979d5da6p+8
-LOG -> 0x1.238311f6b7728p+8
-LOG -> 0x1.23f40c760ab3cp+8
-LOG -> 0x1.23a3b7a6be4afp+8
-LOG -> 0x1.2342277ecde3cp+8
-LOG -> 0x1.22e8eadf88306p+8
-LOG -> 0x1.228c3b9500edcp+8
-LOG -> 0x1.222484cc6aef2p+8
-LOG -> 0x1.21b45b484ce27p+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1715eadce9ccep+8
-LOG -> 0x1.1ff11ea6a8371p+8
-LOG -> 0x1.2354de3e8f4eap+8
-LOG -> 0x1.23ddb820adaddp+8
-LOG -> 0x1.2396de4956c2cp+8
-LOG -> 0x1.233b6042b9d88p+8
-LOG -> 0x1.22e502534a5bcp+8
-LOG -> 0x1.2289a130b3898p+8
-LOG -> 0x1.2222df5a5905cp+8
-LOG -> 0x1.21b389bf36a54p+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9ef947d4349f3p-3
-LOG -> 0x1.9ef24c09b617dp-3
-LOG -> 0x1.9efc51ecdcfb3p-3
-LOG -> 0x1.d0d2db076f92ap-3
-LOG -> 0x1.0632f6753ad86p-2
-LOG -> 0x1.61b9592890ca5p-2
-LOG -> 0x1.bbaf4ee66ab88p-2
-LOG -> 0x1.ea6db256219cdp-2
-LOG -> 0x1.04e7c8e6c9fb1p-1
-LOG -> 0x1.11ad84976d5bfp-1
-LOG -> 0x1.1d9e7e5e45b50p-1
-LOG -> 0x1.2a40134790d03p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9ef947d4349f3p-3
-diffusion -> 	 soil_q: 0x1.9f035148b2b77p-3
-diffusion -> 	 soil_q: 0x1.d0e45934ec5bep-3
-diffusion -> 	 soil_q: 0x1.07de0c26af542p-2
-diffusion -> 	 soil_q: 0x1.6b091b60fa72dp-2
-diffusion -> 	 soil_q: 0x1.c01e6781ac203p-2
-diffusion -> 	 soil_q: 0x1.ec28bb55233c0p-2
-diffusion -> 	 soil_q: 0x1.0526861d343fbp-1
-diffusion -> 	 soil_q: 0x1.1190b7f740a8ep-1
-diffusion -> 	 soil_q: 0x1.1d3fb449f3056p-1
-diffusion -> 	 soil_q: 0x1.29a288237ad7ap-1
---------------
-[UtahLSM: Run] 		 Running for time 7200.00 of 33000.00----BEFORET---
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1715eadce9ccep+8
-LOG -> 0x1.1ff11ea6a8371p+8
-LOG -> 0x1.2354de3e8f4eap+8
-LOG -> 0x1.23ddb820adaddp+8
-LOG -> 0x1.2396de4956c2cp+8
-LOG -> 0x1.233b6042b9d88p+8
-LOG -> 0x1.22e502534a5bcp+8
-LOG -> 0x1.2289a130b3898p+8
-LOG -> 0x1.2222df5a5905cp+8
-LOG -> 0x1.21b389bf36a54p+8
-LOG -> 0x1.213dd20000002p+8
---------------
-----AFTERT----
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1fa2705f47900p+8
-LOG -> 0x1.232699c6fa8a0p+8
-LOG -> 0x1.23c65fecdbefep+8
-LOG -> 0x1.2389bbc17e284p+8
-LOG -> 0x1.233480dd6b495p+8
-LOG -> 0x1.22e0eb636619cp+8
-LOG -> 0x1.2286dab5af9b2p+8
-LOG -> 0x1.222120e948be1p+8
-LOG -> 0x1.21b2ad1522b8bp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f004766c2cf3p-3
-LOG -> 0x1.9ef947d4349f3p-3
-LOG -> 0x1.9f035148b2b77p-3
-LOG -> 0x1.d0e45934ec5bep-3
-LOG -> 0x1.07de0c26af542p-2
-LOG -> 0x1.6b091b60fa72dp-2
-LOG -> 0x1.c01e6781ac203p-2
-LOG -> 0x1.ec28bb55233c0p-2
-LOG -> 0x1.0526861d343fbp-1
-LOG -> 0x1.1190b7f740a8ep-1
-LOG -> 0x1.1d3fb449f3056p-1
-LOG -> 0x1.29a288237ad7ap-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f004766c2cf3p-3
-diffusion -> 	 soil_q: 0x1.9f0a546072e0cp-3
-diffusion -> 	 soil_q: 0x1.d0f8a301ecb21p-3
-diffusion -> 	 soil_q: 0x1.0a17edec414f0p-2
-diffusion -> 	 soil_q: 0x1.742ba84fe82fdp-2
-diffusion -> 	 soil_q: 0x1.c3dbed3ff270ep-2
-diffusion -> 	 soil_q: 0x1.ed9935ac8d351p-2
-diffusion -> 	 soil_q: 0x1.0555a827240edp-1
-diffusion -> 	 soil_q: 0x1.116ec8fd49272p-1
-diffusion -> 	 soil_q: 0x1.1ce1f9199c556p-1
-diffusion -> 	 soil_q: 0x1.290af86bea8f5p-1
---------------
-[UtahLSM: Run] 		 Running for time 7800.00 of 33000.00----BEFORET---
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1fa2705f47900p+8
-LOG -> 0x1.232699c6fa8a0p+8
-LOG -> 0x1.23c65fecdbefep+8
-LOG -> 0x1.2389bbc17e284p+8
-LOG -> 0x1.233480dd6b495p+8
-LOG -> 0x1.22e0eb636619cp+8
-LOG -> 0x1.2286dab5af9b2p+8
-LOG -> 0x1.222120e948be1p+8
-LOG -> 0x1.21b2ad1522b8bp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.1f5d1f84c602ep+8
-LOG -> 0x1.22f8d2c265c46p+8
-LOG -> 0x1.23ae3de27a0cbp+8
-LOG -> 0x1.237c4b1ecec48p+8
-LOG -> 0x1.232d699eeeeaap+8
-LOG -> 0x1.22dc9bf96f246p+8
-LOG -> 0x1.2283ea98646c1p+8
-LOG -> 0x1.221f49590e2b6p+8
-LOG -> 0x1.21b1c5062080dp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f074aa749c25p-3
-LOG -> 0x1.9f004766c2cf3p-3
-LOG -> 0x1.9f0a546072e0cp-3
-LOG -> 0x1.d0f8a301ecb21p-3
-LOG -> 0x1.0a17edec414f0p-2
-LOG -> 0x1.742ba84fe82fdp-2
-LOG -> 0x1.c3dbed3ff270ep-2
-LOG -> 0x1.ed9935ac8d351p-2
-LOG -> 0x1.0555a827240edp-1
-LOG -> 0x1.116ec8fd49272p-1
-LOG -> 0x1.1ce1f9199c556p-1
-LOG -> 0x1.290af86bea8f5p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f074aa749c25p-3
-diffusion -> 	 soil_q: 0x1.9f115c02ba285p-3
-diffusion -> 	 soil_q: 0x1.d110f50e8c6ebp-3
-diffusion -> 	 soil_q: 0x1.0cfd04c3fffe9p-2
-diffusion -> 	 soil_q: 0x1.7cd373de91365p-2
-diffusion -> 	 soil_q: 0x1.c7142f99e41e8p-2
-diffusion -> 	 soil_q: 0x1.eecf3f18890f0p-2
-diffusion -> 	 soil_q: 0x1.0578383735fffp-1
-diffusion -> 	 soil_q: 0x1.1148d1e270160p-1
-diffusion -> 	 soil_q: 0x1.1c857b63c8a60p-1
-diffusion -> 	 soil_q: 0x1.2878f826a0a39p-1
---------------
-[UtahLSM: Run] 		 Running for time 8400.00 of 33000.00----BEFORET---
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1695eadce9ccep+8
-LOG -> 0x1.1f5d1f84c602ep+8
-LOG -> 0x1.22f8d2c265c46p+8
-LOG -> 0x1.23ae3de27a0cbp+8
-LOG -> 0x1.237c4b1ecec48p+8
-LOG -> 0x1.232d699eeeeaap+8
-LOG -> 0x1.22dc9bf96f246p+8
-LOG -> 0x1.2283ea98646c1p+8
-LOG -> 0x1.221f49590e2b6p+8
-LOG -> 0x1.21b1c5062080dp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1f198555129bep+8
-LOG -> 0x1.22cb9bca13360p+8
-LOG -> 0x1.239580ce160c0p+8
-LOG -> 0x1.236e853039df4p+8
-LOG -> 0x1.2326024051d27p+8
-LOG -> 0x1.22d80b246d1d3p+8
-LOG -> 0x1.2280d003a8cb9p+8
-LOG -> 0x1.221d58415512fp+8
-LOG -> 0x1.21b0d146f4bdcp+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f0e548867514p-3
-LOG -> 0x1.9f074aa749c25p-3
-LOG -> 0x1.9f115c02ba285p-3
-LOG -> 0x1.d110f50e8c6ebp-3
-LOG -> 0x1.0cfd04c3fffe9p-2
-LOG -> 0x1.7cd373de91365p-2
-LOG -> 0x1.c7142f99e41e8p-2
-LOG -> 0x1.eecf3f18890f0p-2
-LOG -> 0x1.0578383735fffp-1
-LOG -> 0x1.1148d1e270160p-1
-LOG -> 0x1.1c857b63c8a60p-1
-LOG -> 0x1.2878f826a0a39p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f0e548867514p-3
-diffusion -> 	 soil_q: 0x1.9f186959eb831p-3
-diffusion -> 	 soil_q: 0x1.d12f119bf81d7p-3
-diffusion -> 	 soil_q: 0x1.10a287552a895p-2
-diffusion -> 	 soil_q: 0x1.84c9701302c63p-2
-diffusion -> 	 soil_q: 0x1.c9e52924bf5ddp-2
-diffusion -> 	 soil_q: 0x1.efd79eb66a58cp-2
-diffusion -> 	 soil_q: 0x1.0590d8605f321p-1
-diffusion -> 	 soil_q: 0x1.111fd4b8f67a9p-1
-diffusion -> 	 soil_q: 0x1.1c2a696c25a38p-1
-diffusion -> 	 soil_q: 0x1.27ec261ba115fp-1
---------------
-[UtahLSM: Run] 		 Running for time 9000.00 of 33000.00----BEFORET---
-LOG -> 0x1.18c5eadce9ccep+8
-LOG -> 0x1.1655eadce9ccep+8
-LOG -> 0x1.1f198555129bep+8
-LOG -> 0x1.22cb9bca13360p+8
-LOG -> 0x1.239580ce160c0p+8
-LOG -> 0x1.236e853039df4p+8
-LOG -> 0x1.2326024051d27p+8
-LOG -> 0x1.22d80b246d1d3p+8
-LOG -> 0x1.2280d003a8cb9p+8
-LOG -> 0x1.221d58415512fp+8
-LOG -> 0x1.21b0d146f4bdcp+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----AFTERT----
-LOG -> 0x1.18c5eadce9ccep+8
-LOG -> 0x1.1efb55219ded1p+8
-LOG -> 0x1.22a120649d740p+8
-LOG -> 0x1.237c736b185e5p+8
-LOG -> 0x1.2360674df840ap+8
-LOG -> 0x1.231e3956d58fbp+8
-LOG -> 0x1.22d330f657479p+8
-LOG -> 0x1.227d8867b40e6p+8
-LOG -> 0x1.221b4cb063d47p+8
-LOG -> 0x1.21afd16d37edbp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f155f855ef41p-3
-LOG -> 0x1.9f0e548867514p-3
-LOG -> 0x1.9f186959eb831p-3
-LOG -> 0x1.d12f119bf81d7p-3
-LOG -> 0x1.10a287552a895p-2
-LOG -> 0x1.84c9701302c63p-2
-LOG -> 0x1.c9e52924bf5ddp-2
-LOG -> 0x1.efd79eb66a58cp-2
-LOG -> 0x1.0590d8605f321p-1
-LOG -> 0x1.111fd4b8f67a9p-1
-LOG -> 0x1.1c2a696c25a38p-1
-LOG -> 0x1.27ec261ba115fp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f155f855ef41p-3
-diffusion -> 	 soil_q: 0x1.9f1f7e12382f4p-3
-diffusion -> 	 soil_q: 0x1.d15572203bbc9p-3
-diffusion -> 	 soil_q: 0x1.151228b0ad3c7p-2
-diffusion -> 	 soil_q: 0x1.8bee3a362f078p-2
-diffusion -> 	 soil_q: 0x1.cc6216b905749p-2
-diffusion -> 	 soil_q: 0x1.f0bbd4a83c3fcp-2
-diffusion -> 	 soil_q: 0x1.05a1b05bcc3bfp-1
-diffusion -> 	 soil_q: 0x1.10f4b1bdb2af1p-1
-diffusion -> 	 soil_q: 0x1.1bd0ed3f48c7dp-1
-diffusion -> 	 soil_q: 0x1.27642ab574e3dp-1
---------------
-[UtahLSM: Run] 		 Running for time 9600.00 of 33000.00----BEFORET---
-LOG -> 0x1.1905eadce9ccep+8
-LOG -> 0x1.18c5eadce9ccep+8
-LOG -> 0x1.1efb55219ded1p+8
-LOG -> 0x1.22a120649d740p+8
-LOG -> 0x1.237c736b185e5p+8
-LOG -> 0x1.2360674df840ap+8
-LOG -> 0x1.231e3956d58fbp+8
-LOG -> 0x1.22d330f657479p+8
-LOG -> 0x1.227d8867b40e6p+8
-LOG -> 0x1.221b4cb063d47p+8
-LOG -> 0x1.21afd16d37edbp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1905eadce9ccep+8
-LOG -> 0x1.1ee17a6db3520p+8
-LOG -> 0x1.22795e24b45cdp+8
-LOG -> 0x1.23634e724e085p+8
-LOG -> 0x1.2351f27fa214dp+8
-LOG -> 0x1.231603c11dcf2p+8
-LOG -> 0x1.22ce06bc257cep+8
-LOG -> 0x1.227a106c32d1ep+8
-LOG -> 0x1.2219253554270p+8
-LOG -> 0x1.21aec4e36846fp+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f1c739046021p-3
-LOG -> 0x1.9f155f855ef41p-3
-LOG -> 0x1.9f1f7e12382f4p-3
-LOG -> 0x1.d15572203bbc9p-3
-LOG -> 0x1.151228b0ad3c7p-2
-LOG -> 0x1.8bee3a362f078p-2
-LOG -> 0x1.cc6216b905749p-2
-LOG -> 0x1.f0bbd4a83c3fcp-2
-LOG -> 0x1.05a1b05bcc3bfp-1
-LOG -> 0x1.10f4b1bdb2af1p-1
-LOG -> 0x1.1bd0ed3f48c7dp-1
-LOG -> 0x1.27642ab574e3dp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f1c739046021p-3
-diffusion -> 	 soil_q: 0x1.9f269c902b4bap-3
-diffusion -> 	 soil_q: 0x1.d187885929ffap-3
-diffusion -> 	 soil_q: 0x1.1a47f312d04bfp-2
-diffusion -> 	 soil_q: 0x1.92389ed8401f1p-2
-diffusion -> 	 soil_q: 0x1.ce9724e6d1ffdp-2
-diffusion -> 	 soil_q: 0x1.f1828a06c715ap-2
-diffusion -> 	 soil_q: 0x1.05ac64e1f7c4cp-1
-diffusion -> 	 soil_q: 0x1.10c81c1e84ec2p-1
-diffusion -> 	 soil_q: 0x1.1b7926aa27eabp-1
-diffusion -> 	 soil_q: 0x1.26e0b6e34dbbfp-1
---------------
-[UtahLSM: Run] 		 Running for time 10200.00 of 33000.00----BEFORET---
-LOG -> 0x1.17c5eadce9ccep+8
-LOG -> 0x1.1905eadce9ccep+8
-LOG -> 0x1.1ee17a6db3520p+8
-LOG -> 0x1.22795e24b45cdp+8
-LOG -> 0x1.23634e724e085p+8
-LOG -> 0x1.2351f27fa214dp+8
-LOG -> 0x1.231603c11dcf2p+8
-LOG -> 0x1.22ce06bc257cep+8
-LOG -> 0x1.227a106c32d1ep+8
-LOG -> 0x1.2219253554270p+8
-LOG -> 0x1.21aec4e36846fp+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----AFTERT----
-LOG -> 0x1.17c5eadce9ccep+8
-LOG -> 0x1.1eb7a15a4d1cap+8
-LOG -> 0x1.2253281468db6p+8
-LOG -> 0x1.234a2598f5904p+8
-LOG -> 0x1.2343278637ccep+8
-LOG -> 0x1.230d5b5872564p+8
-LOG -> 0x1.22c8872a371bbp+8
-LOG -> 0x1.2276648a39e43p+8
-LOG -> 0x1.2216e006674e6p+8
-LOG -> 0x1.21adaae9f228bp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f23936c2171fp-3
-LOG -> 0x1.9f1c739046021p-3
-LOG -> 0x1.9f269c902b4bap-3
-LOG -> 0x1.d187885929ffap-3
-LOG -> 0x1.1a47f312d04bfp-2
-LOG -> 0x1.92389ed8401f1p-2
-LOG -> 0x1.ce9724e6d1ffdp-2
-LOG -> 0x1.f1828a06c715ap-2
-LOG -> 0x1.05ac64e1f7c4cp-1
-LOG -> 0x1.10c81c1e84ec2p-1
-LOG -> 0x1.1b7926aa27eabp-1
-LOG -> 0x1.26e0b6e34dbbfp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f23936c2171fp-3
-diffusion -> 	 soil_q: 0x1.9f2dc839a267cp-3
-diffusion -> 	 soil_q: 0x1.d1ca102d511e0p-3
-diffusion -> 	 soil_q: 0x1.2032ff50625e9p-2
-diffusion -> 	 soil_q: 0x1.97b1767880f68p-2
-diffusion -> 	 soil_q: 0x1.d08c7b5205de5p-2
-diffusion -> 	 soil_q: 0x1.f23039f831ddap-2
-diffusion -> 	 soil_q: 0x1.05b220e711bd8p-1
-diffusion -> 	 soil_q: 0x1.109a95c6c3888p-1
-diffusion -> 	 soil_q: 0x1.1b2327679e422p-1
-diffusion -> 	 soil_q: 0x1.26618303f9625p-1
---------------
-[UtahLSM: Run] 		 Running for time 10800.00 of 33000.00----BEFORET---
-LOG -> 0x1.1785eadce9ccep+8
-LOG -> 0x1.17c5eadce9ccep+8
-LOG -> 0x1.1eb7a15a4d1cap+8
-LOG -> 0x1.2253281468db6p+8
-LOG -> 0x1.234a2598f5904p+8
-LOG -> 0x1.2343278637ccep+8
-LOG -> 0x1.230d5b5872564p+8
-LOG -> 0x1.22c8872a371bbp+8
-LOG -> 0x1.2276648a39e43p+8
-LOG -> 0x1.2216e006674e6p+8
-LOG -> 0x1.21adaae9f228bp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.1785eadce9ccep+8
-LOG -> 0x1.1e8cf65a863e9p+8
-LOG -> 0x1.222e5bafd184fp+8
-LOG -> 0x1.2331030230f9ap+8
-LOG -> 0x1.233406a06fcfbp+8
-LOG -> 0x1.23043db5a87c3p+8
-LOG -> 0x1.22c2ae6db66d0p+8
-LOG -> 0x1.2272816ea80cdp+8
-LOG -> 0x1.22147b2d8b9e2p+8
-LOG -> 0x1.21ac82a10136fp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f2ac206fe552p-3
-LOG -> 0x1.9f23936c2171fp-3
-LOG -> 0x1.9f2dc839a267cp-3
-LOG -> 0x1.d1ca102d511e0p-3
-LOG -> 0x1.2032ff50625e9p-2
-LOG -> 0x1.97b1767880f68p-2
-LOG -> 0x1.d08c7b5205de5p-2
-LOG -> 0x1.f23039f831ddap-2
-LOG -> 0x1.05b220e711bd8p-1
-LOG -> 0x1.109a95c6c3888p-1
-LOG -> 0x1.1b2327679e422p-1
-LOG -> 0x1.26618303f9625p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f2ac206fe552p-3
-diffusion -> 	 soil_q: 0x1.9f3505d901c8cp-3
-diffusion -> 	 soil_q: 0x1.d22370aeada4ap-3
-diffusion -> 	 soil_q: 0x1.26b87f4e42e45p-2
-diffusion -> 	 soil_q: 0x1.9c6dbf879e08bp-2
-diffusion -> 	 soil_q: 0x1.d2486a6fecfd7p-2
-diffusion -> 	 soil_q: 0x1.f2c7e8f538973p-2
-diffusion -> 	 soil_q: 0x1.05b3ad0c213dfp-1
-diffusion -> 	 soil_q: 0x1.106c7386b0ff5p-1
-diffusion -> 	 soil_q: 0x1.1acef2ca1aa79p-1
-diffusion -> 	 soil_q: 0x1.25e64de716d66p-1
---------------
-[UtahLSM: Run] 		 Running for time 11400.00 of 33000.00----BEFORET---
-LOG -> 0x1.18c5eadce9ccep+8
-LOG -> 0x1.1785eadce9ccep+8
-LOG -> 0x1.1e8cf65a863e9p+8
-LOG -> 0x1.222e5bafd184fp+8
-LOG -> 0x1.2331030230f9ap+8
-LOG -> 0x1.233406a06fcfbp+8
-LOG -> 0x1.23043db5a87c3p+8
-LOG -> 0x1.22c2ae6db66d0p+8
-LOG -> 0x1.2272816ea80cdp+8
-LOG -> 0x1.22147b2d8b9e2p+8
-LOG -> 0x1.21ac82a10136fp+8
-LOG -> 0x1.213dd20000003p+8
---------------
-----AFTERT----
-LOG -> 0x1.18c5eadce9ccep+8
-LOG -> 0x1.1e75aca832a56p+8
-LOG -> 0x1.220c0583916d3p+8
-LOG -> 0x1.231802d59272ep+8
-LOG -> 0x1.232492d0b07a6p+8
-LOG -> 0x1.22faabafe2761p+8
-LOG -> 0x1.22bc7a419acacp+8
-LOG -> 0x1.226e643d283b2p+8
-LOG -> 0x1.2211f4b293267p+8
-LOG -> 0x1.21ab4b16d2740p+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f31fd4d8dae1p-3
-LOG -> 0x1.9f2ac206fe552p-3
-LOG -> 0x1.9f3505d901c8cp-3
-LOG -> 0x1.d22370aeada4ap-3
-LOG -> 0x1.26b87f4e42e45p-2
-LOG -> 0x1.9c6dbf879e08bp-2
-LOG -> 0x1.d2486a6fecfd7p-2
-LOG -> 0x1.f2c7e8f538973p-2
-LOG -> 0x1.05b3ad0c213dfp-1
-LOG -> 0x1.106c7386b0ff5p-1
-LOG -> 0x1.1acef2ca1aa79p-1
-LOG -> 0x1.25e64de716d66p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f31fd4d8dae1p-3
-diffusion -> 	 soil_q: 0x1.9f3c5c1e38a27p-3
-diffusion -> 	 soil_q: 0x1.d29c2d3d2b7d8p-3
-diffusion -> 	 soil_q: 0x1.2db83bd907d25p-2
-diffusion -> 	 soil_q: 0x1.a08890b8e8c99p-2
-diffusion -> 	 soil_q: 0x1.d3d083f159815p-2
-diffusion -> 	 soil_q: 0x1.f34baa0ab1239p-2
-diffusion -> 	 soil_q: 0x1.05b188e0f459cp-1
-diffusion -> 	 soil_q: 0x1.103dec13b2dfcp-1
-diffusion -> 	 soil_q: 0x1.1a7c93020641dp-1
-diffusion -> 	 soil_q: 0x1.256edc450e2bbp-1
---------------
-[UtahLSM: Run] 		 Running for time 12000.00 of 33000.00----BEFORET---
-LOG -> 0x1.1885eadce9ccep+8
-LOG -> 0x1.18c5eadce9ccep+8
-LOG -> 0x1.1e75aca832a56p+8
-LOG -> 0x1.220c0583916d3p+8
-LOG -> 0x1.231802d59272ep+8
-LOG -> 0x1.232492d0b07a6p+8
-LOG -> 0x1.22faabafe2761p+8
-LOG -> 0x1.22bc7a419acacp+8
-LOG -> 0x1.226e643d283b2p+8
-LOG -> 0x1.2211f4b293267p+8
-LOG -> 0x1.21ab4b16d2740p+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----AFTERT----
-LOG -> 0x1.1885eadce9ccep+8
-LOG -> 0x1.1e5bcc3a0fdefp+8
-LOG -> 0x1.21ebc4b6ae20ep+8
-LOG -> 0x1.22ff3552d6582p+8
-LOG -> 0x1.2314d03dfac20p+8
-LOG -> 0x1.22f0a87c2b714p+8
-LOG -> 0x1.22b5e9dfe302ep+8
-LOG -> 0x1.226a0ab98b4ddp+8
-LOG -> 0x1.220f4abf92c40p+8
-LOG -> 0x1.21aa03573abc0p+8
-LOG -> 0x1.213dd20000005p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f3954563987fp-3
-LOG -> 0x1.9f31fd4d8dae1p-3
-LOG -> 0x1.9f3c5c1e38a27p-3
-LOG -> 0x1.d29c2d3d2b7d8p-3
-LOG -> 0x1.2db83bd907d25p-2
-LOG -> 0x1.a08890b8e8c99p-2
-LOG -> 0x1.d3d083f159815p-2
-LOG -> 0x1.f34baa0ab1239p-2
-LOG -> 0x1.05b188e0f459cp-1
-LOG -> 0x1.103dec13b2dfcp-1
-LOG -> 0x1.1a7c93020641dp-1
-LOG -> 0x1.256edc450e2bbp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f3954563987fp-3
-diffusion -> 	 soil_q: 0x1.9f43d44f8596fp-3
-diffusion -> 	 soil_q: 0x1.d33f4d47ae4e3p-3
-diffusion -> 	 soil_q: 0x1.350f8610c2102p-2
-diffusion -> 	 soil_q: 0x1.a41dbc973f3f9p-2
-diffusion -> 	 soil_q: 0x1.d52a9bd56b5e2p-2
-diffusion -> 	 soil_q: 0x1.f3bd58e3bf71ep-2
-diffusion -> 	 soil_q: 0x1.05ac13e317a2fp-1
-diffusion -> 	 soil_q: 0x1.100f1926d1550p-1
-diffusion -> 	 soil_q: 0x1.1a2bee6bdd9aap-1
-diffusion -> 	 soil_q: 0x1.24faf7753e7a3p-1
---------------
-[UtahLSM: Run] 		 Running for time 12600.00 of 33000.00----BEFORET---
-LOG -> 0x1.16c5eadce9ccep+8
-LOG -> 0x1.1885eadce9ccep+8
-LOG -> 0x1.1e5bcc3a0fdefp+8
-LOG -> 0x1.21ebc4b6ae20ep+8
-LOG -> 0x1.22ff3552d6582p+8
-LOG -> 0x1.2314d03dfac20p+8
-LOG -> 0x1.22f0a87c2b714p+8
-LOG -> 0x1.22b5e9dfe302ep+8
-LOG -> 0x1.226a0ab98b4ddp+8
-LOG -> 0x1.220f4abf92c40p+8
-LOG -> 0x1.21aa03573abc0p+8
-LOG -> 0x1.213dd20000005p+8
---------------
-----AFTERT----
-LOG -> 0x1.16c5eadce9ccep+8
-LOG -> 0x1.1e2bbb5f3277dp+8
-LOG -> 0x1.21cc1e6e0aae5p+8
-LOG -> 0x1.22e689e471580p+8
-LOG -> 0x1.2304bfcc925e7p+8
-LOG -> 0x1.22e6381452fb3p+8
-LOG -> 0x1.22aefdad1cd4dp+8
-LOG -> 0x1.226573500e542p+8
-LOG -> 0x1.220c7bb844cc1p+8
-LOG -> 0x1.21a8aa7985e45p+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f40cf14cd781p-3
-LOG -> 0x1.9f3954563987fp-3
-LOG -> 0x1.9f43d44f8596fp-3
-LOG -> 0x1.d33f4d47ae4e3p-3
-LOG -> 0x1.350f8610c2102p-2
-LOG -> 0x1.a41dbc973f3f9p-2
-LOG -> 0x1.d52a9bd56b5e2p-2
-LOG -> 0x1.f3bd58e3bf71ep-2
-LOG -> 0x1.05ac13e317a2fp-1
-LOG -> 0x1.100f1926d1550p-1
-LOG -> 0x1.1a2bee6bdd9aap-1
-LOG -> 0x1.24faf7753e7a3p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f40cf14cd781p-3
-diffusion -> 	 soil_q: 0x1.9f4b7b281b49fp-3
-diffusion -> 	 soil_q: 0x1.d41aaf3858c6dp-3
-diffusion -> 	 soil_q: 0x1.3c9bed4444e03p-2
-diffusion -> 	 soil_q: 0x1.a746e789dd27dp-2
-diffusion -> 	 soil_q: 0x1.d65c9ff217d6cp-2
-diffusion -> 	 soil_q: 0x1.f41ec138043c2p-2
-diffusion -> 	 soil_q: 0x1.05a39d1fcc383p-1
-diffusion -> 	 soil_q: 0x1.0fe008a397558p-1
-diffusion -> 	 soil_q: 0x1.19dceaa2f172cp-1
-diffusion -> 	 soil_q: 0x1.248a6cfd17d1ap-1
---------------
-[UtahLSM: Run] 		 Running for time 13200.00 of 33000.00----BEFORET---
-LOG -> 0x1.1805eadce9ccep+8
-LOG -> 0x1.16c5eadce9ccep+8
-LOG -> 0x1.1e2bbb5f3277dp+8
-LOG -> 0x1.21cc1e6e0aae5p+8
-LOG -> 0x1.22e689e471580p+8
-LOG -> 0x1.2304bfcc925e7p+8
-LOG -> 0x1.22e6381452fb3p+8
-LOG -> 0x1.22aefdad1cd4dp+8
-LOG -> 0x1.226573500e542p+8
-LOG -> 0x1.220c7bb844cc1p+8
-LOG -> 0x1.21a8aa7985e45p+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----AFTERT----
-LOG -> 0x1.1805eadce9ccep+8
-LOG -> 0x1.1e10001d25b99p+8
-LOG -> 0x1.21ae3ab86496fp+8
-LOG -> 0x1.22ce0e6ab19f6p+8
-LOG -> 0x1.22f464c4fa9c6p+8
-LOG -> 0x1.22db5f3516592p+8
-LOG -> 0x1.22a7b70381466p+8
-LOG -> 0x1.22609d12320e7p+8
-LOG -> 0x1.22098649f4a39p+8
-LOG -> 0x1.21a73fab7e89bp+8
-LOG -> 0x1.213dd20000005p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f4872a15ac07p-3
-LOG -> 0x1.9f40cf14cd781p-3
-LOG -> 0x1.9f4b7b281b49fp-3
-LOG -> 0x1.d41aaf3858c6dp-3
-LOG -> 0x1.3c9bed4444e03p-2
-LOG -> 0x1.a746e789dd27dp-2
-LOG -> 0x1.d65c9ff217d6cp-2
-LOG -> 0x1.f41ec138043c2p-2
-LOG -> 0x1.05a39d1fcc383p-1
-LOG -> 0x1.0fe008a397558p-1
-LOG -> 0x1.19dceaa2f172cp-1
-LOG -> 0x1.248a6cfd17d1ap-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f4872a15ac07p-3
-diffusion -> 	 soil_q: 0x1.9f5361f1b2bbdp-3
-diffusion -> 	 soil_q: 0x1.d53f31445cb63p-3
-diffusion -> 	 soil_q: 0x1.443cebb8a90a3p-2
-diffusion -> 	 soil_q: 0x1.aa19f08ef013ep-2
-diffusion -> 	 soil_q: 0x1.d76c54dbd4af0p-2
-diffusion -> 	 soil_q: 0x1.f471af0e86e8ap-2
-diffusion -> 	 soil_q: 0x1.05987077e2107p-1
-diffusion -> 	 soil_q: 0x1.0fb0c81fea237p-1
-diffusion -> 	 soil_q: 0x1.198f740817de6p-1
-diffusion -> 	 soil_q: 0x1.241d0e3d2d702p-1
---------------
-[UtahLSM: Run] 		 Running for time 13800.00 of 33000.00----BEFORET---
-LOG -> 0x1.19c5eadce9ccep+8
-LOG -> 0x1.1805eadce9ccep+8
-LOG -> 0x1.1e10001d25b99p+8
-LOG -> 0x1.21ae3ab86496fp+8
-LOG -> 0x1.22ce0e6ab19f6p+8
-LOG -> 0x1.22f464c4fa9c6p+8
-LOG -> 0x1.22db5f3516592p+8
-LOG -> 0x1.22a7b70381466p+8
-LOG -> 0x1.22609d12320e7p+8
-LOG -> 0x1.22098649f4a39p+8
-LOG -> 0x1.21a73fab7e89bp+8
-LOG -> 0x1.213dd20000005p+8
---------------
-----AFTERT----
-LOG -> 0x1.19c5eadce9ccep+8
-LOG -> 0x1.1e0d332709bd5p+8
-LOG -> 0x1.21935512a3902p+8
-LOG -> 0x1.22b5ee2f27564p+8
-LOG -> 0x1.22e3c924c0b85p+8
-LOG -> 0x1.22d0243c4d1f3p+8
-LOG -> 0x1.22a018412be6cp+8
-LOG -> 0x1.225b87ba984fcp+8
-LOG -> 0x1.22066977449b5p+8
-LOG -> 0x1.21a5c23a1067bp+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f504fb10f496p-3
-LOG -> 0x1.9f4872a15ac07p-3
-LOG -> 0x1.9f5361f1b2bbdp-3
-LOG -> 0x1.d53f31445cb63p-3
-LOG -> 0x1.443cebb8a90a3p-2
-LOG -> 0x1.aa19f08ef013ep-2
-LOG -> 0x1.d76c54dbd4af0p-2
-LOG -> 0x1.f471af0e86e8ap-2
-LOG -> 0x1.05987077e2107p-1
-LOG -> 0x1.0fb0c81fea237p-1
-LOG -> 0x1.198f740817de6p-1
-LOG -> 0x1.241d0e3d2d702p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f504fb10f496p-3
-diffusion -> 	 soil_q: 0x1.9f5b9fea5b0e5p-3
-diffusion -> 	 soil_q: 0x1.d6c08f69941aep-3
-diffusion -> 	 soil_q: 0x1.4bd495aad92ebp-2
-diffusion -> 	 soil_q: 0x1.aca875547c90cp-2
-diffusion -> 	 soil_q: 0x1.d85f1fa4cbd89p-2
-diffusion -> 	 soil_q: 0x1.f4b7f35716ef0p-2
-diffusion -> 	 soil_q: 0x1.058ade0c38317p-1
-diffusion -> 	 soil_q: 0x1.0f8168d6b2287p-1
-diffusion -> 	 soil_q: 0x1.19437a7389ee2p-1
-diffusion -> 	 soil_q: 0x1.23b2b019621d9p-1
---------------
-[UtahLSM: Run] 		 Running for time 14400.00 of 33000.00----BEFORET---
-LOG -> 0x1.1b05eadce9ccep+8
-LOG -> 0x1.19c5eadce9ccep+8
-LOG -> 0x1.1e0d332709bd5p+8
-LOG -> 0x1.21935512a3902p+8
-LOG -> 0x1.22b5ee2f27564p+8
-LOG -> 0x1.22e3c924c0b85p+8
-LOG -> 0x1.22d0243c4d1f3p+8
-LOG -> 0x1.22a018412be6cp+8
-LOG -> 0x1.225b87ba984fcp+8
-LOG -> 0x1.22066977449b5p+8
-LOG -> 0x1.21a5c23a1067bp+8
-LOG -> 0x1.213dd20000004p+8
---------------
-----AFTERT----
-LOG -> 0x1.1b05eadce9ccep+8
-LOG -> 0x1.1e1a23b664891p+8
-LOG -> 0x1.217becab3c695p+8
-LOG -> 0x1.229e5db64b520p+8
-LOG -> 0x1.22d2fdfb495c5p+8
-LOG -> 0x1.22c48fdeb81e1p+8
-LOG -> 0x1.229824f865036p+8
-LOG -> 0x1.225633bc0f084p+8
-LOG -> 0x1.220324a3746aap+8
-LOG -> 0x1.21a431989c134p+8
-LOG -> 0x1.213dd20000005p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f58881a51b3fp-3
-LOG -> 0x1.9f504fb10f496p-3
-LOG -> 0x1.9f5b9fea5b0e5p-3
-LOG -> 0x1.d6c08f69941aep-3
-LOG -> 0x1.4bd495aad92ebp-2
-LOG -> 0x1.aca875547c90cp-2
-LOG -> 0x1.d85f1fa4cbd89p-2
-LOG -> 0x1.f4b7f35716ef0p-2
-LOG -> 0x1.058ade0c38317p-1
-LOG -> 0x1.0f8168d6b2287p-1
-LOG -> 0x1.19437a7389ee2p-1
-LOG -> 0x1.23b2b019621d9p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f58881a51b3fp-3
-diffusion -> 	 soil_q: 0x1.9f6454088104ap-3
-diffusion -> 	 soil_q: 0x1.d8b4dab4e6864p-3
-diffusion -> 	 soil_q: 0x1.5347d856eb5b7p-2
-diffusion -> 	 soil_q: 0x1.af000cad3508dp-2
-diffusion -> 	 soil_q: 0x1.d939d7c06e5f6p-2
-diffusion -> 	 soil_q: 0x1.f4f358ebb084cp-2
-diffusion -> 	 soil_q: 0x1.057b3b1155392p-1
-diffusion -> 	 soil_q: 0x1.0f5200cc1340ep-1
-diffusion -> 	 soil_q: 0x1.18f8f178687afp-1
-diffusion -> 	 soil_q: 0x1.234b2aaf5fc6fp-1
---------------
-[UtahLSM: Run] 		 Running for time 15000.00 of 33000.00----BEFORET---
-LOG -> 0x1.1b45eadce9ccep+8
-LOG -> 0x1.1b05eadce9ccep+8
-LOG -> 0x1.1e1a23b664891p+8
-LOG -> 0x1.217becab3c695p+8
-LOG -> 0x1.229e5db64b520p+8
-LOG -> 0x1.22d2fdfb495c5p+8
-LOG -> 0x1.22c48fdeb81e1p+8
-LOG -> 0x1.229824f865036p+8
-LOG -> 0x1.225633bc0f084p+8
-LOG -> 0x1.220324a3746aap+8
-LOG -> 0x1.21a431989c134p+8
-LOG -> 0x1.213dd20000005p+8
---------------
-----AFTERT----
-LOG -> 0x1.1b45eadce9ccep+8
-LOG -> 0x1.1e27fb8040e6dp+8
-LOG -> 0x1.21678be025e44p+8
-LOG -> 0x1.228782b58a1c2p+8
-LOG -> 0x1.22c217f699bf9p+8
-LOG -> 0x1.22b8ad02c0ab3p+8
-LOG -> 0x1.228fe20661489p+8
-LOG -> 0x1.2250a251be03bp+8
-LOG -> 0x1.21ffb79dc4254p+8
-LOG -> 0x1.21a28d67a27d6p+8
-LOG -> 0x1.213dd20000006p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f61394287ea3p-3
-LOG -> 0x1.9f58881a51b3fp-3
-LOG -> 0x1.9f6454088104ap-3
-LOG -> 0x1.d8b4dab4e6864p-3
-LOG -> 0x1.5347d856eb5b7p-2
-LOG -> 0x1.af000cad3508dp-2
-LOG -> 0x1.d939d7c06e5f6p-2
-LOG -> 0x1.f4f358ebb084cp-2
-LOG -> 0x1.057b3b1155392p-1
-LOG -> 0x1.0f5200cc1340ep-1
-LOG -> 0x1.18f8f178687afp-1
-LOG -> 0x1.234b2aaf5fc6fp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f61394287ea3p-3
-diffusion -> 	 soil_q: 0x1.9f6da7367da20p-3
-diffusion -> 	 soil_q: 0x1.db3375b8b5bdcp-3
-diffusion -> 	 soil_q: 0x1.5a7ea14a7bc06p-2
-diffusion -> 	 soil_q: 0x1.b12ad361296fbp-2
-diffusion -> 	 soil_q: 0x1.da00aaefe24b9p-2
-diffusion -> 	 soil_q: 0x1.f52594450660bp-2
-diffusion -> 	 soil_q: 0x1.0569df3db6aeap-1
-diffusion -> 	 soil_q: 0x1.0f22aa2a5cd05p-1
-diffusion -> 	 soil_q: 0x1.18afd02e1285cp-1
-diffusion -> 	 soil_q: 0x1.22e65915e8cd5p-1
---------------
-[UtahLSM: Run] 		 Running for time 15600.00 of 33000.00----BEFORET---
-LOG -> 0x1.1d05eadce9ccep+8
-LOG -> 0x1.1b45eadce9ccep+8
-LOG -> 0x1.1e27fb8040e6dp+8
-LOG -> 0x1.21678be025e44p+8
-LOG -> 0x1.228782b58a1c2p+8
-LOG -> 0x1.22c217f699bf9p+8
-LOG -> 0x1.22b8ad02c0ab3p+8
-LOG -> 0x1.228fe20661489p+8
-LOG -> 0x1.2250a251be03bp+8
-LOG -> 0x1.21ffb79dc4254p+8
-LOG -> 0x1.21a28d67a27d6p+8
-LOG -> 0x1.213dd20000006p+8
---------------
-----AFTERT----
-LOG -> 0x1.1d05eadce9ccep+8
-LOG -> 0x1.1e4ad96672136p+8
-LOG -> 0x1.2156f302f6924p+8
-LOG -> 0x1.2271948d9f47ep+8
-LOG -> 0x1.22b131d8ff475p+8
-LOG -> 0x1.22ac893bf4badp+8
-LOG -> 0x1.228755bf0c8e8p+8
-LOG -> 0x1.224ad594aa769p+8
-LOG -> 0x1.21fc22ae13507p+8
-LOG -> 0x1.21a0d57b5afd5p+8
-LOG -> 0x1.213dd20000007p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f6a836af6bbdp-3
-LOG -> 0x1.9f61394287ea3p-3
-LOG -> 0x1.9f6da7367da20p-3
-LOG -> 0x1.db3375b8b5bdcp-3
-LOG -> 0x1.5a7ea14a7bc06p-2
-LOG -> 0x1.b12ad361296fbp-2
-LOG -> 0x1.da00aaefe24b9p-2
-LOG -> 0x1.f52594450660bp-2
-LOG -> 0x1.0569df3db6aeap-1
-LOG -> 0x1.0f22aa2a5cd05p-1
-LOG -> 0x1.18afd02e1285cp-1
-LOG -> 0x1.22e65915e8cd5p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f6a836af6bbdp-3
-diffusion -> 	 soil_q: 0x1.9f77cf2de879fp-3
-diffusion -> 	 soil_q: 0x1.de5395d1275ddp-3
-diffusion -> 	 soil_q: 0x1.616422504236cp-2
-diffusion -> 	 soil_q: 0x1.b3300e310d6f7p-2
-diffusion -> 	 soil_q: 0x1.dab712ecc70ffp-2
-diffusion -> 	 soil_q: 0x1.f550344314c31p-2
-diffusion -> 	 soil_q: 0x1.055720dbbb474p-1
-diffusion -> 	 soil_q: 0x1.0ef381810f851p-1
-diffusion -> 	 soil_q: 0x1.1868107483b54p-1
-diffusion -> 	 soil_q: 0x1.22841921573dcp-1
---------------
-[UtahLSM: Run] 		 Running for time 16200.00 of 33000.00----BEFORET---
-LOG -> 0x1.1f75eadce9ccep+8
-LOG -> 0x1.1d05eadce9ccep+8
-LOG -> 0x1.1e4ad96672136p+8
-LOG -> 0x1.2156f302f6924p+8
-LOG -> 0x1.2271948d9f47ep+8
-LOG -> 0x1.22b131d8ff475p+8
-LOG -> 0x1.22ac893bf4badp+8
-LOG -> 0x1.228755bf0c8e8p+8
-LOG -> 0x1.224ad594aa769p+8
-LOG -> 0x1.21fc22ae13507p+8
-LOG -> 0x1.21a0d57b5afd5p+8
-LOG -> 0x1.213dd20000007p+8
---------------
-----AFTERT----
-LOG -> 0x1.1f75eadce9ccep+8
-LOG -> 0x1.1e89d43c5584ap+8
-LOG -> 0x1.214b2e6ea5308p+8
-LOG -> 0x1.225ce1b40d8d1p+8
-LOG -> 0x1.22a06f28136c6p+8
-LOG -> 0x1.22a035bb04840p+8
-LOG -> 0x1.227e884126410p+8
-LOG -> 0x1.2244d09d84890p+8
-LOG -> 0x1.21f866a4f0cfap+8
-LOG -> 0x1.219f09e2f91e5p+8
-LOG -> 0x1.213dd20000008p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.b0a55bf8e6487p-3
-LOG -> 0x1.9f6a836af6bbdp-3
-LOG -> 0x1.9f77cf2de879fp-3
-LOG -> 0x1.de5395d1275ddp-3
-LOG -> 0x1.616422504236cp-2
-LOG -> 0x1.b3300e310d6f7p-2
-LOG -> 0x1.dab712ecc70ffp-2
-LOG -> 0x1.f550344314c31p-2
-LOG -> 0x1.055720dbbb474p-1
-LOG -> 0x1.0ef381810f851p-1
-LOG -> 0x1.1868107483b54p-1
-LOG -> 0x1.22841921573dcp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.b0a55bf8e6487p-3
-diffusion -> 	 soil_q: 0x1.9f84ad2fcc37ap-3
-diffusion -> 	 soil_q: 0x1.e22a66c7c9983p-3
-diffusion -> 	 soil_q: 0x1.67e73f255d251p-2
-diffusion -> 	 soil_q: 0x1.b514c353242fbp-2
-diffusion -> 	 soil_q: 0x1.db5fd890d520cp-2
-diffusion -> 	 soil_q: 0x1.f57496df038e2p-2
-diffusion -> 	 soil_q: 0x1.054350cf27851p-1
-diffusion -> 	 soil_q: 0x1.0ec4a399cfe04p-1
-diffusion -> 	 soil_q: 0x1.1821adf79388ep-1
-diffusion -> 	 soil_q: 0x1.22244b2b22ca9p-1
---------------
-[UtahLSM: Run] 		 Running for time 16800.00 of 33000.00----BEFORET---
-LOG -> 0x1.2136eadce9ccep+8
-LOG -> 0x1.1f75eadce9ccep+8
-LOG -> 0x1.1e89d43c5584ap+8
-LOG -> 0x1.214b2e6ea5308p+8
-LOG -> 0x1.225ce1b40d8d1p+8
-LOG -> 0x1.22a06f28136c6p+8
-LOG -> 0x1.22a035bb04840p+8
-LOG -> 0x1.227e884126410p+8
-LOG -> 0x1.2244d09d84890p+8
-LOG -> 0x1.21f866a4f0cfap+8
-LOG -> 0x1.219f09e2f91e5p+8
-LOG -> 0x1.213dd20000008p+8
---------------
-----AFTERT----
-LOG -> 0x1.2136eadce9ccep+8
-LOG -> 0x1.1eda7e1638a06p+8
-LOG -> 0x1.2144898991cabp+8
-LOG -> 0x1.2249b885a278fp+8
-LOG -> 0x1.228ffa4e39598p+8
-LOG -> 0x1.2293c79b5a766p+8
-LOG -> 0x1.227583c115ddfp+8
-LOG -> 0x1.223e97ac3875ep+8
-LOG -> 0x1.21f484ef1a136p+8
-LOG -> 0x1.219d2af111837p+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.9f815fc152ecfp-3
-LOG -> 0x1.b0a55bf8e6487p-3
-LOG -> 0x1.9f84ad2fcc37ap-3
-LOG -> 0x1.e22a66c7c9983p-3
-LOG -> 0x1.67e73f255d251p-2
-LOG -> 0x1.b514c353242fbp-2
-LOG -> 0x1.db5fd890d520cp-2
-LOG -> 0x1.f57496df038e2p-2
-LOG -> 0x1.054350cf27851p-1
-LOG -> 0x1.0ec4a399cfe04p-1
-LOG -> 0x1.1821adf79388ep-1
-LOG -> 0x1.22244b2b22ca9p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.9f815fc152ecfp-3
-diffusion -> 	 soil_q: 0x1.9f91666a6a9d0p-3
-diffusion -> 	 soil_q: 0x1.e6c90ea6a3686p-3
-diffusion -> 	 soil_q: 0x1.6dfb109e09557p-2
-diffusion -> 	 soil_q: 0x1.b6dc41a9c9729p-2
-diffusion -> 	 soil_q: 0x1.dbfd1ff4f6feep-2
-diffusion -> 	 soil_q: 0x1.f593e273b2312p-2
-diffusion -> 	 soil_q: 0x1.052eb74709da4p-1
-diffusion -> 	 soil_q: 0x1.0e962b64c3ad6p-1
-diffusion -> 	 soil_q: 0x1.17dca52c10c3cp-1
-diffusion -> 	 soil_q: 0x1.21c6d1db84b40p-1
---------------
-[UtahLSM: Run] 		 Running for time 17400.00 of 33000.00----BEFORET---
-LOG -> 0x1.21a6eadce9ccep+8
-LOG -> 0x1.2136eadce9ccep+8
-LOG -> 0x1.1eda7e1638a06p+8
-LOG -> 0x1.2144898991cabp+8
-LOG -> 0x1.2249b885a278fp+8
-LOG -> 0x1.228ffa4e39598p+8
-LOG -> 0x1.2293c79b5a766p+8
-LOG -> 0x1.227583c115ddfp+8
-LOG -> 0x1.223e97ac3875ep+8
-LOG -> 0x1.21f484ef1a136p+8
-LOG -> 0x1.219d2af111837p+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----AFTERT----
-LOG -> 0x1.21a6eadce9ccep+8
-LOG -> 0x1.1f26809c7d779p+8
-LOG -> 0x1.2141f8adc74fcp+8
-LOG -> 0x1.223842a477237p+8
-LOG -> 0x1.227ffce9268a9p+8
-LOG -> 0x1.2287568f91a06p+8
-LOG -> 0x1.226c54722660fp+8
-LOG -> 0x1.2238303da02fep+8
-LOG -> 0x1.21f07fa7498acp+8
-LOG -> 0x1.219b39444e22ep+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.e666666666666p-2
-LOG -> 0x1.9f815fc152ecfp-3
-LOG -> 0x1.9f91666a6a9d0p-3
-LOG -> 0x1.e6c90ea6a3686p-3
-LOG -> 0x1.6dfb109e09557p-2
-LOG -> 0x1.b6dc41a9c9729p-2
-LOG -> 0x1.dbfd1ff4f6feep-2
-LOG -> 0x1.f593e273b2312p-2
-LOG -> 0x1.052eb74709da4p-1
-LOG -> 0x1.0e962b64c3ad6p-1
-LOG -> 0x1.17dca52c10c3cp-1
-LOG -> 0x1.21c6d1db84b40p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.e666666666666p-2
-diffusion -> 	 soil_q: 0x1.0b15b252763a3p-2
-diffusion -> 	 soil_q: 0x1.ec4ba12f8bad1p-3
-diffusion -> 	 soil_q: 0x1.73976694f0559p-2
-diffusion -> 	 soil_q: 0x1.b88896aafe14dp-2
-diffusion -> 	 soil_q: 0x1.dc907a4e51c42p-2
-diffusion -> 	 soil_q: 0x1.f5af034ef3cbap-2
-diffusion -> 	 soil_q: 0x1.0519916970e1bp-1
-diffusion -> 	 soil_q: 0x1.0e6830456f2efp-1
-diffusion -> 	 soil_q: 0x1.1798f26c29abep-1
-diffusion -> 	 soil_q: 0x1.216b91f51e593p-1
---------------
-[UtahLSM: Run] 		 Running for time 18000.00 of 33000.00----BEFORET---
-LOG -> 0x1.21bb2adce9ccep+8
-LOG -> 0x1.21a6eadce9ccep+8
-LOG -> 0x1.1f26809c7d779p+8
-LOG -> 0x1.2141f8adc74fcp+8
-LOG -> 0x1.223842a477237p+8
-LOG -> 0x1.227ffce9268a9p+8
-LOG -> 0x1.2287568f91a06p+8
-LOG -> 0x1.226c54722660fp+8
-LOG -> 0x1.2238303da02fep+8
-LOG -> 0x1.21f07fa7498acp+8
-LOG -> 0x1.219b39444e22ep+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----AFTERT----
-LOG -> 0x1.21bb2adce9ccep+8
-LOG -> 0x1.1fc4b8a215b86p+8
-LOG -> 0x1.2140b8b3776e7p+8
-LOG -> 0x1.2228596bc951bp+8
-LOG -> 0x1.2270925f161c5p+8
-LOG -> 0x1.227af941eb632p+8
-LOG -> 0x1.226307ae8070ep+8
-LOG -> 0x1.2231a0eaf3e47p+8
-LOG -> 0x1.21ec599b210b1p+8
-LOG -> 0x1.219935cda574cp+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----BEFOREQ---
-LOG -> 0x1.48f13dadaea56p-3
-LOG -> 0x1.e666666666666p-2
-LOG -> 0x1.0b15b252763a3p-2
-LOG -> 0x1.ec4ba12f8bad1p-3
-LOG -> 0x1.73976694f0559p-2
-LOG -> 0x1.b88896aafe14dp-2
-LOG -> 0x1.dc907a4e51c42p-2
-LOG -> 0x1.f5af034ef3cbap-2
-LOG -> 0x1.0519916970e1bp-1
-LOG -> 0x1.0e6830456f2efp-1
-LOG -> 0x1.1798f26c29abep-1
-LOG -> 0x1.216b91f51e593p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.48f13dadaea56p-3
-diffusion -> 	 soil_q: 0x1.0ae889b290a90p-2
-diffusion -> 	 soil_q: 0x1.f2b8e6ee6e7c8p-3
-diffusion -> 	 soil_q: 0x1.78b90d52ce914p-2
-diffusion -> 	 soil_q: 0x1.ba1af7e6d58a3p-2
-diffusion -> 	 soil_q: 0x1.dd1afbee25d96p-2
-diffusion -> 	 soil_q: 0x1.f5c6ad0605bd3p-2
-diffusion -> 	 soil_q: 0x1.0504100abdf9cp-1
-diffusion -> 	 soil_q: 0x1.0e3ac4e00e70ap-1
-diffusion -> 	 soil_q: 0x1.17569146250a2p-1
-diffusion -> 	 soil_q: 0x1.21127222f350ap-1
---------------
-[UtahLSM: Run] 		 Running for time 18600.00 of 33000.00----BEFORET---
-LOG -> 0x1.22ea6adce9ccep+8
-LOG -> 0x1.21bb2adce9ccep+8
-LOG -> 0x1.1fc4b8a215b86p+8
-LOG -> 0x1.2140b8b3776e7p+8
-LOG -> 0x1.2228596bc951bp+8
-LOG -> 0x1.2270925f161c5p+8
-LOG -> 0x1.227af941eb632p+8
-LOG -> 0x1.226307ae8070ep+8
-LOG -> 0x1.2231a0eaf3e47p+8
-LOG -> 0x1.21ec599b210b1p+8
-LOG -> 0x1.219935cda574cp+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----AFTERT----
-LOG -> 0x1.22ea6adce9ccep+8
-LOG -> 0x1.2013f1bc5dec9p+8
-LOG -> 0x1.21448d53a1e4ap+8
-LOG -> 0x1.221a4e32c260bp+8
-LOG -> 0x1.2261e052011dcp+8
-LOG -> 0x1.226ec80416fd8p+8
-LOG -> 0x1.2259ac0a1603ap+8
-LOG -> 0x1.222af15ac8cb8p+8
-LOG -> 0x1.21e8164ba19bfp+8
-LOG -> 0x1.219721d425821p+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.d540c8b72bf87p-3
-LOG -> 0x1.48f13dadaea56p-3
-LOG -> 0x1.0ae889b290a90p-2
-LOG -> 0x1.f2b8e6ee6e7c8p-3
-LOG -> 0x1.78b90d52ce914p-2
-LOG -> 0x1.ba1af7e6d58a3p-2
-LOG -> 0x1.dd1afbee25d96p-2
-LOG -> 0x1.f5c6ad0605bd3p-2
-LOG -> 0x1.0504100abdf9cp-1
-LOG -> 0x1.0e3ac4e00e70ap-1
-LOG -> 0x1.17569146250a2p-1
-LOG -> 0x1.21127222f350ap-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.d540c8b72bf87p-3
-diffusion -> 	 soil_q: 0x1.0ad1d747e33b9p-2
-diffusion -> 	 soil_q: 0x1.f9f9ff76e9064p-3
-diffusion -> 	 soil_q: 0x1.7d613c86dce20p-2
-diffusion -> 	 soil_q: 0x1.bb941a2988993p-2
-diffusion -> 	 soil_q: 0x1.dd9d54951a0c1p-2
-diffusion -> 	 soil_q: 0x1.f5db5ef0e02b4p-2
-diffusion -> 	 soil_q: 0x1.04ee57656bc99p-1
-diffusion -> 	 soil_q: 0x1.0e0df66f8ec29p-1
-diffusion -> 	 soil_q: 0x1.17157c04aa69ep-1
-diffusion -> 	 soil_q: 0x1.20bb5ac934903p-1
---------------
-[UtahLSM: Run] 		 Running for time 19200.00 of 33000.00----BEFORET---
-LOG -> 0x1.22ab6adce9ccep+8
-LOG -> 0x1.22ea6adce9ccep+8
-LOG -> 0x1.2013f1bc5dec9p+8
-LOG -> 0x1.21448d53a1e4ap+8
-LOG -> 0x1.221a4e32c260bp+8
-LOG -> 0x1.2261e052011dcp+8
-LOG -> 0x1.226ec80416fd8p+8
-LOG -> 0x1.2259ac0a1603ap+8
-LOG -> 0x1.222af15ac8cb8p+8
-LOG -> 0x1.21e8164ba19bfp+8
-LOG -> 0x1.219721d425821p+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----AFTERT----
-LOG -> 0x1.22ab6adce9ccep+8
-LOG -> 0x1.206015e4fde98p+8
-LOG -> 0x1.214c653ac1b8ep+8
-LOG -> 0x1.220e47ed00a2ap+8
-LOG -> 0x1.22540bedaea78p+8
-LOG -> 0x1.2262dc489e9e1p+8
-LOG -> 0x1.2250513f555dcp+8
-LOG -> 0x1.22242a339ff6ap+8
-LOG -> 0x1.21e3b9eaec760p+8
-LOG -> 0x1.2194fef6b99c2p+8
-LOG -> 0x1.213dd2000000bp+8
---------------
-----BEFOREQ---
-LOG -> 0x1.e7f7e93fb3a0fp-3
-LOG -> 0x1.d540c8b72bf87p-3
-LOG -> 0x1.0ad1d747e33b9p-2
-LOG -> 0x1.f9f9ff76e9064p-3
-LOG -> 0x1.7d613c86dce20p-2
-LOG -> 0x1.bb941a2988993p-2
-LOG -> 0x1.dd9d54951a0c1p-2
-LOG -> 0x1.f5db5ef0e02b4p-2
-LOG -> 0x1.04ee57656bc99p-1
-LOG -> 0x1.0e0df66f8ec29p-1
-LOG -> 0x1.17157c04aa69ep-1
-LOG -> 0x1.20bb5ac934903p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.e7f7e93fb3a0fp-3
-diffusion -> 	 soil_q: 0x1.0ac03556fe60cp-2
-diffusion -> 	 soil_q: 0x1.01029aacd4371p-2
-diffusion -> 	 soil_q: 0x1.81951ea151930p-2
-diffusion -> 	 soil_q: 0x1.bcf47b32f3d4bp-2
-diffusion -> 	 soil_q: 0x1.de17e8a4c123dp-2
-diffusion -> 	 soil_q: 0x1.f5ed6b0d1266ap-2
-diffusion -> 	 soil_q: 0x1.04d87fb268560p-1
-diffusion -> 	 soil_q: 0x1.0de1cc9d1a814p-1
-diffusion -> 	 soil_q: 0x1.16d5ab7068b7bp-1
-diffusion -> 	 soil_q: 0x1.206635d960066p-1
---------------
-[UtahLSM: Run] 		 Running for time 19800.00 of 33000.00----BEFORET---
-LOG -> 0x1.231b6adce9ccep+8
-LOG -> 0x1.22ab6adce9ccep+8
-LOG -> 0x1.206015e4fde98p+8
-LOG -> 0x1.214c653ac1b8ep+8
-LOG -> 0x1.220e47ed00a2ap+8
-LOG -> 0x1.22540bedaea78p+8
-LOG -> 0x1.2262dc489e9e1p+8
-LOG -> 0x1.2250513f555dcp+8
-LOG -> 0x1.22242a339ff6ap+8
-LOG -> 0x1.21e3b9eaec760p+8
-LOG -> 0x1.2194fef6b99c2p+8
-LOG -> 0x1.213dd2000000bp+8
---------------
-----AFTERT----
-LOG -> 0x1.231b6adce9ccep+8
-LOG -> 0x1.20abb9c4ed358p+8
-LOG -> 0x1.2157a02cdc614p+8
-LOG -> 0x1.22045768a4912p+8
-LOG -> 0x1.224735d87e8cap+8
-LOG -> 0x1.22574f6f70dbap+8
-LOG -> 0x1.224707dd8876ap+8
-LOG -> 0x1.221d550118834p+8
-LOG -> 0x1.21df495529495p+8
-LOG -> 0x1.2192cf2bb83a2p+8
-LOG -> 0x1.213dd2000000cp+8
---------------
-----BEFOREQ---
-LOG -> 0x1.dde2dab9cb3ebp-3
-LOG -> 0x1.e7f7e93fb3a0fp-3
-LOG -> 0x1.0ac03556fe60cp-2
-LOG -> 0x1.01029aacd4371p-2
-LOG -> 0x1.81951ea151930p-2
-LOG -> 0x1.bcf47b32f3d4bp-2
-LOG -> 0x1.de17e8a4c123dp-2
-LOG -> 0x1.f5ed6b0d1266ap-2
-LOG -> 0x1.04d87fb268560p-1
-LOG -> 0x1.0de1cc9d1a814p-1
-LOG -> 0x1.16d5ab7068b7bp-1
-LOG -> 0x1.206635d960066p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.dde2dab9cb3ebp-3
-diffusion -> 	 soil_q: 0x1.0aaf0ea51931bp-2
-diffusion -> 	 soil_q: 0x1.0565812a414c6p-2
-diffusion -> 	 soil_q: 0x1.855cf2dcae898p-2
-diffusion -> 	 soil_q: 0x1.be3c9d70e83bcp-2
-diffusion -> 	 soil_q: 0x1.de8aea66fd7cdp-2
-diffusion -> 	 soil_q: 0x1.f5fcfeb280e36p-2
-diffusion -> 	 soil_q: 0x1.04c2967d9c629p-1
-diffusion -> 	 soil_q: 0x1.0db649ca9a0b6p-1
-diffusion -> 	 soil_q: 0x1.169716c6986d8p-1
-diffusion -> 	 soil_q: 0x1.2012eeaa27276p-1
---------------
-[UtahLSM: Run] 		 Running for time 20400.00 of 33000.00----BEFORET---
-LOG -> 0x1.238b6adce9ccep+8
-LOG -> 0x1.231b6adce9ccep+8
-LOG -> 0x1.20abb9c4ed358p+8
-LOG -> 0x1.2157a02cdc614p+8
-LOG -> 0x1.22045768a4912p+8
-LOG -> 0x1.224735d87e8cap+8
-LOG -> 0x1.22574f6f70dbap+8
-LOG -> 0x1.224707dd8876ap+8
-LOG -> 0x1.221d550118834p+8
-LOG -> 0x1.21df495529495p+8
-LOG -> 0x1.2192cf2bb83a2p+8
-LOG -> 0x1.213dd2000000cp+8
---------------
-----AFTERT----
-LOG -> 0x1.238b6adce9ccep+8
-LOG -> 0x1.20f42ade1fba7p+8
-LOG -> 0x1.21658a5ccda75p+8
-LOG -> 0x1.21fc78c8e950cp+8
-LOG -> 0x1.223b77873804cp+8
-LOG -> 0x1.224c396709386p+8
-LOG -> 0x1.223de0c5569c6p+8
-LOG -> 0x1.22167c053430cp+8
-LOG -> 0x1.21daca01cd453p+8
-LOG -> 0x1.219094bd89f9dp+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----BEFOREQ---
-LOG -> 0x1.caf4a7d1c31d7p-3
-LOG -> 0x1.dde2dab9cb3ebp-3
-LOG -> 0x1.0aaf0ea51931bp-2
-LOG -> 0x1.0565812a414c6p-2
-LOG -> 0x1.855cf2dcae898p-2
-LOG -> 0x1.be3c9d70e83bcp-2
-LOG -> 0x1.de8aea66fd7cdp-2
-LOG -> 0x1.f5fcfeb280e36p-2
-LOG -> 0x1.04c2967d9c629p-1
-LOG -> 0x1.0db649ca9a0b6p-1
-LOG -> 0x1.169716c6986d8p-1
-LOG -> 0x1.2012eeaa27276p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.caf4a7d1c31d7p-3
-diffusion -> 	 soil_q: 0x1.0a9da7ab4e113p-2
-diffusion -> 	 soil_q: 0x1.0a1bd130dc8acp-2
-diffusion -> 	 soil_q: 0x1.88c2ff42272dep-2
-diffusion -> 	 soil_q: 0x1.bf6d30bf43ee9p-2
-diffusion -> 	 soil_q: 0x1.def67190282a3p-2
-diffusion -> 	 soil_q: 0x1.f60a2c59962eep-2
-diffusion -> 	 soil_q: 0x1.04aca08c05e47p-1
-diffusion -> 	 soil_q: 0x1.0d8b6bbd8ae4ap-1
-diffusion -> 	 soil_q: 0x1.1659b3ddaa522p-1
-diffusion -> 	 soil_q: 0x1.1fc171d37440ap-1
---------------
-[UtahLSM: Run] 		 Running for time 21000.00 of 33000.00----BEFORET---
-LOG -> 0x1.24376adce9ccep+8
-LOG -> 0x1.238b6adce9ccep+8
-LOG -> 0x1.20f42ade1fba7p+8
-LOG -> 0x1.21658a5ccda75p+8
-LOG -> 0x1.21fc78c8e950cp+8
-LOG -> 0x1.223b77873804cp+8
-LOG -> 0x1.224c396709386p+8
-LOG -> 0x1.223de0c5569c6p+8
-LOG -> 0x1.22167c053430cp+8
-LOG -> 0x1.21daca01cd453p+8
-LOG -> 0x1.219094bd89f9dp+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----AFTERT----
-LOG -> 0x1.24376adce9ccep+8
-LOG -> 0x1.213d59da7cdf6p+8
-LOG -> 0x1.2175e6dd3ffe9p+8
-LOG -> 0x1.21f6a57455fa0p+8
-LOG -> 0x1.2230e48945e1dp+8
-LOG -> 0x1.2241b001904a7p+8
-LOG -> 0x1.2234ecac19a88p+8
-LOG -> 0x1.220fa9fdf6b3dp+8
-LOG -> 0x1.21d641ed4b5d6p+8
-LOG -> 0x1.218e52440487bp+8
-LOG -> 0x1.213dd20000008p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.c08b05b833f1cp-3
-LOG -> 0x1.caf4a7d1c31d7p-3
-LOG -> 0x1.0a9da7ab4e113p-2
-LOG -> 0x1.0a1bd130dc8acp-2
-LOG -> 0x1.88c2ff42272dep-2
-LOG -> 0x1.bf6d30bf43ee9p-2
-LOG -> 0x1.def67190282a3p-2
-LOG -> 0x1.f60a2c59962eep-2
-LOG -> 0x1.04aca08c05e47p-1
-LOG -> 0x1.0d8b6bbd8ae4ap-1
-LOG -> 0x1.1659b3ddaa522p-1
-LOG -> 0x1.1fc171d37440ap-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.c08b05b833f1cp-3
-diffusion -> 	 soil_q: 0x1.0a8e12cc4b044p-2
-diffusion -> 	 soil_q: 0x1.0f1a5b82939dep-2
-diffusion -> 	 soil_q: 0x1.8bd288f5a7db7p-2
-diffusion -> 	 soil_q: 0x1.c08727aa814edp-2
-diffusion -> 	 soil_q: 0x1.df5a8f2362c1dp-2
-diffusion -> 	 soil_q: 0x1.f614f58630fafp-2
-diffusion -> 	 soil_q: 0x1.04969c1cd62a7p-1
-diffusion -> 	 soil_q: 0x1.0d612c91b3bbfp-1
-diffusion -> 	 soil_q: 0x1.161d776ef9cb1p-1
-diffusion -> 	 soil_q: 0x1.1f71ad0ec2eb5p-1
---------------
-[UtahLSM: Run] 		 Running for time 21600.00 of 33000.00----BEFORET---
-LOG -> 0x1.2466aadce9ccep+8
-LOG -> 0x1.24376adce9ccep+8
-LOG -> 0x1.213d59da7cdf6p+8
-LOG -> 0x1.2175e6dd3ffe9p+8
-LOG -> 0x1.21f6a57455fa0p+8
-LOG -> 0x1.2230e48945e1dp+8
-LOG -> 0x1.2241b001904a7p+8
-LOG -> 0x1.2234ecac19a88p+8
-LOG -> 0x1.220fa9fdf6b3dp+8
-LOG -> 0x1.21d641ed4b5d6p+8
-LOG -> 0x1.218e52440487bp+8
-LOG -> 0x1.213dd20000008p+8
---------------
-----AFTERT----
-LOG -> 0x1.2466aadce9ccep+8
-LOG -> 0x1.217ea96c7d667p+8
-LOG -> 0x1.2187d1504dd92p+8
-LOG -> 0x1.21f2beff00ad0p+8
-LOG -> 0x1.22278799292a8p+8
-LOG -> 0x1.2237c5d737ebep+8
-LOG -> 0x1.222c3b87b0c6dp+8
-LOG -> 0x1.2208e9dda8aa7p+8
-LOG -> 0x1.21d1b77ac9460p+8
-LOG -> 0x1.218c0a9a29f08p+8
-LOG -> 0x1.213dd20000008p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0a827acf6e17dp-2
-LOG -> 0x1.c08b05b833f1cp-3
-LOG -> 0x1.0a8e12cc4b044p-2
-LOG -> 0x1.0f1a5b82939dep-2
-LOG -> 0x1.8bd288f5a7db7p-2
-LOG -> 0x1.c08727aa814edp-2
-LOG -> 0x1.df5a8f2362c1dp-2
-LOG -> 0x1.f614f58630fafp-2
-LOG -> 0x1.04969c1cd62a7p-1
-LOG -> 0x1.0d612c91b3bbfp-1
-LOG -> 0x1.161d776ef9cb1p-1
-LOG -> 0x1.1f71ad0ec2eb5p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0a827acf6e17dp-2
-diffusion -> 	 soil_q: 0x1.0a93de5b9f1e7p-2
-diffusion -> 	 soil_q: 0x1.1455663c6ad64p-2
-diffusion -> 	 soil_q: 0x1.8e96f444706cap-2
-diffusion -> 	 soil_q: 0x1.c18bbb641424dp-2
-diffusion -> 	 soil_q: 0x1.dfb75c6694645p-2
-diffusion -> 	 soil_q: 0x1.f61d53eac06fcp-2
-diffusion -> 	 soil_q: 0x1.048083475b7f8p-1
-diffusion -> 	 soil_q: 0x1.0d3783d5aeeb2p-1
-diffusion -> 	 soil_q: 0x1.15e25579b0202p-1
-diffusion -> 	 soil_q: 0x1.1f238f1bd30cfp-1
---------------
-[UtahLSM: Run] 		 Running for time 22200.00 of 33000.00----BEFORET---
-LOG -> 0x1.24f6aadce9ccep+8
-LOG -> 0x1.2466aadce9ccep+8
-LOG -> 0x1.217ea96c7d667p+8
-LOG -> 0x1.2187d1504dd92p+8
-LOG -> 0x1.21f2beff00ad0p+8
-LOG -> 0x1.22278799292a8p+8
-LOG -> 0x1.2237c5d737ebep+8
-LOG -> 0x1.222c3b87b0c6dp+8
-LOG -> 0x1.2208e9dda8aa7p+8
-LOG -> 0x1.21d1b77ac9460p+8
-LOG -> 0x1.218c0a9a29f08p+8
-LOG -> 0x1.213dd20000008p+8
---------------
-----AFTERT----
-LOG -> 0x1.24f6aadce9ccep+8
-LOG -> 0x1.21ccf61bbd70cp+8
-LOG -> 0x1.219c514da685cp+8
-LOG -> 0x1.21f0d1e7d42c0p+8
-LOG -> 0x1.221f6ccd34affp+8
-LOG -> 0x1.222e8ba669be8p+8
-LOG -> 0x1.2223dc78e2979p+8
-LOG -> 0x1.2202469616226p+8
-LOG -> 0x1.21cd3154a5018p+8
-LOG -> 0x1.2189c0d1854ffp+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0a8843abb2ae5p-2
-LOG -> 0x1.0a827acf6e17dp-2
-LOG -> 0x1.0a93de5b9f1e7p-2
-LOG -> 0x1.1455663c6ad64p-2
-LOG -> 0x1.8e96f444706cap-2
-LOG -> 0x1.c18bbb641424dp-2
-LOG -> 0x1.dfb75c6694645p-2
-LOG -> 0x1.f61d53eac06fcp-2
-LOG -> 0x1.048083475b7f8p-1
-LOG -> 0x1.0d3783d5aeeb2p-1
-LOG -> 0x1.15e25579b0202p-1
-LOG -> 0x1.1f238f1bd30cfp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0a8843abb2ae5p-2
-diffusion -> 	 soil_q: 0x1.0a9ea206a18a7p-2
-diffusion -> 	 soil_q: 0x1.19c133df5410dp-2
-diffusion -> 	 soil_q: 0x1.911b1dbf0a363p-2
-diffusion -> 	 soil_q: 0x1.c27c62bff9ecdp-2
-diffusion -> 	 soil_q: 0x1.e00d04633a1cap-2
-diffusion -> 	 soil_q: 0x1.f6234103c45f5p-2
-diffusion -> 	 soil_q: 0x1.046a4e38d42b9p-1
-diffusion -> 	 soil_q: 0x1.0d0e67b0eeedap-1
-diffusion -> 	 soil_q: 0x1.15a841b159b90p-1
-diffusion -> 	 soil_q: 0x1.1ed707a98bbcep-1
---------------
-[UtahLSM: Run] 		 Running for time 22800.00 of 33000.00----BEFORET---
-LOG -> 0x1.2566aadce9ccep+8
-LOG -> 0x1.24f6aadce9ccep+8
-LOG -> 0x1.21ccf61bbd70cp+8
-LOG -> 0x1.219c514da685cp+8
-LOG -> 0x1.21f0d1e7d42c0p+8
-LOG -> 0x1.221f6ccd34affp+8
-LOG -> 0x1.222e8ba669be8p+8
-LOG -> 0x1.2223dc78e2979p+8
-LOG -> 0x1.2202469616226p+8
-LOG -> 0x1.21cd3154a5018p+8
-LOG -> 0x1.2189c0d1854ffp+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----AFTERT----
-LOG -> 0x1.2566aadce9ccep+8
-LOG -> 0x1.221900368386ep+8
-LOG -> 0x1.21b2faa882960p+8
-LOG -> 0x1.21f0dbfeba3e4p+8
-LOG -> 0x1.22189e1b8a5b7p+8
-LOG -> 0x1.2226106e0607bp+8
-LOG -> 0x1.221bddbc12dc9p+8
-LOG -> 0x1.21fbcaf098433p+8
-LOG -> 0x1.21c8b64ec69bep+8
-LOG -> 0x1.218778247e10fp+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0a930531c1654p-2
-LOG -> 0x1.0a8843abb2ae5p-2
-LOG -> 0x1.0a9ea206a18a7p-2
-LOG -> 0x1.19c133df5410dp-2
-LOG -> 0x1.911b1dbf0a363p-2
-LOG -> 0x1.c27c62bff9ecdp-2
-LOG -> 0x1.e00d04633a1cap-2
-LOG -> 0x1.f6234103c45f5p-2
-LOG -> 0x1.046a4e38d42b9p-1
-LOG -> 0x1.0d0e67b0eeedap-1
-LOG -> 0x1.15a841b159b90p-1
-LOG -> 0x1.1ed707a98bbcep-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0a930531c1654p-2
-diffusion -> 	 soil_q: 0x1.0aaf9244eea98p-2
-diffusion -> 	 soil_q: 0x1.1f5265b08cb8dp-2
-diffusion -> 	 soil_q: 0x1.9368ee944dbb1p-2
-diffusion -> 	 soil_q: 0x1.c35ac16aea32cp-2
-diffusion -> 	 soil_q: 0x1.e05bc844db3b0p-2
-diffusion -> 	 soil_q: 0x1.f626bbb81ea4ap-2
-diffusion -> 	 soil_q: 0x1.0453f5203f90dp-1
-diffusion -> 	 soil_q: 0x1.0ce5cdf53539fp-1
-diffusion -> 	 soil_q: 0x1.156f2fead164bp-1
-diffusion -> 	 soil_q: 0x1.1e8c0742b3713p-1
---------------
-[UtahLSM: Run] 		 Running for time 23400.00 of 33000.00----BEFORET---
-LOG -> 0x1.25a5aadce9ccep+8
-LOG -> 0x1.2566aadce9ccep+8
-LOG -> 0x1.221900368386ep+8
-LOG -> 0x1.21b2faa882960p+8
-LOG -> 0x1.21f0dbfeba3e4p+8
-LOG -> 0x1.22189e1b8a5b7p+8
-LOG -> 0x1.2226106e0607bp+8
-LOG -> 0x1.221bddbc12dc9p+8
-LOG -> 0x1.21fbcaf098433p+8
-LOG -> 0x1.21c8b64ec69bep+8
-LOG -> 0x1.218778247e10fp+8
-LOG -> 0x1.213dd20000009p+8
---------------
-----AFTERT----
-LOG -> 0x1.25a5aadce9ccep+8
-LOG -> 0x1.225eeff3b6218p+8
-LOG -> 0x1.21cb1f09af680p+8
-LOG -> 0x1.21f2c6a266dd5p+8
-LOG -> 0x1.221320007c35ep+8
-LOG -> 0x1.221e60c4b1017p+8
-LOG -> 0x1.22144c73bc418p+8
-LOG -> 0x1.21f58165986c0p+8
-LOG -> 0x1.21c44d49d3696p+8
-LOG -> 0x1.218533e83f486p+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0aa41107d0b27p-2
-LOG -> 0x1.0a930531c1654p-2
-LOG -> 0x1.0aaf9244eea98p-2
-LOG -> 0x1.1f5265b08cb8dp-2
-LOG -> 0x1.9368ee944dbb1p-2
-LOG -> 0x1.c35ac16aea32cp-2
-LOG -> 0x1.e05bc844db3b0p-2
-LOG -> 0x1.f626bbb81ea4ap-2
-LOG -> 0x1.0453f5203f90dp-1
-LOG -> 0x1.0ce5cdf53539fp-1
-LOG -> 0x1.156f2fead164bp-1
-LOG -> 0x1.1e8c0742b3713p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0aa41107d0b27p-2
-diffusion -> 	 soil_q: 0x1.0ac82c2de6befp-2
-diffusion -> 	 soil_q: 0x1.24fe5e9b67ed2p-2
-diffusion -> 	 soil_q: 0x1.95891e9e2fd07p-2
-diffusion -> 	 soil_q: 0x1.c428880d548d4p-2
-diffusion -> 	 soil_q: 0x1.e0a3f90fa6b70p-2
-diffusion -> 	 soil_q: 0x1.f627c9117aa1ap-2
-diffusion -> 	 soil_q: 0x1.043d71b8d2bbbp-1
-diffusion -> 	 soil_q: 0x1.0cbdaec66324ap-1
-diffusion -> 	 soil_q: 0x1.153718929be1ep-1
-diffusion -> 	 soil_q: 0x1.1e427f5afea0cp-1
---------------
-[UtahLSM: Run] 		 Running for time 24000.00 of 33000.00----BEFORET---
-LOG -> 0x1.25d4eadce9ccep+8
-LOG -> 0x1.25a5aadce9ccep+8
-LOG -> 0x1.225eeff3b6218p+8
-LOG -> 0x1.21cb1f09af680p+8
-LOG -> 0x1.21f2c6a266dd5p+8
-LOG -> 0x1.221320007c35ep+8
-LOG -> 0x1.221e60c4b1017p+8
-LOG -> 0x1.22144c73bc418p+8
-LOG -> 0x1.21f58165986c0p+8
-LOG -> 0x1.21c44d49d3696p+8
-LOG -> 0x1.218533e83f486p+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----AFTERT----
-LOG -> 0x1.25d4eadce9ccep+8
-LOG -> 0x1.229e69b22bb76p+8
-LOG -> 0x1.21e424307352cp+8
-LOG -> 0x1.21f66d4fe4e1dp+8
-LOG -> 0x1.220ef06e5e377p+8
-LOG -> 0x1.2217862f1d73ap+8
-LOG -> 0x1.220d345b74521p+8
-LOG -> 0x1.21ef73eeaea87p+8
-LOG -> 0x1.21bffd15c83d5p+8
-LOG -> 0x1.2182f77e3d452p+8
-LOG -> 0x1.213dd2000000bp+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0abc8eee394ecp-2
-LOG -> 0x1.0aa41107d0b27p-2
-LOG -> 0x1.0ac82c2de6befp-2
-LOG -> 0x1.24fe5e9b67ed2p-2
-LOG -> 0x1.95891e9e2fd07p-2
-LOG -> 0x1.c428880d548d4p-2
-LOG -> 0x1.e0a3f90fa6b70p-2
-LOG -> 0x1.f627c9117aa1ap-2
-LOG -> 0x1.043d71b8d2bbbp-1
-LOG -> 0x1.0cbdaec66324ap-1
-LOG -> 0x1.153718929be1ep-1
-LOG -> 0x1.1e427f5afea0cp-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0abc8eee394ecp-2
-diffusion -> 	 soil_q: 0x1.0aea41c918f48p-2
-diffusion -> 	 soil_q: 0x1.2abb2cbce1b54p-2
-diffusion -> 	 soil_q: 0x1.9783245bd500bp-2
-diffusion -> 	 soil_q: 0x1.c4e772d12f5f4p-2
-diffusion -> 	 soil_q: 0x1.e0e5fe571d426p-2
-diffusion -> 	 soil_q: 0x1.f6267a52e9d72p-2
-diffusion -> 	 soil_q: 0x1.0426c06f0ca8cp-1
-diffusion -> 	 soil_q: 0x1.0c960263b5a09p-1
-diffusion -> 	 soil_q: 0x1.14fff124f325bp-1
-diffusion -> 	 soil_q: 0x1.1dfa6220ba498p-1
---------------
-[UtahLSM: Run] 		 Running for time 24600.00 of 33000.00----BEFORET---
-LOG -> 0x1.2628eadce9ccep+8
-LOG -> 0x1.25d4eadce9ccep+8
-LOG -> 0x1.229e69b22bb76p+8
-LOG -> 0x1.21e424307352cp+8
-LOG -> 0x1.21f66d4fe4e1dp+8
-LOG -> 0x1.220ef06e5e377p+8
-LOG -> 0x1.2217862f1d73ap+8
-LOG -> 0x1.220d345b74521p+8
-LOG -> 0x1.21ef73eeaea87p+8
-LOG -> 0x1.21bffd15c83d5p+8
-LOG -> 0x1.2182f77e3d452p+8
-LOG -> 0x1.213dd2000000bp+8
---------------
-----AFTERT----
-LOG -> 0x1.2628eadce9ccep+8
-LOG -> 0x1.22db9b6697ef5p+8
-LOG -> 0x1.21fde8a777a3cp+8
-LOG -> 0x1.21fbb05359638p+8
-LOG -> 0x1.220c0987b49bep+8
-LOG -> 0x1.22118741b7729p+8
-LOG -> 0x1.22069f99d398ep+8
-LOG -> 0x1.21e9abdc19d24p+8
-LOG -> 0x1.21bbcc54ab24cp+8
-LOG -> 0x1.2180c645978e1p+8
-LOG -> 0x1.213dd2000000bp+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0ade82b9c2af9p-2
-LOG -> 0x1.0abc8eee394ecp-2
-LOG -> 0x1.0aea41c918f48p-2
-LOG -> 0x1.2abb2cbce1b54p-2
-LOG -> 0x1.9783245bd500bp-2
-LOG -> 0x1.c4e772d12f5f4p-2
-LOG -> 0x1.e0e5fe571d426p-2
-LOG -> 0x1.f6267a52e9d72p-2
-LOG -> 0x1.0426c06f0ca8cp-1
-LOG -> 0x1.0c960263b5a09p-1
-LOG -> 0x1.14fff124f325bp-1
-LOG -> 0x1.1dfa6220ba498p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0ade82b9c2af9p-2
-diffusion -> 	 soil_q: 0x1.0b1804b1be64bp-2
-diffusion -> 	 soil_q: 0x1.307f6718b9006p-2
-diffusion -> 	 soil_q: 0x1.995d4d2fd517ep-2
-diffusion -> 	 soil_q: 0x1.c5993f36b4138p-2
-diffusion -> 	 soil_q: 0x1.e12254bc2fb9fp-2
-diffusion -> 	 soil_q: 0x1.f622eddad616ep-2
-diffusion -> 	 soil_q: 0x1.040fe059bf1bfp-1
-diffusion -> 	 soil_q: 0x1.0c6ec0c069086p-1
-diffusion -> 	 soil_q: 0x1.14c9ac6b049fcp-1
-diffusion -> 	 soil_q: 0x1.1db3a25c3db64p-1
---------------
-[UtahLSM: Run] 		 Running for time 25200.00 of 33000.00----BEFORET---
-LOG -> 0x1.26b4eadce9ccep+8
-LOG -> 0x1.2628eadce9ccep+8
-LOG -> 0x1.22db9b6697ef5p+8
-LOG -> 0x1.21fde8a777a3cp+8
-LOG -> 0x1.21fbb05359638p+8
-LOG -> 0x1.220c0987b49bep+8
-LOG -> 0x1.22118741b7729p+8
-LOG -> 0x1.22069f99d398ep+8
-LOG -> 0x1.21e9abdc19d24p+8
-LOG -> 0x1.21bbcc54ab24cp+8
-LOG -> 0x1.2180c645978e1p+8
-LOG -> 0x1.213dd2000000bp+8
---------------
-----AFTERT----
-LOG -> 0x1.26b4eadce9ccep+8
-LOG -> 0x1.231ba0442b067p+8
-LOG -> 0x1.2218c7d246c6cp+8
-LOG -> 0x1.220284392190ep+8
-LOG -> 0x1.220a665ba316ep+8
-LOG -> 0x1.220c68b3206a3p+8
-LOG -> 0x1.220096dbc0392p+8
-LOG -> 0x1.21e431bcb9746p+8
-LOG -> 0x1.21b7c16184b82p+8
-LOG -> 0x1.217ea38d44334p+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0b0be5b9bc712p-2
-LOG -> 0x1.0ade82b9c2af9p-2
-LOG -> 0x1.0b1804b1be64bp-2
-LOG -> 0x1.307f6718b9006p-2
-LOG -> 0x1.995d4d2fd517ep-2
-LOG -> 0x1.c5993f36b4138p-2
-LOG -> 0x1.e12254bc2fb9fp-2
-LOG -> 0x1.f622eddad616ep-2
-LOG -> 0x1.040fe059bf1bfp-1
-LOG -> 0x1.0c6ec0c069086p-1
-LOG -> 0x1.14c9ac6b049fcp-1
-LOG -> 0x1.1db3a25c3db64p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0b0be5b9bc712p-2
-diffusion -> 	 soil_q: 0x1.0b540c05158b5p-2
-diffusion -> 	 soil_q: 0x1.3642409f316cep-2
-diffusion -> 	 soil_q: 0x1.9b1cd2d1fa8c9p-2
-diffusion -> 	 soil_q: 0x1.c63f92a617b56p-2
-diffusion -> 	 soil_q: 0x1.e15981d179853p-2
-diffusion -> 	 soil_q: 0x1.f61d4ab352abap-2
-diffusion -> 	 soil_q: 0x1.03f8d3553a6c7p-1
-diffusion -> 	 soil_q: 0x1.0c47e431bc327p-1
-diffusion -> 	 soil_q: 0x1.149440eea95a6p-1
-diffusion -> 	 soil_q: 0x1.1d6e337dc8a97p-1
---------------
-[UtahLSM: Run] 		 Running for time 25800.00 of 33000.00----BEFORET---
-LOG -> 0x1.2760eadce9ccep+8
-LOG -> 0x1.26b4eadce9ccep+8
-LOG -> 0x1.231ba0442b067p+8
-LOG -> 0x1.2218c7d246c6cp+8
-LOG -> 0x1.220284392190ep+8
-LOG -> 0x1.220a665ba316ep+8
-LOG -> 0x1.220c68b3206a3p+8
-LOG -> 0x1.220096dbc0392p+8
-LOG -> 0x1.21e431bcb9746p+8
-LOG -> 0x1.21b7c16184b82p+8
-LOG -> 0x1.217ea38d44334p+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----AFTERT----
-LOG -> 0x1.2760eadce9ccep+8
-LOG -> 0x1.2360aa19c7bc0p+8
-LOG -> 0x1.223541d202236p+8
-LOG -> 0x1.220af1f39e59bp+8
-LOG -> 0x1.220a06310781fp+8
-LOG -> 0x1.22082ebf04dfep+8
-LOG -> 0x1.21fb21b0e51aep+8
-LOG -> 0x1.21df0d607fabcp+8
-LOG -> 0x1.21b3e23ff9a43p+8
-LOG -> 0x1.217c928872a25p+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0b4730af89149p-2
-LOG -> 0x1.0b0be5b9bc712p-2
-LOG -> 0x1.0b540c05158b5p-2
-LOG -> 0x1.3642409f316cep-2
-LOG -> 0x1.9b1cd2d1fa8c9p-2
-LOG -> 0x1.c63f92a617b56p-2
-LOG -> 0x1.e15981d179853p-2
-LOG -> 0x1.f61d4ab352abap-2
-LOG -> 0x1.03f8d3553a6c7p-1
-LOG -> 0x1.0c47e431bc327p-1
-LOG -> 0x1.149440eea95a6p-1
-LOG -> 0x1.1d6e337dc8a97p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0b4730af89149p-2
-diffusion -> 	 soil_q: 0x1.0ba1579b5abaap-2
-diffusion -> 	 soil_q: 0x1.3bfb72f47c111p-2
-diffusion -> 	 soil_q: 0x1.9cc5fa287f020p-2
-diffusion -> 	 soil_q: 0x1.c6dbf2f3b22e1p-2
-diffusion -> 	 soil_q: 0x1.e18c0f2d32180p-2
-diffusion -> 	 soil_q: 0x1.f615bf28a1aa4p-2
-diffusion -> 	 soil_q: 0x1.03e19e311e494p-1
-diffusion -> 	 soil_q: 0x1.0c2169553f934p-1
-diffusion -> 	 soil_q: 0x1.145fa6cd630cdp-1
-diffusion -> 	 soil_q: 0x1.1d2a099693126p-1
---------------
-[UtahLSM: Run] 		 Running for time 26400.00 of 33000.00----BEFORET---
-LOG -> 0x1.27eceadce9ccep+8
-LOG -> 0x1.2760eadce9ccep+8
-LOG -> 0x1.2360aa19c7bc0p+8
-LOG -> 0x1.223541d202236p+8
-LOG -> 0x1.220af1f39e59bp+8
-LOG -> 0x1.220a06310781fp+8
-LOG -> 0x1.22082ebf04dfep+8
-LOG -> 0x1.21fb21b0e51aep+8
-LOG -> 0x1.21df0d607fabcp+8
-LOG -> 0x1.21b3e23ff9a43p+8
-LOG -> 0x1.217c928872a25p+8
-LOG -> 0x1.213dd2000000ap+8
---------------
-----AFTERT----
-LOG -> 0x1.27eceadce9ccep+8
-LOG -> 0x1.23a71bfc029c5p+8
-LOG -> 0x1.2253673515be1p+8
-LOG -> 0x1.2215021f73005p+8
-LOG -> 0x1.220aeaef119f9p+8
-LOG -> 0x1.2204ddb745609p+8
-LOG -> 0x1.21f646e44fa9dp+8
-LOG -> 0x1.21da45eb380b1p+8
-LOG -> 0x1.21b03494de2bep+8
-LOG -> 0x1.217a9646236e8p+8
-LOG -> 0x1.213dd2000000cp+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0b93eb96a9bc5p-2
-LOG -> 0x1.0b4730af89149p-2
-LOG -> 0x1.0ba1579b5abaap-2
-LOG -> 0x1.3bfb72f47c111p-2
-LOG -> 0x1.9cc5fa287f020p-2
-LOG -> 0x1.c6dbf2f3b22e1p-2
-LOG -> 0x1.e18c0f2d32180p-2
-LOG -> 0x1.f615bf28a1aa4p-2
-LOG -> 0x1.03e19e311e494p-1
-LOG -> 0x1.0c2169553f934p-1
-LOG -> 0x1.145fa6cd630cdp-1
-LOG -> 0x1.1d2a099693126p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0b93eb96a9bc5p-2
-diffusion -> 	 soil_q: 0x1.0c034e0c37992p-2
-diffusion -> 	 soil_q: 0x1.41a32a7c6a670p-2
-diffusion -> 	 soil_q: 0x1.9e5c3425e97d2p-2
-diffusion -> 	 soil_q: 0x1.c76fc1d104a09p-2
-diffusion -> 	 soil_q: 0x1.e1ba862424708p-2
-diffusion -> 	 soil_q: 0x1.f60c7eeecd588p-2
-diffusion -> 	 soil_q: 0x1.03ca484c355d3p-1
-diffusion -> 	 soil_q: 0x1.0bfb4eafafd76p-1
-diffusion -> 	 soil_q: 0x1.142bd757db511p-1
-diffusion -> 	 soil_q: 0x1.1ce7195181f4ep-1
---------------
-[UtahLSM: Run] 		 Running for time 27000.00 of 33000.00----BEFORET---
-LOG -> 0x1.2860eadce9ccep+8
-LOG -> 0x1.27eceadce9ccep+8
-LOG -> 0x1.23a71bfc029c5p+8
-LOG -> 0x1.2253673515be1p+8
-LOG -> 0x1.2215021f73005p+8
-LOG -> 0x1.220aeaef119f9p+8
-LOG -> 0x1.2204ddb745609p+8
-LOG -> 0x1.21f646e44fa9dp+8
-LOG -> 0x1.21da45eb380b1p+8
-LOG -> 0x1.21b03494de2bep+8
-LOG -> 0x1.217a9646236e8p+8
-LOG -> 0x1.213dd2000000cp+8
---------------
-----AFTERT----
-LOG -> 0x1.2860eadce9ccep+8
-LOG -> 0x1.23ecb11ba0f5ap+8
-LOG -> 0x1.22730c5f7bb45p+8
-LOG -> 0x1.2220b48273970p+8
-LOG -> 0x1.220d168730372p+8
-LOG -> 0x1.220279dc6fc58p+8
-LOG -> 0x1.21f20cab93512p+8
-LOG -> 0x1.21d5e1e93ed90p+8
-LOG -> 0x1.21acbda5295c2p+8
-LOG -> 0x1.2178b1abfb0a3p+8
-LOG -> 0x1.213dd2000000dp+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0bf551c33a25fp-2
-LOG -> 0x1.0b93eb96a9bc5p-2
-LOG -> 0x1.0c034e0c37992p-2
-LOG -> 0x1.41a32a7c6a670p-2
-LOG -> 0x1.9e5c3425e97d2p-2
-LOG -> 0x1.c76fc1d104a09p-2
-LOG -> 0x1.e1ba862424708p-2
-LOG -> 0x1.f60c7eeecd588p-2
-LOG -> 0x1.03ca484c355d3p-1
-LOG -> 0x1.0bfb4eafafd76p-1
-LOG -> 0x1.142bd757db511p-1
-LOG -> 0x1.1ce7195181f4ep-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0bf551c33a25fp-2
-diffusion -> 	 soil_q: 0x1.0c7db29e27a72p-2
-diffusion -> 	 soil_q: 0x1.4731f8c302e89p-2
-diffusion -> 	 soil_q: 0x1.9fe23d2403abdp-2
-diffusion -> 	 soil_q: 0x1.c7fc3aa4d6bd2p-2
-diffusion -> 	 soil_q: 0x1.e1e56c39aa06dp-2
-diffusion -> 	 soil_q: 0x1.f601c1179aeb8p-2
-diffusion -> 	 soil_q: 0x1.03b2db0762e2ap-1
-diffusion -> 	 soil_q: 0x1.0bd59457701adp-1
-diffusion -> 	 soil_q: 0x1.13f8cce3f98afp-1
-diffusion -> 	 soil_q: 0x1.1ca557ebf4085p-1
---------------
-[UtahLSM: Run] 		 Running for time 27600.00 of 33000.00----BEFORET---
-LOG -> 0x1.290ceadce9ccep+8
-LOG -> 0x1.2860eadce9ccep+8
-LOG -> 0x1.23ecb11ba0f5ap+8
-LOG -> 0x1.22730c5f7bb45p+8
-LOG -> 0x1.2220b48273970p+8
-LOG -> 0x1.220d168730372p+8
-LOG -> 0x1.220279dc6fc58p+8
-LOG -> 0x1.21f20cab93512p+8
-LOG -> 0x1.21d5e1e93ed90p+8
-LOG -> 0x1.21acbda5295c2p+8
-LOG -> 0x1.2178b1abfb0a3p+8
-LOG -> 0x1.213dd2000000dp+8
---------------
-----AFTERT----
-LOG -> 0x1.290ceadce9ccep+8
-LOG -> 0x1.243665a2cdc74p+8
-LOG -> 0x1.22948e17a9cf8p+8
-LOG -> 0x1.222e1674915fcp+8
-LOG -> 0x1.22108d8b3b38ap+8
-LOG -> 0x1.220107db7c521p+8
-LOG -> 0x1.21ee78e2716b8p+8
-LOG -> 0x1.21d1e7691b902p+8
-LOG -> 0x1.21a9825a4a7c4p+8
-LOG -> 0x1.2176e7741b82dp+8
-LOG -> 0x1.213dd2000000ep+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0c6f1b300c276p-2
-LOG -> 0x1.0bf551c33a25fp-2
-LOG -> 0x1.0c7db29e27a72p-2
-LOG -> 0x1.4731f8c302e89p-2
-LOG -> 0x1.9fe23d2403abdp-2
-LOG -> 0x1.c7fc3aa4d6bd2p-2
-LOG -> 0x1.e1e56c39aa06dp-2
-LOG -> 0x1.f601c1179aeb8p-2
-LOG -> 0x1.03b2db0762e2ap-1
-LOG -> 0x1.0bd59457701adp-1
-LOG -> 0x1.13f8cce3f98afp-1
-LOG -> 0x1.1ca557ebf4085p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0c6f1b300c276p-2
-diffusion -> 	 soil_q: 0x1.0d1493482baa9p-2
-diffusion -> 	 soil_q: 0x1.4ca0d0b3f421dp-2
-diffusion -> 	 soil_q: 0x1.a15a38e6d05dep-2
-diffusion -> 	 soil_q: 0x1.c8827224037dcp-2
-diffusion -> 	 soil_q: 0x1.e20d40495d571p-2
-diffusion -> 	 soil_q: 0x1.f5f5be1a88167p-2
-diffusion -> 	 soil_q: 0x1.039b6130abff6p-1
-diffusion -> 	 soil_q: 0x1.0bb03ba0f60edp-1
-diffusion -> 	 soil_q: 0x1.13c682a54b9c6p-1
-diffusion -> 	 soil_q: 0x1.1c64bb2eaed38p-1
---------------
-[UtahLSM: Run] 		 Running for time 28200.00 of 33000.00----BEFORET---
-LOG -> 0x1.29cdeadce9ccep+8
-LOG -> 0x1.290ceadce9ccep+8
-LOG -> 0x1.243665a2cdc74p+8
-LOG -> 0x1.22948e17a9cf8p+8
-LOG -> 0x1.222e1674915fcp+8
-LOG -> 0x1.22108d8b3b38ap+8
-LOG -> 0x1.220107db7c521p+8
-LOG -> 0x1.21ee78e2716b8p+8
-LOG -> 0x1.21d1e7691b902p+8
-LOG -> 0x1.21a9825a4a7c4p+8
-LOG -> 0x1.2176e7741b82dp+8
-LOG -> 0x1.213dd2000000ep+8
---------------
-----AFTERT----
-LOG -> 0x1.29cdeadce9ccep+8
-LOG -> 0x1.248562b53b152p+8
-LOG -> 0x1.22b85770598a7p+8
-LOG -> 0x1.223d41b7d5894p+8
-LOG -> 0x1.221558b529a69p+8
-LOG -> 0x1.22008d78f9a7dp+8
-LOG -> 0x1.21eb91592857ap+8
-LOG -> 0x1.21ce5c1d09646p+8
-LOG -> 0x1.21a6874be8732p+8
-LOG -> 0x1.21753a2de7e19p+8
-LOG -> 0x1.213dd20000010p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0d054199914c5p-2
-LOG -> 0x1.0c6f1b300c276p-2
-LOG -> 0x1.0d1493482baa9p-2
-LOG -> 0x1.4ca0d0b3f421dp-2
-LOG -> 0x1.a15a38e6d05dep-2
-LOG -> 0x1.c8827224037dcp-2
-LOG -> 0x1.e20d40495d571p-2
-LOG -> 0x1.f5f5be1a88167p-2
-LOG -> 0x1.039b6130abff6p-1
-LOG -> 0x1.0bb03ba0f60edp-1
-LOG -> 0x1.13c682a54b9c6p-1
-LOG -> 0x1.1c64bb2eaed38p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0d054199914c5p-2
-diffusion -> 	 soil_q: 0x1.0dcc2d56d82ebp-2
-diffusion -> 	 soil_q: 0x1.51e90e75823e8p-2
-diffusion -> 	 soil_q: 0x1.a2c5ca9c265fep-2
-diffusion -> 	 soil_q: 0x1.c9035711c738bp-2
-diffusion -> 	 soil_q: 0x1.e232785fbd62bp-2
-diffusion -> 	 soil_q: 0x1.f5e8ae119adc2p-2
-diffusion -> 	 soil_q: 0x1.0383e6736673ep-1
-diffusion -> 	 soil_q: 0x1.0b8b46cca6bd1p-1
-diffusion -> 	 soil_q: 0x1.1394f48651d36p-1
-diffusion -> 	 soil_q: 0x1.1c253966e48c0p-1
---------------
-[UtahLSM: Run] 		 Running for time 28800.00 of 33000.00----BEFORET---
-LOG -> 0x1.29d94edce9ccep+8
-LOG -> 0x1.29cdeadce9ccep+8
-LOG -> 0x1.248562b53b152p+8
-LOG -> 0x1.22b85770598a7p+8
-LOG -> 0x1.223d41b7d5894p+8
-LOG -> 0x1.221558b529a69p+8
-LOG -> 0x1.22008d78f9a7dp+8
-LOG -> 0x1.21eb91592857ap+8
-LOG -> 0x1.21ce5c1d09646p+8
-LOG -> 0x1.21a6874be8732p+8
-LOG -> 0x1.21753a2de7e19p+8
-LOG -> 0x1.213dd20000010p+8
---------------
-----AFTERT----
-LOG -> 0x1.29d94edce9ccep+8
-LOG -> 0x1.24c949b70a863p+8
-LOG -> 0x1.22dd08b7739dcp+8
-LOG -> 0x1.224e13503d104p+8
-LOG -> 0x1.221b77dd80f2fp+8
-LOG -> 0x1.22010f36868d0p+8
-LOG -> 0x1.21e95b810c51dp+8
-LOG -> 0x1.21cb455e095cfp+8
-LOG -> 0x1.21a3d0c6a2d7ap+8
-LOG -> 0x1.2173ac3fe2574p+8
-LOG -> 0x1.213dd20000011p+8
---------------
-----BEFOREQ---
-LOG -> 0x1.0dbc2df70a2b2p-2
-LOG -> 0x1.0d054199914c5p-2
-LOG -> 0x1.0dcc2d56d82ebp-2
-LOG -> 0x1.51e90e75823e8p-2
-LOG -> 0x1.a2c5ca9c265fep-2
-LOG -> 0x1.c9035711c738bp-2
-LOG -> 0x1.e232785fbd62bp-2
-LOG -> 0x1.f5e8ae119adc2p-2
-LOG -> 0x1.0383e6736673ep-1
-LOG -> 0x1.0b8b46cca6bd1p-1
-LOG -> 0x1.1394f48651d36p-1
-LOG -> 0x1.1c253966e48c0p-1
---------------
-----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0dbc2df70a2b2p-2
-diffusion -> 	 soil_q: 0x1.0ea8c92d96a04p-2
-diffusion -> 	 soil_q: 0x1.57048b0e72c1ap-2
-diffusion -> 	 soil_q: 0x1.a42628ef7a2d6p-2
-diffusion -> 	 soil_q: 0x1.c97fb3ae4c303p-2
-diffusion -> 	 soil_q: 0x1.e255802a8ec7cp-2
-diffusion -> 	 soil_q: 0x1.f5dac738a43bfp-2
-diffusion -> 	 soil_q: 0x1.036c76d479d55p-1
-diffusion -> 	 soil_q: 0x1.0b66b8b8c5d6cp-1
-diffusion -> 	 soil_q: 0x1.13641f0301f4ep-1
-diffusion -> 	 soil_q: 0x1.1be6c95f4de17p-1
---------------
-[UtahLSM: Run] 		 Running for time 29400.00 of 33000.00<class 'numpy.float64'>
-update_fields -> 	 tstep: 0x1.2c00000000000p+9
-update_fields -> 	 t utc: 0x1.cb60000000000p+14
-update_fields -> 	 atm_U: 0x1.5e45980000000p+1
-update_fields -> 	 atm_T: 0x1.2973320000000p+8
-update_fields -> 	 atm_q: 0x1.7148a40000000p-7
-update_fields -> 	 atm_p: 0x1.ff26660000000p+9
-update_fields -> 	 R_net: 0x1.6a79a60000000p+8
-
-LOG -> 0x1.29d94edce9ccep+8
-LOG -> 0x1.0dbc2df70a2b2p-2
-LOG -> 0x1.371741926bc10p+4
-LOG -> 0x1.a870aadc5449fp+8
-LOG -> -0x1.3ee61e602f843p+6
+[UtahLSM: Run] 		 Running for time: 600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 1200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 1800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 2400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 3000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 3600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 4200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 4800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 5400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 6000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 6600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 7200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 7800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 8400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 9000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 9600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 10200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 10800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 11400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 12000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 12600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 13200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 13800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 14400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 15000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 15600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 16200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 16800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 17400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 18000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 18600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 19200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 19800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 20400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 21000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 21600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 22200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 22800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 23400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 24000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 24600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 25200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 25800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 26400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 27000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 27600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 28200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 28800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 29400.00 of 33000.00
+--------------
+update_fields		 tstep: 0x1.2c00000000000p+9
+update_fields		 t utc: 0x1.cb60000000000p+14
+update_fields		 atm_U: 0x1.5e45980000000p+1
+update_fields		 atm_T: 0x1.2973320000000p+8
+update_fields		 atm_q: 0x1.7148a40000000p-7
+update_fields		 atm_p: 0x1.ff26660000000p+9
+update_fields		 R_net: 0x1.6a79a60000000p+8
+--------------
+--------------
+run					 sfc_T_new: 0x1.2881894c7a4bcp+8
+run					 sfc_q_new: 0x1.0dab01d4d5d42p-2
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.0f2e4a4910b98p-6
+compute_fluxes		 ghf: 0x1.5555b7f1f8526p+5
+compute_fluxes		 ust: 0x1.13dec5ca1b8aep-2
+compute_fluxes		 wT: -0x1.e135f7d47ca6ep-6
+compute_fluxes		 wq: 0x1.4eb706faef5b1p-14
+compute_fluxes		 wTv: -0x1.e3e243ae37199p-7
+compute_fluxes		 obl: 0x1.94ed09849c360p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.0f2e4a4910b98p-6
+compute_fluxes		 ghf: 0x1.5555b7f1f8526p+5
+compute_fluxes		 ust: 0x1.de5e7cc72a77ep-3
+compute_fluxes		 wT: -0x1.97f8dc8746acbp-6
+compute_fluxes		 wq: 0x1.1bc5be9510f77p-14
+compute_fluxes		 wTv: -0x1.9a3d02956f17ap-7
+compute_fluxes		 obl: 0x1.374a49d1f5f65p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.0f2e4a4910b98p-6
+compute_fluxes		 ghf: 0x1.5555b7f1f8526p+5
+compute_fluxes		 ust: 0x1.cfe20817d3a1bp-3
+compute_fluxes		 wT: -0x1.8a038cda5bb7ap-6
+compute_fluxes		 wq: 0x1.1210434159315p-14
+compute_fluxes		 wTv: -0x1.8c33d98d49eacp-7
+compute_fluxes		 obl: 0x1.25e9fb77ac8b4p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.0f2e4a4910b98p-6
+compute_fluxes		 ghf: 0x1.5555b7f1f8526p+5
+compute_fluxes		 ust: 0x1.cc51b0b2e34cep-3
+compute_fluxes		 wT: -0x1.8694fc8102206p-6
+compute_fluxes		 wq: 0x1.0fad295f47fe2p-14
+compute_fluxes		 wTv: -0x1.88c067dbcb537p-7
+compute_fluxes		 obl: 0x1.21b71b572ac0ep+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.0f2e4a4910b98p-6
+compute_fluxes		 ghf: 0x1.5555b7f1f8526p+5
+compute_fluxes		 ust: 0x1.cb671af40219cp-3
+compute_fluxes		 wT: -0x1.85b31f15eed32p-6
+compute_fluxes		 wq: 0x1.0f100ea1898c9p-14
+compute_fluxes		 wTv: -0x1.87dd4940eaff5p-7
+compute_fluxes		 obl: 0x1.20a3f9463e57cp+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.0f2e4a4910b98p-6
+compute_fluxes		 ghf: 0x1.5555b7f1f8526p+5
+compute_fluxes		 ust: 0x1.cb2a1d91f57e9p-3
+compute_fluxes		 wT: -0x1.857866b116837p-6
+compute_fluxes		 wq: 0x1.0ee7369351ba6p-14
+compute_fluxes		 wTv: -0x1.87a23d5b8e2e7p-7
+compute_fluxes		 obl: 0x1.205c866fa37fbp+6
+--------------
+--------------
+compute_seb			 Qh: -0x1.cbc37cd78db57p+4
+compute_seb			 Ql: 0x1.7d0ba17072a8ap+7
+compute_seb			 Qg: 0x1.5555b7f1f8526p+5
+compute_seb			 Rn: 0x1.6a79a60000000p+8
+compute_seb			 SEB: 0x1.3c0aac2e00f96p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.325a6b3721284p-6
+compute_fluxes		 ghf: 0x1.213fe668c6270p+6
+compute_fluxes		 ust: 0x1.cb1a36995252cp-3
+compute_fluxes		 wT: 0x1.671783d646bfbp-11
+compute_fluxes		 wq: 0x1.7cf2eed35c5b6p-14
+compute_fluxes		 wTv: 0x1.1b8a64d7c93b5p-6
+compute_fluxes		 obl: -0x1.8e217a49dbc7ep+5
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.325a6b3721284p-6
+compute_fluxes		 ghf: 0x1.213fe668c6270p+6
+compute_fluxes		 ust: 0x1.2afc4cae0cb5ep-2
+compute_fluxes		 wT: 0x1.eed5352f6a9a2p-11
+compute_fluxes		 wq: 0x1.0679e14be0847p-13
+compute_fluxes		 wTv: 0x1.86b8e9c3f6523p-6
+compute_fluxes		 obl: -0x1.3f31a7e14e4c9p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.325a6b3721284p-6
+compute_fluxes		 ghf: 0x1.213fe668c6270p+6
+compute_fluxes		 ust: 0x1.217269f1a66c7p-2
+compute_fluxes		 wT: 0x1.d90d1e709f24fp-11
+compute_fluxes		 wq: 0x1.f5d84479d25dap-14
+compute_fluxes		 wTv: 0x1.758601e69a5a1p-6
+compute_fluxes		 obl: -0x1.2ef1781650983p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.325a6b3721284p-6
+compute_fluxes		 ghf: 0x1.213fe668c6270p+6
+compute_fluxes		 ust: 0x1.225f5d8f9ef41p-2
+compute_fluxes		 wT: 0x1.db1f983d498dfp-11
+compute_fluxes		 wq: 0x1.f80b083884d92p-14
+compute_fluxes		 wTv: 0x1.7728dfa25143ap-6
+compute_fluxes		 obl: -0x1.30865c15dcf5ep+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.325a6b3721284p-6
+compute_fluxes		 ghf: 0x1.213fe668c6270p+6
+compute_fluxes		 ust: 0x1.224766e89c423p-2
+compute_fluxes		 wT: 0x1.dae9d71d4da42p-11
+compute_fluxes		 wq: 0x1.f7d2017cd2892p-14
+compute_fluxes		 wTv: 0x1.76fe6dc924ed2p-6
+compute_fluxes		 obl: -0x1.305d6cc53e080p+6
+--------------
+--------------
+compute_seb			 Qh: 0x1.18505ed2d99bfp+0
+compute_seb			 Ql: 0x1.6254922313d6ap+8
+compute_seb			 Qg: 0x1.213fe668c6270p+6
+compute_seb			 Rn: 0x1.6a79a60000000p+8
+compute_seb			 SEB: -0x1.050cd87060e80p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.204af1e5797d8p-6
+compute_fluxes		 ghf: 0x1.cbeac261c2502p+5
+compute_fluxes		 ust: 0x1.2249d0c579e7ap-2
+compute_fluxes		 wT: -0x1.f4313ae7f95a0p-7
+compute_fluxes		 wq: 0x1.ad142a707ba7ep-14
+compute_fluxes		 wTv: 0x1.c50667135dc00p-9
+compute_fluxes		 obl: -0x1.f7edb1ea80ac8p+8
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.204af1e5797d8p-6
+compute_fluxes		 ghf: 0x1.cbeac261c2502p+5
+compute_fluxes		 ust: 0x1.0f818bd6c4023p-2
+compute_fluxes		 wT: -0x1.c9e6438284a93p-7
+compute_fluxes		 wq: 0x1.88cc7eb90f7cap-14
+compute_fluxes		 wTv: 0x1.9eb866a83debcp-9
+compute_fluxes		 obl: -0x1.c262fa0b455d7p+8
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.204af1e5797d8p-6
+compute_fluxes		 ghf: 0x1.cbeac261c2502p+5
+compute_fluxes		 ust: 0x1.10038534b8478p-2
+compute_fluxes		 wT: -0x1.cafc5dd092cbap-7
+compute_fluxes		 wq: 0x1.89bb0f29ea847p-14
+compute_fluxes		 wTv: 0x1.9fb4477569f70p-9
+compute_fluxes		 obl: -0x1.c3d894e96bdbfp+8
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.204af1e5797d8p-6
+compute_fluxes		 ghf: 0x1.cbeac261c2502p+5
+compute_fluxes		 ust: 0x1.0fff98fc0c8f4p-2
+compute_fluxes		 wT: -0x1.caf3f5f4abaa9p-7
+compute_fluxes		 wq: 0x1.89b3d93d5a8a7p-14
+compute_fluxes		 wTv: 0x1.9facaa842f1d4p-9
+compute_fluxes		 obl: -0x1.c3cd4efe0fe5cp+8
+--------------
+--------------
+compute_seb			 Qh: -0x1.0ee4b641659adp+4
+compute_seb			 Ql: 0x1.14e2cbd607d54p+8
+compute_seb			 Qg: 0x1.cbeac261c2502p+5
+compute_seb			 Rn: 0x1.6a79a60000000p+8
+compute_seb			 SEB: 0x1.683e6a0eb1d38p+5
+--------------
+--------------
+compute_dseb		 heat_cap: 0x1.98e53c6461e05p+20
+compute_dseb		 dSEB_dT: 0x1.764adcafb4bc7p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.29339c0c5341ep-6
+compute_fluxes		 ghf: 0x1.039aa3ccd3a79p+6
+compute_fluxes		 ust: 0x1.0fffb7328d99cp-2
+compute_fluxes		 wT: -0x1.afb7c1821cbc1p-8
+compute_fluxes		 wq: 0x1.ab8ada07d1739p-14
+compute_fluxes		 wTv: 0x1.8b64a2f61f154p-7
+compute_fluxes		 obl: -0x1.dafaadc3ff33bp+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.29339c0c5341ep-6
+compute_fluxes		 ghf: 0x1.039aa3ccd3a79p+6
+compute_fluxes		 ust: 0x1.1b582e592e315p-2
+compute_fluxes		 wT: -0x1.c756c0e1f9995p-8
+compute_fluxes		 wq: 0x1.c2ef5d722dc6ap-14
+compute_fluxes		 wTv: 0x1.a106d72840a56p-7
+compute_fluxes		 obl: -0x1.fd13727c96ec1p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.29339c0c5341ep-6
+compute_fluxes		 ghf: 0x1.039aa3ccd3a79p+6
+compute_fluxes		 ust: 0x1.1a6fec489e007p-2
+compute_fluxes		 wT: -0x1.c5655401f1798p-8
+compute_fluxes		 wq: 0x1.c102c029957e9p-14
+compute_fluxes		 wTv: 0x1.9f3f44ba7afe4p-7
+compute_fluxes		 obl: -0x1.fa5cbe7cc2f8ep+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.29339c0c5341ep-6
+compute_fluxes		 ghf: 0x1.039aa3ccd3a79p+6
+compute_fluxes		 ust: 0x1.1a816f3da95ffp-2
+compute_fluxes		 wT: -0x1.c58ac0214ba62p-8
+compute_fluxes		 wq: 0x1.c127cfa1329cbp-14
+compute_fluxes		 wTv: 0x1.9f618ac7d088fp-7
+compute_fluxes		 obl: -0x1.fa91244604292p+6
+--------------
+--------------
+compute_seb			 Qh: -0x1.0bb31a371bc0dp+3
+compute_seb			 Ql: 0x1.3be2a24455a6ep+8
+compute_seb			 Qg: 0x1.039aa3ccd3a79p+6
+compute_seb			 Rn: 0x1.6a79a60000000p+8
+compute_seb			 SEB: -0x1.3e418cba36580p+3
+--------------
+--------------
+compute_dseb		 heat_cap: 0x1.98e53c6461e05p+20
+compute_dseb		 dSEB_dT: 0x1.7a09967a41a92p+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.24b799aed2e76p-6
+compute_fluxes		 ghf: 0x1.e99004fdb4cfap+5
+compute_fluxes		 ust: 0x1.1a801bb207eeep-2
+compute_fluxes		 wT: -0x1.62744fdfabe78p-7
+compute_fluxes		 wq: 0x1.af4020c59dd69p-14
+compute_fluxes		 wTv: 0x1.06195efadbc14p-7
+compute_fluxes		 obl: -0x1.916341b98b56bp+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.24b799aed2e76p-6
+compute_fluxes		 ghf: 0x1.e99004fdb4cfap+5
+compute_fluxes		 ust: 0x1.1579a5a36de9fp-2
+compute_fluxes		 wT: -0x1.5a2bfc3b153f6p-7
+compute_fluxes		 wq: 0x1.a52c692c0b29dp-14
+compute_fluxes		 wTv: 0x1.fff30443c56ccp-8
+compute_fluxes		 obl: -0x1.85724e6bfbf71p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.24b799aed2e76p-6
+compute_fluxes		 ghf: 0x1.e99004fdb4cfap+5
+compute_fluxes		 ust: 0x1.15c14ab7b0751p-2
+compute_fluxes		 wT: -0x1.5aa08c52d593ep-7
+compute_fluxes		 wq: 0x1.a5ba3a6d08211p-14
+compute_fluxes		 wTv: 0x1.004fb3350c0b6p-7
+compute_fluxes		 obl: -0x1.861ceb9f93f02p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.24b799aed2e76p-6
+compute_fluxes		 ghf: 0x1.e99004fdb4cfap+5
+compute_fluxes		 ust: 0x1.15bd3111dc6e0p-2
+compute_fluxes		 wT: -0x1.5a99df57a4f81p-7
+compute_fluxes		 wq: 0x1.a5b21b2d2bc1bp-14
+compute_fluxes		 wTv: 0x1.004ac382ef96dp-7
+compute_fluxes		 obl: -0x1.8613284fbb571p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.26f3aca51ebaep-6
+compute_fluxes		 ghf: 0x1.f862a64bae0f5p+5
+compute_fluxes		 ust: 0x1.15bd6d0c4b4d3p-2
+compute_fluxes		 wT: -0x1.1c2c21106ce37p-7
+compute_fluxes		 wq: 0x1.ae6abcedd80cap-14
+compute_fluxes		 wTv: 0x1.4b30790b9dfe9p-7
+compute_fluxes		 obl: -0x1.2ddd20259045ap+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.26f3aca51ebaep-6
+compute_fluxes		 ghf: 0x1.f862a64bae0f5p+5
+compute_fluxes		 ust: 0x1.1862836f3e5fdp-2
+compute_fluxes		 wT: -0x1.1fba865fecdf1p-7
+compute_fluxes		 wq: 0x1.b3cda759163dcp-14
+compute_fluxes		 wTv: 0x1.4f557ee170ed3p-7
+compute_fluxes		 obl: -0x1.32bb3dbf91b70p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.26f3aca51ebaep-6
+compute_fluxes		 ghf: 0x1.f862a64bae0f5p+5
+compute_fluxes		 ust: 0x1.18346e86d8b50p-2
+compute_fluxes		 wT: -0x1.1f7c2601cd7ddp-7
+compute_fluxes		 wq: 0x1.b36f2d2075056p-14
+compute_fluxes		 wTv: 0x1.4f0ccc8299cfdp-7
+compute_fluxes		 obl: -0x1.326686fa0e270p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.26f3aca51ebaep-6
+compute_fluxes		 ghf: 0x1.f862a64bae0f5p+5
+compute_fluxes		 ust: 0x1.1837864509f2ap-2
+compute_fluxes		 wT: -0x1.1f80553b1e2a2p-7
+compute_fluxes		 wq: 0x1.b37583a35d5b5p-14
+compute_fluxes		 wTv: 0x1.4f11acf8714e6p-7
+compute_fluxes		 obl: -0x1.326c369520df2p+7
+--------------
+--------------
+compute_seb			 Qh: -0x1.53640b038715bp+3
+compute_seb			 Ql: 0x1.3240b34f744bfp+8
+compute_seb			 Qg: 0x1.f862a64bae0f5p+5
+compute_seb			 Rn: 0x1.6a79a60000000p+8
+compute_seb			 SEB: 0x1.e3df1f9915680p+1
+--------------
+--------------
+compute_dseb		 heat_cap: 0x1.98e53c6461e05p+20
+compute_dseb		 dSEB_dT: 0x1.79333ab3f4b3ap+6
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.2813286d7174dp-6
+compute_fluxes		 ghf: 0x1.ffcbf6f2aaaf3p+5
+compute_fluxes		 ust: 0x1.1837511505ff5p-2
+compute_fluxes		 wT: -0x1.ffd6d1aa2506bp-8
+compute_fluxes		 wq: 0x1.b7e3f3d294a4ap-14
+compute_fluxes		 wTv: 0x1.74fc7dc1fe000p-7
+compute_fluxes		 obl: -0x1.1345134e95ad6p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.2813286d7174dp-6
+compute_fluxes		 ghf: 0x1.ffcbf6f2aaaf3p+5
+compute_fluxes		 ust: 0x1.1976c356eb46ep-2
+compute_fluxes		 wT: -0x1.016d713a1fe1bp-7
+compute_fluxes		 wq: 0x1.ba7b7d538b21bp-14
+compute_fluxes		 wTv: 0x1.772f1bf351087p-7
+compute_fluxes		 obl: -0x1.15545e6557320p+7
+--------------
+--------------
+compute_fluxes		 gnd_q: 0x1.2813286d7174dp-6
+compute_fluxes		 ghf: 0x1.ffcbf6f2aaaf3p+5
+compute_fluxes		 ust: 0x1.195fc05795374p-2
+compute_fluxes		 wT: -0x1.01518c4a7bb40p-7
+compute_fluxes		 wq: 0x1.ba4b8b0ac9350p-14
+compute_fluxes		 wTv: 0x1.7706747eeff5cp-7
+compute_fluxes		 obl: -0x1.152e6774b0f74p+7
+--------------
+--------------
+compute_seb			 Qh: -0x1.2fc2b1b409cc3p+3
+compute_seb			 Ql: 0x1.370f79263acbep+8
+compute_seb			 Qg: 0x1.ffcbf6f2aaaf3p+5
+--------------
+solve_smb			 E: 0x1.f82723b3f95e8p-14
+solve_smb			 flux_sm: -0x1.0ab30dceee840p-14
+solve_smb			 E: -0x1.ae220b07be1c3p-13
+solve_smb			 flux_sm: -0x1.816d18c173f14p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.dad6fd4e08472p-15
+solve_smb			 E: 0x1.0a4f6f1a2bb86p-13
+solve_smb			 flux_sm: -0x1.2b75f0777f471p-15
+solve_smb			 E: 0x1.f127659ae0245p-14
+solve_smb			 flux_sm: -0x1.552ceb380b8a2p-14
+solve_smb			 E: -0x1.b8b7dc4ea1de8p-13
+solve_smb			 flux_sm: -0x1.a32a286975d74p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.ce459033cde5cp-15
+solve_smb			 E: 0x1.0a4f6e5b8d0b5p-13
+solve_smb			 flux_sm: -0x1.31bea7049c77cp-15
+solve_smb			 E: 0x1.f0fe00c861730p-14
+solve_smb			 flux_sm: -0x1.56bf181cb4294p-14
+solve_smb			 E: -0x1.b8c1e9ef4f363p-13
+solve_smb			 flux_sm: -0x1.a3de8c728ace2p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cda5476c139e4p-15
+solve_smb			 E: 0x1.0a4f6e520e039p-13
+solve_smb			 flux_sm: -0x1.320ecb68799b8p-15
+solve_smb			 E: 0x1.f0fbf0e67effap-14
+solve_smb			 flux_sm: -0x1.56d3212c2c6a7p-14
+solve_smb			 E: -0x1.b8c264f091577p-13
+solve_smb			 flux_sm: -0x1.a3e7890955b50p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9d40d7ccf9ep-15
+solve_smb			 E: 0x1.0a4f6e519449ap-13
+solve_smb			 flux_sm: -0x1.3212ceb29cedbp-15
+solve_smb			 E: 0x1.f0fbd677ef4f5p-14
+solve_smb			 flux_sm: -0x1.56d421fe3b851p-14
+solve_smb			 E: -0x1.b8c26b160aa6bp-13
+solve_smb			 flux_sm: -0x1.a3e7fc3b156a3p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd9f0ffe33p-15
+solve_smb			 E: 0x1.0a4f6e518e311p-13
+solve_smb			 flux_sm: -0x1.3213022603790p-15
+solve_smb			 E: 0x1.f0fbd52509cf4p-14
+solve_smb			 flux_sm: -0x1.56d42edb0f0f5p-14
+solve_smb			 E: -0x1.b8c26b64d6e03p-13
+solve_smb			 flux_sm: -0x1.a3e802000c6f4p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd4c9a1512p-15
+solve_smb			 E: 0x1.0a4f6e518de2fp-13
+solve_smb			 flux_sm: -0x1.321304b9b2c21p-15
+solve_smb			 E: 0x1.f0fbd5141097ap-14
+solve_smb			 flux_sm: -0x1.56d42f7ffa937p-14
+solve_smb			 E: -0x1.b8c26b68c9305p-13
+solve_smb			 flux_sm: -0x1.a3e8024a05958p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd4878ccb2p-15
+solve_smb			 E: 0x1.0a4f6e518ddeep-13
+solve_smb			 flux_sm: -0x1.321304dabd051p-15
+solve_smb			 E: 0x1.f0fbd51336f6ap-14
+solve_smb			 flux_sm: -0x1.56d42f883d202p-14
+solve_smb			 E: -0x1.b8c26b68fbca4p-13
+solve_smb			 flux_sm: -0x1.a3e8024dba0b6p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd4843d892p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc64a61p-15
+solve_smb			 E: 0x1.f0fbd5132c101p-14
+solve_smb			 flux_sm: -0x1.56d42f88a7085p-14
+solve_smb			 E: -0x1.b8c26b68fe531p-13
+solve_smb			 flux_sm: -0x1.a3e8024de98c3p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd4841319fp-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc79ddap-15
+solve_smb			 E: 0x1.f0fbd5132b845p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac564p-14
+solve_smb			 E: -0x1.b8c26b68fe739p-13
+solve_smb			 flux_sm: -0x1.a3e8024debed4p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410f9ep-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7aedbp-15
+solve_smb			 E: 0x1.f0fbd5132b7d7p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9a4p-14
+solve_smb			 E: -0x1.b8c26b68fe753p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0bep-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410de8p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afb6p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9dap-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d6p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd4p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc0p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
+solve_smb			 E: 0x1.f0fbd5132b7d2p-14
+solve_smb			 flux_sm: -0x1.56d42f88ac9ddp-14
+solve_smb			 E: -0x1.b8c26b68fe755p-13
+solve_smb			 flux_sm: -0x1.a3e8024dec0d8p-14
+solve_smb			 E: 0x1.0c70b78f41b55p-13
+solve_smb			 flux_sm: 0x1.cd9cd48410dd2p-15
+solve_smb			 E: 0x1.0a4f6e518ddedp-13
+solve_smb			 flux_sm: -0x1.321304dc7afc1p-15
 ----BEFORET---
-LOG -> 0x1.2a654edce9ccep+8
-LOG -> 0x1.29d94edce9ccep+8
-LOG -> 0x1.24c949b70a863p+8
-LOG -> 0x1.22dd08b7739dcp+8
-LOG -> 0x1.224e13503d104p+8
-LOG -> 0x1.221b77dd80f2fp+8
-LOG -> 0x1.22010f36868d0p+8
-LOG -> 0x1.21e95b810c51dp+8
-LOG -> 0x1.21cb455e095cfp+8
-LOG -> 0x1.21a3d0c6a2d7ap+8
-LOG -> 0x1.2173ac3fe2574p+8
-LOG -> 0x1.213dd20000011p+8
+diffusion_heat		 sfc_T_new: 0x1.28f1894c7a4bcp+8
+diffusion_heat		 soil_T (00): 0x1.2881894c7a4bcp+8
+diffusion_heat		 soil_T (01): 0x1.24a0a621c53bdp+8
+diffusion_heat		 soil_T (02): 0x1.2325e7ab416a8p+8
+diffusion_heat		 soil_T (03): 0x1.22ad0b0d12984p+8
+diffusion_heat		 soil_T (04): 0x1.22768f4c71de1p+8
+diffusion_heat		 soil_T (05): 0x1.224fc8bd0cb30p+8
+diffusion_heat		 soil_T (06): 0x1.2228a9f0a28b9p+8
+diffusion_heat		 soil_T (07): 0x1.21fa1704fc39dp+8
+diffusion_heat		 soil_T (08): 0x1.21c268ed77782p+8
+diffusion_heat		 soil_T (09): 0x1.2182c5055f477p+8
+diffusion_heat		 soil_T (10): 0x1.213dd20000010p+8
 --------------
 ----AFTERT----
-LOG -> 0x1.2a654edce9ccep+8
-LOG -> 0x1.250f4d13cdb29p+8
-LOG -> 0x1.2302eb8dc2e86p+8
-LOG -> 0x1.22607c7374c5ep+8
-LOG -> 0x1.2222e8dde2cc4p+8
-LOG -> 0x1.22029051cff43p+8
-LOG -> 0x1.21e7dc3a7fc9fp+8
-LOG -> 0x1.21c8a8237ccb4p+8
-LOG -> 0x1.21a162ce9b013p+8
-LOG -> 0x1.21723fe951569p+8
-LOG -> 0x1.213dd20000012p+8
+diffusion_heat		 soil_T (00): 0x1.28f1894c7a4bcp+8
+diffusion_heat		 soil_T (01): 0x1.24d63701715dfp+8
+diffusion_heat		 soil_T (02): 0x1.2340d5bed06bap+8
+diffusion_heat		 soil_T (03): 0x1.22b90b98503bap+8
+diffusion_heat		 soil_T (04): 0x1.227a8b748fa50p+8
+diffusion_heat		 soil_T (05): 0x1.224fad20c4978p+8
+diffusion_heat		 soil_T (06): 0x1.2226ab21901f0p+8
+diffusion_heat		 soil_T (07): 0x1.21f79284e112bp+8
+diffusion_heat		 soil_T (08): 0x1.21c0463117396p+8
+diffusion_heat		 soil_T (09): 0x1.21819069cffc4p+8
+diffusion_heat		 soil_T (10): 0x1.213dd20000011p+8
 --------------
 ----BEFOREQ---
-LOG -> 0x1.0e97f5e293272p-2
-LOG -> 0x1.0dbc2df70a2b2p-2
-LOG -> 0x1.0ea8c92d96a04p-2
-LOG -> 0x1.57048b0e72c1ap-2
-LOG -> 0x1.a42628ef7a2d6p-2
-LOG -> 0x1.c97fb3ae4c303p-2
-LOG -> 0x1.e255802a8ec7cp-2
-LOG -> 0x1.f5dac738a43bfp-2
-LOG -> 0x1.036c76d479d55p-1
-LOG -> 0x1.0b66b8b8c5d6cp-1
-LOG -> 0x1.13641f0301f4ep-1
-LOG -> 0x1.1be6c95f4de17p-1
+diffusion_mois		 sfc_q_new: 0x1.0e8781408e043p-2
+diffusion_mois		 soil_q (00): 0x1.0dab01d4d5d42p-2
+diffusion_mois		 soil_q (01): 0x1.0e96487ae931ap-2
+diffusion_mois		 soil_q (02): 0x1.570e50614edcep-2
+diffusion_mois		 soil_q (03): 0x1.a428a179bd86dp-2
+diffusion_mois		 soil_q (04): 0x1.c980a2411a46cp-2
+diffusion_mois		 soil_q (05): 0x1.e255f1a2c7567p-2
+diffusion_mois		 soil_q (06): 0x1.f5db038dfc1e8p-2
+diffusion_mois		 soil_q (07): 0x1.036c87926a2b5p-1
+diffusion_mois		 soil_q (08): 0x1.0b66c1c04ed5fp-1
+diffusion_mois		 soil_q (09): 0x1.1364230e133bbp-1
+diffusion_mois		 soil_q (10): 0x1.1be6c9be68febp-1
 --------------
 ----AFTERQ----
-diffusion -> 	 soil_q: 0x1.0e97f5e293272p-2
-diffusion -> 	 soil_q: 0x1.0fae8ddd73ed7p-2
-diffusion -> 	 soil_q: 0x1.5bedba39dba6cp-2
-diffusion -> 	 soil_q: 0x1.a57c2ec32ab79p-2
-diffusion -> 	 soil_q: 0x1.c9f82f7fa820ap-2
-diffusion -> 	 soil_q: 0x1.e276b7e4f1ec3p-2
-diffusion -> 	 soil_q: 0x1.f5cc3cb06b194p-2
-diffusion -> 	 soil_q: 0x1.03551e3e38220p-1
-diffusion -> 	 soil_q: 0x1.0b429499ebbe0p-1
-diffusion -> 	 soil_q: 0x1.1333ff05938c4p-1
-diffusion -> 	 soil_q: 0x1.1ba9625958325p-1
+diffusion_mois		 soil_q (00): 0x1.0e8781408e043p-2
+diffusion_mois		 soil_q (01): 0x1.0f9c9672fdac1p-2
+diffusion_mois		 soil_q (02): 0x1.5bf6e0b7f0535p-2
+diffusion_mois		 soil_q (03): 0x1.a57ea004a1ab2p-2
+diffusion_mois		 soil_q (04): 0x1.c9f9232c20d00p-2
+diffusion_mois		 soil_q (05): 0x1.e2772e1bba16dp-2
+diffusion_mois		 soil_q (06): 0x1.f5cc7c692470cp-2
+diffusion_mois		 soil_q (07): 0x1.035530195261bp-1
+diffusion_mois		 soil_q (08): 0x1.0b429e4cbae58p-1
+diffusion_mois		 soil_q (09): 0x1.13340364604cdp-1
+diffusion_mois		 soil_q (10): 0x1.1ba962c60b5cfp-1
 --------------
+[UtahLSM: Run] 		 Running for time: 30000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 30600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 31200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 31800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 32400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 33000.00 of 33000.00
+[UtahLSM: Run] 		 Done! Completed in 0.3557 seconds
+##############################################################

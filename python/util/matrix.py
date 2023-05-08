@@ -31,7 +31,6 @@ def tridiagonal(a,b,c,r,u):
 	# Initialize first element of solution vector
 	u[0] = r[0]/(bet)
 	if False:
-		print()        
 		print("tridiag---------")
 		print('n: %d'%n)
 		print("----------------")
