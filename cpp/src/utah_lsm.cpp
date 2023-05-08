@@ -386,7 +386,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         
         // Compute ground flux
         // First time through we estimate based on Santanello and Friedl (2003)
-        if ( (!first)) {
+        if (first) {
             double A,B;
             if (soil_q[0]>=0.4) {
                 A = 0.31;

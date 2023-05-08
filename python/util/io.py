@@ -98,8 +98,9 @@ class Input(object):
 			else:
 				# load offline data from netcdf into local variables
 				try:
+					metfile.set_auto_mask(False)
 					self.ntime = len(metfile.dimensions['t'])
-					self.tstep = metfile.variables['tstep'][:]
+					self.tstep = metfile.variables['tstep'][0].astype('float')
 					self.atm_U = metfile.variables['atm_U'][:].astype('float')
 					self.atm_T = metfile.variables['atm_T'][:].astype('float')
 					self.atm_q = metfile.variables['atm_q'][:].astype('float')
@@ -245,16 +246,16 @@ class Output(object):
 	
 class Logger(object):
 	
-	def print_double(x,label=False):
+	def print_double(x,section=False,label=False):
 		
 		if label:
-			print('LOG -> %s: %0.17g'%(label,x))
+			print('%s -> \t %s: %0.17g'%(section,label,x))
 		else:
 			print('LOG -> %0.17g'%x)
 	
-	def print_hex(x,label=False):
+	def print_hex(x,section=False,label=False):
 		
 		if label:
-			print('LOG -> %s: '%(label)+float.hex(x))
+			print('%s -> \t %s: '%(section,label)+float.hex(x))
 		else:
 			print('LOG -> '+float.hex(x))

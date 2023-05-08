@@ -172,7 +172,19 @@ class UtahLSM:
         
         # Keep winds from being exactly zero
         if (self.atm_U==0): self.atm_U = 0.1
+        
+        # debugging
+        if (self.runtime==29400.0):
+            print(type(self.tstep))
+            io.Logger.print_hex(self.tstep, "update_fields", "tstep")
+            io.Logger.print_hex(self.utc,   "update_fields", "t utc")
+            io.Logger.print_hex(self.atm_U, "update_fields", "atm_U")
+            io.Logger.print_hex(self.atm_T, "update_fields", "atm_T")
+            io.Logger.print_hex(self.atm_q, "update_fields", "atm_q")
+            io.Logger.print_hex(self.atm_p, "update_fields", "atm_p")
+            io.Logger.print_hex(self.R_net, "update_fields", "R_net")
             
+        
     # Run the model
     def run(self):
                 
@@ -181,9 +193,8 @@ class UtahLSM:
         self.sfc_q_new = self.soil_q[0]
         
         if (self.runtime==29400.0): 
-            print()
-            io.Logger.print_hex(self.sfc_T_new, 'sfc_T_new')
-            io.Logger.print_hex(self.sfc_q_new, 'sfc_q_new')
+            io.Logger.print_hex(self.sfc_T_new, "run", 'sfc_T_new')
+            io.Logger.print_hex(self.sfc_q_new, "run", 'sfc_q_new')
         
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
@@ -233,11 +244,14 @@ class UtahLSM:
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
         
+        if (self.runtime==29400.0): 
+            io.Logger.print_hex(gnd_q, "compute_fluxes", 'gnd_q')
+        
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             
             # First time through we estimate based on Santanello and Friedl (2003)
-            if not self.first:
+            if self.first:
                 if (self.soil_q[0]>=0.4):
                     A = 0.31000
                     B = 74000.0
@@ -798,7 +812,7 @@ class UtahLSM:
         if True:
             print("----AFTERQ----")
             for ii in range(self.nz):
-                io.Logger.print_hex(self.soil_q[ii],"soil_q")
+                io.Logger.print_hex(self.soil_q[ii],"diffusion","soil_q")
             print("--------------")
             if (self.runtime==29400.0): sys.exit();
 
