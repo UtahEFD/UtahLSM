@@ -27,785 +27,785 @@ update_fields		atm_p: 0x1.ff2666p+9
 update_fields		R_net: 0x1.6a79a6p+8
 --------------
 --------------
-run					sfc_T_new: 0x1.2881894c7a4bcp+8
-run					sfc_q_new: 0x1.0dab01d4d5d42p-2
+run					sfc_T_new: 0x1.287e0a4630987p+8
+run					sfc_q_new: 0x1.0de15bee0f833p-2
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.0f2e4a4910b98p-6
-compute_fluxes		ghf: 0x1.5555b7f1f8526p+5
-compute_fluxes		ust: 0x1.13dec5ca1b8aep-2
-compute_fluxes		wT: -0x1.e135f7d47ca6ep-6
-compute_fluxes		wq: 0x1.4eb706faef5b1p-14
-compute_fluxes		wTv: -0x1.e3e243ae37199p-7
-compute_fluxes		obl: 0x1.94ed09849c36p+6
+compute_fluxes		gnd_q: 0x1.0ef53c33c7457p-6
+compute_fluxes		ghf: 0x1.556a3686f35e3p+5
+compute_fluxes		ust: 0x1.1396dee486401p-2
+compute_fluxes		wT: -0x1.e3f4281227ff5p-6
+compute_fluxes		wq: 0x1.4d69e0c73323dp-14
+compute_fluxes		wTv: -0x1.eb3af0c784e17p-7
+compute_fluxes		obl: 0x1.8da736bfd27ffp+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.0f2e4a4910b98p-6
-compute_fluxes		ghf: 0x1.5555b7f1f8526p+5
-compute_fluxes		ust: 0x1.de5e7cc72a77ep-3
-compute_fluxes		wT: -0x1.97f8dc8746acbp-6
-compute_fluxes		wq: 0x1.1bc5be9510f77p-14
-compute_fluxes		wTv: -0x1.9a3d02956f17ap-7
-compute_fluxes		obl: 0x1.374a49d1f5f65p+6
+compute_fluxes		gnd_q: 0x1.0ef53c33c7457p-6
+compute_fluxes		ghf: 0x1.556a3686f35e3p+5
+compute_fluxes		ust: 0x1.dd7667bc116ffp-3
+compute_fluxes		wT: -0x1.99f54ad8242aap-6
+compute_fluxes		wq: 0x1.1a6f70a0f5d03p-14
+compute_fluxes		wTv: -0x1.a01f42aa28e5ap-7
+compute_fluxes		obl: 0x1.3125aefaf4ee2p+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.0f2e4a4910b98p-6
-compute_fluxes		ghf: 0x1.5555b7f1f8526p+5
-compute_fluxes		ust: 0x1.cfe20817d3a1bp-3
-compute_fluxes		wT: -0x1.8a038cda5bb7ap-6
-compute_fluxes		wq: 0x1.1210434159315p-14
-compute_fluxes		wTv: -0x1.8c33d98d49eacp-7
-compute_fluxes		obl: 0x1.25e9fb77ac8b4p+6
+compute_fluxes		gnd_q: 0x1.0ef53c33c7457p-6
+compute_fluxes		ghf: 0x1.556a3686f35e3p+5
+compute_fluxes		ust: 0x1.cea9c8b22366bp-3
+compute_fluxes		wT: -0x1.8b995917c51fcp-6
+compute_fluxes		wq: 0x1.108af23e4c33dp-14
+compute_fluxes		wTv: -0x1.918c0bda794d7p-7
+compute_fluxes		obl: 0x1.1fb872932e3eep+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.0f2e4a4910b98p-6
-compute_fluxes		ghf: 0x1.5555b7f1f8526p+5
-compute_fluxes		ust: 0x1.cc51b0b2e34cep-3
-compute_fluxes		wT: -0x1.8694fc8102206p-6
-compute_fluxes		wq: 0x1.0fad295f47fe2p-14
-compute_fluxes		wTv: -0x1.88c067dbcb537p-7
-compute_fluxes		obl: 0x1.21b71b572ac0ep+6
+compute_fluxes		gnd_q: 0x1.0ef53c33c7457p-6
+compute_fluxes		ghf: 0x1.556a3686f35e3p+5
+compute_fluxes		ust: 0x1.caf59824c16ccp-3
+compute_fluxes		wT: -0x1.8801ee2d12c5ep-6
+compute_fluxes		wq: 0x1.0e118688b3e08p-14
+compute_fluxes		wTv: -0x1.8de6ce02b460dp-7
+compute_fluxes		obl: 0x1.1b70569f39c77p+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.0f2e4a4910b98p-6
-compute_fluxes		ghf: 0x1.5555b7f1f8526p+5
-compute_fluxes		ust: 0x1.cb671af40219cp-3
-compute_fluxes		wT: -0x1.85b31f15eed32p-6
-compute_fluxes		wq: 0x1.0f100ea1898c9p-14
-compute_fluxes		wTv: -0x1.87dd4940eaff5p-7
-compute_fluxes		obl: 0x1.20a3f9463e57cp+6
+compute_fluxes		gnd_q: 0x1.0ef53c33c7457p-6
+compute_fluxes		ghf: 0x1.556a3686f35e3p+5
+compute_fluxes		ust: 0x1.c9fd51870c48dp-3
+compute_fluxes		wT: -0x1.87113a3bd77adp-6
+compute_fluxes		wq: 0x1.0d6bb24835825p-14
+compute_fluxes		wTv: -0x1.8cf27b9472755p-7
+compute_fluxes		obl: 0x1.1a52ae6ee8931p+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.0f2e4a4910b98p-6
-compute_fluxes		ghf: 0x1.5555b7f1f8526p+5
-compute_fluxes		ust: 0x1.cb2a1d91f57e9p-3
-compute_fluxes		wT: -0x1.857866b116837p-6
-compute_fluxes		wq: 0x1.0ee7369351ba6p-14
-compute_fluxes		wTv: -0x1.87a23d5b8e2e7p-7
-compute_fluxes		obl: 0x1.205c866fa37fbp+6
+compute_fluxes		gnd_q: 0x1.0ef53c33c7457p-6
+compute_fluxes		ghf: 0x1.556a3686f35e3p+5
+compute_fluxes		ust: 0x1.c9bb8df65ce82p-3
+compute_fluxes		wT: -0x1.86d178e4d96b5p-6
+compute_fluxes		wq: 0x1.0d3fc5e8a9ad5p-14
+compute_fluxes		wTv: -0x1.8cb1c4d71040dp-7
+compute_fluxes		obl: 0x1.1a071c172853bp+6
 --------------
 --------------
-compute_seb			Qh: -0x1.cbc37cd78db57p+4
-compute_seb			Ql: 0x1.7d0ba17072a8ap+7
-compute_seb			Qg: 0x1.5555b7f1f8526p+5
+compute_seb			Qh: -0x1.cd5ad6b59be87p+4
+compute_seb			Ql: 0x1.7ab807da5c2bdp+7
+compute_seb			Qg: 0x1.556a3686f35e3p+5
 compute_seb			Rn: 0x1.6a79a6p+8
-compute_seb			SEB: 0x1.3c0aac2e00f96p+7
+compute_seb			SEB: 0x1.3e8c115a9a79bp+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.325a6b3721284p-6
-compute_fluxes		ghf: 0x1.213fe668c627p+6
-compute_fluxes		ust: 0x1.cb1a36995252cp-3
-compute_fluxes		wT: 0x1.671783d646bfbp-11
-compute_fluxes		wq: 0x1.7cf2eed35c5b6p-14
-compute_fluxes		wTv: 0x1.1b8a64d7c93b5p-6
-compute_fluxes		obl: -0x1.8e217a49dbc7ep+5
+compute_fluxes		gnd_q: 0x1.321adf43e57ffp-6
+compute_fluxes		ghf: 0x1.218f19e560501p+6
+compute_fluxes		ust: 0x1.c9aa14f16149bp-3
+compute_fluxes		wT: 0x1.0e9565d4710adp-11
+compute_fluxes		wq: 0x1.7ad20886c6b45p-14
+compute_fluxes		wTv: 0x1.1740cf46fb933p-6
+compute_fluxes		obl: -0x1.9074ea8d76c3ap+5
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.325a6b3721284p-6
-compute_fluxes		ghf: 0x1.213fe668c627p+6
-compute_fluxes		ust: 0x1.2afc4cae0cb5ep-2
-compute_fluxes		wT: 0x1.eed5352f6a9a2p-11
-compute_fluxes		wq: 0x1.0679e14be0847p-13
-compute_fluxes		wTv: 0x1.86b8e9c3f6523p-6
-compute_fluxes		obl: -0x1.3f31a7e14e4c9p+6
+compute_fluxes		gnd_q: 0x1.321adf43e57ffp-6
+compute_fluxes		ghf: 0x1.218f19e560501p+6
+compute_fluxes		ust: 0x1.2ad9d26cab2ebp-2
+compute_fluxes		wT: 0x1.75f5d62dacb02p-11
+compute_fluxes		wq: 0x1.05c64a910cb49p-13
+compute_fluxes		wTv: 0x1.81f12d4ccd8fap-6
+compute_fluxes		obl: -0x1.42b601ed7c18fp+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.325a6b3721284p-6
-compute_fluxes		ghf: 0x1.213fe668c627p+6
-compute_fluxes		ust: 0x1.217269f1a66c7p-2
-compute_fluxes		wT: 0x1.d90d1e709f24fp-11
-compute_fluxes		wq: 0x1.f5d84479d25dap-14
-compute_fluxes		wTv: 0x1.758601e69a5a1p-6
-compute_fluxes		obl: -0x1.2ef1781650983p+6
+compute_fluxes		gnd_q: 0x1.321adf43e57ffp-6
+compute_fluxes		ghf: 0x1.218f19e560501p+6
+compute_fluxes		ust: 0x1.2141b4b16411dp-2
+compute_fluxes		wT: 0x1.6567ae22b8019p-11
+compute_fluxes		wq: 0x1.f45f1c25551a4p-14
+compute_fluxes		wTv: 0x1.70db3a8fc595dp-6
+compute_fluxes		obl: -0x1.322bf991b00f5p+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.325a6b3721284p-6
-compute_fluxes		ghf: 0x1.213fe668c627p+6
-compute_fluxes		ust: 0x1.225f5d8f9ef41p-2
-compute_fluxes		wT: 0x1.db1f983d498dfp-11
-compute_fluxes		wq: 0x1.f80b083884d92p-14
-compute_fluxes		wTv: 0x1.7728dfa25143ap-6
-compute_fluxes		obl: -0x1.30865c15dcf5ep+6
+compute_fluxes		gnd_q: 0x1.321adf43e57ffp-6
+compute_fluxes		ghf: 0x1.218f19e560501p+6
+compute_fluxes		ust: 0x1.222ea9b1dcd7dp-2
+compute_fluxes		wT: 0x1.66f87a25a8f5ap-11
+compute_fluxes		wq: 0x1.f6903b0f62dcp-14
+compute_fluxes		wTv: 0x1.7278de092cf2fp-6
+compute_fluxes		obl: -0x1.33c5b032b686ap+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.325a6b3721284p-6
-compute_fluxes		ghf: 0x1.213fe668c627p+6
-compute_fluxes		ust: 0x1.224766e89c423p-2
-compute_fluxes		wT: 0x1.dae9d71d4da42p-11
-compute_fluxes		wq: 0x1.f7d2017cd2892p-14
-compute_fluxes		wTv: 0x1.76fe6dc924ed2p-6
-compute_fluxes		obl: -0x1.305d6cc53e08p+6
+compute_fluxes		gnd_q: 0x1.321adf43e57ffp-6
+compute_fluxes		ghf: 0x1.218f19e560501p+6
+compute_fluxes		ust: 0x1.2216d425f1329p-2
+compute_fluxes		wT: 0x1.66d01550ceee4p-11
+compute_fluxes		wq: 0x1.f657adc3e6533p-14
+compute_fluxes		wTv: 0x1.724f2de1901cep-6
+compute_fluxes		obl: -0x1.339c7d8b83764p+6
 --------------
 --------------
-compute_seb			Qh: 0x1.18505ed2d99bfp+0
-compute_seb			Ql: 0x1.6254922313d6ap+8
-compute_seb			Qg: 0x1.213fe668c627p+6
+compute_seb			Qh: 0x1.a792abc96bc43p-1
+compute_seb			Ql: 0x1.614a7f915433fp+8
+compute_seb			Qg: 0x1.218f19e560501p+6
 compute_seb			Rn: 0x1.6a79a6p+8
-compute_seb			SEB: -0x1.050cd87060e8p+6
+compute_seb			SEB: -0x1.0021a58243f74p+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.204af1e5797d8p-6
-compute_fluxes		ghf: 0x1.cbeac261c2502p+5
-compute_fluxes		ust: 0x1.2249d0c579e7ap-2
-compute_fluxes		wT: -0x1.f4313ae7f95ap-7
-compute_fluxes		wq: 0x1.ad142a707ba7ep-14
-compute_fluxes		wTv: 0x1.c50667135dcp-9
-compute_fluxes		obl: -0x1.f7edb1ea80ac8p+8
+compute_fluxes		gnd_q: 0x1.200eb874968c4p-6
+compute_fluxes		ghf: 0x1.cc443528d9ff3p+5
+compute_fluxes		ust: 0x1.22193756cb9cbp-2
+compute_fluxes		wT: -0x1.faf95f90f0da2p-7
+compute_fluxes		wq: 0x1.abb8a6ccaeb77p-14
+compute_fluxes		wTv: 0x1.a2227b9ec3c08p-9
+compute_fluxes		obl: -0x1.10741f87c7c1fp+9
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.204af1e5797d8p-6
-compute_fluxes		ghf: 0x1.cbeac261c2502p+5
-compute_fluxes		ust: 0x1.0f818bd6c4023p-2
-compute_fluxes		wT: -0x1.c9e6438284a93p-7
-compute_fluxes		wq: 0x1.88cc7eb90f7cap-14
-compute_fluxes		wTv: 0x1.9eb866a83debcp-9
-compute_fluxes		obl: -0x1.c262fa0b455d7p+8
+compute_fluxes		gnd_q: 0x1.200eb874968c4p-6
+compute_fluxes		ghf: 0x1.cc443528d9ff3p+5
+compute_fluxes		ust: 0x1.0f2e4f5cb3b07p-2
+compute_fluxes		wT: -0x1.cfd1f1afba88bp-7
+compute_fluxes		wq: 0x1.875036b4c111ep-14
+compute_fluxes		wTv: 0x1.7e8af21ac5fb4p-9
+compute_fluxes		obl: -0x1.e684cf355e669p+8
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.204af1e5797d8p-6
-compute_fluxes		ghf: 0x1.cbeac261c2502p+5
-compute_fluxes		ust: 0x1.10038534b847ap-2
-compute_fluxes		wT: -0x1.cafc5dd092cbep-7
-compute_fluxes		wq: 0x1.89bb0f29ea84ap-14
-compute_fluxes		wTv: 0x1.9fb4477569f7p-9
-compute_fluxes		obl: -0x1.c3d894e96bdc8p+8
+compute_fluxes		gnd_q: 0x1.200eb874968c4p-6
+compute_fluxes		ghf: 0x1.cc443528d9ff3p+5
+compute_fluxes		ust: 0x1.0fa8dfc476c4ep-2
+compute_fluxes		wT: -0x1.d0db728e6f721p-7
+compute_fluxes		wq: 0x1.883036548ab7ap-14
+compute_fluxes		wTv: 0x1.7f65ec79bb81cp-9
+compute_fluxes		obl: -0x1.e8024ad55d4abp+8
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.204af1e5797d8p-6
-compute_fluxes		ghf: 0x1.cbeac261c2502p+5
-compute_fluxes		ust: 0x1.0fff98fc0c8f5p-2
-compute_fluxes		wT: -0x1.caf3f5f4abaa9p-7
-compute_fluxes		wq: 0x1.89b3d93d5a8a9p-14
-compute_fluxes		wTv: 0x1.9facaa842f1e4p-9
-compute_fluxes		obl: -0x1.c3cd4efe0fe5p+8
+compute_fluxes		gnd_q: 0x1.200eb874968c4p-6
+compute_fluxes		ghf: 0x1.cc443528d9ff3p+5
+compute_fluxes		ust: 0x1.0fa567bb62544p-2
+compute_fluxes		wT: -0x1.d0d3ec2f1f02cp-7
+compute_fluxes		wq: 0x1.8829dd1931fbfp-14
+compute_fluxes		wTv: 0x1.7f5fb7ab99cep-9
+compute_fluxes		obl: -0x1.e7f77f6a220f9p+8
 --------------
 --------------
-compute_seb			Qh: -0x1.0ee4b641659adp+4
-compute_seb			Ql: 0x1.14e2cbd607d55p+8
-compute_seb			Qg: 0x1.cbeac261c2502p+5
+compute_seb			Qh: -0x1.125c69e5532b8p+4
+compute_seb			Ql: 0x1.13cdb6328450dp+8
+compute_seb			Qg: 0x1.cc443528d9ff3p+5
 compute_seb			Rn: 0x1.6a79a6p+8
-compute_seb			SEB: 0x1.683e6a0eb1d3p+5
+compute_seb			SEB: 0x1.72497e35ad108p+5
 --------------
 --------------
-compute_dseb		heat_cap: 0x1.98e53c6461e05p+20
-compute_dseb		dSEB_dT: 0x1.764adcafb4bc7p+6
+compute_dseb		heat_cap: 0x1.991b779ccbdaap+20
+compute_dseb		dSEB_dT: 0x1.7650e02549beep+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.29339c0c5341ep-6
-compute_fluxes		ghf: 0x1.039aa3ccd3a79p+6
-compute_fluxes		ust: 0x1.0fffb7328d99cp-2
-compute_fluxes		wT: -0x1.afb7c1821cbc1p-8
-compute_fluxes		wq: 0x1.ab8ada07d1739p-14
-compute_fluxes		wTv: 0x1.8b64a2f61f154p-7
-compute_fluxes		obl: -0x1.dafaadc3ff33bp+6
+compute_fluxes		gnd_q: 0x1.28f5be595e627p-6
+compute_fluxes		ghf: 0x1.03d89a3ce6a7ep+6
+compute_fluxes		ust: 0x1.0fa580ca5d516p-2
+compute_fluxes		wT: -0x1.bc4427d7b873ep-8
+compute_fluxes		wq: 0x1.a9ec5dcf1b4fbp-14
+compute_fluxes		wTv: 0x1.82cdda323cd1fp-7
+compute_fluxes		obl: -0x1.e3a43914f77fep+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.29339c0c5341ep-6
-compute_fluxes		ghf: 0x1.039aa3ccd3a79p+6
-compute_fluxes		ust: 0x1.1b582e592e315p-2
-compute_fluxes		wT: -0x1.c756c0e1f9995p-8
-compute_fluxes		wq: 0x1.c2ef5d722dc6ap-14
-compute_fluxes		wTv: 0x1.a106d72840a56p-7
-compute_fluxes		obl: -0x1.fd13727c96ec1p+6
+compute_fluxes		gnd_q: 0x1.28f5be595e627p-6
+compute_fluxes		ghf: 0x1.03d89a3ce6a7ep+6
+compute_fluxes		ust: 0x1.1b1a8e2044639p-2
+compute_fluxes		wT: -0x1.d4d01b8346caep-8
+compute_fluxes		wq: 0x1.c174dd9782ca1p-14
+compute_fluxes		wTv: 0x1.982d070cf9977p-7
+compute_fluxes		obl: -0x1.03652489c3d85p+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.29339c0c5341ep-6
-compute_fluxes		ghf: 0x1.039aa3ccd3a79p+6
-compute_fluxes		ust: 0x1.1a6fec489e007p-2
-compute_fluxes		wT: -0x1.c5655401f1798p-8
-compute_fluxes		wq: 0x1.c102c029957e9p-14
-compute_fluxes		wTv: 0x1.9f3f44ba7afe4p-7
-compute_fluxes		obl: -0x1.fa5cbe7cc2f8ep+6
+compute_fluxes		gnd_q: 0x1.28f5be595e627p-6
+compute_fluxes		ghf: 0x1.03d89a3ce6a7ep+6
+compute_fluxes		ust: 0x1.1a3283bb9151dp-2
+compute_fluxes		wT: -0x1.d2d080be9ac8p-8
+compute_fluxes		wq: 0x1.bf8a625cf023p-14
+compute_fluxes		wTv: 0x1.966f984191eep-7
+compute_fluxes		obl: -0x1.0202eb7081c18p+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.29339c0c5341ep-6
-compute_fluxes		ghf: 0x1.039aa3ccd3a79p+6
-compute_fluxes		ust: 0x1.1a816f3da95fep-2
-compute_fluxes		wT: -0x1.c58ac0214ba6p-8
-compute_fluxes		wq: 0x1.c127cfa1329c9p-14
-compute_fluxes		wTv: 0x1.9f618ac7d088ep-7
-compute_fluxes		obl: -0x1.fa9124460429p+6
+compute_fluxes		gnd_q: 0x1.28f5be595e627p-6
+compute_fluxes		ghf: 0x1.03d89a3ce6a7ep+6
+compute_fluxes		ust: 0x1.1a43ceee4f9a4p-2
+compute_fluxes		wT: -0x1.d2f68c73a9d8bp-8
+compute_fluxes		wq: 0x1.bfaedbef97327p-14
+compute_fluxes		wTv: 0x1.9690b836b53dcp-7
+compute_fluxes		obl: -0x1.021d5447de221p+7
 --------------
 --------------
-compute_seb			Qh: -0x1.0bb31a371bc0cp+3
-compute_seb			Ql: 0x1.3be2a24455a6dp+8
-compute_seb			Qg: 0x1.039aa3ccd3a79p+6
+compute_seb			Qh: -0x1.139f0e2f40e27p+3
+compute_seb			Ql: 0x1.3ad9874657212p+8
+compute_seb			Qg: 0x1.03d89a3ce6a7ep+6
 compute_seb			Rn: 0x1.6a79a6p+8
-compute_seb			SEB: -0x1.3e418cba3656p+3
+compute_seb			SEB: -0x1.1721ec82d882p+3
 --------------
 --------------
-compute_dseb		heat_cap: 0x1.98e53c6461e05p+20
-compute_dseb		dSEB_dT: 0x1.7a09967a41a91p+6
+compute_dseb		heat_cap: 0x1.991b779ccbdaap+20
+compute_dseb		dSEB_dT: 0x1.7a17e7e47d212p+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.24b799aed2e76p-6
-compute_fluxes		ghf: 0x1.e99004fdb4cfap+5
-compute_fluxes		ust: 0x1.1a801bb207eeep-2
-compute_fluxes		wT: -0x1.62744fdfabe78p-7
-compute_fluxes		wq: 0x1.af4020c59dd69p-14
-compute_fluxes		wTv: 0x1.06195efadbc14p-7
-compute_fluxes		obl: -0x1.916341b98b56bp+7
+compute_fluxes		gnd_q: 0x1.247a8f595a8bbp-6
+compute_fluxes		ghf: 0x1.e9fab4d153a78p+5
+compute_fluxes		ust: 0x1.1a428376d48cfp-2
+compute_fluxes		wT: -0x1.6905299f13a36p-7
+compute_fluxes		wq: 0x1.adcfbbe3d284ap-14
+compute_fluxes		wTv: 0x1.faf3aa0146ac8p-8
+compute_fluxes		obl: -0x1.9dfbb88610327p+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.24b799aed2e76p-6
-compute_fluxes		ghf: 0x1.e99004fdb4cfap+5
-compute_fluxes		ust: 0x1.1579a5a36de9ep-2
-compute_fluxes		wT: -0x1.5a2bfc3b153f5p-7
-compute_fluxes		wq: 0x1.a52c692c0b29cp-14
-compute_fluxes		wTv: 0x1.fff30443c56cep-8
-compute_fluxes		obl: -0x1.85724e6bfbf6cp+7
+compute_fluxes		gnd_q: 0x1.247a8f595a8bbp-6
+compute_fluxes		ghf: 0x1.e9fab4d153a78p+5
+compute_fluxes		ust: 0x1.1532097385bb2p-2
+compute_fluxes		wT: -0x1.608557d2c4decp-7
+compute_fluxes		wq: 0x1.a3b15191c3fe4p-14
+compute_fluxes		wTv: 0x1.ef04559742ad8p-8
+compute_fluxes		obl: -0x1.918d068155daep+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.24b799aed2e76p-6
-compute_fluxes		ghf: 0x1.e99004fdb4cfap+5
-compute_fluxes		ust: 0x1.15c14ab7b075p-2
-compute_fluxes		wT: -0x1.5aa08c52d593ep-7
-compute_fluxes		wq: 0x1.a5ba3a6d0820fp-14
-compute_fluxes		wTv: 0x1.004fb3350c0b4p-7
-compute_fluxes		obl: -0x1.861ceb9f93f01p+7
+compute_fluxes		gnd_q: 0x1.247a8f595a8bbp-6
+compute_fluxes		ghf: 0x1.e9fab4d153a78p+5
+compute_fluxes		ust: 0x1.1578b1b193da3p-2
+compute_fluxes		wT: -0x1.60fa60a69c463p-7
+compute_fluxes		wq: 0x1.a43ca757684a7p-14
+compute_fluxes		wTv: 0x1.efa8ad30b5a86p-8
+compute_fluxes		obl: -0x1.923adc29109c4p+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.24b799aed2e76p-6
-compute_fluxes		ghf: 0x1.e99004fdb4cfap+5
-compute_fluxes		ust: 0x1.15bd3111dc6e1p-2
-compute_fluxes		wT: -0x1.5a99df57a4f82p-7
-compute_fluxes		wq: 0x1.a5b21b2d2bc1cp-14
-compute_fluxes		wTv: 0x1.004ac382ef96ep-7
-compute_fluxes		obl: -0x1.8613284fbb573p+7
+compute_fluxes		gnd_q: 0x1.247a8f595a8bbp-6
+compute_fluxes		ghf: 0x1.e9fab4d153a78p+5
+compute_fluxes		ust: 0x1.1574bc4ec902cp-2
+compute_fluxes		wT: -0x1.60f3d0e37d22ep-7
+compute_fluxes		wq: 0x1.a434d781734a7p-14
+compute_fluxes		wTv: 0x1.ef9f766f2b63p-8
+compute_fluxes		obl: -0x1.92311f46a5859p+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.26f3aca51ebaep-6
-compute_fluxes		ghf: 0x1.f862a64bae0f5p+5
-compute_fluxes		ust: 0x1.15bd6d0c4b4d3p-2
-compute_fluxes		wT: -0x1.1c2c21106ce37p-7
-compute_fluxes		wq: 0x1.ae6abcedd80cap-14
-compute_fluxes		wTv: 0x1.4b30790b9dfe9p-7
-compute_fluxes		obl: -0x1.2ddd20259045ap+7
+compute_fluxes		gnd_q: 0x1.26b638f06eb3fp-6
+compute_fluxes		ghf: 0x1.f8d5f4a5907b9p+5
+compute_fluxes		ust: 0x1.1574f4fee4031p-2
+compute_fluxes		wT: -0x1.229b4b0cb5c96p-7
+compute_fluxes		wq: 0x1.ace8e077f75cbp-14
+compute_fluxes		wTv: 0x1.4299a5decddd2p-7
+compute_fluxes		obl: -0x1.34f44724cee2bp+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.26f3aca51ebaep-6
-compute_fluxes		ghf: 0x1.f862a64bae0f5p+5
-compute_fluxes		ust: 0x1.1862836f3e5fdp-2
-compute_fluxes		wT: -0x1.1fba865fecdf1p-7
-compute_fluxes		wq: 0x1.b3cda759163dcp-14
-compute_fluxes		wTv: 0x1.4f557ee170ed3p-7
-compute_fluxes		obl: -0x1.32bb3dbf91b7p+7
+compute_fluxes		gnd_q: 0x1.26b638f06eb3fp-6
+compute_fluxes		ghf: 0x1.f8d5f4a5907b9p+5
+compute_fluxes		ust: 0x1.181fce331b3afp-2
+compute_fluxes		wT: -0x1.264613346255ep-7
+compute_fluxes		wq: 0x1.b2526f951f33p-14
+compute_fluxes		wTv: 0x1.46abc852d045p-7
+compute_fluxes		obl: -0x1.39fd0fe7aececp+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.26f3aca51ebaep-6
-compute_fluxes		ghf: 0x1.f862a64bae0f5p+5
-compute_fluxes		ust: 0x1.18346e86d8b5p-2
-compute_fluxes		wT: -0x1.1f7c2601cd7ddp-7
-compute_fluxes		wq: 0x1.b36f2d2075056p-14
-compute_fluxes		wTv: 0x1.4f0ccc8299cfdp-7
-compute_fluxes		obl: -0x1.326686fa0e27p+7
+compute_fluxes		gnd_q: 0x1.26b638f06eb3fp-6
+compute_fluxes		ghf: 0x1.f8d5f4a5907b9p+5
+compute_fluxes		ust: 0x1.17f205f8f21afp-2
+compute_fluxes		wT: -0x1.2606b496e76fcp-7
+compute_fluxes		wq: 0x1.b1f4e86fbc81dp-14
+compute_fluxes		wTv: 0x1.46656fb8d811ep-7
+compute_fluxes		obl: -0x1.39a6c0a7b3ff5p+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.26f3aca51ebaep-6
-compute_fluxes		ghf: 0x1.f862a64bae0f5p+5
-compute_fluxes		ust: 0x1.1837864509f2ap-2
-compute_fluxes		wT: -0x1.1f80553b1e2a2p-7
-compute_fluxes		wq: 0x1.b37583a35d5b5p-14
-compute_fluxes		wTv: 0x1.4f11acf8714e6p-7
-compute_fluxes		obl: -0x1.326c369520df2p+7
+compute_fluxes		gnd_q: 0x1.26b638f06eb3fp-6
+compute_fluxes		ghf: 0x1.f8d5f4a5907b9p+5
+compute_fluxes		ust: 0x1.17f50cb7c87cap-2
+compute_fluxes		wT: -0x1.260ae4795a6dbp-7
+compute_fluxes		wq: 0x1.b1fb16717f23bp-14
+compute_fluxes		wTv: 0x1.466a159ce9575p-7
+compute_fluxes		obl: -0x1.39ac755573f25p+7
 --------------
 --------------
-compute_seb			Qh: -0x1.53640b038715bp+3
-compute_seb			Ql: 0x1.3240b34f744bfp+8
-compute_seb			Qg: 0x1.f862a64bae0f5p+5
+compute_seb			Qh: -0x1.5b1cd59b24c2fp+3
+compute_seb			Ql: 0x1.31368ed39bdbp+8
+compute_seb			Qg: 0x1.f8d5f4a5907b9p+5
 compute_seb			Rn: 0x1.6a79a6p+8
-compute_seb			SEB: 0x1.e3df1f991568p+1
+compute_seb			SEB: 0x1.404fd122cee8p+2
 --------------
 --------------
-compute_dseb		heat_cap: 0x1.98e53c6461e05p+20
-compute_dseb		dSEB_dT: 0x1.79333ab3f4b3ap+6
+compute_dseb		heat_cap: 0x1.991b779ccbdaap+20
+compute_dseb		dSEB_dT: 0x1.79401c6be947cp+6
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.2813286d7174dp-6
-compute_fluxes		ghf: 0x1.ffcbf6f2aaaf3p+5
-compute_fluxes		ust: 0x1.1837511505ff5p-2
-compute_fluxes		wT: -0x1.ffd6d1aa2506bp-8
-compute_fluxes		wq: 0x1.b7e3f3d294a4ap-14
-compute_fluxes		wTv: 0x1.74fc7dc1fep-7
-compute_fluxes		obl: -0x1.1345134e95ad6p+7
+compute_fluxes		gnd_q: 0x1.27d57fcd8decfp-6
+compute_fluxes		ghf: 0x1.0021ca47d772dp+6
+compute_fluxes		ust: 0x1.17f4d974d7c8bp-2
+compute_fluxes		wT: -0x1.067fd849f5873p-7
+compute_fluxes		wq: 0x1.b667578edd98dp-14
+compute_fluxes		wTv: 0x1.6c47e6e44b495p-7
+compute_fluxes		obl: -0x1.1910bcd02697ap+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.2813286d7174dp-6
-compute_fluxes		ghf: 0x1.ffcbf6f2aaaf3p+5
-compute_fluxes		ust: 0x1.1976c356eb46ep-2
-compute_fluxes		wT: -0x1.016d713a1fe1bp-7
-compute_fluxes		wq: 0x1.ba7b7d538b21bp-14
-compute_fluxes		wTv: 0x1.772f1bf351087p-7
-compute_fluxes		obl: -0x1.15545e655732p+7
+compute_fluxes		gnd_q: 0x1.27d57fcd8decfp-6
+compute_fluxes		ghf: 0x1.0021ca47d772dp+6
+compute_fluxes		ust: 0x1.1936c05b23b72p-2
+compute_fluxes		wT: -0x1.080eca2e61e29p-7
+compute_fluxes		wq: 0x1.b901a007bde03p-14
+compute_fluxes		wTv: 0x1.6e71889caf93fp-7
+compute_fluxes		obl: -0x1.1b303debdb64fp+7
 --------------
 --------------
-compute_fluxes		gnd_q: 0x1.2813286d7174dp-6
-compute_fluxes		ghf: 0x1.ffcbf6f2aaaf3p+5
-compute_fluxes		ust: 0x1.195fc05795373p-2
-compute_fluxes		wT: -0x1.01518c4a7bb3fp-7
-compute_fluxes		wq: 0x1.ba4b8b0ac934ep-14
-compute_fluxes		wTv: 0x1.7706747eeff5bp-7
-compute_fluxes		obl: -0x1.152e6774b0f72p+7
+compute_fluxes		gnd_q: 0x1.27d57fcd8decfp-6
+compute_fluxes		ghf: 0x1.0021ca47d772dp+6
+compute_fluxes		ust: 0x1.191fdd3db22f1p-2
+compute_fluxes		wT: -0x1.07f2560ee4621p-7
+compute_fluxes		wq: 0x1.b8d21ab88cc88p-14
+compute_fluxes		wTv: 0x1.6e4a0c24f4e49p-7
+compute_fluxes		obl: -0x1.1b099e781d2e2p+7
 --------------
 --------------
-solve_seb			Qh: -0x1.2fc2b1b409cc2p+3
-solve_seb			Ql: 0x1.370f79263acbcp+8
-solve_seb			Qg: 0x1.ffcbf6f2aaaf3p+5
+solve_seb			Qh: -0x1.3795b9decdcd8p+3
+solve_seb			Ql: 0x1.360606821ee5dp+8
+solve_seb			Qg: 0x1.0021ca47d772dp+6
 --------------
-solve_smb			E: 0x1.f82723b3f95e6p-14
-solve_smb			flux_sm: -0x1.0ab30dceee83ep-14
-solve_smb			E: -0x1.ae220b07be1cp-13
-solve_smb			flux_sm: -0x1.816d18c173f12p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.dad6fd4e0846ep-15
-solve_smb			E: 0x1.0a4f6f1a2bb85p-13
-solve_smb			flux_sm: -0x1.2b75f0777f46fp-15
-solve_smb			E: 0x1.f127659ae0244p-14
-solve_smb			flux_sm: -0x1.552ceb380b8a1p-14
-solve_smb			E: -0x1.b8b7dc4ea1de6p-13
-solve_smb			flux_sm: -0x1.a32a286975d72p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.ce459033cde5ap-15
-solve_smb			E: 0x1.0a4f6e5b8d0b4p-13
-solve_smb			flux_sm: -0x1.31bea7049c779p-15
-solve_smb			E: 0x1.f0fe00c86172ep-14
-solve_smb			flux_sm: -0x1.56bf181cb4292p-14
-solve_smb			E: -0x1.b8c1e9ef4f361p-13
-solve_smb			flux_sm: -0x1.a3de8c728acep-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cda5476c139e2p-15
-solve_smb			E: 0x1.0a4f6e520e038p-13
-solve_smb			flux_sm: -0x1.320ecb68799b5p-15
-solve_smb			E: 0x1.f0fbf0e67eff8p-14
-solve_smb			flux_sm: -0x1.56d3212c2c6a5p-14
-solve_smb			E: -0x1.b8c264f091575p-13
-solve_smb			flux_sm: -0x1.a3e7890955b4ep-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9d40d7ccf9cp-15
-solve_smb			E: 0x1.0a4f6e5194499p-13
-solve_smb			flux_sm: -0x1.3212ceb29ced8p-15
-solve_smb			E: 0x1.f0fbd677ef4f3p-14
-solve_smb			flux_sm: -0x1.56d421fe3b84fp-14
-solve_smb			E: -0x1.b8c26b160aa69p-13
-solve_smb			flux_sm: -0x1.a3e7fc3b156a1p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd9f0ffe31p-15
-solve_smb			E: 0x1.0a4f6e518e31p-13
-solve_smb			flux_sm: -0x1.321302260378ep-15
-solve_smb			E: 0x1.f0fbd52509cf2p-14
-solve_smb			flux_sm: -0x1.56d42edb0f0f4p-14
-solve_smb			E: -0x1.b8c26b64d6e01p-13
-solve_smb			flux_sm: -0x1.a3e802000c6f3p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd4c9a150fp-15
-solve_smb			E: 0x1.0a4f6e518de2ep-13
-solve_smb			flux_sm: -0x1.321304b9b2c1ep-15
-solve_smb			E: 0x1.f0fbd51410979p-14
-solve_smb			flux_sm: -0x1.56d42f7ffa936p-14
-solve_smb			E: -0x1.b8c26b68c9304p-13
-solve_smb			flux_sm: -0x1.a3e8024a05958p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd4878ccbp-15
-solve_smb			E: 0x1.0a4f6e518ddeep-13
-solve_smb			flux_sm: -0x1.321304dabd04ep-15
-solve_smb			E: 0x1.f0fbd51336f68p-14
-solve_smb			flux_sm: -0x1.56d42f883d202p-14
-solve_smb			E: -0x1.b8c26b68fbca3p-13
-solve_smb			flux_sm: -0x1.a3e8024dba0b5p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd4843d891p-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc64a5ep-15
-solve_smb			E: 0x1.f0fbd5132c0ffp-14
-solve_smb			flux_sm: -0x1.56d42f88a7084p-14
-solve_smb			E: -0x1.b8c26b68fe52fp-13
-solve_smb			flux_sm: -0x1.a3e8024de98c2p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd4841319cp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc79dd8p-15
-solve_smb			E: 0x1.f0fbd5132b843p-14
-solve_smb			flux_sm: -0x1.56d42f88ac562p-14
-solve_smb			E: -0x1.b8c26b68fe737p-13
-solve_smb			flux_sm: -0x1.a3e8024debed2p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410f9cp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7aed8p-15
-solve_smb			E: 0x1.f0fbd5132b7d5p-14
-solve_smb			flux_sm: -0x1.56d42f88ac9a2p-14
-solve_smb			E: -0x1.b8c26b68fe751p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0bcp-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410de6p-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afb3p-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9d9p-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d4p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410dd2p-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbdp-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dbp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
-solve_smb			E: 0x1.f0fbd5132b7dp-14
-solve_smb			flux_sm: -0x1.56d42f88ac9dcp-14
-solve_smb			E: -0x1.b8c26b68fe753p-13
-solve_smb			flux_sm: -0x1.a3e8024dec0d6p-14
-solve_smb			E: 0x1.0c70b78f41b53p-13
-solve_smb			flux_sm: 0x1.cd9cd48410ddp-15
-solve_smb			E: 0x1.0a4f6e518ddecp-13
-solve_smb			flux_sm: -0x1.321304dc7afbep-15
+solve_smb			E: 0x1.f6e1c4aeb5797p-14
+solve_smb			flux_sm: -0x1.09d064e1c4a83p-14
+solve_smb			E: -0x1.abbf7ca2ddb29p-13
+solve_smb			flux_sm: -0x1.805914c83d10dp-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.d725e47d7e545p-15
+solve_smb			E: 0x1.096c1600d525p-13
+solve_smb			flux_sm: -0x1.2b7fe9fc8d522p-15
+solve_smb			E: 0x1.effa310696afdp-14
+solve_smb			flux_sm: -0x1.544c107ff8798p-14
+solve_smb			E: -0x1.b80e5735fda0cp-13
+solve_smb			flux_sm: -0x1.a22320c34794ap-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cdf98da8b3acep-15
+solve_smb			E: 0x1.096c1575f9118p-13
+solve_smb			flux_sm: -0x1.30161566f2a5dp-15
+solve_smb			E: 0x1.efdc6819edf73p-14
+solve_smb			flux_sm: -0x1.55719acfb5bafp-14
+solve_smb			E: -0x1.b817adbf766edp-13
+solve_smb			flux_sm: -0x1.a2a70174d1d91p-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd885a0a1b049p-15
+solve_smb			E: 0x1.096c156f47796p-13
+solve_smb			flux_sm: -0x1.304eaf363efap-15
+solve_smb			E: 0x1.efdaf88dfc093p-14
+solve_smb			flux_sm: -0x1.557fc13cd737ep-14
+solve_smb			E: -0x1.b8181db20ed8ep-13
+solve_smb			flux_sm: -0x1.a2ad5ce569a08p-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82de7eb4114p-15
+solve_smb			E: 0x1.096c156ef47b3p-13
+solve_smb			flux_sm: -0x1.30516cfbf273ap-15
+solve_smb			E: 0x1.efdae6c0eb567p-14
+solve_smb			flux_sm: -0x1.558070adf1182p-14
+solve_smb			E: -0x1.b818231c1f3fcp-13
+solve_smb			flux_sm: -0x1.a2adabb76e374p-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd829a80d0484p-15
+solve_smb			E: 0x1.096c156ef075fp-13
+solve_smb			flux_sm: -0x1.30518efae4582p-15
+solve_smb			E: 0x1.efdae5e429716p-14
+solve_smb			flux_sm: -0x1.5580792da98cp-14
+solve_smb			E: -0x1.b818235f43327p-13
+solve_smb			flux_sm: -0x1.a2adaf88e97ebp-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd8297359ce63p-15
+solve_smb			E: 0x1.096c156ef0441p-13
+solve_smb			flux_sm: -0x1.305190a07e092p-15
+solve_smb			E: 0x1.efdae5d977b79p-14
+solve_smb			flux_sm: -0x1.558079970fc66p-14
+solve_smb			E: -0x1.b818236283d64p-13
+solve_smb			flux_sm: -0x1.a2adafb843bfp-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970cc3ed8p-15
+solve_smb			E: 0x1.096c156ef041cp-13
+solve_smb			flux_sm: -0x1.305190b4ea858p-15
+solve_smb			E: 0x1.efdae5d8f3177p-14
+solve_smb			flux_sm: -0x1.5580799c2ae32p-14
+solve_smb			E: -0x1.b8182362ac2c5p-13
+solve_smb			flux_sm: -0x1.a2adafba8efd4p-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970ac95b6p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5e7ce9p-15
+solve_smb			E: 0x1.efdae5d8ecaacp-14
+solve_smb			flux_sm: -0x1.5580799c6a352p-14
+solve_smb			E: -0x1.b8182362ae209p-13
+solve_smb			flux_sm: -0x1.a2adafbaab6ffp-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970ab0d13p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f413ap-15
+solve_smb			E: 0x1.efdae5d8ec5b2p-14
+solve_smb			flux_sm: -0x1.5580799c6d466p-14
+solve_smb			E: -0x1.b8182362ae38cp-13
+solve_smb			flux_sm: -0x1.a2adafbaacd0cp-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aafa0cp-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4abep-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6c8p-14
+solve_smb			E: -0x1.b8182362ae39ep-13
+solve_smb			flux_sm: -0x1.a2adafbaace1ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf91ep-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b35p-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e5p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2dp-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf913p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3ap-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e6p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
+solve_smb			E: 0x1.efdae5d8ec575p-14
+solve_smb			flux_sm: -0x1.5580799c6d6e7p-14
+solve_smb			E: -0x1.b8182362ae3ap-13
+solve_smb			flux_sm: -0x1.a2adafbaace2ep-14
+solve_smb			E: 0x1.0b896e1da63e2p-13
+solve_smb			flux_sm: 0x1.cd82970aaf912p-15
+solve_smb			E: 0x1.096c156ef0418p-13
+solve_smb			flux_sm: -0x1.305190b5f4b3bp-15
 ----BEFORET---
-diffusion_heat		sfc_T_new: 0x1.28f1894c7a4bcp+8
-diffusion_heat		soil_T (00): 0x1.2881894c7a4bcp+8
-diffusion_heat		soil_T (01): 0x1.24a0a621c53bdp+8
-diffusion_heat		soil_T (02): 0x1.2325e7ab416a8p+8
-diffusion_heat		soil_T (03): 0x1.22ad0b0d12984p+8
-diffusion_heat		soil_T (04): 0x1.22768f4c71dep+8
-diffusion_heat		soil_T (05): 0x1.224fc8bd0cb3p+8
-diffusion_heat		soil_T (06): 0x1.2228a9f0a28bap+8
-diffusion_heat		soil_T (07): 0x1.21fa1704fc39dp+8
-diffusion_heat		soil_T (08): 0x1.21c268ed77782p+8
-diffusion_heat		soil_T (09): 0x1.2182c5055f477p+8
-diffusion_heat		soil_T (10): 0x1.213dd2000001p+8
+diffusion_heat		sfc_T_new: 0x1.28ee0a4630987p+8
+diffusion_heat		soil_T (00): 0x1.287e0a4630987p+8
+diffusion_heat		soil_T (01): 0x1.249ea67b64c17p+8
+diffusion_heat		soil_T (02): 0x1.2322bf6655d22p+8
+diffusion_heat		soil_T (03): 0x1.22a93f17e8f02p+8
+diffusion_heat		soil_T (04): 0x1.2272b68296046p+8
+diffusion_heat		soil_T (05): 0x1.224c3c7e426e3p+8
+diffusion_heat		soil_T (06): 0x1.2225a2b107fdfp+8
+diffusion_heat		soil_T (07): 0x1.21f7bb72589c5p+8
+diffusion_heat		soil_T (08): 0x1.21c0ce8c1504bp+8
+diffusion_heat		soil_T (09): 0x1.2181f58bd2702p+8
+diffusion_heat		soil_T (10): 0x1.213dd2a666684p+8
 --------------
 ----AFTERT----
-diffusion_heat		soil_T (00): 0x1.28f1894c7a4bcp+8
-diffusion_heat		soil_T (01): 0x1.24d63701715dfp+8
-diffusion_heat		soil_T (02): 0x1.2340d5bed06bap+8
-diffusion_heat		soil_T (03): 0x1.22b90b98503b9p+8
-diffusion_heat		soil_T (04): 0x1.227a8b748fa5p+8
-diffusion_heat		soil_T (05): 0x1.224fad20c497ap+8
-diffusion_heat		soil_T (06): 0x1.2226ab21901f1p+8
-diffusion_heat		soil_T (07): 0x1.21f79284e112bp+8
-diffusion_heat		soil_T (08): 0x1.21c0463117396p+8
-diffusion_heat		soil_T (09): 0x1.21819069cffc4p+8
-diffusion_heat		soil_T (10): 0x1.213dd20000011p+8
+diffusion_heat		soil_T (00): 0x1.28ee0a4630987p+8
+diffusion_heat		soil_T (01): 0x1.24d415f87f44ep+8
+diffusion_heat		soil_T (02): 0x1.233db9de7f717p+8
+diffusion_heat		soil_T (03): 0x1.22b55d59f359fp+8
+diffusion_heat		soil_T (04): 0x1.2276cf9e6f1d7p+8
+diffusion_heat		soil_T (05): 0x1.224c36e5a132ep+8
+diffusion_heat		soil_T (06): 0x1.2223b1d2e1ca1p+8
+diffusion_heat		soil_T (07): 0x1.21f53e09f4d1p+8
+diffusion_heat		soil_T (08): 0x1.21beae784803bp+8
+diffusion_heat		soil_T (09): 0x1.2180c18da3122p+8
+diffusion_heat		soil_T (10): 0x1.213dd2a666686p+8
 --------------
 ----BEFOREQ---
-diffusion_mois		sfc_q_new: 0x1.0e8781408e043p-2
-diffusion_mois		soil_q (00): 0x1.0dab01d4d5d42p-2
-diffusion_mois		soil_q (01): 0x1.0e96487ae931ap-2
-diffusion_mois		soil_q (02): 0x1.570e50614edcep-2
-diffusion_mois		soil_q (03): 0x1.a428a179bd86ep-2
-diffusion_mois		soil_q (04): 0x1.c980a2411a46ap-2
-diffusion_mois		soil_q (05): 0x1.e255f1a2c7567p-2
-diffusion_mois		soil_q (06): 0x1.f5db038dfc1e7p-2
-diffusion_mois		soil_q (07): 0x1.036c87926a2b5p-1
-diffusion_mois		soil_q (08): 0x1.0b66c1c04ed5fp-1
-diffusion_mois		soil_q (09): 0x1.1364230e133bap-1
-diffusion_mois		soil_q (10): 0x1.1be6c9be68fecp-1
+diffusion_mois		sfc_q_new: 0x1.0ebd731e5dce9p-2
+diffusion_mois		soil_q (00): 0x1.0de15bee0f833p-2
+diffusion_mois		soil_q (01): 0x1.0ecc4d1b2c2dcp-2
+diffusion_mois		soil_q (02): 0x1.5710f926af592p-2
+diffusion_mois		soil_q (03): 0x1.a428fafacae89p-2
+diffusion_mois		soil_q (04): 0x1.c980b84d49013p-2
+diffusion_mois		soil_q (05): 0x1.e255f9313c278p-2
+diffusion_mois		soil_q (06): 0x1.f5db069687313p-2
+diffusion_mois		soil_q (07): 0x1.036c8834e129fp-1
+diffusion_mois		soil_q (08): 0x1.0b66c1f9d17f4p-1
+diffusion_mois		soil_q (09): 0x1.1364230c51d4cp-1
+diffusion_mois		soil_q (10): 0x1.1be6c991507a1p-1
 --------------
 ----AFTERQ----
-diffusion_mois		soil_q (00): 0x1.0e8781408e043p-2
-diffusion_mois		soil_q (01): 0x1.0f9c9672fdac1p-2
-diffusion_mois		soil_q (02): 0x1.5bf6e0b7f0535p-2
-diffusion_mois		soil_q (03): 0x1.a57ea004a1abp-2
-diffusion_mois		soil_q (04): 0x1.c9f9232c20cfcp-2
-diffusion_mois		soil_q (05): 0x1.e2772e1bba16ep-2
-diffusion_mois		soil_q (06): 0x1.f5cc7c692470cp-2
-diffusion_mois		soil_q (07): 0x1.0355301952619p-1
-diffusion_mois		soil_q (08): 0x1.0b429e4cbae56p-1
-diffusion_mois		soil_q (09): 0x1.13340364604ccp-1
-diffusion_mois		soil_q (10): 0x1.1ba962c60b5dp-1
+diffusion_mois		soil_q (00): 0x1.0ebd731e5dce9p-2
+diffusion_mois		soil_q (01): 0x1.0fd2299ff65b7p-2
+diffusion_mois		soil_q (02): 0x1.5bf9e10850817p-2
+diffusion_mois		soil_q (03): 0x1.a57f09c07d844p-2
+diffusion_mois		soil_q (04): 0x1.c9f93e1dfab14p-2
+diffusion_mois		soil_q (05): 0x1.e277379889086p-2
+diffusion_mois		soil_q (06): 0x1.f5cc8054fac65p-2
+diffusion_mois		soil_q (07): 0x1.035530f48a04cp-1
+diffusion_mois		soil_q (08): 0x1.0b429ea2d8ap-1
+diffusion_mois		soil_q (09): 0x1.1334036f0f90cp-1
+diffusion_mois		soil_q (10): 0x1.1ba9629a45684p-1
 --------------
 [UtahLSM: Run] 		 Running for time: 30000.00 of 33000.00[UtahLSM: Run] 		 Running for time: 30600.00 of 33000.00[UtahLSM: Run] 		 Running for time: 31200.00 of 33000.00[UtahLSM: Run] 		 Running for time: 31800.00 of 33000.00[UtahLSM: Run] 		 Running for time: 32400.00 of 33000.00[UtahLSM: Run] 		 Running for time: 33000.00 of 33000.00
-[UtahLSM: Run] 		 Done! Finished in 0.0103 seconds!
+[UtahLSM: Run] 		 Done! Finished in 0.0122 seconds!
 ##############################################################

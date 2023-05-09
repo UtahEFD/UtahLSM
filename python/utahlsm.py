@@ -250,24 +250,11 @@ class UtahLSM:
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             
-            # First time through we estimate based on Santanello and Friedl (2003)
-            if self.first:
-                if (self.soil_q[0]>=0.4):
-                    A = 0.31000
-                    B = 74000.0
-                elif (self.soil_q[0]<0.4 and self.soil_q[0] >= 0.25):
-                    A = 0.33000
-                    B = 85000.0
-                else:
-                    A = 0.35
-                    B = 100000.0
-                    
-                self.ghf[0] = self.R_net*A*np.cos((2.0*c.pi*(self.utc)+10800.0)/B)
-            else:
-                K0       = self.soil.conductivity_thermal(self.soil_q[0],0)
-                K1       = self.soil.conductivity_thermal(self.soil_q[1],1)
-                Kmid     = 0.5*(K0 + K1)
-                self.ghf[0] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
+            # Compute ground flux
+            K0          = self.soil.conductivity_thermal(self.soil_q[0],0)
+            K1          = self.soil.conductivity_thermal(self.soil_q[1],1)
+            Kmid        = 0.5*(K0 + K1)
+            self.ghf[0] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
             
             # Compute friction velocity
             self.ust[0] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[0])

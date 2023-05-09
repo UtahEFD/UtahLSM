@@ -55,7 +55,7 @@ UtahLSM :: UtahLSM(Settings* settings, Input* input, Output* output,
     settings->getItem(step_dif,"time","step_dif");
     settings->getItem(utc,"time","utc_start");
     settings->getItem(julian_day,"time","julian_day");
-
+    
     // Settings grid section
     settings->getItem(nx,"grid","nx");
     settings->getItem(ny,"grid","ny");
@@ -402,26 +402,10 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     for (int i=0; i<max_iterations; ++i) {
         
         // Compute ground flux
-        // First time through we estimate based on Santanello and Friedl (2003)
-        if (first) {
-            double A,B;
-            if (soil_q[0]>=0.4) {
-                A = 0.31;
-                B = 74000.0;
-            } else if (soil_q[0]<0.4 && soil_q[0] >= 0.25){
-                A = 0.33;
-                B = 85000.0;
-            } else {
-                A = 0.35;
-                B = 100000.0;
-            }
-            flux_gr = R_net*A*std::cos((2.0*c::pi*(utc)+10800.0)/B);
-        } else {
-            double K0 = soil->conductivityThermal(soil_q[0],0);
-            double K1 = soil->conductivityThermal(soil_q[1],1);
-            double Kmid = 0.5*(K0 + K1);
-            flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
-        }
+        double K0 = soil->conductivityThermal(soil_q[0],0);
+        double K1 = soil->conductivityThermal(soil_q[1],1);
+        double Kmid = 0.5*(K0 + K1);
+        flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
         
         // Compute friction velocity
         ustar = atm_U*sfc->fm(z_m,z_o,L);

@@ -99,16 +99,16 @@ init.history     = "Created " + time.ctime(time.time())
 init.createDimension('z', nsoil)
 
 # add variables
-init_z = init.createVariable("soil_z", "f4", ("z",))
+init_z = init.createVariable("soil_z", "f8", ("z",))
 init_z.long_name = "z-distance"
 init_z.units = "m"
-init_T = init.createVariable("soil_T", "f4", ("z"))
+init_T = init.createVariable("soil_T", "f8", ("z"))
 init_T.long_name = "soil temperature"
 init_T.units = "T"
-init_q = init.createVariable("soil_q", "f4", ("z"))
+init_q = init.createVariable("soil_q", "f8", ("z"))
 init_q.long_name = "soil moisture"
 init_q.units = "g g-1"
-init_i = init.createVariable("soil_type", "f4", ("z"))
+init_i = init.createVariable("soil_type", "f8", ("z"))
 init_i.long_name = "soil type"
 init_i.units = ""
 
@@ -172,22 +172,22 @@ metr.history     = "Created " + time.ctime(time.time())
 metr.createDimension('t', ntime)
 
 # add variables
-metr_s = metr.createVariable("tstep", "f4", ())
+metr_s = metr.createVariable("tstep", "f8", ())
 metr_s.long_name = "time step for input offline data"
 metr_s.units = "s"
-metr_u = metr.createVariable("atm_U", "f4", ("t"))
+metr_u = metr.createVariable("atm_U", "f8", ("t"))
 metr_u.long_name = "wind speed"
 metr_u.units = "m s-1"
-metr_t = metr.createVariable("atm_T", "f4", ("t"))
+metr_t = metr.createVariable("atm_T", "f8", ("t"))
 metr_t.long_name = "temperature"
 metr_t.units = "K"
-metr_q = metr.createVariable("atm_q", "f4", ("t"))
+metr_q = metr.createVariable("atm_q", "f8", ("t"))
 metr_q.long_name = "mixing ratio"
 metr_q.units = "g g-1"
-metr_p = metr.createVariable("atm_p", "f4", ("t"))
+metr_p = metr.createVariable("atm_p", "f8", ("t"))
 metr_p.long_name = "pressure"
 metr_p.units = "hPa"
-metr_r = metr.createVariable("R_net", "f4", ("t"))
+metr_r = metr.createVariable("R_net", "f8", ("t"))
 metr_r.long_name = "net radiation"
 metr_r.units = "W m-2"
 
