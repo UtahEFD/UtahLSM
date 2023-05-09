@@ -13,9 +13,9 @@
 # 
 
 import numpy as np
+import warnings
 from util import constants as c
 from .sfc import Surface
-
 class SurfaceMOST(Surface):
 
     # class initialization
@@ -24,6 +24,8 @@ class SurfaceMOST(Surface):
         print("[UtahLSM: Surface] \t --- using the MOST model")
         # initialize parent class
         super().__init__()
+        
+        warnings.simplefilter('error')
         
     # gradient momentum function
     def phim(self,z, obukL):
@@ -79,7 +81,6 @@ class SurfaceMOST(Surface):
     
     # integral stability correction for scalars
     def psih(self,z,obukL):
-        
         # z/L
         zeta = 0 if obukL==0 else z/obukL
         

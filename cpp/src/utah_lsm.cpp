@@ -253,18 +253,18 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     }
     
     // Keep winds from being exactly zero
-    if (atm_U==0) atm_U = 0.1;
+    if (atm_U==0) atm_U = 1e-4;
     
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<std::endl;
         std::cout<<"--------------"<<std::endl;
-        logger->print_hex(tstep, "update_fields\t\t", "tstep");
-        logger->print_hex(utc,   "update_fields\t\t", "t utc");
-        logger->print_hex(atm_U, "update_fields\t\t", "atm_U");
-        logger->print_hex(atm_T, "update_fields\t\t", "atm_T");
-        logger->print_hex(atm_q, "update_fields\t\t", "atm_q");
-        logger->print_hex(atm_p, "update_fields\t\t", "atm_p");
-        logger->print_hex(R_net, "update_fields\t\t", "R_net");
+        logger->print_double(tstep, "update_fields\t\t", "tstep");
+        logger->print_double(utc,   "update_fields\t\t", "t utc");
+        logger->print_double(atm_U, "update_fields\t\t", "atm_U");
+        logger->print_double(atm_T, "update_fields\t\t", "atm_T");
+        logger->print_double(atm_q, "update_fields\t\t", "atm_q");
+        logger->print_double(atm_p, "update_fields\t\t", "atm_p");
+        logger->print_double(R_net, "update_fields\t\t", "R_net");
         std::cout<<"--------------"<<std::endl;
     }
     
@@ -277,10 +277,10 @@ void UtahLSM :: run() {
     sfc_T_new = soil_T[0];
     sfc_q_new = soil_q[0];
     
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"--------------"<<std::endl;
-        logger->print_hex(sfc_T_new,"run\t\t\t\t\t","sfc_T_new");
-        logger->print_hex(sfc_q_new,"run\t\t\t\t\t","sfc_q_new");
+        logger->print_double(sfc_T_new,"run\t\t\t\t\t","sfc_T_new");
+        logger->print_double(sfc_q_new,"run\t\t\t\t\t","sfc_q_new");
         std::cout<<"--------------"<<std::endl;
     }
     
@@ -414,15 +414,8 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         flux_wT = (sfc_T-atm_T)*ustar*sfc->fh(z_s,z_t,L);
         
         // Compute latent flux
-        if ( (first) && (i == 0)) {
-            flux_wq = (R_net - flux_gr - flux_wT*c::rho_air*c::Cp_air)/(c::rho_air*c::Lv);
-            gnd_q = atm_q + flux_wq / (ustar*sfc->fh(z_s,z_t,L));
-            soil_q[0] = soil->surfaceWaterContentEstimate(soil_T[0],gnd_q, atm_p);
-            sfc_q_new = soil_q[0];
-        } else {
-            flux_wq = (gnd_q-atm_q)*ustar*sfc->fh(z_s,z_t,L);
-        }
-
+        flux_wq = (gnd_q-atm_q)*ustar*sfc->fh(z_s,z_t,L);
+        
         // Compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
 
@@ -430,21 +423,24 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         last_L = L;
         L      = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
         
-        if (runtime==29400) {
-            std::cout<<"--------------"<<std::endl;
-            logger->print_hex(gnd_q,"compute_fluxes\t\t","gnd_q");
-            logger->print_hex(flux_gr,"compute_fluxes\t\t","ghf");
-            logger->print_hex(ustar,"compute_fluxes\t\t","ust");
-            logger->print_hex(flux_wT,"compute_fluxes\t\t","wT");
-            logger->print_hex(flux_wq,"compute_fluxes\t\t","wq");
-            logger->print_hex(flux_wTv,"compute_fluxes\t\t","wTv");
-            logger->print_hex(L,"compute_fluxes\t\t","obl");
-            std::cout<<"--------------"<<std::endl;
-        }
-        
         // Bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
+        
+        if (runtime<1E7) {
+            std::cout<<"--------------"<<std::endl;
+            logger->print_double(gnd_q,"compute_fluxes\t\t","gnd_q");
+            logger->print_double(flux_gr,"compute_fluxes\t\t","ghf");
+            logger->print_double(ustar,"compute_fluxes\t\t","ust");
+            logger->print_double(flux_wT,"compute_fluxes\t\t","wT");
+            logger->print_double(flux_wq,"compute_fluxes\t\t","wq");
+            logger->print_double(flux_wTv,"compute_fluxes\t\t","wTv");
+            logger->print_double(L,"compute_fluxes\t\t","obl");
+            logger->print_double(last_L,"compute_fluxes\t\t","obl_old");
+            logger->print_double(std::abs(last_L-L),"compute_fluxes\t\t","obl_diff");
+            logger->print_double(criteria,"compute_fluxes\t\t","criteria");
+            std::cout<<"--------------"<<std::endl;
+        }
         
         // Check for convergence
         converged = std::abs(last_L-L) <= criteria;
@@ -570,11 +566,11 @@ void UtahLSM :: solveSEB() {
             double Qh = c::rho_air*c::Cp_air*flux_wT;
             double Ql = c::rho_air*c::Lv*flux_wq;
             double Qg = flux_gr;
-            if (runtime==29400) {
+            if (runtime<1E7) {
                 std::cout<<"--------------"<<std::endl;
-                logger->print_hex(Qh,"solve_seb\t\t\t","Qh");
-                logger->print_hex(Ql,"solve_seb\t\t\t","Ql");
-                logger->print_hex(Qg,"solve_seb\t\t\t","Qg");
+                logger->print_double(Qh,"solve_seb\t\t\t","Qh");
+                logger->print_double(Ql,"solve_seb\t\t\t","Ql");
+                logger->print_double(Qg,"solve_seb\t\t\t","Qg");
                 std::cout<<"--------------"<<std::endl;
             }
             break;
@@ -602,13 +598,13 @@ double UtahLSM :: computeSEB(double sfc_T) {
     // Compute surface energy balance
     SEB = R_net - Qg - Qh - Ql;
     
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"--------------"<<std::endl; 
-        logger->print_hex(Qh,"compute_seb\t\t\t","Qh");
-        logger->print_hex(Ql,"compute_seb\t\t\t","Ql");
-        logger->print_hex(Qg,"compute_seb\t\t\t","Qg");
-        logger->print_hex(R_net,"compute_seb\t\t\t","Rn");
-        logger->print_hex(SEB,"compute_seb\t\t\t","SEB");
+        logger->print_double(Qh,"compute_seb\t\t\t","Qh");
+        logger->print_double(Ql,"compute_seb\t\t\t","Ql");
+        logger->print_double(Qg,"compute_seb\t\t\t","Qg");
+        logger->print_double(R_net,"compute_seb\t\t\t","Rn");
+        logger->print_double(SEB,"compute_seb\t\t\t","SEB");
         std::cout<<"--------------"<<std::endl;
     }
     
@@ -627,10 +623,10 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     + c::rho_air*c::Cp_air*ustar*sfc->fh(z_s,z_t,L)
     + heat_cap*(soil_z[0]-soil_z[1])/(2.0*tstep);
     
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"--------------"<<std::endl; 
-        logger->print_hex(heat_cap,"compute_dseb\t\t","heat_cap");
-        logger->print_hex(dSEB_dT,"compute_dseb\t\t","dSEB_dT");
+        logger->print_double(heat_cap,"compute_dseb\t\t","heat_cap");
+        logger->print_double(dSEB_dT,"compute_dseb\t\t","dSEB_dT");
         std::cout<<"--------------"<<std::endl;
     }
     
@@ -689,19 +685,19 @@ void UtahLSM :: solveSMB() {
         
         // Update soil moisture transfer
         K0    = soil->conductivityMoisture(sfc_q_new,0);
-        K1    = soil->conductivityMoisture(sfc_q_new,1);
+        K1    = soil->conductivityMoisture(soil_q[1],1);
         K_avg = 0.5*(K0+K1);
         
-        if (runtime==29400) {
-            logger->print_hex(E, "solve_smb\t\t\t", "E");
-            logger->print_hex(flux_sm,"solve_smb\t\t\t", "flux_sm");
+        if (runtime<1E7) {
+            logger->print_double(E, "solve_smb\t\t\t", "E");
+            logger->print_double(flux_sm,"solve_smb\t\t\t", "flux_sm");
         }
         
         // Check for convergence
         if (std::abs((E + flux_sm)/E) <=flux_criteria) {
-            // if (runtime==29400) {
-            //     logger->print_hex(E,"E");
-            //     logger->print_hex(flux_sm,"flux_sm");
+            // if (runtime<1E7) {
+            //     logger->print_double(E,"E");
+            //     logger->print_double(flux_sm,"flux_sm");
             // }
             break;
         }
@@ -710,14 +706,14 @@ void UtahLSM :: solveSMB() {
 
 void UtahLSM :: solveDiffusionHeat() {
     
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"----BEFORET---"<<std::endl;
-        logger->print_hex(sfc_T_new, "diffusion_heat\t\t", "sfc_T_new");
+        logger->print_double(sfc_T_new, "diffusion_heat\t\t", "sfc_T_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
             std::ostringstream oss;
             oss << "soil_T ("<<std::setfill('0') << std::setw(2)<<ii<<")";
             std::string var = oss.str();
-            logger->print_hex(soil_T[ii], "diffusion_heat\t\t", var);
+            logger->print_double(soil_T[ii], "diffusion_heat\t\t", var);
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -851,13 +847,13 @@ void UtahLSM :: solveDiffusionHeat() {
         // update time
         t += dt_T;
     }
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"----AFTERT----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
             std::ostringstream oss;
             oss << "soil_T ("<<std::setfill('0') << std::setw(2)<<ii<<")";
             std::string var = oss.str();
-            logger->print_hex(soil_T[ii], "diffusion_heat\t\t", var);
+            logger->print_double(soil_T[ii], "diffusion_heat\t\t", var);
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -889,14 +885,14 @@ void UtahLSM :: solveDiffusionMois() {
     double Dmax, dt_q;
     dt_q = 1.0;
     
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"----BEFOREQ---"<<std::endl;
-        logger->print_hex(sfc_q_new, "diffusion_mois\t\t","sfc_q_new");
+        logger->print_double(sfc_q_new, "diffusion_mois\t\t","sfc_q_new");
         for (int ii=0; ii<nsoilz; ii+=1) {
             std::ostringstream oss;
             oss << "soil_q ("<<std::setfill('0') << std::setw(2)<<ii<<")";
             std::string var = oss.str();
-            logger->print_hex(soil_q[ii],"diffusion_mois\t\t",var);
+            logger->print_double(soil_q[ii],"diffusion_mois\t\t",var);
         }
         std::cout<<"--------------"<<std::endl;
     }
@@ -1057,13 +1053,13 @@ void UtahLSM :: solveDiffusionMois() {
         // update time
         t += dt_q; 
     }
-    if (runtime==29400) {
+    if (runtime<1E7) {
         std::cout<<"----AFTERQ----"<<std::endl;
         for (int ii=0; ii<nsoilz; ii+=1) {
             std::ostringstream oss;
             oss << "soil_q ("<<std::setfill('0') << std::setw(2)<<ii<<")";
             std::string var = oss.str();
-            logger->print_hex(soil_q[ii],"diffusion_mois\t\t",var);
+            logger->print_double(soil_q[ii],"diffusion_mois\t\t",var);
         }
         std::cout<<"--------------"<<std::endl;
     }

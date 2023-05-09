@@ -40,7 +40,6 @@ namespace {
 int main (int argc, char *argv[]) {
     
     // print a nice little welcome message
-    std::cout << std::endl;
     std::cout<<"##############################################################"<<std::endl;
     std::cout<<"#                                                            #"<<std::endl;
     std::cout<<"#                     Welcome to UtahLSM                     #"<<std::endl;
@@ -69,7 +68,7 @@ int main (int argc, char *argv[]) {
     std::cout<<"[UtahLSM: Info] \t Running offline for the "+case_name+" case"<<std::endl;
     
     // declare local variables
-    double ustar,flux_wT,flux_wq;
+    double ustar = 0,flux_wT = 0,flux_wq = 0;
     
     // input time
     int ntime; 

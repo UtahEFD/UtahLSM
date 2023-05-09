@@ -40,7 +40,7 @@ void Output :: addField(std::string name, std::string units,
  
     NcVar var;
     
-    var = outfile->addVar(name, NC_FLOAT, dims);
+    var = outfile->addVar(name, NC_DOUBLE, dims);
     var.putAtt("units", units);
     var.putAtt("long_name", long_name);
     fields[name] = var;
