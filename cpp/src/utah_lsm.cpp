@@ -390,22 +390,22 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // Local variables
     int max_iterations = 200;
     bool converged = false;
-    double gnd_q, flux_wTv;
-    double last_L, criteria = 0.1, ref_T = 300.;
-    int int_depth;
-    double heat_cap, dT, dz, K0, K1;
+    double flux_wTv = 0;
+    double last_L = 1000.0;
+    double criteria = 0.1;
+    double ref_T = 300.0;
     
     // Compute surface mixing ratio
-    gnd_q  = soil->surfaceMixingRatio(sfc_T,sfc_q,atm_p);
+    double gnd_q  = soil->surfaceMixingRatio(sfc_T,sfc_q,atm_p);
+    
+    // Compute ground flux
+    double K0 = soil->conductivityThermal(soil_q[0],0);
+    double K1 = soil->conductivityThermal(soil_q[1],1);
+    double Kmid = 0.5*(K0 + K1);
+    flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0] - soil_z[1]);
     
     // Sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
-        
-        // Compute ground flux
-        double K0 = soil->conductivityThermal(soil_q[0],0);
-        double K1 = soil->conductivityThermal(soil_q[1],1);
-        double Kmid = 0.5*(K0 + K1);
-        flux_gr = Kmid*(sfc_T - soil_T[1])/(soil_z[0]-soil_z[1]);
         
         // Compute friction velocity
         ustar = atm_U*sfc->fm(z_m,z_o,L);
@@ -421,7 +421,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
 
         // Compute L
         last_L = L;
-        L      = -std::pow(ustar,3.)*ref_T/(c::vonk*c::grav*flux_wTv);
+        L      = -(ustar*ustar*ustar)*ref_T/(c::vonk*c::grav*flux_wTv);
         
         // Bounds check on L
         if (z_m/L > 5.)  L = z_m/5.;

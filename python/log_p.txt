@@ -36666,5 +36666,5 @@ diffusion_mois		soil_q (09): 0.5354123559498265
 diffusion_mois		soil_q (10): 0.55136871294120227
 --------------
 
-[UtahLSM: Run] 		 Done! Completed in 0.3466 seconds
+[UtahLSM: Run] 		 Done! Completed in 0.3425 seconds
 ##############################################################

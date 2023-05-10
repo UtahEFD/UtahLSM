@@ -240,21 +240,21 @@ class UtahLSM:
         # Local variables
         max_iterations = 200
         converged      = False
-        last_L         = 0.1
+        last_L         = 1000.0
         criteria       = 0.1
-        ref_T          = 300
+        ref_T          = 300.0
         
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_p)
         
+        # Compute ground flux
+        K0          = self.soil.conductivity_thermal(self.soil_q[0],0)
+        K1          = self.soil.conductivity_thermal(self.soil_q[1],1)
+        Kmid        = 0.5*(K0 + K1)
+        self.ghf[0] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
+        
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
-            
-            # Compute ground flux
-            K0          = self.soil.conductivity_thermal(self.soil_q[0],0)
-            K1          = self.soil.conductivity_thermal(self.soil_q[1],1)
-            Kmid        = 0.5*(K0 + K1)
-            self.ghf[0] = Kmid*(sfc_T - self.soil_T[1])/(self.soil_z[0]-self.soil_z[1])
             
             # Compute friction velocity
             self.ust[0] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[0])
