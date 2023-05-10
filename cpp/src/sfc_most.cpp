@@ -58,7 +58,7 @@ double MOST::phihUnstable(const double zeta) {
 
 // Integral stability correction for momentum
 double MOST::psim(const double z, const double obukL) {
-    double zeta = (obukL == 0) ? 0 : z/obukL; 
+    double zeta = (obukL == 0) ? 0 : z/obukL;
     return (zeta >= 0.) ? psimStable(zeta) : psimUnstable(zeta);
 }
 
@@ -69,8 +69,25 @@ double MOST::psimStable(const double zeta) {
 
 // Integral stability correction for momentum under unstable conditions
 double MOST::psimUnstable(const double zeta) {
+    
     double x = std::pow( (1.-(16.*zeta)), 0.25);
-    return 2.*std::log((1.+x)/2.)+std::log((1+std::pow(x,2.))/2.)-2*std::atan(x)+c::pi/2.;
+    double log1 = 2.*std::log((1.+x)/2.);
+    double log2 = std::log((1.+std::pow(x,2.))/2.);
+    double atan = 2.* std::cos(x) / std::sin(x);
+    
+    //double atan 2.*std::atan(x);
+    double pio2 = c::pi/2.;
+    
+    std::cout<<std::defaultfloat;
+    std::cout<<std::setprecision(17);
+    std::cout<<"PSIMU\t\t"<<"zeta"<<": "<<zeta<<std::endl;
+    std::cout<<"PSIMU\t\t"<<"x"<<": "<<x<<std::endl;
+    std::cout<<"PSIMU\t\t"<<"log1"<<": "<<log1<<std::endl;
+    std::cout<<"PSIMU\t\t"<<"log2"<<": "<<log2<<std::endl;
+    std::cout<<"PSIMU\t\t"<<"atan"<<": "<<atan<<std::endl;
+    std::cout<<"PSIMU\t\t"<<"pio2"<<": "<<pio2<<std::endl;
+    
+    return 2.*std::log((1.+x)/2.)+std::log((1.+std::pow(x,2.))/2.)-2.*std::atan2(1.,std::pow( (1.-(16.*zeta)), -0.25))+c::pi/2.;
 }
 
 // Integral stability correction for scalars
@@ -87,7 +104,13 @@ double MOST::psihStable(const double zeta) {
 // Integral stability correction for scalars under unstable conditions
 double MOST::psihUnstable(const double zeta) {
     double y = std::pow( (1.-(16.*zeta)), 0.5);
-    return 2.*std::log((1+y)/2.);
+    double log1 = 2.*std::log((1.+y)/2.);
+    std::cout<<std::defaultfloat;
+    std::cout<<std::setprecision(17);
+    std::cout<<"PSIHU\t\t"<<"zeta"<<": "<<zeta<<std::endl;
+    std::cout<<"PSIHU\t\t"<<"x"<<": "<<y<<std::endl;
+    std::cout<<"PSIHU\t\t"<<"log1"<<": "<<log1<<std::endl;
+    return 2.*std::log((1.+y)/2.);
 }
 
 // Common log-law function for momentum

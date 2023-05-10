@@ -162,7 +162,8 @@ class UtahLSM:
         self.atm_p    = p
         self.runtime += tstep
         self.utc      = np.fmod(self.runtime,86400)
-        
+        #if self.runtime==26400:
+        #    sys.exit(1)
         # Run radiation model and update time/date if needed
         if (self.comp_rad==1):
             julian_day += int(runtime/86400);
@@ -256,14 +257,18 @@ class UtahLSM:
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             
+            # Compute stability functions
+            fm = self.sfc.fm(self.z_m, self.z_o, self.obl[0])
+            fh = self.sfc.fh(self.z_s, self.z_t, self.obl[0])
+            
             # Compute friction velocity
-            self.ust[0] = self.atm_U*self.sfc.fm(self.z_m, self.z_o, self.obl[0])
+            self.ust[0] = self.atm_U*fm
             
             # Compute heat flux
-            self.flux_wT[0] = (sfc_T-self.atm_T)*self.ust[0]*self.sfc.fh(self.z_s, self.z_t, self.obl[0])
+            self.flux_wT[0] = (sfc_T-self.atm_T)*self.ust[0]*fh
             
             # Compute latent flux
-            self.flux_wq[0] = (gnd_q-self.atm_q)*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0])
+            self.flux_wq[0] = (gnd_q-self.atm_q)*self.ust[0]*fh
                 
             # Compute virtual heat flux
             flux_wTv = self.flux_wT[0] + ref_T*0.61*self.flux_wq[0]
@@ -276,11 +281,14 @@ class UtahLSM:
             if (self.z_m/self.obl[0] > 5.):  self.obl[0] = self.z_m/5.
             if (self.z_m/self.obl[0] < -5.): self.obl[0] = -self.z_m/5.
                 
-            if (self.runtime<1E7):
+            if (self.runtime==25800):
                 print("--------------")
                 io.Logger.print_double(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
                 io.Logger.print_double(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
                 io.Logger.print_double(self.ust[0],     "compute_fluxes\t\t", 'ust')
+                io.Logger.print_double(self.atm_U,      "compute_fluxes\t\t", 'atm_U')
+                io.Logger.print_double(fm,              "compute_fluxes\t\t", 'fm')
+                io.Logger.print_double(fh,              "compute_fluxes\t\t", 'fh')
                 io.Logger.print_double(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
                 io.Logger.print_double(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
                 io.Logger.print_double(flux_wTv,        "compute_fluxes\t\t", 'wTv')
@@ -296,7 +304,7 @@ class UtahLSM:
                 self.shf[0] = c.rho_air*c.Cp_air*self.flux_wT[0]
                 self.lhf[0] = c.rho_air*c.Lv*self.flux_wq[0]
                 break
-
+        
         # Exit if L convergence fails
         if (not converged):
             print("[UtahLSM: Fluxes] \t Converge failed")

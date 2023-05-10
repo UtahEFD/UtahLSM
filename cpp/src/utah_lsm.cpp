@@ -246,7 +246,9 @@ void UtahLSM :: updateFields(double dt,double u,double T,double q,double p,doubl
     runtime += tstep;
     utc = std::fmod(runtime,86400);
     julian_day += int(runtime/86400);
-    
+    // if (runtime==26400) {
+    //     std::exit(1);
+    // }
     // Run radiation model and update time/date if needed
     if (comp_rad==1) {
         R_net = radiation->computeNet(julian_day,utc,soil_T[0]);
@@ -390,6 +392,7 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // Local variables
     int max_iterations = 200;
     bool converged = false;
+    double fm=0, fh = 0;
     double flux_wTv = 0;
     double last_L = 1000.0;
     double criteria = 0.1;
@@ -407,14 +410,18 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
     // Sensible flux, latent flux, ustar, and L
     for (int i=0; i<max_iterations; ++i) {
         
-        // Compute friction velocity
-        ustar = atm_U*sfc->fm(z_m,z_o,L);
+        // Compute stability functions
+        fm = sfc->fm(z_m,z_o,L);
+        fh = sfc->fh(z_s,z_t,L);
         
+        // Compute friction velocity
+        ustar = atm_U*fm;
+           
         // Compute heat flux
-        flux_wT = (sfc_T-atm_T)*ustar*sfc->fh(z_s,z_t,L);
+        flux_wT = (sfc_T-atm_T)*ustar*fh;
         
         // Compute latent flux
-        flux_wq = (gnd_q-atm_q)*ustar*sfc->fh(z_s,z_t,L);
+        flux_wq = (gnd_q-atm_q)*ustar*fh;
         
         // Compute virtual heat flux
         flux_wTv = flux_wT + ref_T*0.61*flux_wq;
@@ -427,11 +434,14 @@ void UtahLSM :: computeFluxes(double sfc_T, double sfc_q) {
         if (z_m/L > 5.)  L = z_m/5.;
         if (z_m/L < -5.) L = -z_m/5.;
         
-        if (runtime<1E7) {
+        if (runtime==25800) {
             std::cout<<"--------------"<<std::endl;
             logger->print_double(gnd_q,"compute_fluxes\t\t","gnd_q");
             logger->print_double(flux_gr,"compute_fluxes\t\t","ghf");
             logger->print_double(ustar,"compute_fluxes\t\t","ust");
+            logger->print_double(atm_U,"compute_fluxes\t\t","atm_U");
+            logger->print_double(fm,"compute_fluxes\t\t","fm");
+            logger->print_double(fh,"compute_fluxes\t\t","fh");
             logger->print_double(flux_wT,"compute_fluxes\t\t","wT");
             logger->print_double(flux_wq,"compute_fluxes\t\t","wq");
             logger->print_double(flux_wTv,"compute_fluxes\t\t","wTv");
