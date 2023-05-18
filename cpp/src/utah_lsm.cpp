@@ -631,7 +631,7 @@ double UtahLSM :: computeDSEB(double sfc_T) {
     heat_cap = soil->heatCapacity(sfc_q_new,0);
     dSEB_dT = 4.0*emissivity*c::sb*std::pow(sfc_T,3.)
     + c::rho_air*c::Cp_air*ustar*sfc->fh(z_s,z_t,L)
-    + heat_cap*(soil_z[0]-soil_z[1])/(2.0*tstep);
+    + heat_cap/(soil_z[0]-soil_z[1]);
     
     if (runtime<1E7) {
         std::cout<<"--------------"<<std::endl; 

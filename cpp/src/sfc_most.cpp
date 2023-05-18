@@ -17,6 +17,8 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <limits>
+#include <format>
 
 #include "constants.hpp"
 
@@ -79,7 +81,8 @@ double MOST::psimUnstable(const double zeta) {
     double pio2 = c::pi/2.;
     
     std::cout<<std::defaultfloat;
-    std::cout<<std::setprecision(17);
+    typedef std::numeric_limits< double > dbl;
+    std::cout<<std::setprecision(dbl::max_digits10);
     std::cout<<"PSIMU\t\t"<<"zeta"<<": "<<zeta<<std::endl;
     std::cout<<"PSIMU\t\t"<<"x"<<": "<<x<<std::endl;
     std::cout<<"PSIMU\t\t"<<"log1"<<": "<<log1<<std::endl;
@@ -106,7 +109,8 @@ double MOST::psihUnstable(const double zeta) {
     double y = std::pow( (1.-(16.*zeta)), 0.5);
     double log1 = 2.*std::log((1.+y)/2.);
     std::cout<<std::defaultfloat;
-    std::cout<<std::setprecision(17);
+    typedef std::numeric_limits< double > dbl;
+    std::cout<<std::setprecision(dbl::max_digits10);
     std::cout<<"PSIHU\t\t"<<"zeta"<<": "<<zeta<<std::endl;
     std::cout<<"PSIHU\t\t"<<"x"<<": "<<y<<std::endl;
     std::cout<<"PSIHU\t\t"<<"log1"<<": "<<log1<<std::endl;

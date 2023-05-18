@@ -16,16 +16,19 @@
 
 #include <iostream>
 #include <iomanip>
+#include <limits>
 
 void Logger :: print_double(double x, std::string section, std::string label) {
     std::cout<<std::defaultfloat;
-    std::cout<<std::setprecision(17);
+    typedef std::numeric_limits< double > dbl;
+    std::cout<<std::setprecision(dbl::max_digits10);
     std::cout<<section<<label<<": "<<x<<std::endl;
 }
 
 void Logger :: print_double(double x) {
     std::cout<<std::defaultfloat;
-    std::cout<<std::setprecision(17);
+    typedef std::numeric_limits< double > dbl;
+    std::cout<<std::setprecision(dbl::max_digits10);
 	std::cout<<"LOG -> "<<x<<std::endl;
 }
 

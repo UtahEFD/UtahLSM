@@ -12,10 +12,8 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import numpy as np
 import math
-import warnings
-import mpmath as mp
+import numpy as np
 from util import constants as c
 from .sfc import Surface
 class SurfaceMOST(Surface):
@@ -26,10 +24,6 @@ class SurfaceMOST(Surface):
         print("[UtahLSM: Surface] \t --- using the MOST model")
         # initialize parent class
         super().__init__()
-        
-        mp.dps = 20
-        
-        warnings.simplefilter('error')
         
     # gradient momentum function
     def phim(self,z, obukL):
@@ -83,10 +77,10 @@ class SurfaceMOST(Surface):
         x = (1.-(16.*zeta))**(0.25)
         log1 = 2.*np.log((1.+x)/2.)
         log2 = np.log((1.+x**2.)/2.)
-        atan = 2.* mp.cos(x) / mp.sin(x)#   2.*math.atan2(1.,1./x)
+        atan = 2.* np.cos(x) / np.sin(x)#   2.*math.atan2(1.,1./x)
         pio2 = c.pi/2.
         
-        print('%s%s: %0.17g'%("PSIMU\t\t","zeta",zeta))
+        print('%s%s: %s'%("PSIMU\t\t","zeta",str(zeta)))
         print('%s%s: %0.17g'%("PSIMU\t\t","x",x))
         print('%s%s: %0.17g'%("PSIMU\t\t","log1",log1))
         print('%s%s: %0.17g'%("PSIMU\t\t","log2",log2))

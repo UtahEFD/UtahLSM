@@ -450,7 +450,7 @@ class UtahLSM:
         heat_cap = self.soil.heat_capacity(self.sfc_q_new,0)
         dSEB_dT  = 4.0*self.emissivity*c.sb*(sfc_T**3) \
         + c.rho_air*c.Cp_air*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0]) \
-        + heat_cap*(self.soil_z[0]-self.soil_z[1])/(2.0*self.tstep)
+        + heat_cap/(self.soil_z[0]-self.soil_z[1])
         
         if (self.runtime<1E7):
             print("--------------")

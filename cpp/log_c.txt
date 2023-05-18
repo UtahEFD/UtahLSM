@@ -15,8 +15,7 @@
 [UtahLSM: Setup] 	 Creating surface model
 [UtahLSM: Surface] 	 --- using the MOST model
 [UtahLSM: Setup] 	 Creating output file
-
-[UtahLSM: Run] 		 Running for time: 600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 600
@@ -753,7 +752,7 @@ compute_seb			SEB: -181.12783812690657
 --------------
 --------------
 compute_dseb		heat_cap: 1420177.0556539535
-compute_dseb		dSEB_dT: 83.453000630834708
+compute_dseb		dSEB_dT: 28403565.392035712
 --------------
 --------------
 compute_seb			Qh: -8.0518619866650134
@@ -764,7 +763,7 @@ compute_seb			SEB: -28.348801499161297
 --------------
 --------------
 compute_dseb		heat_cap: 1420177.0556539535
-compute_dseb		dSEB_dT: 66.384989532673188
+compute_dseb		dSEB_dT: 28403548.324024614
 --------------
 --------------
 compute_seb			Qh: -10.720319831149638
@@ -775,7 +774,7 @@ compute_seb			SEB: -10.933977313483132
 --------------
 --------------
 compute_dseb		heat_cap: 1420177.0556539535
-compute_dseb		dSEB_dT: 66.300911660332176
+compute_dseb		dSEB_dT: 28403548.239946742
 --------------
 --------------
 compute_seb			Qh: -12.054548753391947
@@ -786,7 +785,7 @@ compute_seb			SEB: -2.3649833762589125
 --------------
 --------------
 compute_dseb		heat_cap: 1420177.0556539535
-compute_dseb		dSEB_dT: 66.2592000447939
+compute_dseb		dSEB_dT: 28403548.198235128
 --------------
 --------------
 compute_seb			Qh: -12.721663214513104
@@ -797,7 +796,7 @@ compute_seb			SEB: 1.8863961322732377
 --------------
 --------------
 compute_dseb		heat_cap: 1420177.0556539535
-compute_dseb		dSEB_dT: 66.238425818544329
+compute_dseb		dSEB_dT: 28403548.177460901
 --------------
 --------------
 solve_seb			Qh: -12.388105983952526
@@ -1258,8 +1257,7 @@ diffusion_mois		soil_q (08): 0.53370839005812609
 diffusion_mois		soil_q (09): 0.5658912916241976
 diffusion_mois		soil_q (10): 0.59614895906363352
 --------------
-
-[UtahLSM: Run] 		 Running for time: 1200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 1200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 1200
@@ -1296,7 +1294,7 @@ compute_seb			SEB: -3.0593059153962399
 --------------
 --------------
 compute_dseb		heat_cap: 1420252.0914416825
-compute_dseb		dSEB_dT: 66.166533035909964
+compute_dseb		dSEB_dT: 28405048.818196211
 --------------
 --------------
 compute_seb			Qh: -12.132098058068172
@@ -1307,7 +1305,7 @@ compute_seb			SEB: 2.4849872820129204
 --------------
 --------------
 compute_dseb		heat_cap: 1420252.0914416825
-compute_dseb		dSEB_dT: 66.13888233544111
+compute_dseb		dSEB_dT: 28405048.790545508
 --------------
 --------------
 solve_seb			Qh: -11.708704982951032
@@ -1768,8 +1766,7 @@ diffusion_mois		soil_q (08): 0.53301827334542973
 diffusion_mois		soil_q (09): 0.56369412026688481
 diffusion_mois		soil_q (10): 0.59430856555075862
 --------------
-
-[UtahLSM: Run] 		 Running for time: 1800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 1800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 1800
@@ -1806,7 +1803,7 @@ compute_seb			SEB: -4.5613095019699568
 --------------
 --------------
 compute_dseb		heat_cap: 1420207.320905
-compute_dseb		dSEB_dT: 66.162278381678959
+compute_dseb		dSEB_dT: 28404153.405073345
 --------------
 --------------
 compute_seb			Qh: -12.469903225907577
@@ -1817,7 +1814,7 @@ compute_seb			SEB: 0.9790522542297655
 --------------
 --------------
 compute_dseb		heat_cap: 1420207.320905
-compute_dseb		dSEB_dT: 66.134675910046099
+compute_dseb		dSEB_dT: 28404153.377470873
 --------------
 --------------
 solve_seb			Qh: -12.043648101414677
@@ -2278,8 +2275,7 @@ diffusion_mois		soil_q (08): 0.53357089264495183
 diffusion_mois		soil_q (09): 0.56285962260825384
 diffusion_mois		soil_q (10): 0.59257059800287282
 --------------
-
-[UtahLSM: Run] 		 Running for time: 2400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 2400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 2400
@@ -2316,7 +2312,7 @@ compute_seb			SEB: -3.7950460718113037
 --------------
 --------------
 compute_dseb		heat_cap: 1420262.6299444085
-compute_dseb		dSEB_dT: 66.024434921297413
+compute_dseb		dSEB_dT: 28405259.445713509
 --------------
 --------------
 compute_seb			Qh: -11.624851826204262
@@ -2327,7 +2323,7 @@ compute_seb			SEB: 1.5741767433990477
 --------------
 --------------
 compute_dseb		heat_cap: 1420262.6299444085
-compute_dseb		dSEB_dT: 65.996880636403034
+compute_dseb		dSEB_dT: 28405259.418159224
 --------------
 --------------
 solve_seb			Qh: -11.23018038069311
@@ -2788,8 +2784,7 @@ diffusion_mois		soil_q (08): 0.5341428052684547
 diffusion_mois		soil_q (09): 0.5621710144363683
 diffusion_mois		soil_q (10): 0.59092201326244398
 --------------
-
-[UtahLSM: Run] 		 Running for time: 3000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 3000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 3000
@@ -2826,7 +2821,7 @@ compute_seb			SEB: -2.8824651433320834
 --------------
 --------------
 compute_dseb		heat_cap: 1420317.8967807079
-compute_dseb		dSEB_dT: 65.880456296363008
+compute_dseb		dSEB_dT: 28406364.636158086
 --------------
 --------------
 compute_seb			Qh: -10.86614882017825
@@ -2837,7 +2832,7 @@ compute_seb			SEB: 2.3110330229663223
 --------------
 --------------
 compute_dseb		heat_cap: 1420317.8967807079
-compute_dseb		dSEB_dT: 65.8529501561096
+compute_dseb		dSEB_dT: 28406364.608651947
 --------------
 --------------
 solve_seb			Qh: -10.504600431144743
@@ -3298,8 +3293,7 @@ diffusion_mois		soil_q (08): 0.53454311687874256
 diffusion_mois		soil_q (09): 0.56148314981168101
 diffusion_mois		soil_q (10): 0.58935486021682959
 --------------
-
-[UtahLSM: Run] 		 Running for time: 3600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 3600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 3600
@@ -3336,7 +3330,7 @@ compute_seb			SEB: -1.0666033283112859
 --------------
 --------------
 compute_dseb		heat_cap: 1420373.2415389058
-compute_dseb		dSEB_dT: 65.927077218810169
+compute_dseb		dSEB_dT: 28407471.575636934
 --------------
 --------------
 compute_seb			Qh: -11.227344493800032
@@ -3347,7 +3341,7 @@ compute_seb			SEB: 4.1823544406029471
 --------------
 --------------
 compute_dseb		heat_cap: 1420373.2415389058
-compute_dseb		dSEB_dT: 65.899619181100192
+compute_dseb		dSEB_dT: 28407471.548178896
 --------------
 --------------
 solve_seb			Qh: -10.851276106796444
@@ -3808,8 +3802,7 @@ diffusion_mois		soil_q (08): 0.53476385234931567
 diffusion_mois		soil_q (09): 0.56077398972312542
 diffusion_mois		soil_q (10): 0.58786214773875789
 --------------
-
-[UtahLSM: Run] 		 Running for time: 4200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 4200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 4200
@@ -3846,7 +3839,7 @@ compute_seb			SEB: -1.1456726480658093
 --------------
 --------------
 compute_dseb		heat_cap: 1420428.6979773969
-compute_dseb		dSEB_dT: 65.924878930535684
+compute_dseb		dSEB_dT: 28408580.699897785
 --------------
 --------------
 compute_seb			Qh: -11.523265843416686
@@ -3857,7 +3850,7 @@ compute_seb			SEB: 4.0996649378411663
 --------------
 --------------
 compute_dseb		heat_cap: 1420428.6979773969
-compute_dseb		dSEB_dT: 65.897468953271613
+compute_dseb		dSEB_dT: 28408580.672487807
 --------------
 --------------
 solve_seb			Qh: -11.144889439908837
@@ -4318,8 +4311,7 @@ diffusion_mois		soil_q (08): 0.53483971164928479
 diffusion_mois		soil_q (09): 0.56004732388315759
 diffusion_mois		soil_q (10): 0.58643760043751436
 --------------
-
-[UtahLSM: Run] 		 Running for time: 4800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 4800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 4800
@@ -4356,7 +4348,7 @@ compute_seb			SEB: -3.8421997021989318
 --------------
 --------------
 compute_dseb		heat_cap: 1420484.2047407087
-compute_dseb		dSEB_dT: 65.854438015562408
+compute_dseb		dSEB_dT: 28409690.762410324
 --------------
 --------------
 compute_seb			Qh: -11.291943956474967
@@ -4367,7 +4359,7 @@ compute_seb			SEB: 1.3191628741481791
 --------------
 --------------
 compute_dseb		heat_cap: 1420484.2047407087
-compute_dseb		dSEB_dT: 65.827076056646732
+compute_dseb		dSEB_dT: 28409690.735048365
 --------------
 --------------
 solve_seb			Qh: -10.928326727541274
@@ -4828,8 +4820,7 @@ diffusion_mois		soil_q (08): 0.53480839852742146
 diffusion_mois		soil_q (09): 0.55931324615320965
 diffusion_mois		soil_q (10): 0.58507562836636462
 --------------
-
-[UtahLSM: Run] 		 Running for time: 5400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 5400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 5400
@@ -4866,7 +4857,7 @@ compute_seb			SEB: -0.93345731869665816
 --------------
 --------------
 compute_dseb		heat_cap: 1420539.7509291139
-compute_dseb		dSEB_dT: 65.886776653709973
+compute_dseb		dSEB_dT: 28410801.716202643
 --------------
 --------------
 compute_seb			Qh: -11.706284363640629
@@ -4877,7 +4868,7 @@ compute_seb			SEB: 4.2653300230417655
 --------------
 --------------
 compute_dseb		heat_cap: 1420539.7509291139
-compute_dseb		dSEB_dT: 65.859462671045151
+compute_dseb		dSEB_dT: 28410801.688888658
 --------------
 --------------
 solve_seb			Qh: -11.331737836603578
@@ -5338,8 +5329,7 @@ diffusion_mois		soil_q (08): 0.53469805623161459
 diffusion_mois		soil_q (09): 0.55857950719406113
 diffusion_mois		soil_q (10): 0.58377126823754832
 --------------
-
-[UtahLSM: Run] 		 Running for time: 6000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 6000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 6000
@@ -5376,7 +5366,7 @@ compute_seb			SEB: 1.9449189222022056
 --------------
 --------------
 compute_dseb		heat_cap: 1420595.3818708239
-compute_dseb		dSEB_dT: 65.915480018040427
+compute_dseb		dSEB_dT: 28411914.361422252
 --------------
 --------------
 compute_seb			Qh: -10.865574495863433
@@ -5387,7 +5377,7 @@ compute_seb			SEB: -3.316486208346384
 --------------
 --------------
 compute_dseb		heat_cap: 1420595.3818708239
-compute_dseb		dSEB_dT: 65.942841976956117
+compute_dseb		dSEB_dT: 28411914.388784211
 --------------
 --------------
 solve_seb			Qh: -11.250134620040189
@@ -5848,8 +5838,7 @@ diffusion_mois		soil_q (08): 0.53452695329920585
 diffusion_mois		soil_q (09): 0.557849825392562
 diffusion_mois		soil_q (10): 0.58252009326159471
 --------------
-
-[UtahLSM: Run] 		 Running for time: 6600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 6600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 6600
@@ -5886,7 +5875,7 @@ compute_seb			SEB: -1.4940211844822358
 --------------
 --------------
 compute_dseb		heat_cap: 1420650.9920126342
-compute_dseb		dSEB_dT: 66.013647969000331
+compute_dseb		dSEB_dT: 28413026.660109319
 --------------
 --------------
 compute_seb			Qh: -12.337290110171882
@@ -5897,7 +5886,7 @@ compute_seb			SEB: 3.8487882258186676
 --------------
 --------------
 compute_dseb		heat_cap: 1420650.9920126342
-compute_dseb		dSEB_dT: 65.986333986335524
+compute_dseb		dSEB_dT: 28413026.632795334
 --------------
 --------------
 solve_seb			Qh: -11.932184515598905
@@ -6358,8 +6347,7 @@ diffusion_mois		soil_q (08): 0.53430723212001308
 diffusion_mois		soil_q (09): 0.55712664015866964
 diffusion_mois		soil_q (10): 0.58131813202722826
 --------------
-
-[UtahLSM: Run] 		 Running for time: 7200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 7200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 7200
@@ -6396,7 +6384,7 @@ compute_seb			SEB: -0.10035280553731596
 --------------
 --------------
 compute_dseb		heat_cap: 1420706.8680997784
-compute_dseb		dSEB_dT: 65.883118939130256
+compute_dseb		dSEB_dT: 28414144.048995003
 --------------
 --------------
 compute_seb			Qh: -11.354792185164605
@@ -6407,7 +6395,7 @@ compute_seb			SEB: 5.089246762849803
 --------------
 --------------
 compute_dseb		heat_cap: 1420706.8680997784
-compute_dseb		dSEB_dT: 65.855852890618777
+compute_dseb		dSEB_dT: 28414144.021728951
 --------------
 --------------
 solve_seb			Qh: -10.979483645600336
@@ -6868,8 +6856,7 @@ diffusion_mois		soil_q (08): 0.53404834023883319
 diffusion_mois		soil_q (09): 0.55641152808020167
 diffusion_mois		soil_q (10): 0.58016181075292417
 --------------
-
-[UtahLSM: Run] 		 Running for time: 7800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 7800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 7800
@@ -6906,7 +6893,7 @@ compute_seb			SEB: 2.5350467653265127
 --------------
 --------------
 compute_dseb		heat_cap: 1420762.7773004479
-compute_dseb		dSEB_dT: 65.951019329007536
+compute_dseb		dSEB_dT: 28415262.298579231
 --------------
 --------------
 compute_seb			Qh: -10.610560018171098
@@ -6917,7 +6904,7 @@ compute_seb			SEB: -2.7624351918913259
 --------------
 --------------
 compute_dseb		heat_cap: 1420762.7773004479
-compute_dseb		dSEB_dT: 65.978333311672344
+compute_dseb		dSEB_dT: 28415262.325893212
 --------------
 --------------
 solve_seb			Qh: -11.00567251833068
@@ -7378,8 +7365,7 @@ diffusion_mois		soil_q (08): 0.53375868853214137
 diffusion_mois		soil_q (09): 0.55570587758750356
 diffusion_mois		soil_q (10): 0.57904791146040446
 --------------
-
-[UtahLSM: Run] 		 Running for time: 8400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 8400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 8400
@@ -7416,7 +7402,7 @@ compute_seb			SEB: -3.8582025077835294
 --------------
 --------------
 compute_dseb		heat_cap: 1420818.6833272611
-compute_dseb		dSEB_dT: 66.054070566603272
+compute_dseb		dSEB_dT: 28416380.519837316
 --------------
 --------------
 compute_seb			Qh: -12.112281137025606
@@ -7427,7 +7413,7 @@ compute_seb			SEB: 1.52533467475007
 --------------
 --------------
 compute_dseb		heat_cap: 1420818.6833272611
-compute_dseb		dSEB_dT: 66.026804518091794
+compute_dseb		dSEB_dT: 28416380.492571265
 --------------
 --------------
 solve_seb			Qh: -11.695399432546026
@@ -7888,8 +7874,7 @@ diffusion_mois		soil_q (08): 0.53344596812146927
 diffusion_mois		soil_q (09): 0.55501106746627049
 diffusion_mois		soil_q (10): 0.57797353680945029
 --------------
-
-[UtahLSM: Run] 		 Running for time: 9000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 9000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 9000
@@ -7926,7 +7911,7 @@ compute_seb			SEB: 3.162814188146239
 --------------
 --------------
 compute_dseb		heat_cap: 1420874.8953156206
-compute_dseb		dSEB_dT: 66.391367483065395
+compute_dseb		dSEB_dT: 28417505.094559256
 --------------
 --------------
 compute_seb			Qh: -13.132282343798428
@@ -7937,7 +7922,7 @@ compute_seb			SEB: -2.6446100412544959
 --------------
 --------------
 compute_dseb		heat_cap: 1420874.8953156206
-compute_dseb		dSEB_dT: 66.418681465730216
+compute_dseb		dSEB_dT: 28417505.121873237
 --------------
 --------------
 solve_seb			Qh: -13.636313986481097
@@ -8398,8 +8383,7 @@ diffusion_mois		soil_q (08): 0.53311686180763429
 diffusion_mois		soil_q (09): 0.5543283508792507
 diffusion_mois		soil_q (10): 0.5769360766001973
 --------------
-
-[UtahLSM: Run] 		 Running for time: 9600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 9600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 9600
@@ -8436,7 +8420,7 @@ compute_seb			SEB: -0.31791263505626155
 --------------
 --------------
 compute_dseb		heat_cap: 1420931.2719633137
-compute_dseb		dSEB_dT: 66.454767752342221
+compute_dseb		dSEB_dT: 28418632.68856436
 --------------
 --------------
 compute_seb			Qh: -14.988718182844005
@@ -8447,7 +8431,7 @@ compute_seb			SEB: 5.5254014742927051
 --------------
 --------------
 compute_dseb		heat_cap: 1420931.2719633137
-compute_dseb		dSEB_dT: 66.427501703830742
+compute_dseb		dSEB_dT: 28418632.661298312
 --------------
 --------------
 solve_seb			Qh: -14.472834980221903
@@ -8908,8 +8892,7 @@ diffusion_mois		soil_q (08): 0.5327767095460153
 diffusion_mois		soil_q (09): 0.55365867555940007
 diffusion_mois		soil_q (10): 0.5759331744946331
 --------------
-
-[UtahLSM: Run] 		 Running for time: 10200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 10200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 10200
@@ -8946,7 +8929,7 @@ compute_seb			SEB: 0.23114304378150408
 --------------
 --------------
 compute_dseb		heat_cap: 1420987.8896154864
-compute_dseb		dSEB_dT: 66.289993882474249
+compute_dseb		dSEB_dT: 28419764.874474876
 --------------
 --------------
 compute_seb			Qh: -12.059332483992199
@@ -8957,7 +8940,7 @@ compute_seb			SEB: -5.4537983334270406
 --------------
 --------------
 compute_dseb		heat_cap: 1420987.8896154864
-compute_dseb		dSEB_dT: 66.317307865139057
+compute_dseb		dSEB_dT: 28419764.901788857
 --------------
 --------------
 solve_seb			Qh: -12.536843702570144
@@ -9418,8 +9401,7 @@ diffusion_mois		soil_q (08): 0.53242938323275368
 diffusion_mois		soil_q (09): 0.55300256989974717
 diffusion_mois		soil_q (10): 0.57496269576386017
 --------------
-
-[UtahLSM: Run] 		 Running for time: 10800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 10800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 10800
@@ -9456,7 +9438,7 @@ compute_seb			SEB: -6.2445920472480161
 --------------
 --------------
 compute_dseb		heat_cap: 1421044.5072055298
-compute_dseb		dSEB_dT: 66.396964972230606
+compute_dseb		dSEB_dT: 28420897.330887765
 --------------
 --------------
 compute_seb			Qh: -13.734197468149091
@@ -9467,7 +9449,7 @@ compute_seb			SEB: -0.47216249222340068
 --------------
 --------------
 compute_dseb		heat_cap: 1421044.5072055298
-compute_dseb		dSEB_dT: 66.369698923719127
+compute_dseb		dSEB_dT: 28420897.303621717
 --------------
 --------------
 solve_seb			Qh: -14.234450441970205
@@ -9928,8 +9910,7 @@ diffusion_mois		soil_q (08): 0.53207741050770918
 diffusion_mois		soil_q (09): 0.55236013290445296
 diffusion_mois		soil_q (10): 0.57402269762638969
 --------------
-
-[UtahLSM: Run] 		 Running for time: 11400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 11400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 11400
@@ -9966,7 +9947,7 @@ compute_seb			SEB: 5.0766235265643029
 --------------
 --------------
 compute_dseb		heat_cap: 1421102.0583821225
-compute_dseb		dSEB_dT: 66.540845843667739
+compute_dseb		dSEB_dT: 28422048.495902527
 --------------
 --------------
 compute_seb			Qh: -14.439913187031191
@@ -9977,7 +9958,7 @@ compute_seb			SEB: -0.88657295373856115
 --------------
 --------------
 compute_dseb		heat_cap: 1421102.0583821225
-compute_dseb		dSEB_dT: 66.5680640001234
+compute_dseb		dSEB_dT: 28422048.523120683
 --------------
 --------------
 solve_seb			Qh: -14.985752677035633
@@ -10438,8 +10419,7 @@ diffusion_mois		soil_q (08): 0.53172242181552309
 diffusion_mois		soil_q (09): 0.55173166823951048
 diffusion_mois		soil_q (10): 0.57311141341207839
 --------------
-
-[UtahLSM: Run] 		 Running for time: 12000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 12000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 12000
@@ -10476,7 +10456,7 @@ compute_seb			SEB: 1.1222159120307929
 --------------
 --------------
 compute_dseb		heat_cap: 1421159.8645068624
-compute_dseb		dSEB_dT: 66.558453576502131
+compute_dseb		dSEB_dT: 28423204.633596469
 --------------
 --------------
 compute_seb			Qh: -13.904268441302374
@@ -10487,7 +10467,7 @@ compute_seb			SEB: -4.8645626840972298
 --------------
 --------------
 compute_dseb		heat_cap: 1421159.8645068624
-compute_dseb		dSEB_dT: 66.58571962501361
+compute_dseb		dSEB_dT: 28423204.660862517
 --------------
 --------------
 solve_seb			Qh: -14.450508439763693
@@ -10948,8 +10928,7 @@ diffusion_mois		soil_q (08): 0.53136518375255393
 diffusion_mois		soil_q (09): 0.55111641180041193
 diffusion_mois		soil_q (10): 0.57222721416566413
 --------------
-
-[UtahLSM: Run] 		 Running for time: 12600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 12600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 12600
@@ -10986,7 +10965,7 @@ compute_seb			SEB: -6.8632812103260932
 --------------
 --------------
 compute_dseb		heat_cap: 1421218.3286815858
-compute_dseb		dSEB_dT: 66.358811057907161
+compute_dseb		dSEB_dT: 28424373.715012413
 --------------
 --------------
 compute_seb			Qh: -13.811644271265935
@@ -10997,7 +10976,7 @@ compute_seb			SEB: -1.1444822860625568
 --------------
 --------------
 compute_dseb		heat_cap: 1421218.3286815858
-compute_dseb		dSEB_dT: 66.331592901451515
+compute_dseb		dSEB_dT: 28424373.687794253
 --------------
 --------------
 solve_seb			Qh: -14.303959376763574
@@ -11458,8 +11437,7 @@ diffusion_mois		soil_q (08): 0.5310061102393685
 diffusion_mois		soil_q (09): 0.55051357701103887
 diffusion_mois		soil_q (10): 0.57136859550399011
 --------------
-
-[UtahLSM: Run] 		 Running for time: 13200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 13200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 13200
@@ -11496,7 +11474,7 @@ compute_seb			SEB: 6.7632103625544406
 --------------
 --------------
 compute_dseb		heat_cap: 1421278.0653827915
-compute_dseb		dSEB_dT: 66.422603651331286
+compute_dseb		dSEB_dT: 28425568.510340087
 --------------
 --------------
 compute_seb			Qh: -14.009860385653228
@@ -11507,7 +11485,7 @@ compute_seb			SEB: 0.94616953916412783
 --------------
 --------------
 compute_dseb		heat_cap: 1421278.0653827915
-compute_dseb		dSEB_dT: 66.449773957828654
+compute_dseb		dSEB_dT: 28425568.537510391
 --------------
 --------------
 solve_seb			Qh: -13.492021550984543
@@ -11968,8 +11946,7 @@ diffusion_mois		soil_q (08): 0.53064560615705603
 diffusion_mois		soil_q (09): 0.54992257909928965
 diffusion_mois		soil_q (10): 0.57053416796171275
 --------------
-
-[UtahLSM: Run] 		 Running for time: 13800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 13800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 13800
@@ -12006,7 +11983,7 @@ compute_seb			SEB: 7.7176593001406921
 --------------
 --------------
 compute_dseb		heat_cap: 1421338.944341925
-compute_dseb		dSEB_dT: 66.364508674974559
+compute_dseb		dSEB_dT: 28426786.028891161
 --------------
 --------------
 compute_seb			Qh: -11.649419526581347
@@ -12017,7 +11994,7 @@ compute_seb			SEB: 1.958560434892175
 --------------
 --------------
 compute_dseb		heat_cap: 1421338.944341925
-compute_dseb		dSEB_dT: 66.391822657639366
+compute_dseb		dSEB_dT: 28426786.056205142
 --------------
 --------------
 solve_seb			Qh: -11.156936429945395
@@ -12478,8 +12455,7 @@ diffusion_mois		soil_q (08): 0.53028418500314412
 diffusion_mois		soil_q (09): 0.5493429365979311
 diffusion_mois		soil_q (10): 0.56972264676693918
 --------------
-
-[UtahLSM: Run] 		 Running for time: 14400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 14400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 14400
@@ -12516,7 +12492,7 @@ compute_seb			SEB: 4.0362920926096413
 --------------
 --------------
 compute_dseb		heat_cap: 1421401.6991478687
-compute_dseb		dSEB_dT: 66.516107027594344
+compute_dseb		dSEB_dT: 28428041.2739936
 --------------
 --------------
 compute_seb			Qh: -10.521779578386136
@@ -12527,7 +12503,7 @@ compute_seb			SEB: -1.9120138052532809
 --------------
 --------------
 compute_dseb		heat_cap: 1421401.6991478687
-compute_dseb		dSEB_dT: 66.543565065304321
+compute_dseb		dSEB_dT: 28428041.301451638
 --------------
 --------------
 solve_seb			Qh: -11.041256826919897
@@ -12988,8 +12964,7 @@ diffusion_mois		soil_q (08): 0.52992250291076115
 diffusion_mois		soil_q (09): 0.54877427920517907
 diffusion_mois		soil_q (10): 0.56893284328089111
 --------------
-
-[UtahLSM: Run] 		 Running for time: 15000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 15000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 15000
@@ -13026,7 +13001,7 @@ compute_seb			SEB: 5.0844569012575356
 --------------
 --------------
 compute_dseb		heat_cap: 1421467.3861991416
-compute_dseb		dSEB_dT: 66.37407642115113
+compute_dseb		dSEB_dT: 28429354.870251492
 --------------
 --------------
 compute_seb			Qh: -9.4313105369403143
@@ -13037,7 +13012,7 @@ compute_seb			SEB: -0.69444797963918781
 --------------
 --------------
 compute_dseb		heat_cap: 1421467.3861991416
-compute_dseb		dSEB_dT: 66.401582561404553
+compute_dseb		dSEB_dT: 28429354.897757635
 --------------
 --------------
 solve_seb			Qh: -9.9111666441255188
@@ -13498,8 +13473,7 @@ diffusion_mois		soil_q (08): 0.5295613396658353
 diffusion_mois		soil_q (09): 0.54821634142122666
 diffusion_mois		soil_q (10): 0.56816365746789477
 --------------
-
-[UtahLSM: Run] 		 Running for time: 15600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 15600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 15600
@@ -13536,7 +13510,7 @@ compute_seb			SEB: 10.384745352492086
 --------------
 --------------
 compute_dseb		heat_cap: 1421536.7445885446
-compute_dseb		dSEB_dT: 66.342065610019716
+compute_dseb		dSEB_dT: 28430742.00313881
 --------------
 --------------
 compute_seb			Qh: -8.9116976165694712
@@ -13547,7 +13521,7 @@ compute_seb			SEB: 4.6442764560132286
 --------------
 --------------
 compute_dseb		heat_cap: 1421536.7445885446
-compute_dseb		dSEB_dT: 66.369619894914095
+compute_dseb		dSEB_dT: 28430742.030693095
 --------------
 --------------
 solve_seb			Qh: -8.4440019551972316
@@ -14008,8 +13982,7 @@ diffusion_mois		soil_q (08): 0.52920154643930684
 diffusion_mois		soil_q (09): 0.54766894070517225
 diffusion_mois		soil_q (10): 0.56741407096832008
 --------------
-
-[UtahLSM: Run] 		 Running for time: 16200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 16200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 16200
@@ -14060,7 +14033,7 @@ compute_seb			SEB: 15.542229671487782
 --------------
 --------------
 compute_dseb		heat_cap: 1421610.9275243757
-compute_dseb		dSEB_dT: 66.398459415008475
+compute_dseb		dSEB_dT: 28432225.715158284
 --------------
 --------------
 compute_seb			Qh: -6.9917219032971571
@@ -14071,7 +14044,7 @@ compute_seb			SEB: 3.8685137008324322
 --------------
 --------------
 compute_dseb		heat_cap: 1421610.9275243757
-compute_dseb		dSEB_dT: 66.453954025972834
+compute_dseb		dSEB_dT: 28432225.770652894
 --------------
 --------------
 compute_seb			Qh: -6.0503629422169221
@@ -14082,7 +14055,7 @@ compute_seb			SEB: -2.0315255216873345
 --------------
 --------------
 compute_dseb		heat_cap: 1421610.9275243757
-compute_dseb		dSEB_dT: 66.481846502084522
+compute_dseb		dSEB_dT: 28432225.798545368
 --------------
 --------------
 solve_seb			Qh: -6.5210424227570387
@@ -14157,8 +14130,7 @@ diffusion_mois		soil_q (08): 0.52884398117053999
 diffusion_mois		soil_q (09): 0.54713194805070775
 diffusion_mois		soil_q (10): 0.5666831405238405
 --------------
-
-[UtahLSM: Run] 		 Running for time: 16800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 16800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 16800
@@ -14209,7 +14181,7 @@ compute_seb			SEB: 13.558511141511964
 --------------
 --------------
 compute_dseb		heat_cap: 1426211.2046373056
-compute_dseb		dSEB_dT: 66.670775087634055
+compute_dseb		dSEB_dT: 28524231.338054337
 --------------
 --------------
 compute_seb			Qh: -5.0446893288082899
@@ -14220,7 +14192,7 @@ compute_seb			SEB: 1.5842179449832554
 --------------
 --------------
 compute_dseb		heat_cap: 1426211.2046373056
-compute_dseb		dSEB_dT: 66.75682999250445
+compute_dseb		dSEB_dT: 28524231.424109243
 --------------
 --------------
 compute_seb			Qh: -37.554691967344255
@@ -14231,7 +14203,7 @@ compute_seb			SEB: -6.4953887564878059
 --------------
 --------------
 compute_dseb		heat_cap: 1426211.2046373056
-compute_dseb		dSEB_dT: 82.218686224812018
+compute_dseb		dSEB_dT: 28524246.885965474
 --------------
 --------------
 compute_seb			Qh: -38.745734524382556
@@ -14242,7 +14214,7 @@ compute_seb			SEB: 0.20246250466289695
 --------------
 --------------
 compute_dseb		heat_cap: 1426211.2046373056
-compute_dseb		dSEB_dT: 81.784473757710487
+compute_dseb		dSEB_dT: 28524246.451753005
 --------------
 --------------
 solve_seb			Qh: -38.159932498745597
@@ -14703,8 +14675,7 @@ diffusion_mois		soil_q (08): 0.52848944667966125
 diffusion_mois		soil_q (09): 0.54660525784766179
 diffusion_mois		soil_q (10): 0.56596999164914086
 --------------
-
-[UtahLSM: Run] 		 Running for time: 17400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 17400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 17400
@@ -14741,7 +14712,7 @@ compute_seb			SEB: -12.917174678663063
 --------------
 --------------
 compute_dseb		heat_cap: 2560600
-compute_dseb		dSEB_dT: 129.39067562852679
+compute_dseb		dSEB_dT: 51212022.699008964
 --------------
 --------------
 compute_seb			Qh: -45.049634557565227
@@ -14752,7 +14723,7 @@ compute_seb			SEB: 32.191675920466395
 --------------
 --------------
 compute_dseb		heat_cap: 2560600
-compute_dseb		dSEB_dT: 127.48901807919438
+compute_dseb		dSEB_dT: 51212020.797351412
 --------------
 --------------
 compute_seb			Qh: -44.554477236194444
@@ -14763,7 +14734,7 @@ compute_seb			SEB: 21.470316570620639
 --------------
 --------------
 compute_dseb		heat_cap: 2560600
-compute_dseb		dSEB_dT: 128.00668987645437
+compute_dseb		dSEB_dT: 51212021.315023206
 --------------
 --------------
 solve_seb			Qh: -43.349792614890482
@@ -14866,8 +14837,7 @@ diffusion_mois		soil_q (08): 0.52813864006856159
 diffusion_mois		soil_q (09): 0.54608876140256557
 diffusion_mois		soil_q (10): 0.5652738125378387
 --------------
-
-[UtahLSM: Run] 		 Running for time: 18000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 18000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 18000
@@ -14904,7 +14874,7 @@ compute_seb			SEB: 43.904862734300863
 --------------
 --------------
 compute_dseb		heat_cap: 1468021.5365863296
-compute_dseb		dSEB_dT: 84.375856504951116
+compute_dseb		dSEB_dT: 29360453.940019071
 --------------
 --------------
 compute_seb			Qh: -46.673894470945164
@@ -14915,7 +14885,7 @@ compute_seb			SEB: 13.483667137508469
 --------------
 --------------
 compute_dseb		heat_cap: 1468021.5365863296
-compute_dseb		dSEB_dT: 85.955452836999882
+compute_dseb		dSEB_dT: 29360455.519615404
 --------------
 --------------
 compute_seb			Qh: -45.098076454764602
@@ -14926,7 +14896,7 @@ compute_seb			SEB: 5.1507024691076708
 --------------
 --------------
 compute_dseb		heat_cap: 1468021.5365863296
-compute_dseb		dSEB_dT: 86.329404063903212
+compute_dseb		dSEB_dT: 29360455.893566631
 --------------
 --------------
 compute_seb			Qh: -43.831314940863628
@@ -14937,7 +14907,7 @@ compute_seb			SEB: -1.2767767890724997
 --------------
 --------------
 compute_dseb		heat_cap: 1468021.5365863296
-compute_dseb		dSEB_dT: 86.598987514498717
+compute_dseb		dSEB_dT: 29360456.16315008
 --------------
 --------------
 solve_seb			Qh: -44.47040528222248
@@ -15012,8 +14982,7 @@ diffusion_mois		soil_q (08): 0.52779211718643115
 diffusion_mois		soil_q (09): 0.54558232636050452
 diffusion_mois		soil_q (10): 0.56459384824009295
 --------------
-
-[UtahLSM: Run] 		 Running for time: 18600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 18600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 18600
@@ -15050,7 +15019,7 @@ compute_seb			SEB: 33.316070985922345
 --------------
 --------------
 compute_dseb		heat_cap: 1403831.4779396902
-compute_dseb		dSEB_dT: 83.536149973297285
+compute_dseb		dSEB_dT: 28076654.601965528
 --------------
 --------------
 compute_seb			Qh: -42.744418142531153
@@ -15061,7 +15030,7 @@ compute_seb			SEB: -1.2326914402045475
 --------------
 --------------
 compute_dseb		heat_cap: 1403831.4779396902
-compute_dseb		dSEB_dT: 84.916167091339304
+compute_dseb		dSEB_dT: 28076655.981982645
 --------------
 --------------
 compute_seb			Qh: -44.650767873020463
@@ -15072,7 +15041,7 @@ compute_seb			SEB: 7.7964213733151269
 --------------
 --------------
 compute_dseb		heat_cap: 1403831.4779396902
-compute_dseb		dSEB_dT: 84.581248411840406
+compute_dseb		dSEB_dT: 28076655.647063967
 --------------
 --------------
 solve_seb			Qh: -43.716306325425535
@@ -15145,8 +15114,7 @@ diffusion_mois		soil_q (08): 0.52745027283761814
 diffusion_mois		soil_q (09): 0.54508578279436026
 diffusion_mois		soil_q (10): 0.56392939516871243
 --------------
-
-[UtahLSM: Run] 		 Running for time: 19200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 19200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 19200
@@ -15183,7 +15151,7 @@ compute_seb			SEB: 35.726888319773572
 --------------
 --------------
 compute_dseb		heat_cap: 1380467.8561137463
-compute_dseb		dSEB_dT: 81.625307642958106
+compute_dseb		dSEB_dT: 27609381.228088561
 --------------
 --------------
 compute_seb			Qh: -38.172261684816434
@@ -15194,7 +15162,7 @@ compute_seb			SEB: 1.2740981136907266
 --------------
 --------------
 compute_dseb		heat_cap: 1380467.8561137463
-compute_dseb		dSEB_dT: 83.077960615838549
+compute_dseb		dSEB_dT: 27609382.680741534
 --------------
 --------------
 compute_seb			Qh: -36.265748975797983
@@ -15205,7 +15173,7 @@ compute_seb			SEB: -8.004201504838349
 --------------
 --------------
 compute_dseb		heat_cap: 1380467.8561137463
-compute_dseb		dSEB_dT: 83.421469217457869
+compute_dseb		dSEB_dT: 27609383.024250139
 --------------
 --------------
 solve_seb			Qh: -37.233336121873258
@@ -15278,8 +15246,7 @@ diffusion_mois		soil_q (08): 0.5271133358866763
 diffusion_mois		soil_q (09): 0.54459891588719922
 diffusion_mois		soil_q (10): 0.56327979599199973
 --------------
-
-[UtahLSM: Run] 		 Running for time: 19800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 19800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 19800
@@ -15316,7 +15283,7 @@ compute_seb			SEB: 30.468204020881842
 --------------
 --------------
 compute_dseb		heat_cap: 1360923.848648394
-compute_dseb		dSEB_dT: 80.105401504587007
+compute_dseb		dSEB_dT: 27218500.373209022
 --------------
 --------------
 compute_seb			Qh: -29.820964866676345
@@ -15327,7 +15294,7 @@ compute_seb			SEB: -4.7592507080401845
 --------------
 --------------
 compute_dseb		heat_cap: 1360923.848648394
-compute_dseb		dSEB_dT: 81.592130726332243
+compute_dseb		dSEB_dT: 27218501.859938245
 --------------
 --------------
 compute_seb			Qh: -31.659860594508235
@@ -15338,7 +15305,7 @@ compute_seb			SEB: 4.4420655139825982
 --------------
 --------------
 compute_dseb		heat_cap: 1360923.848648394
-compute_dseb		dSEB_dT: 81.237541154299848
+compute_dseb		dSEB_dT: 27218501.505348671
 --------------
 --------------
 solve_seb			Qh: -30.753422495355718
@@ -15409,8 +15376,7 @@ diffusion_mois		soil_q (08): 0.52678137778807776
 diffusion_mois		soil_q (09): 0.54412146476025891
 diffusion_mois		soil_q (10): 0.56264443496511585
 --------------
-
-[UtahLSM: Run] 		 Running for time: 20400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 20400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 20400
@@ -15447,7 +15413,7 @@ compute_seb			SEB: 29.004701345379274
 --------------
 --------------
 compute_dseb		heat_cap: 1354573.4457368553
-compute_dseb		dSEB_dT: 81.210171696118508
+compute_dseb		dSEB_dT: 27091493.684348561
 --------------
 --------------
 compute_seb			Qh: -30.947909199123508
@@ -15458,7 +15424,7 @@ compute_seb			SEB: -9.3110997672861515
 --------------
 --------------
 compute_dseb		heat_cap: 1354573.4457368553
-compute_dseb		dSEB_dT: 82.583872626547958
+compute_dseb		dSEB_dT: 27091495.058049493
 --------------
 --------------
 compute_seb			Qh: -32.990757590916644
@@ -15469,7 +15435,7 @@ compute_seb			SEB: 0.64678929277371822
 --------------
 --------------
 compute_dseb		heat_cap: 1354573.4457368553
-compute_dseb		dSEB_dT: 82.252222156205463
+compute_dseb		dSEB_dT: 27091494.726399023
 --------------
 --------------
 solve_seb			Qh: -31.982303218560677
@@ -15542,8 +15508,7 @@ diffusion_mois		soil_q (08): 0.52645433241589645
 diffusion_mois		soil_q (09): 0.54365312670757959
 diffusion_mois		soil_q (10): 0.56202273374047995
 --------------
-
-[UtahLSM: Run] 		 Running for time: 21000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 21000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 21000
@@ -15580,7 +15545,7 @@ compute_seb			SEB: 46.040026279852697
 --------------
 --------------
 compute_dseb		heat_cap: 1333067.9556038526
-compute_dseb		dSEB_dT: 75.89950339933992
+compute_dseb		dSEB_dT: 26661379.467082299
 --------------
 --------------
 compute_seb			Qh: -24.316777271361083
@@ -15591,7 +15556,7 @@ compute_seb			SEB: 11.369074058147049
 --------------
 --------------
 compute_dseb		heat_cap: 1333067.9556038526
-compute_dseb		dSEB_dT: 77.718021183008346
+compute_dseb		dSEB_dT: 26661381.285600081
 --------------
 --------------
 compute_seb			Qh: -22.783838220513729
@@ -15602,7 +15567,7 @@ compute_seb			SEB: 2.0186323603452365
 --------------
 --------------
 compute_dseb		heat_cap: 1333067.9556038526
-compute_dseb		dSEB_dT: 78.127069656913335
+compute_dseb		dSEB_dT: 26661381.694648556
 --------------
 --------------
 compute_seb			Qh: -21.555195621779415
@@ -15613,7 +15578,7 @@ compute_seb			SEB: -5.1584147713796966
 --------------
 --------------
 compute_dseb		heat_cap: 1333067.9556038526
-compute_dseb		dSEB_dT: 78.423500727504347
+compute_dseb		dSEB_dT: 26661381.991079628
 --------------
 --------------
 solve_seb			Qh: -22.177554247811557
@@ -15684,8 +15649,7 @@ diffusion_mois		soil_q (08): 0.52613202431119266
 diffusion_mois		soil_q (09): 0.54319356576500977
 diffusion_mois		soil_q (10): 0.56141414768148057
 --------------
-
-[UtahLSM: Run] 		 Running for time: 21600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 21600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 21600
@@ -15794,7 +15758,7 @@ compute_seb			SEB: 10.446183897558427
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 80.319703909170073
+compute_dseb		dSEB_dT: 26596191.783607859
 --------------
 --------------
 compute_seb			Qh: -22.569726601162397
@@ -15805,7 +15769,7 @@ compute_seb			SEB: -31.884701656037905
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 81.655790159581301
+compute_dseb		dSEB_dT: 26596193.11969411
 --------------
 --------------
 compute_seb			Qh: -24.762263826463258
@@ -15816,7 +15780,7 @@ compute_seb			SEB: -20.946742534014348
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 81.333683866415498
+compute_dseb		dSEB_dT: 26596192.797587816
 --------------
 --------------
 compute_seb			Qh: -26.348549387185162
@@ -15827,7 +15791,7 @@ compute_seb			SEB: -12.896818443606705
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 81.087180311125877
+compute_dseb		dSEB_dT: 26596192.551084261
 --------------
 --------------
 compute_seb			Qh: -27.504460012887435
@@ -15838,7 +15802,7 @@ compute_seb			SEB: -6.9463938823427043
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 80.899311083031506
+compute_dseb		dSEB_dT: 26596192.363215033
 --------------
 --------------
 compute_seb			Qh: -28.351922616354852
@@ -15849,7 +15813,7 @@ compute_seb			SEB: -2.5330606737960011
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 80.75666112078963
+compute_dseb		dSEB_dT: 26596192.220565073
 --------------
 --------------
 compute_seb			Qh: -28.976367896704801
@@ -15860,7 +15824,7 @@ compute_seb			SEB: 0.7488595312827897
 --------------
 --------------
 compute_dseb		heat_cap: 1329808.3436292468
-compute_dseb		dSEB_dT: 80.64866238810032
+compute_dseb		dSEB_dT: 26596192.112566337
 --------------
 --------------
 solve_seb			Qh: -28.664133295066762
@@ -15933,8 +15897,7 @@ diffusion_mois		soil_q (08): 0.52581420182405847
 diffusion_mois		soil_q (09): 0.54274242422537056
 diffusion_mois		soil_q (10): 0.56081816268313733
 --------------
-
-[UtahLSM: Run] 		 Running for time: 22200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 22200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 22200
@@ -15971,7 +15934,7 @@ compute_seb			SEB: 41.284104926464408
 --------------
 --------------
 compute_dseb		heat_cap: 1311222.1396570844
-compute_dseb		dSEB_dT: 77.534552058037889
+compute_dseb		dSEB_dT: 26224465.693437923
 --------------
 --------------
 compute_seb			Qh: -21.694109713935962
@@ -15982,7 +15945,7 @@ compute_seb			SEB: 1.3027776671077618
 --------------
 --------------
 compute_dseb		heat_cap: 1311222.1396570844
-compute_dseb		dSEB_dT: 79.035008818812983
+compute_dseb		dSEB_dT: 26224467.193894684
 --------------
 --------------
 compute_seb			Qh: -19.701015383920691
@@ -15993,7 +15956,7 @@ compute_seb			SEB: -9.3010065518120939
 --------------
 --------------
 compute_dseb		heat_cap: 1311222.1396570844
-compute_dseb		dSEB_dT: 79.383285794939596
+compute_dseb		dSEB_dT: 26224467.542171661
 --------------
 --------------
 solve_seb			Qh: -20.709757711072719
@@ -16066,8 +16029,7 @@ diffusion_mois		soil_q (08): 0.52550057136798511
 diffusion_mois		soil_q (09): 0.54229933552106102
 diffusion_mois		soil_q (10): 0.56023429248039114
 --------------
-
-[UtahLSM: Run] 		 Running for time: 22800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 22800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 22800
@@ -16194,7 +16156,7 @@ compute_seb			SEB: 31.533242800496012
 --------------
 --------------
 compute_dseb		heat_cap: 1301908.9727795355
-compute_dseb		dSEB_dT: 77.427148613555758
+compute_dseb		dSEB_dT: 26038202.63653212
 --------------
 --------------
 compute_seb			Qh: -16.948794209484173
@@ -16205,7 +16167,7 @@ compute_seb			SEB: -10.599010163213194
 --------------
 --------------
 compute_dseb		heat_cap: 1301908.9727795355
-compute_dseb		dSEB_dT: 78.879363768482847
+compute_dseb		dSEB_dT: 26038204.088747274
 --------------
 --------------
 compute_seb			Qh: -18.972048603755265
@@ -16216,7 +16178,7 @@ compute_seb			SEB: 0.28973735582388827
 --------------
 --------------
 compute_dseb		heat_cap: 1301908.9727795355
-compute_dseb		dSEB_dT: 78.531938204706933
+compute_dseb		dSEB_dT: 26038203.741321713
 --------------
 --------------
 solve_seb			Qh: -17.972239030809181
@@ -16287,8 +16249,7 @@ diffusion_mois		soil_q (08): 0.52519082928247385
 diffusion_mois		soil_q (09): 0.54186393691464008
 diffusion_mois		soil_q (10): 0.55966207640285259
 --------------
-
-[UtahLSM: Run] 		 Running for time: 23400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 23400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 23400
@@ -16415,7 +16376,7 @@ compute_seb			SEB: 17.961960967496708
 --------------
 --------------
 compute_dseb		heat_cap: 1293947.8284495743
-compute_dseb		dSEB_dT: 79.781139602340033
+compute_dseb		dSEB_dT: 25878982.435638238
 --------------
 --------------
 compute_seb			Qh: -16.204741881704695
@@ -16426,7 +16387,7 @@ compute_seb			SEB: -28.408359380514867
 --------------
 --------------
 compute_dseb		heat_cap: 1293947.8284495743
-compute_dseb		dSEB_dT: 81.035983073357784
+compute_dseb		dSEB_dT: 25878983.690481707
 --------------
 --------------
 compute_seb			Qh: -18.621214885670078
@@ -16437,7 +16398,7 @@ compute_seb			SEB: -16.475286815632302
 --------------
 --------------
 compute_dseb		heat_cap: 1293947.8284495743
-compute_dseb		dSEB_dT: 80.73227764596615
+compute_dseb		dSEB_dT: 25878983.38677628
 --------------
 --------------
 compute_seb			Qh: -20.380847704579239
@@ -16448,7 +16409,7 @@ compute_seb			SEB: -7.6729302891899636
 --------------
 --------------
 compute_dseb		heat_cap: 1293947.8284495743
-compute_dseb		dSEB_dT: 80.500312325403968
+compute_dseb		dSEB_dT: 25878983.154810958
 --------------
 --------------
 compute_seb			Qh: -21.670108303289609
@@ -16459,7 +16420,7 @@ compute_seb			SEB: -1.1548204250745187
 --------------
 --------------
 compute_dseb		heat_cap: 1293947.8284495743
-compute_dseb		dSEB_dT: 80.323862009513576
+compute_dseb		dSEB_dT: 25878982.978360642
 --------------
 --------------
 compute_seb			Qh: -22.61955751443146
@@ -16470,7 +16431,7 @@ compute_seb			SEB: 3.6863644666670723
 --------------
 --------------
 compute_dseb		heat_cap: 1293947.8284495743
-compute_dseb		dSEB_dT: 80.190078027692977
+compute_dseb		dSEB_dT: 25878982.844576661
 --------------
 --------------
 solve_seb			Qh: -22.146761062660527
@@ -16543,8 +16504,7 @@ diffusion_mois		soil_q (08): 0.52488474099494309
 diffusion_mois		soil_q (09): 0.54143600249718526
 diffusion_mois		soil_q (10): 0.55910108089396438
 --------------
-
-[UtahLSM: Run] 		 Running for time: 24000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 24000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 24000
@@ -16671,7 +16631,7 @@ compute_seb			SEB: 20.316709431117431
 --------------
 --------------
 compute_dseb		heat_cap: 1281825.9786066613
-compute_dseb		dSEB_dT: 80.708384951185138
+compute_dseb		dSEB_dT: 25636546.8711024
 --------------
 --------------
 compute_seb			Qh: -17.571781147327791
@@ -16682,7 +16642,7 @@ compute_seb			SEB: -28.050579422761587
 --------------
 --------------
 compute_dseb		heat_cap: 1281825.9786066613
-compute_dseb		dSEB_dT: 81.88412218563542
+compute_dseb		dSEB_dT: 25636548.046839636
 --------------
 --------------
 compute_seb			Qh: -20.167586069102214
@@ -16693,7 +16653,7 @@ compute_seb			SEB: -15.624943838568697
 --------------
 --------------
 compute_dseb		heat_cap: 1281825.9786066613
-compute_dseb		dSEB_dT: 81.598358628865455
+compute_dseb		dSEB_dT: 25636547.761076078
 --------------
 --------------
 compute_seb			Qh: -22.065345761065071
@@ -16704,7 +16664,7 @@ compute_seb			SEB: -6.4505930500307898
 --------------
 --------------
 compute_dseb		heat_cap: 1281825.9786066613
-compute_dseb		dSEB_dT: 81.38060377176987
+compute_dseb		dSEB_dT: 25636547.543321222
 --------------
 --------------
 compute_seb			Qh: -23.460398076679866
@@ -16715,7 +16675,7 @@ compute_seb			SEB: 0.34810374640954933
 --------------
 --------------
 compute_dseb		heat_cap: 1281825.9786066613
-compute_dseb		dSEB_dT: 81.215268760299466
+compute_dseb		dSEB_dT: 25636547.377986211
 --------------
 --------------
 solve_seb			Qh: -22.765948778564507
@@ -16788,8 +16748,7 @@ diffusion_mois		soil_q (08): 0.52458207506629329
 diffusion_mois		soil_q (09): 0.54101521875023084
 diffusion_mois		soil_q (10): 0.55855089411698911
 --------------
-
-[UtahLSM: Run] 		 Running for time: 24600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 24600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 24600
@@ -16916,7 +16875,7 @@ compute_seb			SEB: 35.929292104067542
 --------------
 --------------
 compute_dseb		heat_cap: 1269344.5850604654
-compute_dseb		dSEB_dT: 80.926252783845214
+compute_dseb		dSEB_dT: 25386919.738104381
 --------------
 --------------
 compute_seb			Qh: -19.36922898607823
@@ -16927,7 +16886,7 @@ compute_seb			SEB: -13.272193519868836
 --------------
 --------------
 compute_dseb		heat_cap: 1269344.5850604654
-compute_dseb		dSEB_dT: 82.069356042383049
+compute_dseb		dSEB_dT: 25386920.881207637
 --------------
 --------------
 compute_seb			Qh: -22.043489069880199
@@ -16938,7 +16897,7 @@ compute_seb			SEB: -0.63728084304403865
 --------------
 --------------
 compute_dseb		heat_cap: 1269344.5850604654
-compute_dseb		dSEB_dT: 81.791043514130052
+compute_dseb		dSEB_dT: 25386920.602895111
 --------------
 --------------
 compute_seb			Qh: -24.001426176759036
@@ -16949,7 +16908,7 @@ compute_seb			SEB: 8.6936752638414134
 --------------
 --------------
 compute_dseb		heat_cap: 1269344.5850604654
-compute_dseb		dSEB_dT: 81.579161227957101
+compute_dseb		dSEB_dT: 25386920.391012825
 --------------
 --------------
 solve_seb			Qh: -23.02765242301566
@@ -17020,8 +16979,7 @@ diffusion_mois		soil_q (08): 0.5242825911803618
 diffusion_mois		soil_q (09): 0.5406011916914939
 diffusion_mois		soil_q (10): 0.55801112216538873
 --------------
-
-[UtahLSM: Run] 		 Running for time: 25200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 25200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 25200
@@ -17148,7 +17106,7 @@ compute_seb			SEB: 54.354031192847799
 --------------
 --------------
 compute_dseb		heat_cap: 1262979.856478794
-compute_dseb		dSEB_dT: 79.6319707860753
+compute_dseb		dSEB_dT: 25259624.137385979
 --------------
 --------------
 compute_seb			Qh: -17.91613229145015
@@ -17159,7 +17117,7 @@ compute_seb			SEB: 5.7451055762346641
 --------------
 --------------
 compute_dseb		heat_cap: 1262979.856478794
-compute_dseb		dSEB_dT: 80.828997473900145
+compute_dseb		dSEB_dT: 25259625.334412664
 --------------
 PSIMU		zeta: -0.013403765768986275
 PSIMU		x: 1.049774034032231
@@ -17302,7 +17260,7 @@ PSIHU		x: 1.0000046207498927
 PSIHU		log1: 4.6207445551120883e-06
 --------------
 compute_dseb		heat_cap: 1262979.856478794
-compute_dseb		dSEB_dT: 81.099740086223136
+compute_dseb		dSEB_dT: 25259625.605155278
 --------------
 PSIMU		zeta: -0.0038506338069554092
 PSIMU		x: 1.0150589494845883
@@ -17373,7 +17331,7 @@ PSIHU		x: 1.0000018369066139
 PSIHU		log1: 1.8369057703719194e-06
 --------------
 compute_dseb		heat_cap: 1262979.856478794
-compute_dseb		dSEB_dT: 81.038072084889549
+compute_dseb		dSEB_dT: 25259625.543487277
 --------------
 PSIMU		zeta: -0.0015307569176185786
 PSIMU		x: 1.0060675806480208
@@ -17462,8 +17420,7 @@ diffusion_mois		soil_q (08): 0.52398612001037304
 diffusion_mois		soil_q (09): 0.540193639160781
 diffusion_mois		soil_q (10): 0.5574813906768058
 --------------
-
-[UtahLSM: Run] 		 Running for time: 25800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 25800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 25800
@@ -17830,7 +17787,7 @@ compute_seb			SEB: 53.208562155807016
 --------------
 --------------
 compute_dseb		heat_cap: 1257682.7409736568
-compute_dseb		dSEB_dT: 78.550314144976042
+compute_dseb		dSEB_dT: 25153680.966339737
 --------------
 --------------
 compute_fluxes		gnd_q: 0.015111468400279267
@@ -17961,7 +17918,7 @@ PSIHU		x: 1.0000122179460811
 PSIHU		log1: 1.2217908761683775e-05
 --------------
 compute_dseb		heat_cap: 1257682.7409736568
-compute_dseb		dSEB_dT: 79.745205279810875
+compute_dseb		dSEB_dT: 25153682.161230873
 --------------
 PSIMU		zeta: -0.010181683933500052
 PSIMU		x: 1.0384515546705666
@@ -18242,7 +18199,7 @@ PSIHU		x: 1.0000243498726602
 PSIHU		log1: 2.4349724432551453e-05
 --------------
 compute_dseb		heat_cap: 1257682.7409736568
-compute_dseb		dSEB_dT: 79.980901087466435
+compute_dseb		dSEB_dT: 25153682.396926679
 --------------
 PSIMU		zeta: -0.020291807598578168
 PSIMU		x: 1.0728199397198217
@@ -18490,7 +18447,7 @@ PSIHU		x: 1.0000213460123324
 PSIHU		log1: 2.134589842014043e-05
 --------------
 compute_dseb		heat_cap: 1257682.7409736568
-compute_dseb		dSEB_dT: 79.92364173670272
+compute_dseb		dSEB_dT: 25153682.339667328
 --------------
 PSIMU		zeta: -0.017788533465489215
 PSIMU		x: 1.0646169514393218
@@ -18690,8 +18647,7 @@ diffusion_mois		soil_q (08): 0.52369256022941157
 diffusion_mois		soil_q (09): 0.53979232597709725
 diffusion_mois		soil_q (10): 0.55696134402525155
 --------------
-
-[UtahLSM: Run] 		 Running for time: 26400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 26400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 26400
@@ -18836,7 +18792,7 @@ compute_seb			SEB: 51.503454769906654
 --------------
 --------------
 compute_dseb		heat_cap: 1251931.1647057554
-compute_dseb		dSEB_dT: 77.170360160239227
+compute_dseb		dSEB_dT: 25038648.300676737
 --------------
 PSIMU		zeta: -0.041795395253384403
 PSIMU		x: 1.1365702372995456
@@ -18907,7 +18863,7 @@ PSIHU		x: 1.0000464635788102
 PSIHU		log1: 4.6463039102538501e-05
 --------------
 compute_dseb		heat_cap: 1251931.1647057554
-compute_dseb		dSEB_dT: 78.240246707547669
+compute_dseb		dSEB_dT: 25038649.370563287
 --------------
 PSIMU		zeta: -0.038720548535220639
 PSIMU		x: 1.1280988780350107
@@ -19068,7 +19024,7 @@ PSIHU		x: 1.0000601143575378
 PSIHU		log1: 6.0113454122161877e-05
 --------------
 compute_dseb		heat_cap: 1251931.1647057554
-compute_dseb		dSEB_dT: 78.452821244210583
+compute_dseb		dSEB_dT: 25038649.583137821
 --------------
 PSIMU		zeta: -0.050096803671522618
 PSIMU		x: 1.1585412758957911
@@ -19193,7 +19149,7 @@ PSIHU		x: 1.0000567290790656
 PSIHU		log1: 5.6728274533508993e-05
 --------------
 compute_dseb		heat_cap: 1251931.1647057554
-compute_dseb		dSEB_dT: 78.400811449852668
+compute_dseb		dSEB_dT: 25038649.531128027
 --------------
 PSIMU		zeta: -0.047275573466554359
 PSIMU		x: 1.1512149591772269
@@ -19340,8 +19296,7 @@ diffusion_mois		soil_q (08): 0.52340186719454274
 diffusion_mois		soil_q (09): 0.5393970527025076
 diffusion_mois		soil_q (10): 0.55645064447198256
 --------------
-
-[UtahLSM: Run] 		 Running for time: 27000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 27000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 27000
@@ -19546,7 +19501,7 @@ PSIHU		x: 1.0000210502147677
 PSIHU		log1: 2.1050103990617912e-05
 --------------
 compute_dseb		heat_cap: 1248842.1093697133
-compute_dseb		dSEB_dT: 77.689069537203977
+compute_dseb		dSEB_dT: 24976867.841375913
 --------------
 PSIMU		zeta: -0.017542030269538891
 PSIMU		x: 1.0637988577542847
@@ -19635,7 +19590,7 @@ PSIHU		x: 1.0000763078407728
 PSIHU		log1: 7.6306385088223663e-05
 --------------
 compute_dseb		heat_cap: 1248842.1093697133
-compute_dseb		dSEB_dT: 78.566269986807697
+compute_dseb		dSEB_dT: 24976868.71857636
 --------------
 PSIMU		zeta: -0.06359229351345011
 PSIMU		x: 1.1917965714792615
@@ -19796,7 +19751,7 @@ PSIHU		x: 1.0000629365331417
 PSIHU		log1: 6.2935542910461724e-05
 --------------
 compute_dseb		heat_cap: 1248842.1093697133
-compute_dseb		dSEB_dT: 78.367627071187698
+compute_dseb		dSEB_dT: 24976868.519933447
 --------------
 PSIMU		zeta: -0.05244876137108985
 PSIMU		x: 1.1645444491345722
@@ -19921,7 +19876,7 @@ PSIHU		x: 1.0000663024509042
 PSIHU		log1: 6.6301351924760236e-05
 --------------
 compute_dseb		heat_cap: 1248842.1093697133
-compute_dseb		dSEB_dT: 78.418389077092172
+compute_dseb		dSEB_dT: 24976868.570695452
 --------------
 PSIMU		zeta: -0.055253874093021252
 PSIMU		x: 1.1715849839126951
@@ -20076,8 +20031,7 @@ diffusion_mois		soil_q (08): 0.5231140429759662
 diffusion_mois		soil_q (09): 0.53900765029174857
 diffusion_mois		soil_q (10): 0.55594897132709298
 --------------
-
-[UtahLSM: Run] 		 Running for time: 27600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 27600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 27600
@@ -20282,7 +20236,7 @@ PSIHU		x: 1.0000346156363076
 PSIHU		log1: 3.4615336750465003e-05
 --------------
 compute_dseb		heat_cap: 1244547.5141695272
-compute_dseb		dSEB_dT: 76.916763193638417
+compute_dseb		dSEB_dT: 24890975.344007313
 --------------
 PSIMU		zeta: -0.028846862857209173
 PSIMU		x: 1.0995206871302416
@@ -20371,7 +20325,7 @@ PSIHU		x: 1.0000934976774416
 PSIHU		log1: 9.3495492055788244e-05
 --------------
 compute_dseb		heat_cap: 1244547.5141695272
-compute_dseb		dSEB_dT: 77.769872833085088
+compute_dseb		dSEB_dT: 24890976.197116952
 --------------
 PSIMU		zeta: -0.077918373624544818
 PSIMU		x: 1.2242947306755196
@@ -20532,7 +20486,7 @@ PSIHU		x: 1.0001075343884676
 PSIHU		log1: 0.00010753149766000031
 --------------
 compute_dseb		heat_cap: 1244547.5141695272
-compute_dseb		dSEB_dT: 77.954006577907464
+compute_dseb		dSEB_dT: 24890976.381250698
 --------------
 PSIMU		zeta: -0.089616808574925835
 PSIMU		x: 1.2490341049942684
@@ -20657,7 +20611,7 @@ PSIHU		x: 1.000104047983575
 PSIHU		log1: 0.00010404527717291651
 --------------
 compute_dseb		heat_cap: 1244547.5141695272
-compute_dseb		dSEB_dT: 77.908564273045329
+compute_dseb		dSEB_dT: 24890976.335808393
 --------------
 PSIMU		zeta: -0.086711163805276131
 PSIMU		x: 1.2430263215948401
@@ -20804,8 +20758,7 @@ diffusion_mois		soil_q (08): 0.52282912660461311
 diffusion_mois		soil_q (09): 0.53862397547442287
 diffusion_mois		soil_q (10): 0.55545602012577122
 --------------
-
-[UtahLSM: Run] 		 Running for time: 28200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 28200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 28200
@@ -21010,7 +20963,7 @@ PSIHU		x: 1.000067638869818
 PSIHU		log1: 6.7637726089585595e-05
 --------------
 compute_dseb		heat_cap: 1242891.7772373117
-compute_dseb		dSEB_dT: 75.611377445188353
+compute_dseb		dSEB_dT: 24857859.368966293
 --------------
 PSIMU		zeta: -0.056367631105261953
 PSIMU		x: 1.1743455261586611
@@ -21099,7 +21052,7 @@ PSIHU		x: 1.0001353308873615
 PSIHU		log1: 0.0001353263089555482
 --------------
 compute_dseb		heat_cap: 1242891.7772373117
-compute_dseb		dSEB_dT: 76.421061765318314
+compute_dseb		dSEB_dT: 24857860.17865061
 --------------
 PSIMU		zeta: -0.11278337048846665
 PSIMU		x: 1.2940920659442801
@@ -21242,7 +21195,7 @@ PSIHU		x: 1.0001515162869288
 PSIHU		log1: 0.00015151054792210267
 --------------
 compute_dseb		heat_cap: 1242891.7772373117
-compute_dseb		dSEB_dT: 76.598834050481202
+compute_dseb		dSEB_dT: 24857860.356422897
 --------------
 PSIMU		zeta: -0.12627313793450384
 PSIMU		x: 1.3183024051845678
@@ -21385,7 +21338,7 @@ PSIHU		x: 1.0001635115028968
 PSIHU		log1: 0.00016350481925800489
 --------------
 compute_dseb		heat_cap: 1242891.7772373117
-compute_dseb		dSEB_dT: 76.726556448750742
+compute_dseb		dSEB_dT: 24857860.484145295
 --------------
 PSIMU		zeta: -0.13627072575211818
 PSIMU		x: 1.3354206928852519
@@ -21524,8 +21477,7 @@ diffusion_mois		soil_q (08): 0.52254718447980208
 diffusion_mois		soil_q (09): 0.53824590623704571
 diffusion_mois		soil_q (10): 0.55497150181565391
 --------------
-
-[UtahLSM: Run] 		 Running for time: 28800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 28800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 28800
@@ -21802,7 +21754,7 @@ PSIHU		x: 1.0001309225735056
 PSIHU		log1: 0.00013091828851249056
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 77.648701114787286
+compute_dseb		dSEB_dT: 24843671.641613778
 --------------
 PSIMU		zeta: -0.10910928655466123
 PSIMU		x: 1.2872567923605831
@@ -21891,7 +21843,7 @@ PSIHU		x: 1.0001869107463899
 PSIHU		log1: 0.00018690201302699343
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 78.290018844019016
+compute_dseb		dSEB_dT: 24843672.282931507
 --------------
 PSIMU		zeta: -0.15577351183618549
 PSIMU		x: 1.3670369539696938
@@ -22034,7 +21986,7 @@ PSIHU		x: 1.0001731805205485
 PSIHU		log1: 0.00017317302310811426
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 78.136503022014665
+compute_dseb		dSEB_dT: 24843672.129415687
 --------------
 PSIMU		zeta: -0.14432959691235889
 PSIMU		x: 1.3487553086305375
@@ -22177,7 +22129,7 @@ PSIHU		x: 1.0001627578539041
 PSIHU		log1: 0.00016275123173358771
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 78.019672440690471
+compute_dseb		dSEB_dT: 24843672.012585104
 --------------
 PSIMU		zeta: -0.13564258246971064
 PSIMU		x: 1.3343644112889572
@@ -22302,7 +22254,7 @@ PSIHU		x: 1.0001548812004881
 PSIHU		log1: 0.00015487520375092546
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 77.930007528943619
+compute_dseb		dSEB_dT: 24843671.922920194
 --------------
 PSIMU		zeta: -0.12907766215102551
 PSIMU		x: 1.323171728479364
@@ -22427,7 +22379,7 @@ PSIHU		x: 1.0001489384423679
 PSIHU		log1: 0.00014893289697803168
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 77.861537987549738
+compute_dseb		dSEB_dT: 24843671.854450651
 --------------
 PSIMU		zeta: -0.12412461141463507
 PSIMU		x: 1.3145352146751308
@@ -22552,7 +22504,7 @@ PSIHU		x: 1.0001444607746572
 PSIHU		log1: 0.00014445555767960121
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 77.809463996662814
+compute_dseb		dSEB_dT: 24843671.802376661
 --------------
 PSIMU		zeta: -0.1203926742623642
 PSIMU		x: 1.3079136527685846
@@ -22677,7 +22629,7 @@ PSIHU		x: 1.0001410905908179
 PSIHU		log1: 0.00014108561441301853
 --------------
 compute_dseb		heat_cap: 1242182.2875253989
-compute_dseb		dSEB_dT: 77.76998689370356
+compute_dseb		dSEB_dT: 24843671.762899555
 --------------
 PSIMU		zeta: -0.11758378674600313
 PSIMU		x: 1.3028626955299309
@@ -22824,8 +22776,7 @@ diffusion_mois		soil_q (08): 0.52226830124417301
 diffusion_mois		soil_q (09): 0.53787333744332577
 diffusion_mois		soil_q (10): 0.5544951419530354
 --------------
-
-[UtahLSM: Run] 		 Running for time: 29400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 29400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 29400
@@ -23030,7 +22981,7 @@ PSIHU		x: 1.0001212397066999
 PSIHU		log1: 0.0001212360320817428
 --------------
 compute_dseb		heat_cap: 1239209.8479210781
-compute_dseb		dSEB_dT: 76.691999441828912
+compute_dseb		dSEB_dT: 24784222.016677339
 --------------
 PSIMU		zeta: -0.10103921352759926
 PSIMU		x: 1.2718487628669395
@@ -23119,7 +23070,7 @@ PSIHU		x: 1.0001819617638641
 PSIHU		log1: 0.00018195348684524408
 --------------
 compute_dseb		heat_cap: 1239209.8479210781
-compute_dseb		dSEB_dT: 77.369711599518013
+compute_dseb		dSEB_dT: 24784222.6943895
 --------------
 PSIMU		zeta: -0.15164859908810485
 PSIMU		x: 1.360532138315012
@@ -23262,7 +23213,7 @@ PSIHU		x: 1.0001671026466898
 PSIHU		log1: 0.00016709566625480182
 --------------
 compute_dseb		heat_cap: 1239209.8479210781
-compute_dseb		dSEB_dT: 77.208569585951324
+compute_dseb		dSEB_dT: 24784222.533247486
 --------------
 PSIMU		zeta: -0.13926384028093061
 PSIMU		x: 1.3404197850114155
@@ -23387,7 +23338,7 @@ PSIHU		x: 1.0001708193688543
 PSIHU		log1: 0.00017081207445546933
 --------------
 compute_dseb		heat_cap: 1239209.8479210781
-compute_dseb		dSEB_dT: 77.250436607470505
+compute_dseb		dSEB_dT: 24784222.575114507
 --------------
 PSIMU		zeta: -0.14236163206881253
 PSIMU		x: 1.3455354760037617
@@ -23518,8 +23469,7 @@ diffusion_mois		soil_q (08): 0.52199257141260491
 diffusion_mois		soil_q (09): 0.53750617671773515
 diffusion_mois		soil_q (10): 0.55402667990813326
 --------------
-
-[UtahLSM: Run] 		 Running for time: 30000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 30000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 30000
@@ -23724,7 +23674,7 @@ PSIHU		x: 1.0001327330158594
 PSIHU		log1: 0.00013272861154085567
 --------------
 compute_dseb		heat_cap: 1239565.3728042757
-compute_dseb		dSEB_dT: 77.009829142871894
+compute_dseb		dSEB_dT: 24791332.817357458
 --------------
 PSIMU		zeta: -0.11061818740505298
 PSIMU		x: 1.2900771105071283
@@ -23813,7 +23763,7 @@ PSIHU		x: 1.0001921613013767
 PSIHU		log1: 0.0001921520704767244
 --------------
 compute_dseb		heat_cap: 1239565.3728042757
-compute_dseb		dSEB_dT: 77.666112101165282
+compute_dseb		dSEB_dT: 24791333.473640416
 --------------
 PSIMU		zeta: -0.16014980363300571
 PSIMU		x: 1.3738381584708506
@@ -23956,7 +23906,7 @@ PSIHU		x: 1.0001776011739349
 PSIHU		log1: 0.00017759328885749967
 --------------
 compute_dseb		heat_cap: 1239565.3728042757
-compute_dseb		dSEB_dT: 77.509367070922139
+compute_dseb		dSEB_dT: 24791333.316895384
 --------------
 PSIMU		zeta: -0.14801412085284155
 PSIMU		x: 1.354722375137535
@@ -24099,7 +24049,7 @@ PSIHU		x: 1.0001665423447357
 PSIHU		log1: 0.00016653541103222238
 --------------
 compute_dseb		heat_cap: 1239565.3728042757
-compute_dseb		dSEB_dT: 77.389976197351118
+compute_dseb		dSEB_dT: 24791333.197504513
 --------------
 PSIMU		zeta: -0.1387968440932649
 PSIMU		x: 1.3396434876047356
@@ -24230,8 +24180,7 @@ diffusion_mois		soil_q (08): 0.52172009192684454
 diffusion_mois		soil_q (09): 0.53714434068783667
 diffusion_mois		soil_q (10): 0.55356586808141872
 --------------
-
-[UtahLSM: Run] 		 Running for time: 30600.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 30600.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 30600
@@ -24508,7 +24457,7 @@ PSIHU		x: 1.00012203075485
 PSIHU		log1: 0.00012202703212510141
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 77.895830513527258
+compute_dseb		dSEB_dT: 24800312.813605491
 --------------
 PSIMU		zeta: -0.10169850050203917
 PSIMU		x: 1.2731286526311181
@@ -24597,7 +24546,7 @@ PSIHU		x: 1.0001767544009101
 PSIHU		log1: 0.00017674659084095269
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 78.546039396998665
+compute_dseb		dSEB_dT: 24800313.463814374
 --------------
 PSIMU		zeta: -0.14730835164109551
 PSIMU		x: 1.353585484944424
@@ -24740,7 +24689,7 @@ PSIHU		x: 1.0001633356263877
 PSIHU		log1: 0.00016332895711910155
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 78.390611239252962
+compute_dseb		dSEB_dT: 24800313.308386214
 --------------
 PSIMU		zeta: -0.1361241380425286
 PSIMU		x: 1.3351744161510848
@@ -24883,7 +24832,7 @@ PSIHU		x: 1.0001531502814063
 PSIHU		log1: 0.00015314441795321012
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 78.272180731548957
+compute_dseb		dSEB_dT: 24800313.189955708
 --------------
 PSIMU		zeta: -0.12763500742554643
 PSIMU		x: 1.3206736629335969
@@ -25008,7 +24957,7 @@ PSIHU		x: 1.0001454521851294
 PSIHU		log1: 0.00014544689630106272
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 78.181253786989288
+compute_dseb		dSEB_dT: 24800313.099028762
 --------------
 PSIMU		zeta: -0.12121896941535421
 PSIMU		x: 1.3093884200647012
@@ -25133,7 +25082,7 @@ PSIHU		x: 1.000139643649101
 PSIHU		log1: 0.00013963877424074734
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 78.11179882054472
+compute_dseb		dSEB_dT: 24800313.029573798
 --------------
 PSIMU		zeta: -0.11637783272957382
 PSIMU		x: 1.3006760000374893
@@ -25258,7 +25207,7 @@ PSIHU		x: 1.00013526680706
 PSIHU		log1: 0.00013526223298918497
 --------------
 compute_dseb		heat_cap: 1240014.3292519348
-compute_dseb		dSEB_dT: 78.05896220504755
+compute_dseb		dSEB_dT: 24800312.976737183
 --------------
 PSIMU		zeta: -0.11272996301218922
 PSIMU		x: 1.2939934797385804
@@ -25389,8 +25338,7 @@ diffusion_mois		soil_q (08): 0.52145095569843081
 diffusion_mois		soil_q (09): 0.53678775163428871
 diffusion_mois		soil_q (10): 0.55311247113397399
 --------------
-
-[UtahLSM: Run] 		 Running for time: 31200.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 31200.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 31200
@@ -25595,7 +25543,7 @@ PSIHU		x: 1.0001699750576367
 PSIHU		log1: 0.00016996783516609539
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 74.458201282430849
+compute_dseb		dSEB_dT: 24803912.397586539
 --------------
 PSIMU		zeta: -0.1416579194974073
 PSIMU		x: 1.3443784848440472
@@ -25684,7 +25632,7 @@ PSIHU		x: 1.0002496208230038
 PSIHU		log1: 0.0002496052466610648
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 75.148155331706377
+compute_dseb		dSEB_dT: 24803913.087540586
 --------------
 PSIMU		zeta: -0.20804331523461198
 PSIMU		x: 1.4424115707463203
@@ -25827,7 +25775,7 @@ PSIHU		x: 1.0002688655529537
 PSIHU		log1: 0.00026884748240201879
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 75.304595631417172
+compute_dseb		dSEB_dT: 24803913.243980888
 --------------
 PSIMU		zeta: -0.2240847477470963
 PSIMU		x: 1.46333332808365
@@ -25952,7 +25900,7 @@ PSIHU		x: 1.0002831751826382
 PSIHU		log1: 0.00028315513748426556
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 75.417647094760795
+compute_dseb		dSEB_dT: 24803913.357032351
 --------------
 PSIMU		zeta: -0.23601273060855404
 PSIMU		x: 1.4783276844151494
@@ -26077,7 +26025,7 @@ PSIHU		x: 1.0002938313753551
 PSIHU		log1: 0.00029380979324984615
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 75.500638221767531
+compute_dseb		dSEB_dT: 24803913.440023478
 --------------
 PSIMU		zeta: -0.24489545316139227
 PSIMU		x: 1.4892045535747027
@@ -26202,7 +26150,7 @@ PSIHU		x: 1.0003017824816285
 PSIHU		log1: 0.0003017597157517965
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 75.561928842783885
+compute_dseb		dSEB_dT: 24803913.5013141
 --------------
 PSIMU		zeta: -0.25152334830132522
 PSIMU		x: 1.4971678089951554
@@ -26327,7 +26275,7 @@ PSIHU		x: 1.0003077234448616
 PSIHU		log1: 0.00030769977386000969
 --------------
 compute_dseb		heat_cap: 1240194.4807077644
-compute_dseb		dSEB_dT: 75.607382198549828
+compute_dseb		dSEB_dT: 24803913.546767455
 --------------
 PSIMU		zeta: -0.2564756597673567
 PSIMU		x: 1.5030359966716937
@@ -26482,8 +26430,7 @@ diffusion_mois		soil_q (08): 0.52118524612910921
 diffusion_mois		soil_q (09): 0.53643633456049844
 diffusion_mois		soil_q (10): 0.5526662652351203
 --------------
-
-[UtahLSM: Run] 		 Running for time: 31800.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 31800.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 31800
@@ -26760,7 +26707,7 @@ PSIHU		x: 1.0002282091970707
 PSIHU		log1: 0.00022819617820159788
 --------------
 compute_dseb		heat_cap: 1247375.4174541328
-compute_dseb		dSEB_dT: 78.105229375469293
+compute_dseb		dSEB_dT: 24947534.480336305
 --------------
 PSIMU		zeta: -0.19019603065782784
 PSIMU		x: 1.4180110027880217
@@ -26849,7 +26796,7 @@ PSIHU		x: 1.0001683433536823
 PSIHU		log1: 0.00016833626920867721
 --------------
 compute_dseb		heat_cap: 1247375.4174541328
-compute_dseb		dSEB_dT: 77.491574030909632
+compute_dseb		dSEB_dT: 24947533.866680961
 --------------
 PSIMU		zeta: -0.1402979361872686
 PSIMU		x: 1.3421340000663831
@@ -26992,7 +26939,7 @@ PSIHU		x: 1.000183534248517
 PSIHU		log1: 0.00018352582782731056
 --------------
 compute_dseb		heat_cap: 1247375.4174541328
-compute_dseb		dSEB_dT: 77.654586192251912
+compute_dseb		dSEB_dT: 24947534.029693123
 --------------
 PSIMU		zeta: -0.15295924243934664
 PSIMU		x: 1.3626090774236137
@@ -27117,7 +27064,7 @@ PSIHU		x: 1.0001948323634167
 PSIHU		log1: 0.00019482287412069617
 --------------
 compute_dseb		heat_cap: 1247375.4174541328
-compute_dseb		dSEB_dT: 77.771677635635072
+compute_dseb		dSEB_dT: 24947534.146784566
 --------------
 PSIMU		zeta: -0.16237611936794585
 PSIMU		x: 1.3772596696260573
@@ -27264,8 +27211,7 @@ diffusion_mois		soil_q (08): 0.52092303256491779
 diffusion_mois		soil_q (09): 0.53609001467313144
 diffusion_mois		soil_q (10): 0.55222703733044642
 --------------
-
-[UtahLSM: Run] 		 Running for time: 32400.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 32400.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 32400
@@ -27542,7 +27488,7 @@ PSIHU		x: 1.0002153444926705
 PSIHU		log1: 0.00021533290019017548
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 74.821729754119247
+compute_dseb		dSEB_dT: 24988219.492550537
 --------------
 PSIMU		zeta: -0.17947306607966265
 PSIMU		x: 1.4027224654916801
@@ -27631,7 +27577,7 @@ PSIHU		x: 1.0002969807885016
 PSIHU		log1: 0.0002969587412869209
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 75.47002771500884
+compute_dseb		dSEB_dT: 24988220.140848499
 --------------
 PSIMU		zeta: -0.24752073941337402
 PSIMU		x: 1.4923740288741631
@@ -27756,7 +27702,7 @@ PSIHU		x: 1.000316779592882
 PSIHU		log1: 0.00031675450820313039
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 75.618565612394121
+compute_dseb		dSEB_dT: 24988220.289386395
 --------------
 PSIMU		zeta: -0.26402480628101715
 PSIMU		x: 1.511851171494857
@@ -27881,7 +27827,7 @@ PSIHU		x: 1.0003315197314455
 PSIHU		log1: 0.00033149225814837129
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 75.726135151619474
+compute_dseb		dSEB_dT: 24988220.396955933
 --------------
 PSIMU		zeta: -0.27631223675972788
 PSIMU		x: 1.5258778454913127
@@ -28006,7 +27952,7 @@ PSIHU		x: 1.0003425035073763
 PSIHU		log1: 0.00034247418356072711
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 75.805263319408411
+compute_dseb		dSEB_dT: 24988220.476084102
 --------------
 PSIMU		zeta: -0.28546846808551007
 PSIMU		x: 1.5360840103902649
@@ -28131,7 +28077,7 @@ PSIHU		x: 1.0003507027807046
 PSIHU		log1: 0.00035067203618872601
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 75.86378138941069
+compute_dseb		dSEB_dT: 24988220.534602173
 --------------
 PSIMU		zeta: -0.29230356410389879
 PSIMU		x: 1.5435723452282064
@@ -28238,7 +28184,7 @@ PSIHU		x: 1.0003569772825649
 PSIHU		log1: 0.00035694542816042818
 --------------
 compute_dseb		heat_cap: 1249409.8364781986
-compute_dseb		dSEB_dT: 75.902834589523081
+compute_dseb		dSEB_dT: 24988220.573655374
 --------------
 PSIMU		zeta: -0.29753416579588932
 PSIMU		x: 1.5492300937189216
@@ -28383,8 +28329,7 @@ diffusion_mois		soil_q (08): 0.52066436664000326
 diffusion_mois		soil_q (09): 0.53574871525910983
 diffusion_mois		soil_q (10): 0.5517945844331229
 --------------
-
-[UtahLSM: Run] 		 Running for time: 33000.00 of 33000.00
+[UtahLSM: Run] 		 Running for time: 33000.00 of 33000.00
 --------------
 update_fields		tstep: 600
 update_fields		t utc: 33000
@@ -28661,7 +28606,7 @@ PSIHU		x: 1.0003278384765681
 PSIHU		log1: 0.0003278116099873896
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.199908756119612
+compute_dseb		dSEB_dT: 25151353.154072389
 --------------
 PSIMU		zeta: -0.2732435130013301
 PSIMU		x: 1.5224109649564186
@@ -28750,7 +28695,7 @@ PSIHU		x: 1.0004036004101304
 PSIHU		log1: 0.00040355969228549006
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.742535323464139
+compute_dseb		dSEB_dT: 25151353.696698956
 --------------
 PSIMU		zeta: -0.33640154731327088
 PSIMU		x: 1.5894483721446786
@@ -28875,7 +28820,7 @@ PSIHU		x: 1.0003849897942927
 PSIHU		log1: 0.00038495274476174954
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.609736173662753
+compute_dseb		dSEB_dT: 25151353.563899808
 --------------
 PSIMU		zeta: -0.32088658571959722
 PSIMU		x: 1.5737626136809082
@@ -29000,7 +28945,7 @@ PSIHU		x: 1.0003708314749618
 PSIHU		log1: 0.0003707971002152826
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.510713222570018
+compute_dseb		dSEB_dT: 25151353.464876857
 --------------
 PSIMU		zeta: -0.3090835274609286
 PSIMU		x: 1.561507623873148
@@ -29125,7 +29070,7 @@ PSIHU		x: 1.0003601528070722
 PSIHU		log1: 0.00036012038345378371
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.435182306537385
+compute_dseb		dSEB_dT: 25151353.38934594
 --------------
 PSIMU		zeta: -0.30018138507872305
 PSIMU		x: 1.5520700270416796
@@ -29250,7 +29195,7 @@ PSIHU		x: 1.0003521088606071
 PSIHU		log1: 0.00035207786908208387
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.377790006147009
+compute_dseb		dSEB_dT: 25151353.331953637
 --------------
 PSIMU		zeta: -0.2934757091098627
 PSIMU		x: 1.544845622640169
@@ -29375,7 +29320,7 @@ PSIHU		x: 1.0003460556920032
 PSIHU		log1: 0.00034602575682094914
 --------------
 compute_dseb		heat_cap: 1257566.4676383226
-compute_dseb		dSEB_dT: 76.334312211509911
+compute_dseb		dSEB_dT: 25151353.288475845
 --------------
 PSIMU		zeta: -0.28842964106171504
 PSIMU		x: 1.5393416091031895
@@ -29539,5 +29484,5 @@ diffusion_mois		soil_q (09): 0.5354123559498265
 diffusion_mois		soil_q (10): 0.55136871294120227
 --------------
 
-[UtahLSM: Run] 		 Done! Finished in 0.136 seconds!
+[UtahLSM: Run] 		 Done! Finished in 0.1443 seconds!
 ##############################################################
