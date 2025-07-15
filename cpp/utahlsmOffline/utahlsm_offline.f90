@@ -1,10 +1,10 @@
 !!
 !! UtahLSM
 !! 
-!! Copyright (c) 2017–2024 Jeremy A. Gibbs
-!! Copyright (c) 2017–2024 Rob Stoll
-!! Copyright (c) 2017–2024 Eric Pardyjak
-!! Copyright (c) 2017–2024 Pete Willemsen
+!! Copyright (c) 2017–2025 Jeremy A. Gibbs
+!! Copyright (c) 2017–2025 Rob Stoll
+!! Copyright (c) 2017–2025 Eric Pardyjak
+!! Copyright (c) 2017–2025 Pete Willemsen
 !! 
 !! This file is part of UtahLSM.
 !! 
