@@ -13,6 +13,7 @@
 # 
 
 import numpy as np
+import sys
 
 from util import constants as c
 from .soil_type import SoilType
@@ -20,9 +21,6 @@ from .soil_type import SoilType
 class Soil(object):
     
     def __init__(self,input):
-        
-        # TODO: limit what is passed in
-        # TODO: implement error check on models
         
         self.input = input    
         nz         = self.input.nsoil
@@ -44,15 +42,35 @@ class Soil(object):
     
     @staticmethod
     def get_model(key,input):
-        if key == 1:
-            from .soil_brookscorey import BrooksCorey
-            return BrooksCorey(input)
-        if key == 2:
-            from .soil_campbell import Campbell
-            return Campbell(input)
-        if key == 3:
-            from .soil_vangenuchten import VanGenuchten
-            return VanGenuchten(input)
+        
+        # import soil sub-classes
+        from .soil_brookscorey import BrooksCorey
+        from .soil_campbell import Campbell
+        from .soil_vangenuchten import VanGenuchten
+        
+        # dictionary to map keys to classes
+        SOIL_MODELS = {
+            1: BrooksCorey,
+            2: Campbell,
+            3: VanGenuchten,
+        }
+        
+        # look up model class from dictionary
+        model_class = SOIL_MODELS.get(key)
+        
+        # return class or throw error
+        try:
+            # look up model class from dictionary
+            return SOIL_MODELS[key](input)
+        except KeyError as e:
+            print("x"*62)
+            print(f"Namelist Error: {e} is an invalid soil model.")
+            print(f"Valid options are:")
+            for k,v in SOIL_MODELS.items():
+                print(f"\t{k} ({v.__name__})")
+            print("x"*62)
+            
+            sys.exit(1)
     
     # Compute heat capacity
     def heat_capacity(self, soil_q, level):

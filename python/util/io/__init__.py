@@ -12,7 +12,9 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-from .io import Input, Output, Logger
+from .input import Input
+from .output import Output
+from .logger import Logger
 
 __all__ = ['Input']
 __all__ = ['Output']

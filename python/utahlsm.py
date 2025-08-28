@@ -19,7 +19,7 @@ import os
 import sys
 import time
 from physics import Radiation, Soil, Surface
-from util import constants as c, io, matrix
+from util import constants as c, Input, Output, Logger, matrix
 
 # custom error message for user case entry
 class InvalidCase(Exception):
@@ -29,8 +29,8 @@ class InvalidCase(Exception):
 class UtahLSM:
     """This is the main UtahLSM class
     
-    :param inputLSM: A handle to the :class:`util.io.Input`
-    :param outputLSM: A handle to the :class:`util.io.Output`
+    :param inputLSM: A handle to the :class:`util.Input`
+    :param outputLSM: A handle to the :class:`util.Output`
     """
     
     # model class initialization
@@ -90,8 +90,8 @@ class UtahLSM:
             print("[UtahLSM: Setup] \t Creating radiation model")
                         
             # convert latitude and longitude into radians
-            self.latitude  = self.latitude * constants.pi / 180.0
-            self.longitude = self.longitude * constants.pi / 180.0
+            self.latitude  = self.latitude * c.pi / 180.0
+            self.longitude = self.longitude * c.pi / 180.0
             
             # Create radiation model
             self.rad = Radiation.get_model(1,self.input)
@@ -166,8 +166,8 @@ class UtahLSM:
         #    sys.exit(1)
         # Run radiation model and update time/date if needed
         if (self.comp_rad==1):
-            julian_day += int(runtime/86400);
-            self.R_net  = self.rad.computeNet(julian_day,self.utc,self.soil_T[0])
+            self.julian_day += int(self.runtime/86400);
+            self.R_net  = self.rad.compute_net(self.julian_day,self.utc,self.soil_T[0])
         else:
             self.R_net = rad
         
@@ -178,13 +178,13 @@ class UtahLSM:
         if (self.runtime<1E7):
             print('\r')
             print("--------------")
-            io.Logger.print_double(self.tstep, "update_fields\t\t", "tstep")
-            io.Logger.print_double(self.utc,   "update_fields\t\t", "t utc")
-            io.Logger.print_double(self.atm_U, "update_fields\t\t", "atm_U")
-            io.Logger.print_double(self.atm_T, "update_fields\t\t", "atm_T")
-            io.Logger.print_double(self.atm_q, "update_fields\t\t", "atm_q")
-            io.Logger.print_double(self.atm_p, "update_fields\t\t", "atm_p")
-            io.Logger.print_double(self.R_net, "update_fields\t\t", "R_net")
+            Logger.print_double(self.tstep, "update_fields\t\t", "tstep")
+            Logger.print_double(self.utc,   "update_fields\t\t", "t utc")
+            Logger.print_double(self.atm_U, "update_fields\t\t", "atm_U")
+            Logger.print_double(self.atm_T, "update_fields\t\t", "atm_T")
+            Logger.print_double(self.atm_q, "update_fields\t\t", "atm_q")
+            Logger.print_double(self.atm_p, "update_fields\t\t", "atm_p")
+            Logger.print_double(self.R_net, "update_fields\t\t", "R_net")
             print("--------------")
         
     # Run the model
@@ -196,8 +196,8 @@ class UtahLSM:
         
         if (self.runtime<1E7):
             print("--------------")
-            io.Logger.print_double(self.sfc_T_new, "run\t\t\t\t\t", 'sfc_T_new')
-            io.Logger.print_double(self.sfc_q_new, "run\t\t\t\t\t", 'sfc_q_new')
+            Logger.print_double(self.sfc_T_new, "run\t\t\t\t\t", 'sfc_T_new')
+            Logger.print_double(self.sfc_q_new, "run\t\t\t\t\t", 'sfc_q_new')
             print("--------------")
         
         # Check if time to re-compute balances
@@ -272,7 +272,7 @@ class UtahLSM:
                 
             # Compute virtual heat flux
             flux_wTv = self.flux_wT[0] + ref_T*0.61*self.flux_wq[0]
-                
+            
             # Compute L
             last_L = self.obl[0]
             self.obl[0] = -(self.ust[0]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
@@ -283,19 +283,19 @@ class UtahLSM:
                 
             if (self.runtime==25800):
                 print("--------------")
-                io.Logger.print_double(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
-                io.Logger.print_double(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
-                io.Logger.print_double(self.ust[0],     "compute_fluxes\t\t", 'ust')
-                io.Logger.print_double(self.atm_U,      "compute_fluxes\t\t", 'atm_U')
-                io.Logger.print_double(fm,              "compute_fluxes\t\t", 'fm')
-                io.Logger.print_double(fh,              "compute_fluxes\t\t", 'fh')
-                io.Logger.print_double(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
-                io.Logger.print_double(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
-                io.Logger.print_double(flux_wTv,        "compute_fluxes\t\t", 'wTv')
-                io.Logger.print_double(self.obl[0],     "compute_fluxes\t\t", 'obl')
-                io.Logger.print_double(last_L,          "compute_fluxes\t\t", 'obl_old')
-                io.Logger.print_double(np.abs(last_L-self.obl[0]), "compute_fluxes\t\t", 'obl_diff')
-                io.Logger.print_double(criteria,     "compute_fluxes\t\t", 'criteria')
+                Logger.print_double(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
+                Logger.print_double(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
+                Logger.print_double(self.ust[0],     "compute_fluxes\t\t", 'ust')
+                Logger.print_double(self.atm_U,      "compute_fluxes\t\t", 'atm_U')
+                Logger.print_double(fm,              "compute_fluxes\t\t", 'fm')
+                Logger.print_double(fh,              "compute_fluxes\t\t", 'fh')
+                Logger.print_double(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
+                Logger.print_double(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
+                Logger.print_double(flux_wTv,        "compute_fluxes\t\t", 'wTv')
+                Logger.print_double(self.obl[0],     "compute_fluxes\t\t", 'obl')
+                Logger.print_double(last_L,          "compute_fluxes\t\t", 'obl_old')
+                Logger.print_double(np.abs(last_L-self.obl[0]), "compute_fluxes\t\t", 'obl_diff')
+                Logger.print_double(criteria,     "compute_fluxes\t\t", 'criteria')
                 print("--------------")
             
             # Check for convergence
@@ -409,9 +409,9 @@ class UtahLSM:
                 Qg = self.ghf[0]
                 if (self.runtime<1E7):
                     print("--------------")
-                    io.Logger.print_double(Qh, "solve_seb\t\t\t",'Qh')
-                    io.Logger.print_double(Ql, "solve_seb\t\t\t",'Ql')
-                    io.Logger.print_double(Qg, "solve_seb\t\t\t",'Qg')
+                    Logger.print_double(Qh, "solve_seb\t\t\t",'Qh')
+                    Logger.print_double(Ql, "solve_seb\t\t\t",'Ql')
+                    Logger.print_double(Qg, "solve_seb\t\t\t",'Qg')
                     print("--------------")
                 break
             
@@ -434,11 +434,11 @@ class UtahLSM:
         
         if (self.runtime<1E7):
             print("--------------")
-            io.Logger.print_double(Qh,         "compute_seb\t\t\t", 'Qh')
-            io.Logger.print_double(Ql,         "compute_seb\t\t\t", 'Ql')
-            io.Logger.print_double(Qg,         "compute_seb\t\t\t", 'Qg')
-            io.Logger.print_double(self.R_net, "compute_seb\t\t\t", 'Rn')
-            io.Logger.print_double(SEB,        "compute_seb\t\t\t", 'SEB')
+            Logger.print_double(Qh,         "compute_seb\t\t\t", 'Qh')
+            Logger.print_double(Ql,         "compute_seb\t\t\t", 'Ql')
+            Logger.print_double(Qg,         "compute_seb\t\t\t", 'Qg')
+            Logger.print_double(self.R_net, "compute_seb\t\t\t", 'Rn')
+            Logger.print_double(SEB,        "compute_seb\t\t\t", 'SEB')
             print("--------------")
         
         return SEB
@@ -454,8 +454,8 @@ class UtahLSM:
         
         if (self.runtime<1E7):
             print("--------------")
-            io.Logger.print_double(heat_cap, "compute_dseb\t\t", 'heat_cap')
-            io.Logger.print_double(dSEB_dT,  "compute_dseb\t\t", 'dSEB_dT')
+            Logger.print_double(heat_cap, "compute_dseb\t\t", 'heat_cap')
+            Logger.print_double(dSEB_dT,  "compute_dseb\t\t", 'dSEB_dT')
             print("--------------")
         
         return dSEB_dT
@@ -518,12 +518,12 @@ class UtahLSM:
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
             
             if (self.runtime<1E7): 
-                io.Logger.print_double(E,       "solve_smb\t\t\t", 'E')
-                io.Logger.print_double(flux_sm, "solve_smb\t\t\t", 'flux_sm')
+                Logger.print_double(E,       "solve_smb\t\t\t", 'E')
+                Logger.print_double(flux_sm, "solve_smb\t\t\t", 'flux_sm')
             if (converged): 
                 # if (self.runtime<1E7): 
-                #     io.Logger.print_double(E,       'E')
-                #     io.Logger.print_double(flux_sm, 'flux_sm')                
+                #     Logger.print_double(E,       'E')
+                #     Logger.print_double(flux_sm, 'flux_sm')                
                 break
 
     # Solve the diffusion equation for soil heat
@@ -531,9 +531,9 @@ class UtahLSM:
         
         if (self.runtime<1E7): 
             print("----BEFORET---")
-            io.Logger.print_double(self.sfc_T_new,"diffusion_heat\t\t","sfc_T_new")
+            Logger.print_double(self.sfc_T_new,"diffusion_heat\t\t","sfc_T_new")
             for ii in range(self.nz):
-                io.Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii) 
+                Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii) 
             print("--------------")
         
         # Local variables
@@ -655,7 +655,7 @@ class UtahLSM:
         if (self.runtime<1E7): 
             print("----AFTERT----")
             for ii in range(self.nz):
-                io.Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii)
+                Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii)
             print("--------------")
     
     # Solve the diffusion equation for soil moisture
@@ -681,9 +681,9 @@ class UtahLSM:
         
         if (self.runtime<1E7): 
             print("----BEFOREQ---")
-            io.Logger.print_double(self.sfc_q_new, "diffusion_mois\t\t","sfc_q_new")
+            Logger.print_double(self.sfc_q_new, "diffusion_mois\t\t","sfc_q_new")
             for ii in range(self.nz):
-                io.Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
+                Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
             print("--------------")
         
         # loop through diffusion by sub-step
@@ -836,7 +836,7 @@ class UtahLSM:
         if (self.runtime<1E7): 
             print("----AFTERQ----")
             for ii in range(self.nz):
-                io.Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
+                Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
             print("--------------")
 
 # main program to run the LSM
@@ -870,7 +870,7 @@ if __name__ == "__main__":
             namelist    = '../cases/%s/lsm_namelist.json'%case
             initfile    = '../cases/%s/lsm_init.nc'%case 
             offlinefile = '../cases/%s/lsm_offline.nc'%case  
-            inputLSM    = io.Input(namelist,initfile,offlinefile)
+            inputLSM    = Input(namelist,initfile,offlinefile)
         else:
             raise InvalidCase('Error: The folder ../cases/%s does not exist.'%case)
     except InvalidCase as e:
@@ -882,7 +882,7 @@ if __name__ == "__main__":
     # create Output instance
     if not outf:
         outf='lsm_%s_py.nc'%case
-    outputLSM = io.Output(outf)
+    outputLSM = Output(outf)
     
     # grid information
     nx = inputLSM.nx
