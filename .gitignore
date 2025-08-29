@@ -10,4 +10,4 @@ lsm*.nc
 *utahlsm_offline_f 
 **/__pycache__
 **/.vscode
-*.json
+cases/*/*.json

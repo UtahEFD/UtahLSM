@@ -24,7 +24,7 @@ class Soil(object):
         
         self.input = input    
         nz         = self.input.nsoil
-        dataset    = self.input.param
+        dataset    = self.input.soil_param
         
         if dataset==1:
             set_name = "Clapp/Hornberger"

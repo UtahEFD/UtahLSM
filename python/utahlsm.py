@@ -19,7 +19,8 @@ import os
 import sys
 import time
 from physics import Radiation, Soil, Surface
-from util import constants as c, Input, Output, Logger, matrix
+from util import constants as c, matrix
+from util.io import Input, Output, Logger
 
 # custom error message for user case entry
 class InvalidCase(Exception):
@@ -29,8 +30,8 @@ class InvalidCase(Exception):
 class UtahLSM:
     """This is the main UtahLSM class
     
-    :param inputLSM: A handle to the :class:`util.Input`
-    :param outputLSM: A handle to the :class:`util.Output`
+    :param inputLSM: A handle to the :class:`io.Input`
+    :param outputLSM: A handle to the :class:`io.Output`
     """
     
     # model class initialization
@@ -58,10 +59,13 @@ class UtahLSM:
         self.z_m = self.input.z_m
         self.z_s = self.input.z_s
         
+        # Input surface section
+        self.sfc_model = self.input.sfc_model
+        
         # Input soil section
         self.nz         = self.input.nsoil
-        self.soil_param = self.input.param
-        self.soil_model = self.input.model
+        self.soil_param = self.input.soil_param
+        self.soil_model = self.input.soil_model
         
         print("[UtahLSM: Setup] \t Reading input data")
         self.soil_z    = self.input.soil_z
@@ -81,12 +85,12 @@ class UtahLSM:
         self.soil_z = -1*self.soil_z
         
         # Input radiation section
-        self.comp_rad   = self.input.comp_rad
+        self.rad_model  = self.input.rad_model
         self.albedo     = self.input.albedo
         self.emissivity = self.input.emissivity
         self.latitude   = self.input.latitude
         self.longitude  = self.input.longitude
-        if (self.comp_rad==1):
+        if (self.rad_model):
             print("[UtahLSM: Setup] \t Creating radiation model")
                         
             # convert latitude and longitude into radians
@@ -94,7 +98,7 @@ class UtahLSM:
             self.longitude = self.longitude * c.pi / 180.0
             
             # Create radiation model
-            self.rad = Radiation.get_model(1,self.input)
+            self.rad = Radiation.get_model(self.rad_model,self.input)
         else:
             print("[UtahLSM: Radiation] \t --- using offline data, no model")
         
@@ -104,7 +108,7 @@ class UtahLSM:
         
         print("[UtahLSM: Setup] \t Creating surface model")
         # choose surface model
-        self.sfc = Surface.get_model(1)
+        self.sfc = Surface.get_model(self.sfc_model)
 
         print("[UtahLSM: Setup] \t Creating output file")    
         # initialize flux arrays
@@ -165,7 +169,7 @@ class UtahLSM:
         #if self.runtime==26400:
         #    sys.exit(1)
         # Run radiation model and update time/date if needed
-        if (self.comp_rad==1):
+        if (self.rad_model):
             self.julian_day += int(self.runtime/86400);
             self.R_net  = self.rad.compute_net(self.julian_day,self.utc,self.soil_T[0])
         else:

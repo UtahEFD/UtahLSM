@@ -230,6 +230,7 @@ namelist['surface']['z_m']        = float(10.0)
 namelist['surface']['z_s']        = float(2.0)
 namelist['surface']['albedo']     = float(0.33)
 namelist['surface']['emissivity'] = float(0.99)
+namelist['surface']['model']      = 1
 
 # soil section
 namelist['soil']['nsoil'] = nsoil
@@ -237,7 +238,7 @@ namelist['soil']['param'] = 3
 namelist['soil']['model'] = 2
 
 # radiation section
-namelist['radiation']['comp_rad']  = 0
+namelist['radiation']['model']     = 0
 namelist['radiation']['latitude']  = float(51.9711)
 namelist['radiation']['longitude'] = float(-4.9267)
 
