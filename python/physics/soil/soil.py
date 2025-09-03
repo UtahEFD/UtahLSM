@@ -12,11 +12,14 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
+import logging
 import numpy as np
-import sys
 
 from util import constants as c
 from .soil_type import SoilType
+
+# local logger
+logger = logging.getLogger("SOIL")
 
 class Soil(object):
     
@@ -33,7 +36,7 @@ class Soil(object):
         elif dataset==3:
             set_name="Rawls/Brakensiek"
         
-        print("[UtahLSM: Soil] \t --- the %s dataset"%set_name)
+        logger.info("--- the %s dataset"%set_name)
         
         # fill properties
         self.properties = np.empty(nz).astype(np.object_)
@@ -63,14 +66,13 @@ class Soil(object):
             # look up model class from dictionary
             return SOIL_MODELS[key](input)
         except KeyError as e:
-            print("x"*62)
-            print(f"Namelist Error: {e} is an invalid soil model.")
-            print(f"Valid options are:")
+            logger.error("x"*62)
+            logger.error(f"Namelist Error: {e} is an invalid soil model.")
+            logger.error(f"Valid options are:")
             for k,v in SOIL_MODELS.items():
-                print(f"\t{k} ({v.__name__})")
-            print("x"*62)
-            
-            sys.exit(1)
+                logger.error(f"\t{k} ({v.__name__})")
+            logger.error("x"*62)
+            raise SystemExit(1)
     
     # Compute heat capacity
     def heat_capacity(self, soil_q, level):

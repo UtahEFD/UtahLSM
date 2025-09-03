@@ -6,6 +6,7 @@ output/
 *utahlsm
 lsm*.nc
 .vscode/
+**.log
 *utahlsm_offline 
 *utahlsm_offline_f 
 **/__pycache__

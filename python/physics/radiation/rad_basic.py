@@ -12,16 +12,20 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
+import logging
 import numpy as np
 from util import constants as c
 from .radiation import Radiation
+
+# local logger
+logger = logging.getLogger("RAD: Basic")
 
 class RadBasic(Radiation):
 
     # class initialization
     def __init__(self, input):
         
-        print("[UtahLSM: Radiation] \t --- using the basic model")
+        logger.info("--- using the basic model")
         # initialize parent class
         super().__init__(input)
         

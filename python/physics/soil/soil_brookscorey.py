@@ -11,17 +11,21 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-import sys
+
+import logging
 import numpy as np
 from .soil import Soil
 from util import constants as c
+
+# local logger
+logger = logging.getLogger("SOIL: Brooks/Corey")
 
 class BrooksCorey(Soil):
 
     # class initialization
     def __init__(self,input):
         
-        print("[UtahLSM: Soil] \t\t--- running with the Brooks-Corey model")
+        logger.info("--- running with the Brooks-Corey model")
         # initialize parent class
         super().__init__(input)
     

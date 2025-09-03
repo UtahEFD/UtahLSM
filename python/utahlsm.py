@@ -14,17 +14,21 @@
 # 
 
 import argparse
+import logging
 import numpy as np
 import os
 import sys
 import time
 from physics import Radiation, Soil, Surface
 from util import constants as c, matrix
-from util.io import Input, Output, Logger
+from util.io import Input, Output
 
 # custom error message for user case entry
 class InvalidCase(Exception):
     pass
+
+# local logger
+#logger = logging.getLogger(__name__)
 
 # land-surface model class
 class UtahLSM:
@@ -42,7 +46,7 @@ class UtahLSM:
         self.input  = inputLSM
         self.output = outputLSM
         
-        print("[UtahLSM: Setup] \t Reading input settings")
+        logger.info("Reading input settings")
         # Input time section
         self.dt_seb     = self.input.step_seb
         self.dt_dif     = self.input.step_dif
@@ -67,7 +71,7 @@ class UtahLSM:
         self.soil_param = self.input.soil_param
         self.soil_model = self.input.soil_model
         
-        print("[UtahLSM: Setup] \t Reading input data")
+        logger.info("Reading input data")
         self.soil_z    = self.input.soil_z
         self.soil_T    = self.input.soil_T
         self.soil_q    = self.input.soil_q
@@ -90,8 +94,9 @@ class UtahLSM:
         self.emissivity = self.input.emissivity
         self.latitude   = self.input.latitude
         self.longitude  = self.input.longitude
+        
+        logger.info("Creating radiation model")
         if (self.rad_model):
-            print("[UtahLSM: Setup] \t Creating radiation model")
                         
             # convert latitude and longitude into radians
             self.latitude  = self.latitude * c.pi / 180.0
@@ -100,17 +105,17 @@ class UtahLSM:
             # Create radiation model
             self.rad = Radiation.get_model(self.rad_model,self.input)
         else:
-            print("[UtahLSM: Radiation] \t --- using offline data, no model")
+            logger.info("--- using offline data, no model")
         
         # Create soil model
-        print("[UtahLSM: Setup] \t Creating soil model")
+        logger.info("Creating soil model")
         self.soil = Soil.get_model(self.soil_model,self.input)
         
-        print("[UtahLSM: Setup] \t Creating surface model")
+        logger.info("Creating surface model")
         # choose surface model
         self.sfc = Surface.get_model(self.sfc_model)
 
-        print("[UtahLSM: Setup] \t Creating output file")    
+        logger.info("Creating output file")    
         # initialize flux arrays
         self.ust     = np.array([ustar])
         self.flux_wT = np.array([flux_wT])
@@ -158,7 +163,7 @@ class UtahLSM:
         self.output.save(self.output_fields,0,0,initial=True)
         
     # Update atmospheric quantities prior to solving
-    def update_fields(self, dt, u, T, q, p, rad=0):
+    def update(self, dt, u, T, q, p, rad=0):
         self.tstep    = dt
         self.atm_U    = u
         self.atm_T    = T
@@ -179,17 +184,17 @@ class UtahLSM:
         if (self.atm_U==0): self.atm_U = 1E-4
         
         # debugging
-        if (self.runtime<1E7):
-            print('\r')
-            print("--------------")
-            Logger.print_double(self.tstep, "update_fields\t\t", "tstep")
-            Logger.print_double(self.utc,   "update_fields\t\t", "t utc")
-            Logger.print_double(self.atm_U, "update_fields\t\t", "atm_U")
-            Logger.print_double(self.atm_T, "update_fields\t\t", "atm_T")
-            Logger.print_double(self.atm_q, "update_fields\t\t", "atm_q")
-            Logger.print_double(self.atm_p, "update_fields\t\t", "atm_p")
-            Logger.print_double(self.R_net, "update_fields\t\t", "R_net")
-            print("--------------")
+        # if (self.runtime<1E7):
+        #     print('\r')
+        #     print("--------------")
+        #     Logger.print_double(self.tstep, "update\t\t", "tstep")
+        #     Logger.print_double(self.utc,   "update\t\t", "t utc")
+        #     Logger.print_double(self.atm_U, "update\t\t", "atm_U")
+        #     Logger.print_double(self.atm_T, "update\t\t", "atm_T")
+        #     Logger.print_double(self.atm_q, "update\t\t", "atm_q")
+        #     Logger.print_double(self.atm_p, "update\t\t", "atm_p")
+        #     Logger.print_double(self.R_net, "update\t\t", "R_net")
+        #     print("--------------")
         
     # Run the model
     def run(self):
@@ -198,11 +203,11 @@ class UtahLSM:
         self.sfc_T_new = self.soil_T[0]
         self.sfc_q_new = self.soil_q[0]
         
-        if (self.runtime<1E7):
-            print("--------------")
-            Logger.print_double(self.sfc_T_new, "run\t\t\t\t\t", 'sfc_T_new')
-            Logger.print_double(self.sfc_q_new, "run\t\t\t\t\t", 'sfc_q_new')
-            print("--------------")
+        # if (self.runtime<1E7):
+        #     print("--------------")
+        #     Logger.print_double(self.sfc_T_new, "run\t\t\t\t\t", 'sfc_T_new')
+        #     Logger.print_double(self.sfc_q_new, "run\t\t\t\t\t", 'sfc_q_new')
+        #     print("--------------")
         
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
@@ -285,22 +290,22 @@ class UtahLSM:
             if (self.z_m/self.obl[0] > 5.):  self.obl[0] = self.z_m/5.
             if (self.z_m/self.obl[0] < -5.): self.obl[0] = -self.z_m/5.
                 
-            if (self.runtime==25800):
-                print("--------------")
-                Logger.print_double(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
-                Logger.print_double(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
-                Logger.print_double(self.ust[0],     "compute_fluxes\t\t", 'ust')
-                Logger.print_double(self.atm_U,      "compute_fluxes\t\t", 'atm_U')
-                Logger.print_double(fm,              "compute_fluxes\t\t", 'fm')
-                Logger.print_double(fh,              "compute_fluxes\t\t", 'fh')
-                Logger.print_double(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
-                Logger.print_double(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
-                Logger.print_double(flux_wTv,        "compute_fluxes\t\t", 'wTv')
-                Logger.print_double(self.obl[0],     "compute_fluxes\t\t", 'obl')
-                Logger.print_double(last_L,          "compute_fluxes\t\t", 'obl_old')
-                Logger.print_double(np.abs(last_L-self.obl[0]), "compute_fluxes\t\t", 'obl_diff')
-                Logger.print_double(criteria,     "compute_fluxes\t\t", 'criteria')
-                print("--------------")
+            # if (self.runtime==25800):
+            #     print("--------------")
+            #     Logger.print_double(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
+            #     Logger.print_double(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
+            #     Logger.print_double(self.ust[0],     "compute_fluxes\t\t", 'ust')
+            #     Logger.print_double(self.atm_U,      "compute_fluxes\t\t", 'atm_U')
+            #     Logger.print_double(fm,              "compute_fluxes\t\t", 'fm')
+            #     Logger.print_double(fh,              "compute_fluxes\t\t", 'fh')
+            #     Logger.print_double(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
+            #     Logger.print_double(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
+            #     Logger.print_double(flux_wTv,        "compute_fluxes\t\t", 'wTv')
+            #     Logger.print_double(self.obl[0],     "compute_fluxes\t\t", 'obl')
+            #     Logger.print_double(last_L,          "compute_fluxes\t\t", 'obl_old')
+            #     Logger.print_double(np.abs(last_L-self.obl[0]), "compute_fluxes\t\t", 'obl_diff')
+            #     Logger.print_double(criteria,     "compute_fluxes\t\t", 'criteria')
+            #     print("--------------")
             
             # Check for convergence
             converged = np.abs(last_L-self.obl[0]) <= criteria
@@ -310,9 +315,9 @@ class UtahLSM:
                 break
         
         # Exit if L convergence fails
-        if (not converged):
-            print("[UtahLSM: Fluxes] \t Converge failed")
-            sys.exit()
+        # if (not converged):
+        #     print("[UtahLSM: Fluxes] \t Converge failed")
+        #     sys.exit()
     
     # Solve the surface energy budget
     def solve_seb(self):
@@ -411,12 +416,12 @@ class UtahLSM:
                 Qh = c.rho_air*c.Cp_air*self.flux_wT[0]
                 Ql = c.rho_air*c.Lv*self.flux_wq[0]
                 Qg = self.ghf[0]
-                if (self.runtime<1E7):
-                    print("--------------")
-                    Logger.print_double(Qh, "solve_seb\t\t\t",'Qh')
-                    Logger.print_double(Ql, "solve_seb\t\t\t",'Ql')
-                    Logger.print_double(Qg, "solve_seb\t\t\t",'Qg')
-                    print("--------------")
+                # if (self.runtime<1E7):
+                #     print("--------------")
+                #     Logger.print_double(Qh, "solve_seb\t\t\t",'Qh')
+                #     Logger.print_double(Ql, "solve_seb\t\t\t",'Ql')
+                #     Logger.print_double(Qg, "solve_seb\t\t\t",'Qg')
+                #     print("--------------")
                 break
             
             # If flux fails to converge, split temperature difference
@@ -436,14 +441,14 @@ class UtahLSM:
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
         
-        if (self.runtime<1E7):
-            print("--------------")
-            Logger.print_double(Qh,         "compute_seb\t\t\t", 'Qh')
-            Logger.print_double(Ql,         "compute_seb\t\t\t", 'Ql')
-            Logger.print_double(Qg,         "compute_seb\t\t\t", 'Qg')
-            Logger.print_double(self.R_net, "compute_seb\t\t\t", 'Rn')
-            Logger.print_double(SEB,        "compute_seb\t\t\t", 'SEB')
-            print("--------------")
+        # if (self.runtime<1E7):
+        #     print("--------------")
+        #     Logger.print_double(Qh,         "compute_seb\t\t\t", 'Qh')
+        #     Logger.print_double(Ql,         "compute_seb\t\t\t", 'Ql')
+        #     Logger.print_double(Qg,         "compute_seb\t\t\t", 'Qg')
+        #     Logger.print_double(self.R_net, "compute_seb\t\t\t", 'Rn')
+        #     Logger.print_double(SEB,        "compute_seb\t\t\t", 'SEB')
+        #     print("--------------")
         
         return SEB
     
@@ -456,11 +461,11 @@ class UtahLSM:
         + c.rho_air*c.Cp_air*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0]) \
         + heat_cap/(self.soil_z[0]-self.soil_z[1])
         
-        if (self.runtime<1E7):
-            print("--------------")
-            Logger.print_double(heat_cap, "compute_dseb\t\t", 'heat_cap')
-            Logger.print_double(dSEB_dT,  "compute_dseb\t\t", 'dSEB_dT')
-            print("--------------")
+        # if (self.runtime<1E7):
+        #     print("--------------")
+        #     Logger.print_double(heat_cap, "compute_dseb\t\t", 'heat_cap')
+        #     Logger.print_double(dSEB_dT,  "compute_dseb\t\t", 'dSEB_dT')
+        #     print("--------------")
         
         return dSEB_dT
     
@@ -521,9 +526,9 @@ class UtahLSM:
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
             
-            if (self.runtime<1E7): 
-                Logger.print_double(E,       "solve_smb\t\t\t", 'E')
-                Logger.print_double(flux_sm, "solve_smb\t\t\t", 'flux_sm')
+            # if (self.runtime<1E7): 
+            #     Logger.print_double(E,       "solve_smb\t\t\t", 'E')
+            #     Logger.print_double(flux_sm, "solve_smb\t\t\t", 'flux_sm')
             if (converged): 
                 # if (self.runtime<1E7): 
                 #     Logger.print_double(E,       'E')
@@ -533,12 +538,12 @@ class UtahLSM:
     # Solve the diffusion equation for soil heat
     def solve_diffusion_heat(self):
         
-        if (self.runtime<1E7): 
-            print("----BEFORET---")
-            Logger.print_double(self.sfc_T_new,"diffusion_heat\t\t","sfc_T_new")
-            for ii in range(self.nz):
-                Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii) 
-            print("--------------")
+        # if (self.runtime<1E7): 
+        #     print("----BEFORET---")
+        #     Logger.print_double(self.sfc_T_new,"diffusion_heat\t\t","sfc_T_new")
+        #     for ii in range(self.nz):
+        #         Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii) 
+        #     print("--------------")
         
         # Local variables
         AB  = 1.0
@@ -656,11 +661,11 @@ class UtahLSM:
             
             # update time
             t+=dt_T
-        if (self.runtime<1E7): 
-            print("----AFTERT----")
-            for ii in range(self.nz):
-                Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii)
-            print("--------------")
+        # if (self.runtime<1E7): 
+        #     print("----AFTERT----")
+        #     for ii in range(self.nz):
+        #         Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii)
+        #     print("--------------")
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -683,12 +688,12 @@ class UtahLSM:
         # Get the time step restriction
         dt_q = 1.0
         
-        if (self.runtime<1E7): 
-            print("----BEFOREQ---")
-            Logger.print_double(self.sfc_q_new, "diffusion_mois\t\t","sfc_q_new")
-            for ii in range(self.nz):
-                Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
-            print("--------------")
+        # if (self.runtime<1E7): 
+        #     print("----BEFOREQ---")
+        #     Logger.print_double(self.sfc_q_new, "diffusion_mois\t\t","sfc_q_new")
+        #     for ii in range(self.nz):
+        #         Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
+        #     print("--------------")
         
         # loop through diffusion by sub-step
         t = 0
@@ -837,26 +842,44 @@ class UtahLSM:
             # update time
             t+=dt_q
         
-        if (self.runtime<1E7): 
-            print("----AFTERQ----")
-            for ii in range(self.nz):
-                Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
-            print("--------------")
+        # if (self.runtime<1E7): 
+        #     print("----AFTERQ----")
+        #     for ii in range(self.nz):
+        #         Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
+        #     print("--------------")
 
 # main program to run the LSM
 if __name__ == "__main__":
     
     # let's time this thing
     t1 = time.time()
-
+    
+    # configure logging
+    log_format = '{asctime} [{levelname:^8s}] {name:^20s} {message}'
+    logging.basicConfig(level=logging.DEBUG,
+                        format=log_format,
+                        datefmt='%Y-%m-%d %H:%M:%S',
+                        style='{',
+                        filename='utahlsm.log',
+                        filemode='w')    
+    
+    # create a console handler for printing to the screen
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(logging.Formatter(log_format, "%Y-%m-%d %H:%M:%S",style='{',))
+    logging.getLogger('').addHandler(console_handler)
+    
+    # local logger
+    logger = logging.getLogger("UtahLSM")
+    
     # a nice welcome message
-    print("##############################################################")
-    print("#                                                            #")
-    print("#                     Welcome to UtahLSM                     #")
-    print("#   A land surface model created at the University of Utah   #")
-    print("#       and the NOAA National Severe Storms Laboratory       #")
-    print("#                                                            #")
-    print("##############################################################")
+    logger.info("##############################################################")
+    logger.info("#                                                            #")
+    logger.info("#                     Welcome to UtahLSM                     #")
+    logger.info("#   A land surface model created at the University of Utah   #")
+    logger.info("#       and the NOAA National Severe Storms Laboratory       #")
+    logger.info("#                                                            #")
+    logger.info("##############################################################")
     
     # get case from user
     parser = argparse.ArgumentParser(description="Run a case with UtahLSM")
@@ -878,10 +901,10 @@ if __name__ == "__main__":
         else:
             raise InvalidCase('Error: The folder ../cases/%s does not exist.'%case)
     except InvalidCase as e:
-        print(e)
-        sys.exit(1)
-    
-    print("[UtahLSM: Info] \t Running offline for the %s case"%case)
+        logger.error(e)
+        raise SystemExit(1)
+
+    logger.info("Running offline for the %s case"%case)
     
     # create Output instance
     if not outf:
@@ -911,16 +934,15 @@ if __name__ == "__main__":
     utc = 0
     for t in range(0,ntime):
         utc += tstep
-        sys.stdout.write("\r[UtahLSM: Run] \t\t Running for time: %05.2f of %05.2f"%(utc,ntime*tstep))
-        sys.stdout.flush()
+        logger.info(f"Running for time: {utc:8.2f} of {ntime*tstep:8.2f}")
         
         # update user-specified fields
-        lsm.update_fields(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
+        lsm.update(tstep,atm_U[t],atm_T[t],atm_q[t],atm_p[t],R_net[t])
         lsm.run()
         lsm.save()
     
     # time info
     t2 = time.time()
     tt = t2 - t1
-    print("\n[UtahLSM: Run] \t\t Done! Completed in %0.4f seconds"%tt)
-    print("##############################################################")
+    logger.info("Done! Completed in %0.4f seconds"%tt)
+    logger.info("##############################################################")

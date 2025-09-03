@@ -14,9 +14,14 @@
 
 import json
 import jsonschema
-import time, os
+import logging
+import os
+import time
 import netCDF4 as nc
 import numpy as np
+
+# local logger
+logger = logging.getLogger("IO: Input")
 
 class Input(object):
 
@@ -30,26 +35,26 @@ class Input(object):
             with open(schema) as json_file:
                 namelist_schema = json.load(json_file)
         except FileNotFoundError as e:
-            print('Error: %s — %s'%(schema,e.strerror))
+            logger.error('Error: %s — %s'%(schema,e.strerror))
         except json.decoder.JSONDecodeError as e:
-            print('Error parsing %s: %s (see line %s)'%(schema,e.msg,e.lineno))
+            logger.error('Error parsing %s: %s (see line %s)'%(schema,e.msg,e.lineno))
         
         # namelist json files
         try:
             with open(namelist) as json_file:
                 namelist_data = json.load(json_file)
         except FileNotFoundError as e:
-            print('Error: %s — %s'%(namelist,e.strerror))
+            logger.error('Error: %s — %s'%(namelist,e.strerror))
         except json.decoder.JSONDecodeError as e:
-            print('Error parsing %s: %s (see line %s)'%(namelist,e.msg,e.lineno))
+            logger.error('Error parsing %s: %s (see line %s)'%(namelist,e.msg,e.lineno))
         else:
             # validate the data against the schema
             try:
                 jsonschema.validate(instance=namelist_data, schema=namelist_schema)
             except jsonschema.ValidationError as e:
-                print("Namelist validation failed!")
-                print(f"Error: {e.message}")
-                print(f"Path to error: {list(e.path)}")
+                logger.error("Namelist validation failed!")
+                logger.error(f"Error: {e.message}")
+                logger.error(f"Path to error: {list(e.path)}")
             else:
                 # time section
                 self.step_seb   = namelist_data["time"]["step_seb"]
@@ -89,9 +94,9 @@ class Input(object):
             inifile = nc.Dataset(inputfile)
         # report file open error to user and exit program
         except (RuntimeError,FileNotFoundError) as e:
-            print('There was an issue opening \'%s\'.'%(inputfile))
-            print('Error: ',e.strerror)
-            sys.exit(1)  
+            logger.error('There was an issue opening \'%s\'.'%(inputfile))
+            logger.error('Error: ',e.strerror)
+            raise SystemExit(1)  
         # process the netcdf input file
         else:
             # load initial data from netcdf into local variables
@@ -102,9 +107,9 @@ class Input(object):
                 self.soil_type = inifile.variables['soil_type'][:].astype('int')
             # report a netcdf dictionary error to user and exit program
             except (KeyError) as e:
-                print("There was an issue accessing data from \'%s\'"%inputfile)
-                print("Error: The key",e,"does not exist")
-                sys.exit(1)
+                logger.error("There was an issue accessing data from \'%s\'"%inputfile)
+                logger.error("Error: The key",e,"does not exist")
+                raise SystemExit(1)
         
         # open and parse the netcdf offline data if available
         if (offlinefile):
@@ -112,9 +117,9 @@ class Input(object):
                 metfile = nc.Dataset(offlinefile)
             # report file open error to user and exit program
             except (RuntimeError,FileNotFoundError) as e:
-                print('There was an issue opening \'%s\'.'%(offlinefile))
-                print('Error: ',e.strerror)
-                sys.exit(1)  
+                logger.error('There was an issue opening \'%s\'.'%(offlinefile))
+                logger.error('Error: ',e.strerror)
+                raise SystemExit(1)  
             # process the netcdf offline file
             else:
                 # load offline data from netcdf into local variables
@@ -129,7 +134,7 @@ class Input(object):
                     self.r_net = metfile.variables['R_net'][:].astype('float')
                 # report a netcdf dictionary error to user and exit program
                 except (KeyError) as e:
-                    print("There was an issue accessing data from \'%s\'"%inputfile)
-                    print("Error: The key",e,"does not exist")
-                    sys.exit(1)
+                    logger.error("There was an issue accessing data from \'%s\'"%inputfile)
+                    logger.error("Error: The key",e,"does not exist")
+                    raise SystemExit(1)
     

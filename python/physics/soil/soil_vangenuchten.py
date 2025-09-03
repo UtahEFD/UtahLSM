@@ -11,10 +11,14 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-import sys
+
+import logging
 import numpy as np
 from .soil import Soil
 from util import constants as c
+
+# local logger
+logger = logging.getLogger("SOIL: Van Genuchten")
 
 class VanGenuchten(Soil):
 
@@ -23,7 +27,7 @@ class VanGenuchten(Soil):
         
         # TODO: Check these computations, especially power terms
         
-        print("[UtahLSM: Soil] \t--- running with the Van Genuchten scheme")
+        logger.info("[UtahLSM: Soil] \t--- running with the Van Genuchten scheme")
         # initialize parent class
         super().__init__(input)
         

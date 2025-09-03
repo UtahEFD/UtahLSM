@@ -12,17 +12,21 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
+import logging
 import math
 import numpy as np
 from util import constants as c
 from .sfc import Surface
+
+# local logger
+logger = logging.getLogger("SFC: MOST")
 
 class SurfaceMOST(Surface):
 
     # class initialization
     def __init__(self):
         
-        print("[UtahLSM: Surface] \t --- using the MOST model")
+        logger.info("--- using the MOST model")
         # initialize parent class
         super().__init__()
         

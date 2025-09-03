@@ -14,8 +14,6 @@
 
 from .input import Input
 from .output import Output
-from .logger import Logger
 
 __all__ = ['Input']
 __all__ = ['Output']
-__all__ = ['Logger']

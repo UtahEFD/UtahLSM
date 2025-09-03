@@ -11,16 +11,20 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-import sys
+
+import logging
 import numpy as np
 from .soil import Soil
 from util import constants as c
+
+# local logger
+logger = logging.getLogger("SOIL: Campbell")
 
 class Campbell(Soil):
 
     # class initialization
     def __init__(self,input):
-        print("[UtahLSM: Soil] \t --- using the Campbell model with")
+        logger.info("--- using the Campbell model with")
         # initialize parent class
         super().__init__(input)
     

@@ -13,10 +13,14 @@
 # 
 
 import json
+import logging
 import time
 import netCDF4 as nc
 import numpy as np
 from util import constants
+
+# local logger
+logger = logging.getLogger("IO: Output")
 
 class Output(object):
 			
