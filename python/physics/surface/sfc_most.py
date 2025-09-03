@@ -76,17 +76,6 @@ class SurfaceMOST(Surface):
     # integral stability correction for momentum under unstable conditions
     def psim_unstable(self,zeta):
         x = (1.-(16.*zeta))**(0.25)
-        log1 = 2.*np.log((1.+x)/2.)
-        log2 = np.log((1.+x**2.)/2.)
-        atan = 2.* np.cos(x) / np.sin(x)#   2.*math.atan2(1.,1./x)
-        pio2 = c.pi/2.
-        
-        print('%s%s: %s'%("PSIMU\t\t","zeta",str(zeta)))
-        print('%s%s: %0.17g'%("PSIMU\t\t","x",x))
-        print('%s%s: %0.17g'%("PSIMU\t\t","log1",log1))
-        print('%s%s: %0.17g'%("PSIMU\t\t","log2",log2))
-        print('%s%s: %0.17g'%("PSIMU\t\t","atan",atan))
-        print('%s%s: %0.17g'%("PSIMU\t\t","pio2",pio2))
         
         return 2.*np.log((1.+x)/2.)+np.log((1.+x**2.)/2.)-2.*math.atan2(1.,self.phim_unstable(zeta))+c.pi/2.
     
@@ -102,14 +91,9 @@ class SurfaceMOST(Surface):
     def psih_stable(self,zeta):
         return -5.*zeta
     
-    # Integral stability correction for scalars under unstable conditions
+    # integral stability correction for scalars under unstable conditions
     def psih_unstable(self,zeta):
         x = (1.-(16.*zeta))**(0.50)
-        log1 = 2.*np.log((1.+x)/2.)
-        
-        print('%s%s: %0.17g'%("PSIHU\t\t","zeta",zeta))
-        print('%s%s: %0.17g'%("PSIHU\t\t","x",x))
-        print('%s%s: %0.17g'%("PSIHU\t\t","log1",log1))
         
         return 2.*np.log((1.+x)/2.)
     
