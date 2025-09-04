@@ -171,8 +171,7 @@ class UtahLSM:
         self.atm_p    = p
         self.runtime += tstep
         self.utc      = np.fmod(self.runtime,86400)
-        #if self.runtime==26400:
-        #    sys.exit(1)
+        
         # Run radiation model and update time/date if needed
         if (self.rad_model):
             self.julian_day += int(self.runtime/86400);
@@ -635,11 +634,8 @@ class UtahLSM:
             self.soil_T[0] = self.sfc_T_new
         
             # Solve the tridiagonal system
-            try:
-                # we only need to send the layers below surface
-                matrix.tridiagonal(e,f,g,r,self.soil_T[1::])
-            except:
-                sys.exit(0)
+            # we only need to send the layers below surface
+            matrix.tridiagonal(e,f,g,r,self.soil_T[1::])
             
             # update conductivities for sub-step
             for i in range(0, self.nz-1):
@@ -809,11 +805,8 @@ class UtahLSM:
             self.soil_q[0] = self.sfc_q_new
             
             # solve the tridiagonal system
-            try:
-                # we only need the layers below the surface
-                matrix.tridiagonal(e,f,g,r,self.soil_q[1::])
-            except:
-                sys.exit(0)
+            # we only need the layers below the surface
+            matrix.tridiagonal(e,f,g,r,self.soil_q[1::])
                 
             # update diffusivities and conductivities for sub-step
             for i in range(0,self.nz-1):
