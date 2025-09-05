@@ -448,7 +448,7 @@ class UtahLSM:
 
         # Compute fluxes using passed in values
         self.compute_fluxes(sfc_T,self.sfc_q_new);
-        
+         
         # Write sensible and latent heat fluxes in [W/m^2]
         Qh = c.rho_air*c.Cp_air*self.flux_wT[0]
         Ql = c.rho_air*c.Lv*self.flux_wq[0]
