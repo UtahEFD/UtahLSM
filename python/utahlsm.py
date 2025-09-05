@@ -318,113 +318,130 @@ class UtahLSM:
         #     print("[UtahLSM: Fluxes] \t Converge failed")
         #     sys.exit()
     
-    # Solve the surface energy budget
+    # Solve the surface energy budget using a custom implementation of Brent's Method
     def solve_seb(self):
+        """
+        Solves the Surface Energy Budget (SEB) to find the surface temperature.
+        This function first establishes a valid temperature bracket [a, b] where the
+        SEB function changes sign, then uses a robust root-finding algorithm
+        (_solve_root_brent) to find the precise temperature.
+        """
+        # Objective function for the root finder. The root is found when SEB is zero.
+        def seb_function(sfc_T):
+            return self.compute_seb(sfc_T)
         
-        # Local variables
-        max_iter_temp = 200
-        max_iter_flux = 200
-        temp_1        = self.soil_T[0] - 1
-        temp_2        = self.soil_T[0] + 1
-        temp_criteria = 0.001
-        flux_criteria = 0.001
+        # 1. Establish an initial temperature bracket
+        temp_a = self.soil_T[0] - 1.0
+        temp_b = self.soil_T[0] + 1.0
+        seb_a = seb_function(temp_a)
+        seb_b = seb_function(temp_b)
         
-        # Compute SEB using current bracketed temperatures
-        SEB_l = self.compute_seb(temp_1)
-        SEB_h = self.compute_seb(temp_2)
+        # 2. Aggressively expand the bracket if the root is not contained within it.
+        #    This loop ensures f(a) and f(b) have opposite signs.
+        max_bracket_iter = 50
+        iter_count = 0
+        while seb_a * seb_b > 0 and iter_count < max_bracket_iter:
+            if abs(seb_a) < abs(seb_b):
+                temp_a -= 5.0  # Expand bracket by a larger, fixed step
+                seb_a = seb_function(temp_a)
+            else:
+                temp_b += 5.0
+                seb_b = seb_function(temp_b)
+            iter_count += 1
         
-        # Dynamic bracket adjustments
-        out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
-        while (out_of_bracket):
+        if iter_count >= max_bracket_iter:
+            logger.error("Failed to find a valid bracket for solve_seb after %d iterations.", max_bracket_iter)
+            sys.exit(1)
+        
+        # 3. Call the custom root-finder to get the surface temperature
+        try:
+            temp_root, converged = self._solve_root_brent(seb_function, temp_a, temp_b)
+            if not converged:
+                logger.warning("SEB root-finder did not converge within the maximum iterations.")
             
-            # Expand brackets by 1 K
-            temp_1 -= 1
-            temp_2 += 1
+            self.sfc_T_new = temp_root
             
-            # Recompute SEB at brackets
-            SEB_l = self.compute_seb(temp_1)
-            SEB_h = self.compute_seb(temp_2)
+            # Final flux calculation with the converged temperature
+            self.compute_fluxes(self.sfc_T_new, self.sfc_q_new)
+            logger.debug(f"SEB converged to T_sfc = {self.sfc_T_new:.3f} K")
+        
+        except Exception as e:
+            logger.error(f"An exception occurred during SEB root finding: {e}")
+            sys.exit(1)
 
-            # Check for proper brackets
-            out_of_bracket = (SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)
+    def _solve_root_brent(self, f, a, b, tol=1e-3, max_iter=100):
+        """
+        Custom implementation of Brent's method for finding the root of a function.
+        It combines bisection, secant, and inverse quadratic interpolation methods.
         
-        if ((SEB_l > 0.0 and SEB_h > 0.0) or (SEB_l < 0.0 and SEB_h < 0.0)):
-            throw("Please adjust brackets for Ts")
+        :param f: The function for which to find a root, f(x) = 0.
+        :param a: The lower bound of the bracket.
+        :param b: The upper bound of the bracket.
+        :param tol: The desired tolerance for the root.
+        :param max_iter: The maximum number of iterations to perform.
+        :return: A tuple (root, converged_status).
+        """
+        fa = f(a)
+        fb = f(b)
         
-        # If SEB from low bracket Ts = 0, then that value of Ts is solution
-        if (SEB_l == 0.0): self.sfc_T_new = temp_1
+        if fa * fb >= 0:
+            raise ValueError("Root not bracketed in _solve_root_brent (f(a) * f(b) >= 0).")
         
-        # If SEB from high bracket Ts = 0, then that value of Ts is solution
-        if (SEB_h == 0.0): self.sfc_T_new = temp_2
+        # Ensure 'a' is the best current guess
+        if abs(fa) < abs(fb):
+            a, b = b, a
+            fa, fb = fb, fa
         
-        # Orient the solutions such that SEB(temp_l) < 0;
-        if (SEB_l < 0.0):
-            temp_l = temp_1
-            temp_h = temp_2
-        else:
-            temp_l = temp_2
-            temp_h = temp_1
+        c = a  # c is the previous best approximation
+        fc = fa
+        mflag = True # Flag to indicate whether to use bisection
+        s = 0 # Current iterate
         
-        # Prepare for convergence looping
-        dTs     = np.abs(temp_h-temp_l)
-        dTs_old = dTs
-        
-        # Convergence loop for flux
-        for ff in range(0,max_iter_flux):
-                    
-            # Convergence loop for temperature
-            for tt in range(0,max_iter_temp):
-                
-                # Compute SEB and dSEB_dTs
-                SEB     = self.compute_seb(self.sfc_T_new);
-                dSEB_dT = self.compute_dseb(self.sfc_T_new)
-                
-                # Update brackets
-                if (SEB<0.): temp_l = self.sfc_T_new
-                if (SEB>0.): temp_h = self.sfc_T_new
-                
-                # Bracket and bisect temperature if Newton out of range
-                if ((((self.sfc_T_new-temp_h)*dSEB_dT-SEB)*((self.sfc_T_new-temp_l)*dSEB_dT-SEB)>0.0)
-                    or (np.abs(2.0*SEB) > np.abs(dTs_old*dSEB_dT))):
-                    dTs_old        = dTs
-                    dTs            = 0.5*(temp_h-temp_l)
-                    last_T         = self.sfc_T_new
-                    self.sfc_T_new = temp_l + dTs
-                    if (temp_l == self.sfc_T_new): break
-                else:
-                    dTs_old        = dTs
-                    dTs            = SEB / dSEB_dT
-                    last_T         = self.sfc_T_new
-                    self.sfc_T_new = self.sfc_T_new - dTs
-                    if (last_T == self.sfc_T_new): break
-                
-                # Check for convergence
-                if (np.abs( (self.sfc_T_new-last_T)/last_T) <= temp_criteria): break
-                
-                # If convergence fails, recompute flux
-                # computeFluxes(soil_T[0],soil_q[0]);
+        for i in range(max_iter):
+            # Inverse Quadratic Interpolation
+            if fa != fc and fb != fc:
+                s = (a * fb * fc / ((fa - fb) * (fa - fc)) +
+                     b * fa * fc / ((fb - fa) * (fb - fc)) +
+                     c * fa * fb / ((fc - fa) * (fc - fb)))
+            # Secant Method
+            else:
+                s = b - fb * (b - a) / (fb - fa)
+                 
+            # Check if the interpolated point is within bounds and efficient
+            cond1 = (s < (3 * a + b) / 4 or s > b)
+            cond2 = mflag and (abs(s - b) >= abs(b - c) / 2)
+            cond3 = not mflag and (abs(s - b) >= abs(c - d) / 2)
+            cond4 = mflag and (abs(b - c) < tol)
+            cond5 = not mflag and (abs(c - d) < tol)
             
-            # Save current flux for convergence criteria
-            last_F = self.flux_wT[0]
+            if cond1 or cond2 or cond3 or cond4 or cond5:
+                # If conditions are not met, fall back to bisection
+                s = (a + b) / 2
+                mflag = True
+            else:
+                mflag = False
+                
+            fs = f(s)
+            d, c = c, b  # Update previous values
             
-            # Recompute heat flux using new temperature
-            self.compute_fluxes(self.sfc_T_new,self.sfc_q_new)
-            
+            # Update points for next iteration
+            if fa * fs < 0:
+                b = s
+                fb = fs
+            else:
+                a = s
+                fa = fs
+                 
+            # Ensure 'a' is the best current guess
+            if abs(fa) < abs(fb):
+                a, b = b, a
+                fa, fb = fb, fa
+                 
             # Check for convergence
-            if (np.abs(self.flux_wT-last_F) <= flux_criteria):
-                Qh = c.rho_air*c.Cp_air*self.flux_wT[0]
-                Ql = c.rho_air*c.Lv*self.flux_wq[0]
-                Qg = self.ghf[0]
-                # if (self.runtime<1E7):
-                #     print("--------------")
-                #     Logger.print_double(Qh, "solve_seb\t\t\t",'Qh')
-                #     Logger.print_double(Ql, "solve_seb\t\t\t",'Ql')
-                #     Logger.print_double(Qg, "solve_seb\t\t\t",'Qg')
-                #     print("--------------")
-                break
-            
-            # If flux fails to converge, split temperature difference
-            self.sfc_T_new = 0.5*(self.sfc_T_new + last_T)
+            if abs(b - a) < tol:
+                return b, True
+                 
+        return b, False
     
     # Compute the surface energy budget
     def compute_seb(self, sfc_T):
