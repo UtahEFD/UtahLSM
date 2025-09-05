@@ -181,7 +181,7 @@ namelist['output'] = {}
 # time section
 namelist['time']['step_seb']   = 1
 namelist['time']['step_dif']   = 1
-namelist['time']['utc_start']  = 12.0
+namelist['time']['utc_start']  = float(12.0)
 namelist['time']['julian_day'] = 133
 
 # grid section
@@ -189,12 +189,12 @@ namelist['grid']['nx'] = 1
 namelist['grid']['ny'] = 1
 
 # surface scale section
-namelist['surface']['z_o']        = 0.15
-namelist['surface']['z_t']        = 0.0015
-namelist['surface']['z_m']        = 10.0
-namelist['surface']['z_s']        = 2.0
-namelist['surface']['albedo']     = 0.33
-namelist['surface']['emissivity'] = 0.99
+namelist['surface']['z_o']        = float(0.15)
+namelist['surface']['z_t']        = float(0.0015)
+namelist['surface']['z_m']        = float(10.0)
+namelist['surface']['z_s']        = float(2.0)
+namelist['surface']['albedo']     = float(0.33)
+namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model']      = 1
 
 # soil section
@@ -204,8 +204,8 @@ namelist['soil']['model'] = 2
 
 # radiation section
 namelist['radiation']['model']     = 0
-namelist['radiation']['latitude']  = 40.121360
-namelist['radiation']['longitude'] = -113.129070
+namelist['radiation']['latitude']  = float(40.121360)
+namelist['radiation']['longitude'] = float(-113.129070)
 
 # output section
 namelist['output']['save']   = 1
