@@ -23,13 +23,6 @@ from physics import Radiation, Soil, Surface
 from util import constants as c, matrix
 from util.io import Input, Output
 
-# custom error message for user case entry
-class InvalidCase(Exception):
-    pass
-
-# local logger
-#logger = logging.getLogger(__name__)
-
 # land-surface model class
 class UtahLSM:
     """This is the main UtahLSM class
@@ -182,31 +175,12 @@ class UtahLSM:
         # Keep winds from being exactly zero
         if (self.atm_U==0): self.atm_U = 1E-4
         
-        # debugging
-        # if (self.runtime<1E7):
-        #     print('\r')
-        #     print("--------------")
-        #     Logger.print_double(self.tstep, "update\t\t", "tstep")
-        #     Logger.print_double(self.utc,   "update\t\t", "t utc")
-        #     Logger.print_double(self.atm_U, "update\t\t", "atm_U")
-        #     Logger.print_double(self.atm_T, "update\t\t", "atm_T")
-        #     Logger.print_double(self.atm_q, "update\t\t", "atm_q")
-        #     Logger.print_double(self.atm_p, "update\t\t", "atm_p")
-        #     Logger.print_double(self.R_net, "update\t\t", "R_net")
-        #     print("--------------")
-        
     # Run the model
     def run(self):
                 
         # Set initial new temp and moisture
         self.sfc_T_new = self.soil_T[0]
         self.sfc_q_new = self.soil_q[0]
-        
-        # if (self.runtime<1E7):
-        #     print("--------------")
-        #     Logger.print_double(self.sfc_T_new, "run\t\t\t\t\t", 'sfc_T_new')
-        #     Logger.print_double(self.sfc_q_new, "run\t\t\t\t\t", 'sfc_q_new')
-        #     print("--------------")
         
         # Check if time to re-compute balances
         if ( (self.step_count % self.dt_seb)==0 ):
@@ -239,9 +213,6 @@ class UtahLSM:
     def save(self):
         # write output
         self.output.save(self.output_fields,self.step_count,self.runtime,initial=False)
-        # 
-        # # close output file       
-        #self.output.close()
     
     # Compute fluxes using similarity theory
     def compute_fluxes(self, sfc_T, sfc_q):
@@ -288,23 +259,6 @@ class UtahLSM:
             # Bounds check on L
             if (self.z_m/self.obl[0] > 5.):  self.obl[0] = self.z_m/5.
             if (self.z_m/self.obl[0] < -5.): self.obl[0] = -self.z_m/5.
-                
-            # if (self.runtime==25800):
-            #     print("--------------")
-            #     Logger.print_double(gnd_q,           "compute_fluxes\t\t", 'gnd_q')
-            #     Logger.print_double(self.ghf[0],     "compute_fluxes\t\t", 'ghf')
-            #     Logger.print_double(self.ust[0],     "compute_fluxes\t\t", 'ust')
-            #     Logger.print_double(self.atm_U,      "compute_fluxes\t\t", 'atm_U')
-            #     Logger.print_double(fm,              "compute_fluxes\t\t", 'fm')
-            #     Logger.print_double(fh,              "compute_fluxes\t\t", 'fh')
-            #     Logger.print_double(self.flux_wT[0], "compute_fluxes\t\t", 'wT')
-            #     Logger.print_double(self.flux_wq[0], "compute_fluxes\t\t", 'wq')
-            #     Logger.print_double(flux_wTv,        "compute_fluxes\t\t", 'wTv')
-            #     Logger.print_double(self.obl[0],     "compute_fluxes\t\t", 'obl')
-            #     Logger.print_double(last_L,          "compute_fluxes\t\t", 'obl_old')
-            #     Logger.print_double(np.abs(last_L-self.obl[0]), "compute_fluxes\t\t", 'obl_diff')
-            #     Logger.print_double(criteria,     "compute_fluxes\t\t", 'criteria')
-            #     print("--------------")
             
             # Check for convergence
             converged = np.abs(last_L-self.obl[0]) <= criteria
@@ -312,11 +266,6 @@ class UtahLSM:
                 self.shf[0] = c.rho_air*c.Cp_air*self.flux_wT[0]
                 self.lhf[0] = c.rho_air*c.Lv*self.flux_wq[0]
                 break
-        
-        # Exit if L convergence fails
-        # if (not converged):
-        #     print("[UtahLSM: Fluxes] \t Converge failed")
-        #     sys.exit()
     
     # Solve the surface energy budget using a custom implementation of Brent's Method
     def solve_seb(self):
@@ -457,15 +406,6 @@ class UtahLSM:
         # Compute surface energy balance
         SEB = self.R_net - Qg - Qh - Ql
         
-        # if (self.runtime<1E7):
-        #     print("--------------")
-        #     Logger.print_double(Qh,         "compute_seb\t\t\t", 'Qh')
-        #     Logger.print_double(Ql,         "compute_seb\t\t\t", 'Ql')
-        #     Logger.print_double(Qg,         "compute_seb\t\t\t", 'Qg')
-        #     Logger.print_double(self.R_net, "compute_seb\t\t\t", 'Rn')
-        #     Logger.print_double(SEB,        "compute_seb\t\t\t", 'SEB')
-        #     print("--------------")
-        
         return SEB
     
     # Compute the derivative of the surface energy budget
@@ -476,12 +416,6 @@ class UtahLSM:
         dSEB_dT  = 4.0*self.emissivity*c.sb*(sfc_T**3) \
         + c.rho_air*c.Cp_air*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0]) \
         + heat_cap/(self.soil_z[0]-self.soil_z[1])
-        
-        # if (self.runtime<1E7):
-        #     print("--------------")
-        #     Logger.print_double(heat_cap, "compute_dseb\t\t", 'heat_cap')
-        #     Logger.print_double(dSEB_dT,  "compute_dseb\t\t", 'dSEB_dT')
-        #     print("--------------")
         
         return dSEB_dT
     
@@ -542,24 +476,11 @@ class UtahLSM:
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
             
-            # if (self.runtime<1E7): 
-            #     Logger.print_double(E,       "solve_smb\t\t\t", 'E')
-            #     Logger.print_double(flux_sm, "solve_smb\t\t\t", 'flux_sm')
-            if (converged): 
-                # if (self.runtime<1E7): 
-                #     Logger.print_double(E,       'E')
-                #     Logger.print_double(flux_sm, 'flux_sm')                
+            if (converged):               
                 break
 
     # Solve the diffusion equation for soil heat
     def solve_diffusion_heat(self):
-        
-        # if (self.runtime<1E7): 
-        #     print("----BEFORET---")
-        #     Logger.print_double(self.sfc_T_new,"diffusion_heat\t\t","sfc_T_new")
-        #     for ii in range(self.nz):
-        #         Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii) 
-        #     print("--------------")
         
         # Local variables
         AB  = 1.0
@@ -674,11 +595,6 @@ class UtahLSM:
             
             # update time
             t+=dt_T
-        # if (self.runtime<1E7): 
-        #     print("----AFTERT----")
-        #     for ii in range(self.nz):
-        #         Logger.print_double(self.soil_T[ii],"diffusion_heat\t\t","soil_T (%02d)"%ii)
-        #     print("--------------")
     
     # Solve the diffusion equation for soil moisture
     def solve_diffusion_mois(self):
@@ -700,13 +616,6 @@ class UtahLSM:
         
         # Get the time step restriction
         dt_q = 1.0
-        
-        # if (self.runtime<1E7): 
-        #     print("----BEFOREQ---")
-        #     Logger.print_double(self.sfc_q_new, "diffusion_mois\t\t","sfc_q_new")
-        #     for ii in range(self.nz):
-        #         Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
-        #     print("--------------")
         
         # loop through diffusion by sub-step
         t = 0
@@ -851,12 +760,6 @@ class UtahLSM:
             
             # update time
             t+=dt_q
-        
-        # if (self.runtime<1E7): 
-        #     print("----AFTERQ----")
-        #     for ii in range(self.nz):
-        #         Logger.print_double(self.soil_q[ii],"diffusion_mois\t\t","soil_q (%02d)"%ii)
-        #     print("--------------")
 
 # main program to run the LSM
 if __name__ == "__main__":
@@ -909,8 +812,8 @@ if __name__ == "__main__":
             offlinefile = '../cases/%s/lsm_offline.nc'%case  
             inputLSM    = Input(namelist,initfile,offlinefile)
         else:
-            raise InvalidCase('Error: The folder ../cases/%s does not exist.'%case)
-    except InvalidCase as e:
+            raise FileNotFoundError('Error: The folder ../cases/%s does not exist.'%case)
+    except FileNotFoundError as e:
         logger.error(e)
         raise SystemExit(1)
 
