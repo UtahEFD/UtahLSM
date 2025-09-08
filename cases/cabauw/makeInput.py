@@ -239,6 +239,7 @@ namelist['time']['julian_day'] = 244
 # grid section
 namelist['grid']['nx'] = 1
 namelist['grid']['ny'] = 1
+namelist['grid']['nz'] = nsoil
 
 # surface section
 namelist['surface']['z_o']        = float(0.15)
@@ -250,7 +251,6 @@ namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model']      = 1
 
 # soil section
-namelist['soil']['nsoil'] = nsoil
 namelist['soil']['param'] = 1
 namelist['soil']['model'] = 2
 
@@ -260,7 +260,7 @@ namelist['radiation']['latitude']  = float(51.9711)
 namelist['radiation']['longitude'] = float(-4.9267)
 
 # output section
-namelist['output']['save']   = 1
+namelist['output']['save']   = True
 namelist['output']['fields'] = ['all']
 
 with open('lsm_namelist.json', 'w') as outfile:

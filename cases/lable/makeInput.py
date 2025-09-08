@@ -235,6 +235,7 @@ namelist['time']['julian_day'] = 298
 # grid section
 namelist['grid']['nx'] = 1
 namelist['grid']['ny'] = 1
+namelist['grid']['nz'] = nsoil
 
 # surface section
 namelist['surface']['z_o']        = float(0.0500)
@@ -246,12 +247,11 @@ namelist['surface']['emissivity'] = float(0.96)
 namelist['surface']['model']      = 1
 
 # soil section
-namelist['soil']['nsoil'] = nsoil
 namelist['soil']['param'] = 3
 namelist['soil']['model'] = 2
 
 # radiation section
-namelist['radiation']['model']     = 0
+namelist['radiation']['model']     = True
 namelist['radiation']['latitude']  = float(36.6906)
 namelist['radiation']['longitude'] = float(97.5564)
 

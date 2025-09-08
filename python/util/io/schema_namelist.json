@@ -9,7 +9,7 @@
             "properties": {
                 "step_seb": { "type": "integer", "minimum": 1 },
                 "step_dif": { "type": "integer", "minimum": 1 },
-                "utc_start": { "type": "number", "minimum": 0, "maximum": 23 },
+                "utc_start": { "type": "integer", "minimum": 0, "maximum": 86359 },
                 "julian_day": { "type": "integer", "minimum": 1, "maximum": 366 }
             },
             "required": ["step_seb", "step_dif", "utc_start", "julian_day"]
@@ -56,7 +56,7 @@
         "output": {
             "type": "object",
             "properties": {
-                "save": { "type": "integer", "enum": [0, 1] },
+                "save": { "type": "boolean"},
                 "fields": {
                     "type": "array",
                     "items": { "type": "string" },

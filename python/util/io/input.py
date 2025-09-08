@@ -11,130 +11,129 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-
+from dataclasses import dataclass
 import json
 import jsonschema
 import logging
 import os
 import time
+from typing import Dict, List, Optional
+
 import netCDF4 as nc
 import numpy as np
+
+from data_models import (
+    TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig, OutputConfig,
+    SoilData, ForcingData, AtmosphericData
+)
 
 # local logger
 logger = logging.getLogger("IO: Input")
 
 class Input(object):
 
-    def __init__(self, namelist, inputfile, offlinefile=None):
+    def __init__(self, namelist_path: str, inputfile: str, offlinefile: str = None):
         
-        # validation schema file path
-        schema = "util/io/schema_namelist.json"
+        # Load and validate the namelist into the configuration dataclasses
+        namelist_data = self._load_and_validate_namelist(namelist_path)
+            
+        # Load initial conditions into the InitialConditions dataclass
+        init_data = self._load_initial_conditions(inputfile)
         
-        # validation schema file
+        # Assemble the final, structured dataclasses from the raw data
+        self.time:      TimeConfig      = TimeConfig(**namelist_data["time"])
+        self.surface:   SurfaceConfig   = SurfaceConfig(**namelist_data["surface"])
+        self.soil:      SoilConfig      = SoilConfig(**namelist_data["soil"])
+        self.radiation: RadiationConfig = RadiationConfig(**namelist_data["radiation"])
+        self.output:    OutputConfig    = OutputConfig(**namelist_data["output"])
+        self.grid:      GridConfig      = GridConfig(
+                                            nx = namelist_data["grid"]["nx"],
+                                            ny = namelist_data["grid"]["ny"],
+                                            nz = namelist_data["grid"]["nz"],
+                                            z  = init_data["z"]
+                                        )
+        # InitialConditions now only contains dynamic variables
+        self.initial: SoilData = SoilData(
+            T    = init_data["soil_T"],
+            q    = init_data["soil_q"],
+            type = init_data["soil_type"]
+        )
+        
+        # Load offline forcing data if provided into the ForcingData dataclass
+        self.forcing: Optional[ForcingData] = None
+        if offlinefile:
+            self._load_offline_data(offlinefile)
+            
+        # Perform additional semantic and physical validation
+        self._validate_physical_consistency()
+
+    def _load_and_validate_namelist(self, namelist_path: str) -> Dict:
+        """Loads the JSON namelist, validates it, and populates the config dataclasses."""
+        
+        schema_path = "util/io/schema_namelist.json"
+        
         try:
-            with open(schema) as json_file:
-                namelist_schema = json.load(json_file)
-        except FileNotFoundError as e:
-            logger.error('Error: %s — %s'%(schema,e.strerror))
-        except json.decoder.JSONDecodeError as e:
-            logger.error('Error parsing %s: %s (see line %s)'%(schema,e.msg,e.lineno))
-        
-        # namelist json files
-        try:
-            with open(namelist) as json_file:
-                namelist_data = json.load(json_file)
-        except FileNotFoundError as e:
-            logger.error('Error: %s — %s'%(namelist,e.strerror))
-        except json.decoder.JSONDecodeError as e:
-            logger.error('Error parsing %s: %s (see line %s)'%(namelist,e.msg,e.lineno))
-        else:
-            # validate the data against the schema
-            try:
-                jsonschema.validate(instance=namelist_data, schema=namelist_schema)
-            except jsonschema.ValidationError as e:
-                logger.error("Namelist validation failed!")
-                logger.error(f"Error: {e.message}")
-                logger.error(f"Path to error: {list(e.path)}")
-            else:
-                # time section
-                self.step_seb   = namelist_data["time"]["step_seb"]
-                self.step_dif   = namelist_data["time"]["step_dif"]
-                self.utc_start  = namelist_data["time"]["utc_start"]
-                self.julian_day = namelist_data["time"]["julian_day"]
-                
-                # grid section
-                self.nx         = namelist_data["grid"]["nx"]
-                self.ny         = namelist_data["grid"]["ny"]
-                
-                # length section
-                self.z_o        = namelist_data["surface"]["z_o"]
-                self.z_t        = namelist_data["surface"]["z_t"]
-                self.z_m        = namelist_data["surface"]["z_m"]
-                self.z_s        = namelist_data["surface"]["z_s"]
-                self.albedo     = namelist_data["surface"]["albedo"]
-                self.emissivity = namelist_data["surface"]["emissivity"]
-                self.sfc_model  = namelist_data["surface"]["model"]
-                
-                # soil section
-                self.nsoil      = namelist_data["soil"]["nsoil"]
-                self.soil_param = namelist_data["soil"]["param"]
-                self.soil_model = namelist_data["soil"]["model"]
-                
-                # radiation section
-                self.rad_model  = namelist_data["radiation"]["model"]
-                self.latitude   = namelist_data["radiation"]["latitude"]
-                self.longitude  = namelist_data["radiation"]["longitude"]
-                
-                # output section
-                self.save       = namelist_data["output"]["save"]
-                self.fields     = namelist_data["output"]["fields"]
-        
-        # open and parse the netcdf initialization data
-        try:
-            inifile = nc.Dataset(inputfile)
-        # report file open error to user and exit program
-        except (RuntimeError,FileNotFoundError) as e:
-            logger.error('There was an issue opening \'%s\'.'%(inputfile))
-            logger.error('Error: ',e.strerror)
-            raise SystemExit(1)  
-        # process the netcdf input file
-        else:
-            # load initial data from netcdf into local variables
-            try:
-                self.soil_z    = inifile.variables['soil_z'][:].astype('float')
-                self.soil_T    = inifile.variables['soil_T'][:].astype('float')
-                self.soil_q    = inifile.variables['soil_q'][:].astype('float')
-                self.soil_type = inifile.variables['soil_type'][:].astype('int')
-            # report a netcdf dictionary error to user and exit program
-            except (KeyError) as e:
-                logger.error("There was an issue accessing data from \'%s\'"%inputfile)
-                logger.error("Error: The key",e,"does not exist")
-                raise SystemExit(1)
-        
-        # open and parse the netcdf offline data if available
-        if (offlinefile):
-            try:
-                metfile = nc.Dataset(offlinefile)
-            # report file open error to user and exit program
-            except (RuntimeError,FileNotFoundError) as e:
-                logger.error('There was an issue opening \'%s\'.'%(offlinefile))
-                logger.error('Error: ',e.strerror)
-                raise SystemExit(1)  
-            # process the netcdf offline file
-            else:
-                # load offline data from netcdf into local variables
-                try:
-                    metfile.set_auto_mask(False)
-                    self.ntime = len(metfile.dimensions['t'])
-                    self.tstep = metfile.variables['tstep'][0].astype('float')
-                    self.atm_U = metfile.variables['atm_U'][:].astype('float')
-                    self.atm_T = metfile.variables['atm_T'][:].astype('float')
-                    self.atm_q = metfile.variables['atm_q'][:].astype('float')
-                    self.atm_p = metfile.variables['atm_p'][:].astype('float')
-                    self.r_net = metfile.variables['R_net'][:].astype('float')
-                # report a netcdf dictionary error to user and exit program
-                except (KeyError) as e:
-                    logger.error("There was an issue accessing data from \'%s\'"%inputfile)
-                    logger.error("Error: The key",e,"does not exist")
-                    raise SystemExit(1)
+            with open(schema_path) as f: 
+                schema = json.load(f)
+            with open(namelist_path) as f: 
+                namelist_data = json.load(f)
+            
+            # validate namelist structure
+            jsonschema.validate(instance=namelist_data, schema=schema)
+            logger.info("Namelist validation successful")
+            return namelist_data
+        # raise an error
+        except (FileNotFoundError, json.JSONDecodeError, jsonschema.ValidationError) as e:
+            logger.error(f"Namelist Error: {e}")
+            raise
     
+    def _load_initial_conditions(self, inputfile: str)-> Dict[str, np.ndarray]:
+        """Loads data from the NetCDF initialization file into a dataclass."""
+        try:
+            with nc.Dataset(inputfile) as inifile:
+                init_dict = {
+                    z    = inifile.variables['soil_z'][:].astype('float') * (-1),
+                    T    = inifile.variables['soil_T'][:].astype('float'),
+                    q    = inifile.variables['soil_q'][:].astype('float'),
+                    type = inifile.variables['soil_type'][:].astype('int')
+                }
+            logger.info("Initial conditions data loaded successfully")
+            return init_dict
+        except (IOError, KeyError) as e:
+            logger.error(f"Initial Conditions Error: {e}")
+            raise
+    
+    def _load_offline_data(self, offlinefile: str):
+        """Loads data from the NetCDF offline forcing file into a dataclass."""
+        try:
+            with nc.Dataset(offlinefile) as metfile:
+                metfile.set_auto_mask(False)
+                ntime    = len(metfile.dimensions['t']),
+                tstep    = metfile.variables['tstep'][0].astype('float')
+                atm_U    = metfile.variables['atm_U'][:].astype('float'),
+                atm_T    = metfile.variables['atm_T'][:].astype('float'),
+                atm_q    = metfile.variables['atm_q'][:].astype('float'),
+                atm_p    = metfile.variables['atm_p'][:].astype('float'),
+                r_net    = metfile.variables['R_net'][:].astype('float')
+                atm_data = [
+                    AtmosphericData(U=atm_U[i], T=atm_T[i], q=atm_q[i], p=atm_p[i], R_net=r_net[i])
+                    for i in range(ntime)
+                ]
+                self.forcing = ForcingData(ntime=ntime, tstep=tstep, atmos=atm_data)
+                logger.info(f"Loaded {ntime} timesteps of forcing data")
+        except (IOError, KeyError) as e:
+            logger.error(f"Offline forcing error: {e}")
+            raise
+    
+    def _validate_physical_consistency(self):
+        """Performs validation checks on inter-variable relationships."""
+        if self.surface.z_m <= self.surface.z_o:
+            raise ValueError(f"z_m={self.surface.z_m} must be > z_o={self.surface.z_o}.")
+        
+        if self.surface.z_s <= self.surface.z_t:
+            raise ValueError(f"z_s={self.surface.z_s} must be > z_t={self.surface.z_t}.")
+        
+        if len(self.initial.T) != self.grid.nz:
+            raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
+                             f"init file soil_T length of {len(self.initial.T)}.")
+        logger.info("Physical consistency checks passed")
