@@ -42,6 +42,17 @@ class SoilData:
     type: np.ndarray  # soil type [category]
 
 @dataclass
+class Fluxes:
+    """Represents the calculated surface fluxes for a single timestep."""
+    ust: np.ndarray
+    obl: np.ndarray
+    wT:  np.ndarray
+    wq:  np.ndarray
+    shf: np.ndarray
+    lhf: np.ndarray
+    ghf: np.ndarray
+
+@dataclass
 class ForcingData:
     """Represents the entire time-series of meteorological forcing data."""
     ntime: int
