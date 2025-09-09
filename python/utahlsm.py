@@ -14,6 +14,7 @@
 # 
 
 import argparse
+from dataclasses import replace
 import logging
 import numpy as np
 import os
@@ -42,9 +43,9 @@ class UtahLSM:
         
         # copy mutable data
         logger.info("Copying input data")
-        self.utc         = self.input.utc_start.copy()
-        self.julian_day  = self.input.julian_day.copy()    
-        self.soil_state  = self.input.initial.copy()
+        self.utc         = self.input.time.utc_start
+        self.julian_day  = self.input.time.julian_day    
+        self.soil_state  = replace(self.input.initial) #replace copies dataclass
         
         # initialize new surface values for first run
         self.sfc_T_new = self.soil_state.T.item(0)
@@ -63,7 +64,7 @@ class UtahLSM:
         
         # surface model
         logger.info("Creating surface model")
-        self.sfc = Surface.get_model(self.input.sfc.model)
+        self.sfc = Surface.get_model(self.input.surface.model)
         
         # data for output file
         logger.info("Creating output file")    
@@ -126,7 +127,7 @@ class UtahLSM:
             self.julian_day = self.input.time.julian_day + int(utc_total/86400)
             self.R_net      = self.rad.compute_net(self.julian_day,self.utc,self.soil_state.T[0])
         else:
-            self.R_net = rad
+            self.R_net = self.atm_state.R_net
         
         # Keep winds from being exactly zero
         if (self.atm_state.U==0): self.atm_state.U = 1E-4
@@ -139,7 +140,7 @@ class UtahLSM:
         self.sfc_q_new = self.soil_state.q[0]
         
         # Check if time to re-compute balances
-        if ( (self.step_count % self.input.time.dt_seb)==0 ):
+        if ( (self.step_count % self.input.time.step_seb)==0 ):
             self.solve_seb()
             self.solve_smb()
         else:
@@ -147,7 +148,7 @@ class UtahLSM:
             self.compute_fluxes(self.soil_state.T[0],self.soil_state.q[0])
         
         # check if time to compute diffusion
-        if ( (self.step_count % self.input.time.dt_dif)==0 ):
+        if ( (self.step_count % self.input.time.step_dif)==0 ):
             
             # Solve heat diffusion
             self.solve_diffusion_heat()
@@ -418,7 +419,7 @@ class UtahLSM:
             self.sfc_q_new = self.soil.surface_water_content(psi0)
             
             gnd_q = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_state.p)
-            E     = c.rho_air*(gnd_q-self.atm_q)*self.ust[0]*self.sfc.fh(self.z_s,self.z_t,self.obl[0])
+            E     = c.rho_air*(gnd_q-self.atm_state.q)*self.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.obl[0])
             
             # Update soil moisture transfer
             K0    = self.soil.conductivity_moisture(self.sfc_q_new,0)
@@ -440,15 +441,15 @@ class UtahLSM:
         dz  = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
         
-        K     = np.zeros(self.nz)
-        K_mid = np.zeros(self.nz-1)
-        z_mid = np.zeros(self.nz-1)
-        r     = np.zeros(self.nz-1)
-        e     = np.zeros(self.nz-1)
-        f     = np.zeros(self.nz-1)
-        g     = np.zeros(self.nz-1)
+        K     = np.zeros(self.input.grid.nz)
+        K_mid = np.zeros(self.input.grid.nz-1)
+        z_mid = np.zeros(self.input.grid.nz-1)
+        r     = np.zeros(self.input.grid.nz-1)
+        e     = np.zeros(self.input.grid.nz-1)
+        f     = np.zeros(self.input.grid.nz-1)
+        g     = np.zeros(self.input.grid.nz-1)
         
-        for i in range(0,self.nz-1):
+        for i in range(0,self.input.grid.nz-1):
             K[i]     = self.soil.diffusivity_thermal(self.soil_state.q[i],i)
             K[i+1]   = self.soil.diffusivity_thermal(self.soil_state.q[i+1],i+1)
             K_mid[i] = 0.5*(K[i]+K[i+1])
@@ -468,8 +469,8 @@ class UtahLSM:
             # r(n)    the soil temperature vector at t=n multiplied by coefficients
         
             # Matrix coefficients for first level below surface
-            Cp  = float(self.input.time.dt_dif) * dt_T * K_mid[0] / dz2
-            Cm  = float(self.input.time.dt_dif) * dt_T * K_mid[1] / dz2
+            Cp  = float(self.input.time.step_dif) * dt_T * K_mid[0] / dz2
+            Cm  = float(self.input.time.step_dif) * dt_T * K_mid[1] / dz2
             CBp = -AB * Cp
             CBm = -AB * Cm
             CB  = 1.0 - CBp - CBm
@@ -483,14 +484,14 @@ class UtahLSM:
             r[0] = CFp * self.soil_state.T[0] + CF * self.soil_state.T[1] + CFm * self.soil_state.T[2] - CBp * self.sfc_T_new
             
             # Matrix coefficients for the interior levels
-            for i in range(1,self.nz-2):
+            for i in range(1,self.input.grid.nz-2):
         
                 # for soil_T in this loop:
                 # i   -> j+1 level
                 # i+1 -> j   level
                 # i+2 -> j-1 level
-                Cp  = float(self.input.time.dt_dif) * dt_T * K_mid[i] / dz2
-                Cm  = float(self.input.time.dt_dif) * dt_T * K_mid[i+1] / dz2
+                Cp  = float(self.input.time.step_dif) * dt_T * K_mid[i] / dz2
+                Cm  = float(self.input.time.step_dif) * dt_T * K_mid[i+1] / dz2
                 CBp = -AB * Cp
                 CBm = -AB * Cm
                 CB  = 1.0 - CBp - CBm
@@ -504,10 +505,10 @@ class UtahLSM:
                 r[i] = CFp * self.soil_state.T[i] + CF * self.soil_state.T[i+1] + CFm * self.soil_state.T[i+2]
         
             # Matrix coefficients for bottom level
-            j = self.nz-2
+            j = self.input.grid.nz-2
         
-            Cp  = float(self.input.time.dt_dif) * dt_T * K_mid[j] / dz2
-            Cm  = float(self.input.time.dt_dif) * dt_T * K_mid[j] / dz2
+            Cp  = float(self.input.time.step_dif) * dt_T * K_mid[j] / dz2
+            Cm  = float(self.input.time.step_dif) * dt_T * K_mid[j] / dz2
             CBp = -AB * Cp
             CBm = -AB * Cm
             CB  = 1.0 - CBp - CBm
@@ -528,7 +529,7 @@ class UtahLSM:
             matrix.tridiagonal(e,f,g,r,self.soil_state.T[1::])
             
             # update conductivities for sub-step
-            for i in range(0, self.nz-1):
+            for i in range(0, self.input.grid.nz-1):
                 K[i]     = self.soil.diffusivity_thermal(self.soil_state.q[i],i)
                 K[i+1]   = self.soil.diffusivity_thermal(self.soil_state.q[i+1],i+1)
                 K_mid[i] = 0.5*(K[i]+K[i+1])
@@ -557,14 +558,14 @@ class UtahLSM:
         dz  = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
         
-        K_lin = np.zeros(self.nz)
-        D     = np.zeros(self.nz)
-        D_mid = np.zeros(self.nz-1)
-        z_mid = np.zeros(self.nz-1)
-        r     = np.zeros(self.nz-1)
-        e     = np.zeros(self.nz-1)
-        f     = np.zeros(self.nz-1)
-        g     = np.zeros(self.nz-1)
+        K_lin = np.zeros(self.input.grid.nz)
+        D     = np.zeros(self.input.grid.nz)
+        D_mid = np.zeros(self.input.grid.nz-1)
+        z_mid = np.zeros(self.input.grid.nz-1)
+        r     = np.zeros(self.input.grid.nz-1)
+        e     = np.zeros(self.input.grid.nz-1)
+        f     = np.zeros(self.input.grid.nz-1)
+        g     = np.zeros(self.input.grid.nz-1)
         
         # Get the time step restriction
         dt_q = 1.0
@@ -580,10 +581,10 @@ class UtahLSM:
             
             # first soil level below the surface
             # common coefficients
-            Cpd  = float(self.input.time.dt_dif) * dt_q * D_mid[0] / dz2
-            Cmd  = float(self.input.time.dt_dif) * dt_q * D_mid[1] / dz2
-            Cpk  = float(self.input.time.dt_dif) * dt_q * K_lin[0] / (2*dz)
-            Cmk  = float(self.input.time.dt_dif) * dt_q * K_lin[2] / (2*dz)
+            Cpd  = float(self.input.time.step_dif) * dt_q * D_mid[0] / dz2
+            Cmd  = float(self.input.time.step_dif) * dt_q * D_mid[1] / dz2
+            Cpk  = float(self.input.time.step_dif) * dt_q * K_lin[0] / (2*dz)
+            Cmk  = float(self.input.time.step_dif) * dt_q * K_lin[2] / (2*dz)
             
             # coefficients for backward scheme
             CBpd = -AB * Cpd
@@ -610,17 +611,17 @@ class UtahLSM:
             r[0] = CFp * self.soil_state.q[0] + CF * self.soil_state.q[1] + CFm * self.soil_state.q[2] - CBp * self.sfc_q_new
             
             # interior soil levels
-            for i in range(1,self.nz-2):
+            for i in range(1,self.input.grid.nz-2):
                 # for soil_T in this loop:
                 # i   -> j+1 level
                 # i+1 -> j   level
                 # i+2 -> j-1 level# 
                 
                 # common coefficients
-                Cpd  = float(self.input.time.dt_dif) * dt_q * D_mid[i] / dz2
-                Cmd  = float(self.input.time.dt_dif) * dt_q * D_mid[i+1] / dz2
-                Cpk  = float(self.input.time.dt_dif) * dt_q * K_lin[i] / (2*dz)
-                Cmk  = float(self.input.time.dt_dif) * dt_q * K_lin[i+2] / (2*dz)
+                Cpd  = float(self.input.time.step_dif) * dt_q * D_mid[i] / dz2
+                Cmd  = float(self.input.time.step_dif) * dt_q * D_mid[i+1] / dz2
+                Cpk  = float(self.input.time.step_dif) * dt_q * K_lin[i] / (2*dz)
+                Cmk  = float(self.input.time.step_dif) * dt_q * K_lin[i+2] / (2*dz)
                 
                 # coefficients for backward scheme
                 CBpd = -AB * Cpd
@@ -647,13 +648,13 @@ class UtahLSM:
                 r[i] = CFp * self.soil_state.q[i] + CF * self.soil_state.q[i+1] + CFm * self.soil_state.q[i+2]
             
             # Matrix coefficients for bottom level
-            j = self.nz-2
+            j = self.input.grid.nz-2
             
             # common coefficients
-            Cpd  = float(self.input.time.dt_dif) * dt_q * D_mid[j] / dz2
-            Cmd  = float(self.input.time.dt_dif) * dt_q * D_mid[j] / dz2
-            Cpk  = float(self.input.time.dt_dif) * dt_q * K_lin[j] / (2*dz)
-            Cmk  = float(self.input.time.dt_dif) * dt_q * K_lin[j] / (2*dz)
+            Cpd  = float(self.input.time.step_dif) * dt_q * D_mid[j] / dz2
+            Cmd  = float(self.input.time.step_dif) * dt_q * D_mid[j] / dz2
+            Cpk  = float(self.input.time.step_dif) * dt_q * K_lin[j] / (2*dz)
+            Cmk  = float(self.input.time.step_dif) * dt_q * K_lin[j] / (2*dz)
             
             # coefficients for backward scheme
             CBpd = -AB * Cpd
@@ -687,7 +688,7 @@ class UtahLSM:
             matrix.tridiagonal(e,f,g,r,self.soil_state.q[1::])
                 
             # update diffusivities and conductivities for sub-step
-            for i in range(0,self.nz-1):
+            for i in range(0,self.input.grid.nz-1):
                 D[i]     = self.soil.diffusivity_moisture(self.soil_state.q[i],i)
                 D[i+1]   = self.soil.diffusivity_moisture(self.soil_state.q[i+1],i+1)
                 D_mid[i] = 0.5*(D[i]+D[i+1])
@@ -695,7 +696,7 @@ class UtahLSM:
                 
                 # linearized K
                 K_lin[i] = self.soil.conductivity_moisture(self.soil_state.q[i],i)/self.soil_state.q[i]
-                if (i==self.nz-2):
+                if (i==self.input.grid.nz-2):
                     K_lin[i+1] = self.soil.conductivity_moisture(self.soil_state.q[i+1],i+1)/self.soil_state.q[i+1]
             
             # adjust time step if not at final time

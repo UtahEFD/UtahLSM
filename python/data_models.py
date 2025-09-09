@@ -37,7 +37,6 @@ class AtmosphericData:
 @dataclass
 class SoilData:
     """Represents the state of the soil column."""
-    z: np.ndarray     # vertical grid levels distance from surface [m]
     T: np.ndarray     # soil temperature [m/s]
     q: np.ndarray     # soil moisture [g/g]
     type: np.ndarray  # soil type [category]

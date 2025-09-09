@@ -26,8 +26,8 @@ class Soil(object):
     def __init__(self,input):
         
         self.input = input    
-        nz         = self.input.nsoil
-        dataset    = self.input.soil_param
+        nz         = self.input.grid.nz
+        dataset    = self.input.soil.param
         
         if dataset==1:
             set_name = "Clapp/Hornberger"
@@ -41,7 +41,7 @@ class Soil(object):
         # fill properties
         self.properties = np.empty(nz).astype(np.object_)
         for k in range(0,nz):
-            self.properties[k] = SoilType.get_properties(dataset,self.input.soil_type[k])
+            self.properties[k] = SoilType.get_properties(dataset,self.input.initial.type[k])
     
     @staticmethod
     def get_model(key,input):
@@ -66,13 +66,8 @@ class Soil(object):
             # look up model class from dictionary
             return SOIL_MODELS[key](input)
         except KeyError as e:
-            logger.error("x"*62)
-            logger.error(f"Namelist Error: {e} is an invalid soil model.")
-            logger.error(f"Valid options are:")
-            for k,v in SOIL_MODELS.items():
-                logger.error(f"\t{k} ({v.__name__})")
-            logger.error("x"*62)
-            raise SystemExit(1)
+            logger.error(e)
+            raise
     
     # Compute heat capacity
     def heat_capacity(self, soil_q, level):

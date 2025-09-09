@@ -54,9 +54,9 @@ class Input(object):
                                         )
         # InitialConditions now only contains dynamic variables
         self.initial: SoilData = SoilData(
-            T    = init_data["soil_T"],
-            q    = init_data["soil_q"],
-            type = init_data["soil_type"]
+            T    = init_data["T"],
+            q    = init_data["q"],
+            type = init_data["type"]
         )
         
         # Load offline forcing data if provided into the ForcingData dataclass
@@ -91,11 +91,12 @@ class Input(object):
         """Loads data from the NetCDF initialization file into a dataclass."""
         try:
             with nc.Dataset(inputfile) as inifile:
+                inifile.set_auto_mask(False)
                 init_dict = {
-                    z    = inifile.variables['soil_z'][:].astype('float') * (-1),
-                    T    = inifile.variables['soil_T'][:].astype('float'),
-                    q    = inifile.variables['soil_q'][:].astype('float'),
-                    type = inifile.variables['soil_type'][:].astype('int')
+                    "z"    : (-1)*inifile.variables['soil_z'][:].astype('float'),
+                    "T"    : inifile.variables['soil_T'][:].astype('float'),
+                    "q"    : inifile.variables['soil_q'][:].astype('float'),
+                    "type" : inifile.variables['soil_type'][:].astype('int')
                 }
             logger.info("Initial conditions data loaded successfully")
             return init_dict
@@ -108,17 +109,19 @@ class Input(object):
         try:
             with nc.Dataset(offlinefile) as metfile:
                 metfile.set_auto_mask(False)
-                ntime    = len(metfile.dimensions['t']),
+                ntime    = len(metfile.dimensions['t'])
                 tstep    = metfile.variables['tstep'][0].astype('float')
-                atm_U    = metfile.variables['atm_U'][:].astype('float'),
-                atm_T    = metfile.variables['atm_T'][:].astype('float'),
-                atm_q    = metfile.variables['atm_q'][:].astype('float'),
-                atm_p    = metfile.variables['atm_p'][:].astype('float'),
+                atm_U    = metfile.variables['atm_U'][:].astype('float')
+                atm_T    = metfile.variables['atm_T'][:].astype('float')
+                atm_q    = metfile.variables['atm_q'][:].astype('float')
+                atm_p    = metfile.variables['atm_p'][:].astype('float')
                 r_net    = metfile.variables['R_net'][:].astype('float')
+                
                 atm_data = [
                     AtmosphericData(U=atm_U[i], T=atm_T[i], q=atm_q[i], p=atm_p[i], R_net=r_net[i])
                     for i in range(ntime)
                 ]
+                
                 self.forcing = ForcingData(ntime=ntime, tstep=tstep, atmos=atm_data)
                 logger.info(f"Loaded {ntime} timesteps of forcing data")
         except (IOError, KeyError) as e:

@@ -18,9 +18,10 @@
             "type": "object",
             "properties": {
                 "nx": { "type": "integer", "minimum": 1 },
-                "ny": { "type": "integer", "minimum": 1 }
+                "ny": { "type": "integer", "minimum": 1 },
+                "nz": { "type": "integer", "minimum": 1 }
             },
-            "required": ["nx", "ny"]
+            "required": ["nx", "ny", "nz"]
         },
         "surface": {
             "type": "object",
@@ -38,11 +39,10 @@
         "soil": {
             "type": "object",
             "properties": {
-                "nsoil": { "type": "integer", "minimum": 1 },
                 "param": { "type": "integer", "enum": [1, 2, 3] },
                 "model": { "type": "integer", "enum": [1, 2, 3] }
             },
-            "required": ["nsoil", "param", "model"]
+            "required": ["param", "model"]
         },
         "radiation": {
             "type": "object",
