@@ -22,7 +22,7 @@ import sys
 import time
 from data_models import AtmosphericData, Fluxes
 from physics import Radiation, Soil, Surface
-from util import constants as c, matrix
+from util import constants as c, solvers
 from util.io import Input, Output
 
 # land-surface model class
@@ -214,7 +214,7 @@ class UtahLSM:
         Solves the Surface Energy Budget (SEB) to find the surface temperature.
         This function first establishes a valid temperature bracket [a, b] where the
         SEB function changes sign, then uses a robust root-finding algorithm
-        (_solve_root_brent) to find the precise temperature.
+        (solvers.root_brent) to find the precise temperature.
         """
         # Objective function for the root finder. The root is found when SEB is zero.
         def seb_function(sfc_T):
@@ -245,7 +245,7 @@ class UtahLSM:
         
         # 3. Call the custom root-finder to get the surface temperature
         try:
-            temp_root, converged = self._solve_root_brent(seb_function, temp_a, temp_b)
+            temp_root, converged = solvers.root_brent(seb_function, temp_a, temp_b)
             if not converged:
                 logger.warning("SEB root-finder did not converge within the maximum iterations.")
             
@@ -259,80 +259,6 @@ class UtahLSM:
             logger.error(f"An exception occurred during SEB root finding: {e}")
             sys.exit(1)
 
-    def _solve_root_brent(self, f, a, b, tol=1e-3, max_iter=100):
-        """
-        Custom implementation of Brent's method for finding the root of a function.
-        It combines bisection, secant, and inverse quadratic interpolation methods.
-        
-        :param f: The function for which to find a root, f(x) = 0.
-        :param a: The lower bound of the bracket.
-        :param b: The upper bound of the bracket.
-        :param tol: The desired tolerance for the root.
-        :param max_iter: The maximum number of iterations to perform.
-        :return: A tuple (root, converged_status).
-        """
-        fa = f(a)
-        fb = f(b)
-        
-        if fa * fb >= 0:
-            raise ValueError("Root not bracketed in _solve_root_brent (f(a) * f(b) >= 0).")
-        
-        # Ensure 'a' is the best current guess
-        if abs(fa) < abs(fb):
-            a, b = b, a
-            fa, fb = fb, fa
-        
-        c = a  # c is the previous best approximation
-        fc = fa
-        mflag = True # Flag to indicate whether to use bisection
-        s = 0 # Current iterate
-        
-        for i in range(max_iter):
-            # Inverse Quadratic Interpolation
-            if fa != fc and fb != fc:
-                s = (a * fb * fc / ((fa - fb) * (fa - fc)) +
-                     b * fa * fc / ((fb - fa) * (fb - fc)) +
-                     c * fa * fb / ((fc - fa) * (fc - fb)))
-            # Secant Method
-            else:
-                s = b - fb * (b - a) / (fb - fa)
-                 
-            # Check if the interpolated point is within bounds and efficient
-            cond1 = (s < (3 * a + b) / 4 or s > b)
-            cond2 = mflag and (abs(s - b) >= abs(b - c) / 2)
-            cond3 = not mflag and (abs(s - b) >= abs(c - d) / 2)
-            cond4 = mflag and (abs(b - c) < tol)
-            cond5 = not mflag and (abs(c - d) < tol)
-            
-            if cond1 or cond2 or cond3 or cond4 or cond5:
-                # If conditions are not met, fall back to bisection
-                s = (a + b) / 2
-                mflag = True
-            else:
-                mflag = False
-                
-            fs = f(s)
-            d, c = c, b  # Update previous values
-            
-            # Update points for next iteration
-            if fa * fs < 0:
-                b = s
-                fb = fs
-            else:
-                a = s
-                fa = fs
-                 
-            # Ensure 'a' is the best current guess
-            if abs(fa) < abs(fb):
-                a, b = b, a
-                fa, fb = fb, fa
-                 
-            # Check for convergence
-            if abs(b - a) < tol:
-                return b, True
-                 
-        return b, False
-    
     # Compute the surface energy budget
     def compute_seb(self, sfc_T):
 
@@ -498,7 +424,7 @@ class UtahLSM:
         
             # Solve the tridiagonal system
             # we only need to send the layers below surface
-            matrix.tridiagonal(e,f,g,r,self.soil_state.T[1::])
+            self.soil_state.T[1::] = solvers.tridiagonal(e,f,g,r)
             
             # update conductivities for sub-step
             for i in range(0, self.input.grid.nz-1):
@@ -657,7 +583,7 @@ class UtahLSM:
             
             # solve the tridiagonal system
             # we only need the layers below the surface
-            matrix.tridiagonal(e,f,g,r,self.soil_state.q[1::])
+            self.soil_state.q[1::] = solvers.tridiagonal(e,f,g,r)
                 
             # update diffusivities and conductivities for sub-step
             for i in range(0,self.input.grid.nz-1):
