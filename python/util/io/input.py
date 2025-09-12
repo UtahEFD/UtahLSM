@@ -24,7 +24,7 @@ import numpy as np
 
 from data_models import (
     TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig, OutputConfig,
-    SoilData, ForcingData, AtmosphericData
+    SoilState, ForcingData, AtmosphericState
 )
 
 # local logger
@@ -53,7 +53,7 @@ class Input(object):
                                             z  = init_data["z"]
                                         )
         # InitialConditions now only contains dynamic variables
-        self.initial: SoilData = SoilData(
+        self.initial: SoilState = SoilState(
             T    = init_data["T"],
             q    = init_data["q"],
             type = init_data["type"]
@@ -118,7 +118,7 @@ class Input(object):
                 r_net    = metfile.variables['R_net'][:].astype('float')
                 
                 atm_data = [
-                    AtmosphericData(U=atm_U[i], T=atm_T[i], q=atm_q[i], p=atm_p[i], R_net=r_net[i])
+                    AtmosphericState(U=atm_U[i], T=atm_T[i], q=atm_q[i], p=atm_p[i], R_net=r_net[i])
                     for i in range(ntime)
                 ]
                 

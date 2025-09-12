@@ -76,7 +76,6 @@ class Soil(object):
         Ks       = (1.-porosity)*Ci + soil_q*c.Ci_wat + (porosity-soil_q)*c.Cp_air
         
         return Ks
-
         
     # Compute surface mixing ratio
     def surface_mixing_ratio(self, sfc_T, sfc_q, atm_p):

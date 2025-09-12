@@ -20,7 +20,7 @@ import numpy as np
 import os
 import sys
 import time
-from data_models import AtmosphericData, Fluxes
+from data_models import AtmosphericState, SurfaceState
 from physics import Radiation, Soil, Surface
 from util import constants as c, solvers
 from util.io import Input, Output
@@ -45,14 +45,10 @@ class UtahLSM:
         logger.info("Copying input data")    
         self.soil_state  = replace(self.input.initial)
         
-        # initialize new surface values for first run
-        self.sfc_T_new = self.soil_state.T.item(0)
-        self.sfc_q_new = self.soil_state.q.item(0)
-        
         # radiation model
         logger.info("Creating radiation model")
         if (self.input.radiation.model):            
-            self.rad = Radiation.get_model(self.rad_model,self.input)
+            self.rad = Radiation.get_model(self.input.radiation.model,self.input)
         else:
             logger.info("--- using offline data, no model")
         
@@ -67,18 +63,21 @@ class UtahLSM:
         # data for output file
         logger.info("Creating output file")    
         
-        # initialize fluxes
-        self.fluxes = Fluxes(ust = np.zeros(1),
-                             obl = np.zeros(1),
-                             wT  = np.zeros(1),
-                             wq  = np.zeros(1),
-                             shf = np.zeros(1),
-                             lhf = np.zeros(1),
-                             ghf = np.zeros(1)
-                            )
+        # initialize surface state
+        self.sfc_state = SurfaceState(Ts=0,
+                                      qs=0,
+                                      qa=0,
+                                      ust = np.zeros(1),
+                                      obl = np.zeros(1),
+                                      wT  = np.zeros(1),
+                                      wq  = np.zeros(1),
+                                      shf = np.zeros(1),
+                                      lhf = np.zeros(1),
+                                      ghf = np.zeros(1)
+                                     )
         
         # initialize local atmospheric data
-        self.atm_state: AtmosphericData = None
+        self.atm_state: AtmosphericState = None
         
         # initialize local time data
         self.tstep = 0    # current time step
@@ -92,11 +91,11 @@ class UtahLSM:
 
         # set reference to output fields
         self.output_fields = {
-            'ust':self.fluxes.ust,
-            'obl':self.fluxes.obl,
-            'shf':self.fluxes.shf,
-            'lhf':self.fluxes.lhf,
-            'ghf':self.fluxes.ghf,
+            'ust'   :self.sfc_state.ust,
+            'obl'   :self.sfc_state.obl,
+            'shf'   :self.sfc_state.shf,
+            'lhf'   :self.sfc_state.lhf,
+            'ghf'   :self.sfc_state.ghf,
             'soil_z':self.input.grid.z,
             'soil_T':self.soil_state.T,
             'soil_q':self.soil_state.q,
@@ -107,29 +106,38 @@ class UtahLSM:
         self.output.save(self.output_fields,0,0,initial=True)
         
     # update atmospheric quantities prior to solving
-    def update(self, dt: float, runtime: float, atm_state: AtmosphericData):
+    def update(self, dt: float, runtime: float, atm_state: AtmosphericState):
         
         # update model state
         self.tstep     = dt
         self.atm_state = atm_state
         
+        # update surface state
+        pa = self.atm_state.p
+        Ts = self.soil_state.T[0]
+        qs = self.soil_state.q[0]
+        
+        qa = self.soil.surface_mixing_ratio(Ts,qs,pa)
+            
+        self.sfc_state.Ts = Ts
+        self.sfc_state.qs = qs
+        self.sfc_state.qa = qa
+        
         # run radiation model and update time/date if needed
         if (self.input.radiation.model):
             utc        = np.fmod((self.input.time.utc_start+runtime),86400)
-            julian_day = self.input.time.julian_day + int(utc_total/86400)
-            self.R_net = self.rad.compute_net(julian_day,utc,self.soil_state.T[0])
-        else:
-            self.R_net = self.atm_state.R_net
+            julian_day = self.input.time.julian_day + int(utc/86400)
+            self.atm_state.R_net = self.rad.compute_net(julian_day,utc,self.atm_state,self.sfc_state)
         
         # Keep winds from being exactly zero
         if (self.atm_state.U==0): self.atm_state.U = 1E-4
         
     # Run the model
-    def run(self, step_count: int) -> Fluxes:
+    def run(self, step_count: int) -> SurfaceState:
                 
         # Set initial new temp and moisture
-        self.sfc_T_new = self.soil_state.T[0]
-        self.sfc_q_new = self.soil_state.q[0]
+        self.sfc_state.Ts = self.soil_state.T[0]
+        self.sfc_state.qs = self.soil_state.q[0]
         
         # Check if time to re-compute balances
         if ( (step_count % self.input.time.step_seb)==0 ):
@@ -159,7 +167,6 @@ class UtahLSM:
         # Local variables
         max_iterations = 200
         converged      = False
-        last_L         = 1000.0
         criteria       = 0.1
         ref_T          = 300.0
         
@@ -170,42 +177,42 @@ class UtahLSM:
         K0          = self.soil.conductivity_thermal(self.soil_state.q[0],0)
         K1          = self.soil.conductivity_thermal(self.soil_state.q[1],1)
         Kmid        = 0.5*(K0 + K1)
-        self.fluxes.ghf[0] = Kmid*(sfc_T - self.soil_state.T[1])/(self.input.grid.z[0]-self.input.grid.z[1])
+        self.sfc_state.ghf[0] = Kmid*(sfc_T - self.soil_state.T[1])/(self.input.grid.z[0]-self.input.grid.z[1])
         
         # Sensible flux, latent flux, ustar, and L
         for i in range(0,max_iterations):
             
             # Compute stability functions
-            fm = self.sfc.fm(self.input.surface.z_m, self.input.surface.z_o, self.fluxes.obl[0])
-            fh = self.sfc.fh(self.input.surface.z_s, self.input.surface.z_t, self.fluxes.obl[0])
+            fm = self.sfc.fm(self.input.surface.z_m, self.input.surface.z_o, self.sfc_state.obl[0])
+            fh = self.sfc.fh(self.input.surface.z_s, self.input.surface.z_t, self.sfc_state.obl[0])
             
             # Compute friction velocity
-            self.fluxes.ust[0] = self.atm_state.U*fm
+            self.sfc_state.ust[0] = self.atm_state.U*fm
             
             # Compute heat flux
-            self.fluxes.wT[0] = (sfc_T-self.atm_state.T)*self.fluxes.ust[0]*fh
+            self.sfc_state.wT[0] = (sfc_T-self.atm_state.T)*self.sfc_state.ust[0]*fh
             
             # Compute latent flux
-            self.fluxes.wq[0] = (gnd_q-self.atm_state.q)*self.fluxes.ust[0]*fh
+            self.sfc_state.wq[0] = (gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*fh
                 
             # Compute virtual heat flux
-            flux_wTv = self.fluxes.wT[0] + ref_T*0.61*self.fluxes.wq[0]
+            flux_wTv = self.sfc_state.wT[0] + ref_T*0.61*self.sfc_state.wq[0]
             
             # Compute L
-            last_L = self.fluxes.obl[0]
-            self.fluxes.obl[0] = -(self.fluxes.ust[0]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
+            last_L = self.sfc_state.obl[0]
+            self.sfc_state.obl[0] = -(self.sfc_state.ust[0]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
             
             # Bounds check on L
-            if (self.input.surface.z_m/self.fluxes.obl[0] > 5.):  
-                self.fluxes.obl[0] =  self.input.surface.z_m/5.
-            if (self.input.surface.z_m/self.fluxes.obl[0] < -5.): 
-                self.fluxes.obl[0] = -self.input.surface.z_m/5.
+            if (self.input.surface.z_m/self.sfc_state.obl[0] > 5.): 
+                self.sfc_state.obl[0] =  self.input.surface.z_m/5.
+            if (self.input.surface.z_m/self.sfc_state.obl[0] < -5.): 
+                self.sfc_state.obl[0] = -self.input.surface.z_m/5.
             
             # Check for convergence
-            converged = np.abs(last_L-self.fluxes.obl[0]) <= criteria
+            converged = np.abs(last_L-self.sfc_state.obl[0]) <= criteria
             if (converged):
-                self.fluxes.shf[0] = c.rho_air*c.Cp_air*self.fluxes.wT[0]
-                self.fluxes.lhf[0] = c.rho_air*c.Lv*self.fluxes.wq[0]
+                self.sfc_state.shf[0] = c.rho_air*c.Cp_air*self.sfc_state.wT[0]
+                self.sfc_state.lhf[0] = c.rho_air*c.Lv*self.sfc_state.wq[0]
                 break
     
     # Solve the surface energy budget using a custom implementation of Brent's Method
@@ -249,11 +256,11 @@ class UtahLSM:
             if not converged:
                 logger.warning("SEB root-finder did not converge within the maximum iterations.")
             
-            self.sfc_T_new = temp_root
+            self.sfc_state.Ts = temp_root
             
             # Final flux calculation with the converged temperature
-            self.compute_fluxes(self.sfc_T_new, self.sfc_q_new)
-            logger.debug(f"SEB converged to T_sfc = {self.sfc_T_new:.3f} K")
+            self.compute_fluxes(self.sfc_state.Ts, self.sfc_state.qs)
+            logger.debug(f"SEB converged to T_sfc = {self.sfc_state.Ts:.3f} K")
         
         except Exception as e:
             logger.error(f"An exception occurred during SEB root finding: {e}")
@@ -263,10 +270,10 @@ class UtahLSM:
     def compute_seb(self, sfc_T):
 
         # Compute fluxes using passed in values
-        self.compute_fluxes(sfc_T,self.sfc_q_new);
+        self.compute_fluxes(sfc_T,self.sfc_state.qs);
         
         # Compute surface energy balance
-        SEB = self.atm_state.R_net - self.fluxes.ghf[0] - self.fluxes.shf[0] - self.fluxes.lhf[0]
+        SEB = self.atm_state.R_net - self.sfc_state.ghf[0] - self.sfc_state.shf[0] - self.sfc_state.lhf[0]
         
         return SEB
     
@@ -295,7 +302,7 @@ class UtahLSM:
         #flux_sm  = c.rho_wat*D_avg*(self.soil_state.q[0]-self.soil_state.q[1])/(self.input.grid.z[0]-self.input.grid.z[1]) + c.rho_wat*K_avg
         
         # Compute evaporation
-        E = c.rho_air*self.fluxes.wq[0]
+        E = c.rho_air*self.sfc_state.wq[0]
         
         # Convergence loop for moisture flux
         for ff in range(0,max_iter_flux):
@@ -314,13 +321,13 @@ class UtahLSM:
                 psi0 = self.soil.properties[0].psi_sat
             
             # Update soil moisture
-            self.sfc_q_new = self.soil.surface_water_content(psi0)
+            self.sfc_state.qs = self.soil.surface_water_content(psi0)
             
-            gnd_q = self.soil.surface_mixing_ratio(self.sfc_T_new,self.sfc_q_new,self.atm_state.p)
-            E     = c.rho_air*(gnd_q-self.atm_state.q)*self.fluxes.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.fluxes.obl[0])
+            gnd_q = self.soil.surface_mixing_ratio(self.sfc_state.Ts,self.sfc_state.qs,self.atm_state.p)
+            E     = c.rho_air*(gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.sfc_state.obl[0])
             
             # Update soil moisture transfer
-            K0    = self.soil.conductivity_moisture(self.sfc_q_new,0)
+            K0    = self.soil.conductivity_moisture(self.sfc_state.qs,0)
             K1    = self.soil.conductivity_moisture(self.soil_state.q[1],1)
             K_avg = 0.5*(K0+K1)
             
@@ -379,7 +386,7 @@ class UtahLSM:
             e[0] = 0
             f[0] = CB
             g[0] = CBm
-            r[0] = CFp * self.soil_state.T[0] + CF * self.soil_state.T[1] + CFm * self.soil_state.T[2] - CBp * self.sfc_T_new
+            r[0] = CFp * self.soil_state.T[0] + CF * self.soil_state.T[1] + CFm * self.soil_state.T[2] - CBp * self.sfc_state.Ts
             
             # Matrix coefficients for the interior levels
             for i in range(1,self.input.grid.nz-2):
@@ -420,7 +427,7 @@ class UtahLSM:
             r[j] = (CFp - CFm) * self.soil_state.T[j] + (CF + 2.0* CFm) * self.soil_state.T[j+1]
                     
             # now we can add new sfc T to column array
-            self.soil_state.T[0] = self.sfc_T_new
+            self.soil_state.T[0] = self.sfc_state.Ts
         
             # Solve the tridiagonal system
             # we only need to send the layers below surface
@@ -506,7 +513,7 @@ class UtahLSM:
             e[0] = 0
             f[0] = CB
             g[0] = CBm
-            r[0] = CFp * self.soil_state.q[0] + CF * self.soil_state.q[1] + CFm * self.soil_state.q[2] - CBp * self.sfc_q_new
+            r[0] = CFp * self.soil_state.q[0] + CF * self.soil_state.q[1] + CFm * self.soil_state.q[2] - CBp * self.sfc_state.qs
             
             # interior soil levels
             for i in range(1,self.input.grid.nz-2):
@@ -579,7 +586,7 @@ class UtahLSM:
             r[j] = (CFp - CFm) * self.soil_state.q[j] + (CF + 2.0 * CFm) * self.soil_state.q[j+1]
             
             # now we can add new sfc q to column array
-            self.soil_state.q[0] = self.sfc_q_new
+            self.soil_state.q[0] = self.sfc_state.qs
             
             # solve the tridiagonal system
             # we only need the layers below the surface

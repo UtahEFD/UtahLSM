@@ -26,7 +26,7 @@ from typing import List, Optional
 # --- Core Physical State Dataclasses ---
 
 @dataclass
-class AtmosphericData:
+class AtmosphericState:
     """Represents the atmospheric conditions at a single point in time."""
     U: float      # Wind speed [m/s]
     T: float      # Air temperature [K]
@@ -35,47 +35,50 @@ class AtmosphericData:
     R_net: float  # Net radiation [W/m^2]
 
 @dataclass
-class SoilData:
+class SoilState:
     """Represents the state of the soil column."""
-    T: np.ndarray     # soil temperature [m/s]
+    T: np.ndarray     # soil temperature [K]
     q: np.ndarray     # soil moisture [g/g]
     type: np.ndarray  # soil type [category]
 
 @dataclass
-class Fluxes:
-    """Represents the calculated surface fluxes for a single timestep."""
-    ust: np.ndarray
-    obl: np.ndarray
-    wT:  np.ndarray
-    wq:  np.ndarray
-    shf: np.ndarray
-    lhf: np.ndarray
-    ghf: np.ndarray
+class SurfaceState:
+    """Represents the surface conditions at a single point in time."""
+    Ts:  float      # surface skin temperature [K]
+    qs:  float      # surface skin water content [g/g]
+    qa:  float      # surface skin mixing ratio [g/g]
+    ust: np.ndarray # friction velocity [m/s]
+    obl: np.ndarray # obukhov length [m]
+    wT:  np.ndarray # kinematic heat flux [K m/s]
+    wq:  np.ndarray # kinematic moisture flux [m/s]
+    shf: np.ndarray # sensible heat flux [W/m^2]
+    lhf: np.ndarray # latent heat flux [W/m^2]
+    ghf: np.ndarray # ground heat flux [W/m^2]
 
-@dataclass
+@dataclass(frozen=True)
 class ForcingData:
     """Represents the entire time-series of meteorological forcing data."""
     ntime: int
     tstep: float
-    atmos: List[AtmosphericData] # A list of atmospheric states, one for each timestep
+    atmos: List[AtmosphericState] # A list of atmospheric states, one for each timestep
 
 # --- Configuration Dataclasses (from Namelist) ---
 
-@dataclass
+@dataclass(frozen=True)
 class TimeConfig:
     step_seb: int
     step_dif: int
     utc_start: int
     julian_day: int
 
-@dataclass
+@dataclass(frozen=True)
 class GridConfig:
     nx: int
     ny: int
     nz: int
     z : np.ndarray
 
-@dataclass
+@dataclass(frozen=True)
 class SurfaceConfig:
     z_o: float
     z_t: float
@@ -85,18 +88,18 @@ class SurfaceConfig:
     emissivity: float
     model: int
 
-@dataclass
+@dataclass(frozen=True)
 class SoilConfig:
     param: int
     model: int
 
-@dataclass
+@dataclass(frozen=True)
 class RadiationConfig:
     model: int
     latitude: float
     longitude: float
 
-@dataclass
+@dataclass(frozen=True)
 class OutputConfig:
     save: bool
     fields: List[str]

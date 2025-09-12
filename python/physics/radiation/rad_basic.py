@@ -14,6 +14,7 @@
 
 import logging
 import numpy as np
+from data_models import AtmosphericState, SurfaceState
 from util import constants as c
 from .radiation import Radiation
 
@@ -30,30 +31,53 @@ class RadBasic(Radiation):
         super().__init__(input)
         
     # Computes the surface net radiation
-    def compute_net(self, julian_day, time_utc, sfc_T):
+    def compute_net(self, julian_day:int, time_utc:int, atm_state:AtmosphericState, sfc_state:SurfaceState):
+        
+        # local copies of constants
+        latitude    = self.input.radiation.latitude
+        longitude   = self.input.radiation.longitude
+        albedo      = self.input.surface.albedo
+        emissivity  = self.input.surface.emissivity
         
         # Compute incoming shortwave radiation
-        sw_in = self.shortwave_in(julian_day, time_utc, self.latitude, self.longitude)
+        sw_in = self.shortwave_in(julian_day, time_utc, latitude, longitude)
         
         # Compute outgoing shortwave radiation
-        sw_out = self.shortwave_out(self.albedo, sw_in)
+        sw_out = self.shortwave_out(albedo, sw_in)
         
         # Compute outgoing longwave radiation
-        lw_out = self.longwave_out(self.emissivity, sfc_T)
+        lw_out = self.longwave_out(emissivity, sfc_state)
         
         # Compute incoming longwave radiation (current hack is net longwave of -50)
-        lw_in = lw_out - 50.0
-        
+        lw_in = self.longwave_in(atm_state,sfc_state)
+
         # Compute net radiation
         return sw_in - sw_out + lw_in - lw_out
     
     # Computes the downward longwave radiation at the surface
-    def longwave_in(self):
-        return 0
-    
+    def longwave_in(self, atm_state, sfc_state):
+        """simple clear-sky downwelling lw computation from Brutsaert (1975)"""
+        
+        # local references to atmospheric state
+        pa = atm_state.p
+        qa = sfc_state.qa
+        Ts = sfc_state.Ts
+        
+        # vapor pressure
+        ea = (pa*qa) / (c.epsilon + qa)
+        
+        # effective emissivity
+        emissivity = 1.24*(ea/Ts)**(1/7.)
+        
+        # downward longwave
+        lw_in = emissivity * c.sb * (Ts**4)
+        
+        return lw_in
+            
     # Computes the upward longwave radiation at the surface
-    def longwave_out(self, emissivity, sfc_T):
-        return emissivity * c.sb * (sfc_T**4)
+    def longwave_out(self, emissivity, sfc_state):
+        Ts = sfc_state.Ts
+        return emissivity * c.sb * (Ts**4)
     
     # Computes the downward shortwave radiation at the surface
     def shortwave_in(self, julian_day, time_utc, latitude, longitude):

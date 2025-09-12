@@ -134,4 +134,3 @@ def root_brent(f, a, b, tol=1e-6, max_iter=100) -> float:
             return b, True
     
     return b, False
-             
