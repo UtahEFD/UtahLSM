@@ -15,8 +15,8 @@
 import logging
 import numpy as np
 
-from ...util import constants as c
 from .soil_type import SoilType
+from ...util import constants as c
 
 # local logger
 logger = logging.getLogger("SOIL")

@@ -16,7 +16,6 @@
 from dataclasses import replace
 import logging
 import numpy as np
-import time
 
 from .data_models import AtmosphericState, SurfaceState
 from .physics import Radiation, Soil, Surface

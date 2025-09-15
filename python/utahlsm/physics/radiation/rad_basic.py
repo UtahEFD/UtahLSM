@@ -15,8 +15,9 @@
 import logging
 import numpy as np
 from data_models import AtmosphericState, SurfaceState
-from util import constants as c
 from .radiation import Radiation
+from ...util import constants as c
+
 
 # local logger
 logger = logging.getLogger("RAD: Basic")

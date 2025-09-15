@@ -21,7 +21,7 @@ ensuring consistency across different parts of the model.
 
 from dataclasses import dataclass
 import numpy as np
-from typing import List, Optional
+from typing import List
 
 # --- Core Physical State Dataclasses ---
 

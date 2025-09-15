@@ -15,7 +15,6 @@
 
 import argparse
 import time
-
 import utahlsm
     
 # let's time this thing
