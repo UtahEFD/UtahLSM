@@ -4,6 +4,13 @@
     "description": "Schema to validate the configuration namelist for the model.",
     "type": "object",
     "properties": {
+        "general": {
+            "type": "object",
+            "properties": {
+                "log_level": { "type": "string", "enum": ["info", "debug"] }
+            },
+            "required": ["log_level"]
+        },
         "time": {
             "type": "object",
             "properties": {

@@ -65,6 +65,10 @@ class ForcingData:
 # --- Configuration Dataclasses (from Namelist) ---
 
 @dataclass(frozen=True)
+class GeneralConfig:
+    log_level: str
+
+@dataclass(frozen=True)
 class TimeConfig:
     step_seb: int
     step_dif: int

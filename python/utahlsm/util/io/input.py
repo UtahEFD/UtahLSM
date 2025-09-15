@@ -23,8 +23,8 @@ import netCDF4 as nc
 import numpy as np
 
 from ...data_models import (
-    TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig, OutputConfig,
-    SoilState, ForcingData, AtmosphericState
+    GeneralConfig, TimeConfig, GridConfig, SurfaceConfig, SoilConfig, 
+    RadiationConfig, OutputConfig, SoilState, ForcingData, AtmosphericState
 )
 
 # local logger
@@ -41,6 +41,7 @@ class Input(object):
         init_data = self._load_initial_conditions(inputfile)
         
         # Assemble the final, structured dataclasses from the raw data
+        self.general:   GeneralConfig   = GeneralConfig(**namelist_data["general"])
         self.time:      TimeConfig      = TimeConfig(**namelist_data["time"])
         self.surface:   SurfaceConfig   = SurfaceConfig(**namelist_data["surface"])
         self.soil:      SoilConfig      = SoilConfig(**namelist_data["soil"])

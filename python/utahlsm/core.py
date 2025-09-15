@@ -38,26 +38,36 @@ class UtahLSM:
     def __init__(self,input_lsm, output_lsm):
         """constructor method
         """
+        # set the input and output fields
+        self.input  = input_lsm
+        self.output = output_lsm
+        
         # configure logging
-        log_format = '{asctime} [{levelname:^8s}] {name:^20s} {message}'
-        logging.basicConfig(level=logging.INFO,
+        LOG_LEVELS = {
+            "info": logging.INFO,
+            "debug": logging.DEBUG
+        }
+        log_level  = LOG_LEVELS[self.input.general.log_level]
+        log_format = '{asctime} [{levelname:^8s}] {name:^20s} {message}'  
+        
+        logging.basicConfig(level=log_level,
                             format=log_format,
                             datefmt='%Y-%m-%d %H:%M:%S',
                             style='{',
                             filename='utahlsm.log',
-                            filemode='w')
+                            filemode='w'
+                        )
         
         # create a console handler and add it to the root logger
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        console_handler.setFormatter(logging.Formatter(log_format, "%Y-%m-%d %H:%M:%S",style='{',))
-        # Avoid adding handler if it already exists to prevent duplicate logs
-        if not any(isinstance(h, logging.StreamHandler) for h in logging.getLogger('').handlers):
-            logging.getLogger('').addHandler(console_handler)
-        
-        # set the input and output fields
-        self.input  = input_lsm
-        self.output = output_lsm
+        console_handler.setLevel(log_level)
+        console_handler.setFormatter(
+            logging.Formatter(
+                log_format, "%Y-%m-%d %H:%M:%S",
+                style='{',
+            )
+        )
+        logger.addHandler(console_handler)
         
         # copy mutable data
         logger.info("Copying input data")    

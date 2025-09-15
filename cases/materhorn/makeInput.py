@@ -171,12 +171,16 @@ metr.close()
 # Settings for UtahLSM #
 ########################
 namelist = {}
+namelist['general'] = {}
 namelist['time'] = {}
 namelist['grid'] = {}
 namelist['surface'] = {}
 namelist['soil'] = {}
 namelist['radiation'] = {}
 namelist['output'] = {}
+
+# general section
+namelist['general']['log_level'] = "info"
 
 # time section
 namelist['time']['step_seb']   = 1
