@@ -12,11 +12,11 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import logging
 import numpy as np
+from ..util.io import logging_helper
 
 # Module-level logger
-logger = logging.getLogger(__name__)
+logger = logging_helper.get_logger("UTIL: Solvers")
 
 def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> np.ndarray:
     """

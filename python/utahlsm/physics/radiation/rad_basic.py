@@ -12,22 +12,20 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import logging
 import numpy as np
 from data_models import AtmosphericState, SurfaceState
 from .radiation import Radiation
 from ...util import constants as c
-
-
-# local logger
-logger = logging.getLogger("RAD: Basic")
+from ...util.io import logging_helper
 
 class RadBasic(Radiation):
 
     # class initialization
     def __init__(self, input):
         
-        logger.info("--- using the basic model")
+        # local logger
+        self.logger = logging_helper.get_logger("RAD: Basic")
+        self.logger.info("Using the basic model")
         # initialize parent class
         super().__init__(input)
         

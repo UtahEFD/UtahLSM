@@ -49,21 +49,17 @@ try:
     input_lsm = utahlsm.Input(namelist,initfile,offlinefile)
 except:
     raise SystemExit(1)
-print("Running offline for the %s case"%case)
+#print("Running offline for the %s case"%case)
 
    # create Output instance
 if not outf:
     outf='lsm_%s_py.nc'%case
-output_lsm = utahlsm.Output(outf)
+try:
+    output_lsm = utahlsm.Output(outf)
+except:
+    raise SystemExit(1)
 
-# grid information (not used yet)
-nx = input_lsm.grid.nx
-ny = input_lsm.grid.ny
-
-# --- Main Time Loop ---
-print("Starting simulation time loop...")
-
-# local fluxes to be modified by lsm
+# Create lsm object from input and object
 lsm = utahlsm.UtahLSM(input_lsm,output_lsm)
 
 # Loop through each time
@@ -71,11 +67,11 @@ runtime = 0
 tstep = input_lsm.forcing.tstep
 for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
     runtime += tstep
-    print(f"Running for time: {runtime:8.2f} of {input_lsm.forcing.ntime*tstep:8.2f}")
+    #print(f"Running for time: {runtime:8.2f} of {input_lsm.forcing.ntime*tstep:8.2f}")
     
     # update user-specified fields
     lsm.update(tstep, runtime, atm_state)
-    lsm.run(runtime)
+    lsm.run(step_count, runtime)
     lsm.save(step_count,runtime)
 
 # time info

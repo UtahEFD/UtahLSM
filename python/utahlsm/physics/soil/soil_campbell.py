@@ -12,19 +12,17 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import logging
 import numpy as np
 from .soil import Soil
 from ...util import constants as c
-
-# local logger
-logger = logging.getLogger("SOIL: Campbell")
+from ...util.io import logging_helper
 
 class Campbell(Soil):
 
     # class initialization
     def __init__(self,input):
-        logger.info("--- using the Campbell model with")
+        self.logger =  logging_helper.get_logger("SOIL")
+        self.logger.info("Using the Campbell model")
         # initialize parent class
         super().__init__(input)
     

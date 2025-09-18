@@ -11,14 +11,12 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-import logging
-
-# local logger
-logger = logging.getLogger("SFC")
+from ...util.io import logging_helper
 
 class Surface(object):
     
-    def __init__(self):pass
+    def __init__(self):
+        self.logger =  logging_helper.get_logger("SFC")
     
     @staticmethod
     def get_model(key):
@@ -36,10 +34,10 @@ class Surface(object):
             # look up model class from dictionary
             return SFC_MODELS[key]()
         except KeyError as e:
-            logger.error("x"*62)
-            logger.error(f"Namelist Error: {e} is an invalid surface model.")
-            logger.error(f"Valid options are:")
+            self.logger.error("x"*62)
+            self.logger.error(f"Namelist Error: {e} is an invalid surface model.")
+            self.logger.error(f"Valid options are:")
             for k,v in SFC_MODELS.items():
-                logger.error(f"\t{k} ({v.__name__})")
-            logger.error("x"*62)
+                self.logger.error(f"\t{k} ({v.__name__})")
+            self.logger.error("x"*62)
             raise SystemExit(1)

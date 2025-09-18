@@ -12,31 +12,26 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import logging
 import numpy as np
-
 from .soil_type import SoilType
 from ...util import constants as c
-
-# local logger
-logger = logging.getLogger("SOIL")
+from ...util.io import logging_helper
 
 class Soil(object):
     
     def __init__(self,input):
         
-        self.input = input    
-        nz         = self.input.grid.nz
-        dataset    = self.input.soil.param
+        self.logger =  logging_helper.get_logger("SOIL")
+        self.input  = input    
+        nz          = self.input.grid.nz
+        dataset     = self.input.soil.param
         
-        if dataset==1:
-            set_name = "Clapp/Hornberger"
-        elif dataset==2:
-            set_name = "Cosby et al"
-        elif dataset==3:
-            set_name="Rawls/Brakensiek"
-        
-        logger.info("--- the %s dataset"%set_name)
+        DATASET_NAMES = {
+            1: "Clapp/Hornberger",
+            2: "Cosby et al",
+            3: "Rawls/Brakensiek"
+        }
+        self.logger.info(f"Using the {DATASET_NAMES[dataset]} dataset")
         
         # fill properties
         self.properties = np.empty(nz).astype(np.object_)
@@ -58,15 +53,12 @@ class Soil(object):
             3: VanGenuchten,
         }
         
-        # look up model class from dictionary
-        model_class = SOIL_MODELS.get(key)
-        
         # return class or throw error
         try:
             # look up model class from dictionary
             return SOIL_MODELS[key](input)
         except KeyError as e:
-            logger.error(e)
+            self.logger.error(e)
             raise
     
     # Compute heat capacity

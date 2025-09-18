@@ -20,10 +20,7 @@ import numpy as np
 from .data_models import AtmosphericState, SurfaceState
 from .physics import Radiation, Soil, Surface
 from .util import constants as c, solvers
-from .util.io import Input, Output
-
-# local logger
-logger = logging.getLogger("UtahLSM")
+from .util.io import Input, Output, logging_helper
 
 # land-surface model class
 class UtahLSM:
@@ -37,58 +34,28 @@ class UtahLSM:
     def __init__(self,input_lsm, output_lsm):
         """constructor method
         """
+        
+        # local logger
+        self.logger = logging_helper.get_logger("UtahLSM")
+        
         # set the input and output fields
         self.input  = input_lsm
         self.output = output_lsm
         
-        # configure logging
-        LOG_LEVELS = {
-            "info": logging.INFO,
-            "debug": logging.DEBUG
-        }
-        log_level  = LOG_LEVELS[self.input.general.log_level]
-        log_format = '{asctime} [{levelname:^8s}] {name:^20s} {message}'  
-        
-        logging.basicConfig(level=log_level,
-                            format=log_format,
-                            datefmt='%Y-%m-%d %H:%M:%S',
-                            style='{',
-                            filename='utahlsm.log',
-                            filemode='w'
-                        )
-        
-        # create a console handler and add it to the root logger
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(log_level)
-        console_handler.setFormatter(
-            logging.Formatter(
-                log_format, "%Y-%m-%d %H:%M:%S",
-                style='{',
-            )
-        )
-        logger.addHandler(console_handler)
-        
-        # copy mutable data
-        logger.info("Copying input data")    
+        # copy mutable data 
         self.soil_state  = replace(self.input.initial)
         
         # radiation model
-        logger.info("Creating radiation model")
         if (self.input.radiation.model):            
             self.rad = Radiation.get_model(self.input.radiation.model,self.input)
         else:
-            logger.info("--- using offline data, no model")
+            self.logger.info("Using radiation forcing data")
         
         # soil model
-        logger.info("Creating soil model")
         self.soil = Soil.get_model(self.input.soil.model,self.input)
         
         # surface model
-        logger.info("Creating surface model")
-        self.sfc = Surface.get_model(self.input.surface.model)
-        
-        # data for output file
-        logger.info("Creating output file")    
+        self.sfc = Surface.get_model(self.input.surface.model) 
         
         # initialize surface state
         self.sfc_state = SurfaceState(Ts=0,
@@ -135,6 +102,9 @@ class UtahLSM:
     # update atmospheric quantities prior to solving
     def update(self, dt: float, runtime: float, atm_state: AtmosphericState):
         
+        self.logger.info(f"[time = {runtime:7.1f}]")
+        self.logger.info("Updating atmospheric state")
+        
         # update model state
         self.tstep     = dt
         self.atm_state = atm_state
@@ -160,8 +130,10 @@ class UtahLSM:
         if (self.atm_state.U==0): self.atm_state.U = 1E-4
         
     # Run the model
-    def run(self, step_count: int) -> SurfaceState:
-                
+    def run(self, step_count: int, runtime: float) -> SurfaceState:
+        
+        self.logger.info(f"Solving soil state")
+        
         # Set initial new temp and moisture
         self.sfc_state.Ts = self.soil_state.T[0]
         self.sfc_state.qs = self.soil_state.q[0]
@@ -186,6 +158,7 @@ class UtahLSM:
     # Save output fields
     def save(self, step_count: int, runtime: float):
         # write output
+        self.logger.info(f"Saving data to file\n{'-'*19}")
         self.output.save(self.output_fields,step_count,runtime)
     
     # Compute fluxes using similarity theory
@@ -274,23 +247,23 @@ class UtahLSM:
             iter_count += 1
         
         if iter_count >= max_bracket_iter:
-            logger.error("Failed to find a valid bracket for solve_seb after %d iterations.", max_bracket_iter)
+            self.logger.error("Failed to find a valid bracket for solve_seb after %d iterations.", max_bracket_iter)
             raise SystemExit(1)
         
         # 3. Call the custom root-finder to get the surface temperature
         try:
             temp_root, converged = solvers.root_brent(seb_function, temp_a, temp_b)
             if not converged:
-                logger.warning("SEB root-finder did not converge within the maximum iterations.")
+                self.logger.warning("SEB root-finder did not converge within the maximum iterations.")
             
             self.sfc_state.Ts = temp_root
             
             # Final flux calculation with the converged temperature
             self.compute_fluxes(self.sfc_state.Ts, self.sfc_state.qs)
-            logger.debug(f"SEB converged to T_sfc = {self.sfc_state.Ts:.3f} K")
+            self.logger.debug(f"SEB converged to T_sfc = {self.sfc_state.Ts:.3f} K")
         
         except Exception as e:
-            logger.error(f"An exception occurred during SEB root finding: {e}")
+            self.logger.error(f"An exception occurred during SEB root finding: {e}")
             raise SystemExit(1)
 
     # Compute the surface energy budget

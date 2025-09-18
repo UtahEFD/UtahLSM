@@ -12,22 +12,19 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import logging
 import numpy as np
 from .soil import Soil
 from ...util import constants as c
-
-# local logger
-logger = logging.getLogger("SOIL: Van Genuchten")
+from ...util.io import logging_helper
 
 class VanGenuchten(Soil):
 
     # class initialization
     def __init__(self,input):
         
-        # TODO: Check these computations, especially power terms
+        self.logger =  logging_helper.get_logger("SOIL")
+        self.logger.info("[UtahLSM: Soil] \tUsing the Van Genuchten model")
         
-        logger.info("[UtahLSM: Soil] \t--- running with the Van Genuchten scheme")
         # initialize parent class
         super().__init__(input)
         

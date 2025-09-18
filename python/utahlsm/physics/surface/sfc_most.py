@@ -12,21 +12,19 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
 
-import logging
 import math
 import numpy as np
 from .sfc import Surface
 from ...util import constants as c
-
-# local logger
-logger = logging.getLogger("SFC: MOST")
+from ...util.io import logging_helper
 
 class SurfaceMOST(Surface):
 
     # class initialization
     def __init__(self):
         
-        logger.info("--- using the MOST model")
+        self.logger = logging_helper.get_logger("SFC")
+        self.logger.info("Using the MOST model")
         # initialize parent class
         super().__init__()
         

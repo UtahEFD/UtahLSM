@@ -11,15 +11,13 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-import logging
-
-# local logger
-logger = logging.getLogger("RAD")
+from ...util.io import logging_helper
 
 class Radiation(object):
     
     def __init__(self, input):
-    
+        
+        self.logger = logging_helper.get_logger("RAD")
         self.input = input
         
     @staticmethod
@@ -38,10 +36,10 @@ class Radiation(object):
             # look up model class from dictionary
             return RAD_MODELS[key](input)
         except KeyError as e:
-            logger.error("x"*62)
-            logger.error(f"Namelist Error: {key} is an invalid radiation model.")
-            logger.error(f"Valid options are:")
+            self.logger.error("x"*62)
+            self.logger.error(f"Namelist Error: {key} is an invalid radiation model.")
+            self.logger.error(f"Valid options are:")
             for k,v in RAD_MODELS.items():
-                logger.error(f"\t{k} ({v.__name__})")
-            logger.error("x"*62)
+                self.logger.error(f"\t{k} ({v.__name__})")
+            self.logger.error("x"*62)
             raise SystemExit(1)

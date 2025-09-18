@@ -14,7 +14,6 @@
 from dataclasses import dataclass
 import json
 import jsonschema
-import logging
 import netCDF4 as nc
 import numpy as np
 from typing import Dict, List, Optional
@@ -23,18 +22,26 @@ from ...data_models import (
     GeneralConfig, TimeConfig, GridConfig, SurfaceConfig, SoilConfig, 
     RadiationConfig, OutputConfig, SoilState, ForcingData, AtmosphericState
 )
-
-# local logger
-logger = logging.getLogger("IO: Input")
+from utahlsm.util.io import logging_helper
 
 class Input(object):
 
     def __init__(self, namelist_path: str, inputfile: str, offlinefile: str = None):
         
+        self.logger = logging_helper.get_logger("Input")
+        
         # Load and validate the namelist into the configuration dataclasses
+        self.logger.info(f"Reading {namelist_path}")
         namelist_data = self._load_and_validate_namelist(namelist_path)
-            
+        
+        # get logging level from user
+        log_level = namelist_data["general"]["log_level"]
+        
+        # stop buffered logging and implement user choice
+        logging_helper.finalize_logging(log_level)
+        
         # Load initial conditions into the InitialConditions dataclass
+        self.logger.info(f"Reading {inputfile}")
         init_data = self._load_initial_conditions(inputfile)
         
         # Assemble the final, structured dataclasses from the raw data
@@ -60,6 +67,7 @@ class Input(object):
         # Load offline forcing data if provided into the ForcingData dataclass
         self.forcing: Optional[ForcingData] = None
         if offlinefile:
+            self.logger.info(f"Reading {offlinefile}")
             self._load_offline_data(offlinefile)
             
         # Perform additional semantic and physical validation
@@ -78,11 +86,11 @@ class Input(object):
             
             # validate namelist structure
             jsonschema.validate(instance=namelist_data, schema=schema)
-            logger.info("Namelist validation successful")
+            self.logger.info("--- namelist validation successful")
             return namelist_data
         # raise an error
         except (FileNotFoundError, json.JSONDecodeError, jsonschema.ValidationError) as e:
-            logger.error(f"Namelist Error: {e}")
+            self.logger.error(f"--- namelist error: {e}")
             raise
     
     def _load_initial_conditions(self, inputfile: str)-> Dict[str, np.ndarray]:
@@ -96,10 +104,10 @@ class Input(object):
                     "q"    : inifile.variables['soil_q'][:].astype('float'),
                     "type" : inifile.variables['soil_type'][:].astype('int')
                 }
-            logger.info("Initial conditions data loaded successfully")
+            self.logger.info("--- initial conditions loaded successfully")
             return init_dict
         except (IOError, KeyError) as e:
-            logger.error(f"Initial Conditions Error: {e}")
+            self.logger.error(f"--- initial conditions error: {e}")
             raise
     
     def _load_offline_data(self, offlinefile: str):
@@ -121,9 +129,9 @@ class Input(object):
                 ]
                 
                 self.forcing = ForcingData(ntime=ntime, tstep=tstep, atmos=atm_data)
-                logger.info(f"Loaded {ntime} timesteps of forcing data")
+                self.logger.info(f"--- loaded {ntime} timesteps of forcing data")
         except (IOError, KeyError) as e:
-            logger.error(f"Offline forcing error: {e}")
+            self.logger.error(f"--- offline forcing error: {e}")
             raise
     
     def _validate_physical_consistency(self):
@@ -137,4 +145,4 @@ class Input(object):
         if len(self.initial.T) != self.grid.nz:
             raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
                              f"init file soil_T length of {len(self.initial.T)}.")
-        logger.info("Physical consistency checks passed")
+        self.logger.info("Physical consistency checks passed")
