@@ -229,13 +229,16 @@ namelist['grid']['ny'] = 1
 namelist['grid']['nz'] = nsoil
 
 # surface section
-namelist['surface']['z_o']        = float(0.15)
-namelist['surface']['z_t']        = float(0.0015)
-namelist['surface']['z_m']        = float(10.0)
-namelist['surface']['z_s']        = float(2.0)
-namelist['surface']['albedo']     = float(0.33)
-namelist['surface']['emissivity'] = float(0.99)
-namelist['surface']['model']      = 1
+namelist['surface']['z_o']                   = float(0.15)
+namelist['surface']['z_t']                   = float(0.0015)
+namelist['surface']['z_m']                   = float(10.0)
+namelist['surface']['z_s']                   = float(2.0)
+namelist['surface']['albedo']                = float(0.33)
+namelist['surface']['emissivity']            = float(0.99)
+namelist['surface']['model']                 = 1
+namelist['surface']['flux_iter_max']         = 200
+namelist['surface']['flux_criteria']         = float(0.1)
+namelist['surface']['temperature_reference'] = float(300)
 
 # soil section
 namelist['soil']['param'] = 3

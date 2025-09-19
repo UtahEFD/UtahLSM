@@ -17,7 +17,7 @@ from dataclasses import replace
 import logging
 import numpy as np
 
-from .data_models import AtmosphericState, SurfaceState
+from .data_models import AtmosphericState, SurfaceState, SolverState
 from .physics import Radiation, Soil, Surface
 from .util import constants as c, solvers
 from .util.io import Input, Output, logging_helper
@@ -72,6 +72,9 @@ class UtahLSM:
         
         # initialize local atmospheric data
         self.atm_state: AtmosphericState = None
+        
+        # initialize solver state
+        self.solver_state = SolverState()
         
         # initialize local time data
         self.tstep = 0    # current time step
@@ -165,22 +168,20 @@ class UtahLSM:
     def compute_fluxes(self, sfc_T, sfc_q):
         
         # Local variables
-        max_iterations = 200
-        converged      = False
-        criteria       = 0.1
-        ref_T          = 300.0
+        converged = False
+        iter_max  = self.input.surface.flux_iter_max
+        criteria  = self.input.surface.flux_criteria
+        ref_T     = self.atm_state.T
         
         # Compute surface mixing ratio
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_state.p)
         
         # Compute ground flux
-        K0          = self.soil.conductivity_thermal(self.soil_state.q[0],0)
-        K1          = self.soil.conductivity_thermal(self.soil_state.q[1],1)
-        Kmid        = 0.5*(K0 + K1)
+        Kmid = self.solver_state.Kmid
         self.sfc_state.ghf[0] = Kmid*(sfc_T - self.soil_state.T[1])/(self.input.grid.z[0]-self.input.grid.z[1])
         
         # Sensible flux, latent flux, ustar, and L
-        for i in range(0,max_iterations):
+        for i in range(0,iter_max):
             
             # Compute stability functions
             fm = self.sfc.fm(self.input.surface.z_m, self.input.surface.z_o, self.sfc_state.obl[0])
@@ -223,6 +224,12 @@ class UtahLSM:
         SEB function changes sign, then uses a robust root-finding algorithm
         (solvers.root_brent) to find the precise temperature.
         """
+        
+        # Calculate and store Kmid in the solver_state object
+        K0 = self.soil.conductivity_thermal(self.soil_state.q[0], 0)
+        K1 = self.soil.conductivity_thermal(self.soil_state.q[1], 1)
+        self.solver_state.Kmid = 0.5 * (K0 + K1)
+        
         # Objective function for the root finder. The root is found when SEB is zero.
         def seb_function(sfc_T):
             return self.compute_seb(sfc_T)
@@ -290,16 +297,14 @@ class UtahLSM:
         psi1 = self.soil.water_potential(self.soil_state.q[1], 1)
         
         # Compute initial soil moisture flux
-        K0    = self.soil.conductivity_moisture(self.soil_state.q[0],0)
-        K1    = self.soil.conductivity_moisture(self.soil_state.q[1],1)
-        K_avg = 0.5*(K0+K1)
+        Kmid = self.solver_state.Kmid
         
         D0    = self.soil.diffusivity_moisture(self.soil_state.q[0],0)
         D1    = self.soil.diffusivity_moisture(self.soil_state.q[1],1) 
         D_avg = 0.5*(D0+D1)
         
-        flux_sm  = c.rho_wat*K_avg*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
-        #flux_sm  = c.rho_wat*D_avg*(self.soil_state.q[0]-self.soil_state.q[1])/(self.input.grid.z[0]-self.input.grid.z[1]) + c.rho_wat*K_avg
+        flux_sm  = c.rho_wat*Kmid*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
+        #flux_sm  = c.rho_wat*D_avg*(self.soil_state.q[0]-self.soil_state.q[1])/(self.input.grid.z[0]-self.input.grid.z[1]) + c.rho_wat*Kmid
         
         # Compute evaporation
         E = c.rho_air*self.sfc_state.wq[0]
@@ -315,7 +320,7 @@ class UtahLSM:
             
             # Re-compute moisture potential
             
-            psi0 = psi1 + (self.input.grid.z[0]-self.input.grid.z[1])*((flux_sm/(c.rho_wat*K_avg))-1.0)
+            psi0 = psi1 + (self.input.grid.z[0]-self.input.grid.z[1])*((flux_sm/(c.rho_wat*Kmid))-1.0)
             
             if (psi0 > self.soil.properties[0].psi_sat):
                 psi0 = self.soil.properties[0].psi_sat
@@ -329,12 +334,13 @@ class UtahLSM:
             # Update soil moisture transfer
             K0    = self.soil.conductivity_moisture(self.sfc_state.qs,0)
             K1    = self.soil.conductivity_moisture(self.soil_state.q[1],1)
-            K_avg = 0.5*(K0+K1)
+            Kmid = 0.5*(K0+K1)
             
             # Check for convergence
             converged = np.abs((E + flux_sm)/E) <=flux_criteria
             
-            if (converged): 
+            if (converged):
+                self.solver_state.Kmid = Kmid
                 break
 
     # Solve the diffusion equation for soil heat

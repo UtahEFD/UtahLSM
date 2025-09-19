@@ -55,6 +55,11 @@ class SurfaceState:
     lhf: np.ndarray # latent heat flux [W/m^2]
     ghf: np.ndarray # ground heat flux [W/m^2]
 
+@dataclass
+class SolverState:
+    """Holds temporary variables for use in numerical solvers."""
+    Kmid: float = 0.0  # soil thermal conductivity for SEB[W/(m*K)]
+
 @dataclass(frozen=True)
 class ForcingData:
     """Represents the entire time-series of meteorological forcing data."""
@@ -91,6 +96,9 @@ class SurfaceConfig:
     albedo: float
     emissivity: float
     model: int
+    flux_iter_max: int
+    flux_criteria: float
+    temperature_reference: float
 
 @dataclass(frozen=True)
 class SoilConfig:
