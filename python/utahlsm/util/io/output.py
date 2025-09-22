@@ -23,7 +23,7 @@ class Output(object):
         # create output file
         self.logger = logging_helper.get_logger("Output")
         self.logger.info(f"Saving output to {outfile}")
-        self.outfile             = nc.Dataset(outfile,'w')
+        self.outfile = nc.Dataset(outfile,'w')
         # self.outfile.description = "UtahLSM output"
         # self.outfile.source      = "Jeremy A. Gibbs"
         # self.outfile.history     = "Created " + time.ctime(time.time())

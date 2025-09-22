@@ -49,9 +49,8 @@ try:
     input_lsm = utahlsm.Input(namelist,initfile,offlinefile)
 except:
     raise SystemExit(1)
-#print("Running offline for the %s case"%case)
 
-   # create Output instance
+# create Output instance
 if not outf:
     outf='lsm_%s_py.nc'%case
 try:
@@ -64,14 +63,17 @@ lsm = utahlsm.UtahLSM(input_lsm,output_lsm)
 
 # Loop through each time
 runtime = 0
-tstep = input_lsm.forcing.tstep
+tstep   = input_lsm.forcing.tstep
 for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
     runtime += tstep
-    #print(f"Running for time: {runtime:8.2f} of {input_lsm.forcing.ntime*tstep:8.2f}")
     
     # update user-specified fields
     lsm.update(tstep, runtime, atm_state)
+    
+    # run the model
     lsm.run(step_count, runtime)
+    
+    # save the data
     lsm.save(step_count,runtime)
 
 # time info

@@ -19,7 +19,7 @@ import numpy as np
 from typing import Dict, List, Optional
 
 from ...data_models import (
-    GeneralConfig, TimeConfig, GridConfig, SurfaceConfig, SoilConfig, 
+    GeneralConfig, NumericsConfig, TimeConfig, GridConfig, SurfaceConfig, SoilConfig, 
     RadiationConfig, OutputConfig, SoilState, ForcingData, AtmosphericState
 )
 from utahlsm.util.io import logging_helper
@@ -28,6 +28,7 @@ class Input(object):
 
     def __init__(self, namelist_path: str, inputfile: str, offlinefile: str = None):
         
+        # local logger
         self.logger = logging_helper.get_logger("Input")
         
         # Load and validate the namelist into the configuration dataclasses
@@ -46,6 +47,7 @@ class Input(object):
         
         # Assemble the final, structured dataclasses from the raw data
         self.general:   GeneralConfig   = GeneralConfig(**namelist_data["general"])
+        self.numerics:  NumericsConfig  = NumericsConfig(**namelist_data["numerics"])
         self.time:      TimeConfig      = TimeConfig(**namelist_data["time"])
         self.surface:   SurfaceConfig   = SurfaceConfig(**namelist_data["surface"])
         self.soil:      SoilConfig      = SoilConfig(**namelist_data["soil"])

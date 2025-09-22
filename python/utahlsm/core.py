@@ -19,8 +19,7 @@ import numpy as np
 
 from .data_models import AtmosphericState, SurfaceState, SolverState
 from .physics import Radiation, Soil, Surface
-from .util import solvers
-from .util import constants as c
+from .util import constants as c, solvers
 from .util.io import Input, Output, logging_helper
 
 # land-surface model class
@@ -359,27 +358,29 @@ class UtahLSM:
     def solve_diffusion_heat(self):
         
         # Local variables
-        AB  = 1.0
-        AF  = 1.0-AB
-        dz  = self.input.grid.z[0] - self.input.grid.z[1]
-        dz2 = dz**2
+        AB       = self.input.numerics.diffusion_back_weight
+        AF       = 1.0-AB
+        nz       = self.input.grid.nz
+        dz       = self.input.grid.z[0] - self.input.grid.z[1]
+        dz2      = dz**2
+        step_dif = self.input.time.step_dif
         
-        K     = np.zeros(self.input.grid.nz)
-        K_mid = np.zeros(self.input.grid.nz-1)
-        z_mid = np.zeros(self.input.grid.nz-1)
-        r     = np.zeros(self.input.grid.nz-1)
-        e     = np.zeros(self.input.grid.nz-1)
-        f     = np.zeros(self.input.grid.nz-1)
-        g     = np.zeros(self.input.grid.nz-1)
+        K     = np.zeros(nz)
+        K_mid = np.zeros(nz-1)
+        z_mid = np.zeros(nz-1)
+        r     = np.zeros(nz-1)
+        e     = np.zeros(nz-1)
+        f     = np.zeros(nz-1)
+        g     = np.zeros(nz-1)
         
-        for i in range(0,self.input.grid.nz-1):
+        for i in range(0,nz-1):
             K[i]     = self.soil.diffusivity_thermal(self.soil_state.q[i],i)
             K[i+1]   = self.soil.diffusivity_thermal(self.soil_state.q[i+1],i+1)
             K_mid[i] = 0.5*(K[i]+K[i+1])
             z_mid[i] = 0.5*(self.input.grid.z[i]+self.input.grid.z[i+1])
         
         # Get the time step restriction
-        dt_T = 1.0
+        dt_T = self.tstep
         
         # loop through diffusion by sub-step
         t = 0
@@ -392,8 +393,8 @@ class UtahLSM:
             # r(n)    the soil temperature vector at t=n multiplied by coefficients
         
             # Matrix coefficients for first level below surface
-            Cp  = float(self.input.time.step_dif) * dt_T * K_mid[0] / dz2
-            Cm  = float(self.input.time.step_dif) * dt_T * K_mid[1] / dz2
+            Cp  = float(step_dif) * dt_T * K_mid[0] / dz2
+            Cm  = float(step_dif) * dt_T * K_mid[1] / dz2
             CBp = -AB * Cp
             CBm = -AB * Cm
             CB  = 1.0 - CBp - CBm
@@ -413,8 +414,8 @@ class UtahLSM:
                 # i   -> j+1 level
                 # i+1 -> j   level
                 # i+2 -> j-1 level
-                Cp  = float(self.input.time.step_dif) * dt_T * K_mid[i] / dz2
-                Cm  = float(self.input.time.step_dif) * dt_T * K_mid[i+1] / dz2
+                Cp  = float(step_dif) * dt_T * K_mid[i] / dz2
+                Cm  = float(step_dif) * dt_T * K_mid[i+1] / dz2
                 CBp = -AB * Cp
                 CBm = -AB * Cm
                 CB  = 1.0 - CBp - CBm
@@ -430,8 +431,8 @@ class UtahLSM:
             # Matrix coefficients for bottom level
             j = self.input.grid.nz-2
         
-            Cp  = float(self.input.time.step_dif) * dt_T * K_mid[j] / dz2
-            Cm  = float(self.input.time.step_dif) * dt_T * K_mid[j] / dz2
+            Cp  = float(step_dif) * dt_T * K_mid[j] / dz2
+            Cm  = float(step_dif) * dt_T * K_mid[j] / dz2
             CBp = -AB * Cp
             CBm = -AB * Cm
             CB  = 1.0 - CBp - CBm
@@ -476,7 +477,7 @@ class UtahLSM:
     def solve_diffusion_mois(self):
         
         # Local variables
-        AB  = 1.0
+        AB  = self.input.numerics.diffusion_back_weight
         AF  = 1.0-AB
         dz  = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
@@ -491,7 +492,7 @@ class UtahLSM:
         g     = np.zeros(self.input.grid.nz-1)
         
         # Get the time step restriction
-        dt_q = 1.0
+        dt_q = self.tstep # 1.0
         
         # loop through diffusion by sub-step
         t = 0

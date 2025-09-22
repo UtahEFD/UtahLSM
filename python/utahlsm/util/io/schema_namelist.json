@@ -11,6 +11,13 @@
             },
             "required": ["log_level"]
         },
+        "numerics": {
+            "type": "object",
+            "properties": {
+                "diffusion_back_weight": { "type": "number",  "minimum": 0, "maximum": 1}
+            },
+            "required": ["diffusion_back_weight"]
+        },
         "time": {
             "type": "object",
             "properties": {

@@ -207,6 +207,7 @@ metr.close()
 ########################
 namelist = {}
 namelist['general'] = {}
+namelist['numerics'] = {}
 namelist['time'] = {}
 namelist['grid'] = {}
 namelist['surface'] = {}
@@ -216,6 +217,9 @@ namelist['output'] = {}
 
 # general section
 namelist['general']['log_level'] = "info"
+
+# numerics section
+namelist['numerics']['diffusion_back_weight'] = float(0.5)
 
 # time section
 namelist['time']['step_seb']   = 1

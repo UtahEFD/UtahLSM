@@ -72,6 +72,10 @@ class ForcingData:
 @dataclass(frozen=True)
 class GeneralConfig:
     log_level: str
+    
+@dataclass(frozen=True)
+class NumericsConfig:
+    diffusion_back_weight: float
 
 @dataclass(frozen=True)
 class TimeConfig:
