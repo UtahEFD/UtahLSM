@@ -57,35 +57,51 @@ class RadBasic(Radiation):
     def longwave_in(self, atm_state, sfc_state):
         """simple clear-sky downwelling lw computation from Brutsaert (1975)"""
         
+        # local constants
+        EPSILON = c.thermodynamic.EPSILON
+        SB      = c.physical.STEFAN_BOLTZMANN
+        
         # local references to atmospheric state
         pa = atm_state.p
         qa = sfc_state.qa
         Ts = sfc_state.Ts
         
         # vapor pressure
-        ea = (pa*qa) / (c.epsilon + qa)
+        ea = (pa*qa) / (EPSILON + qa)
         
         # effective emissivity
         emissivity = 1.24*(ea/Ts)**(1/7.)
         
         # downward longwave
-        lw_in = emissivity * c.sb * (Ts**4)
+        lw_in = emissivity * SB * (Ts**4)
         
         return lw_in
             
     # Computes the upward longwave radiation at the surface
     def longwave_out(self, emissivity, sfc_state):
+        
+        # local constants
+        SB = c.physical.STEFAN_BOLTZMANN
+        
+        # local references to atmospheric state
         Ts = sfc_state.Ts
-        return emissivity * c.sb * (Ts**4)
+        
+        return emissivity * SB * (Ts**4)
     
     # Computes the downward shortwave radiation at the surface
     def shortwave_in(self, julian_day, time_utc, latitude, longitude):
+        
+        # local constants
+        SB = c.physical.STEFAN_BOLTZMANN
+        PI = c.physical.PI
+        SC = c.physical.SOLAR_CONSTANT
+        
         sw_in = 0
-        declination = 23.45*(c.pi/180.0)*np.cos(2.0*c.pi*(julian_day-173)/365.25)
-        sin_elevation = np.sin(latitude)*np.sin(declination) - np.cos(latitude)*np.cos(declination)* np.cos( (2*c.pi*time_utc/(24.0*3600.0)) - longitude )
+        declination   = 23.45*(PI/180.0)*np.cos(2.0*PI*(julian_day-173)/365.25)
+        sin_elevation = np.sin(latitude)*np.sin(declination) - np.cos(latitude)*np.cos(declination)*np.cos((2*PI*time_utc/(24.0*3600.0))-longitude)
         if (sin_elevation > 0):
             transmissivity = (0.6 + 0.2*sin_elevation)
-            sw_in = c.sc * transmissivity * sin_elevation
+            sw_in = SC * transmissivity * sin_elevation
         return sw_in
         
     # Computes the upward shortwave radiation at the surface

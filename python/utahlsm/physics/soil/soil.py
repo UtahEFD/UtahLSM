@@ -63,16 +63,26 @@ class Soil(object):
     
     # Compute heat capacity
     def heat_capacity(self, soil_q, level):
+        
+        # Local constants
+        CI_W = c.water.SPECIFIC_HEAT
+        CP_A = c.thermodynamic.SPECIFIC_HEAT
+        
         porosity = self.properties[level].porosity
         Ci       = self.properties[level].ci
-        Ks       = (1.-porosity)*Ci + soil_q*c.Ci_wat + (porosity-soil_q)*c.Cp_air
+        Ks       = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CP_A
         
         return Ks
         
     # Compute surface mixing ratio
     def surface_mixing_ratio(self, sfc_T, sfc_q, atm_p):
+        
+        # Local constants
+        G  = c.physical.GRAVITY
+        RV = c.thermodynamic.GAS_CONSTANT_VAPOR
+         
         psi      = self.water_potential(sfc_q, 0)
-        h        = np.exp(c.grav*psi/(c.Rv*sfc_T))
+        h        = np.exp(G*psi/(RV*sfc_T))
         es       = 6.1078*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
         hum_sat  = 0.622*(es/(atm_p-0.378*es))
         hum_spec = h*hum_sat

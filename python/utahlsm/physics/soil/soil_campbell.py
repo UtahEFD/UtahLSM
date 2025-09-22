@@ -37,13 +37,18 @@ class Campbell(Soil):
 
     # Estimate soil surface moisture from surface mixing ratio
     def surface_water_content_estimate(self, sfc_T, sfc_q, atm_p):
+        
+        # local constants
+        G  = c.physical.GRAVITY
+        RV = c.thermodynamic.GAS_CONSTANT_DRY
+        
         b        = self.properties[0].b
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
         es       = 6.1078*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
         qs       = 0.622*(es/(atm_p-0.378*es))
         ln       = np.log(sfc_q/qs)
-        soil_q   = porosity*((c.Rv*sfc_T*ln/(c.grav*psi_sat))**(-1./b))
+        soil_q   = porosity*((RV*sfc_T*ln/(G*psi_sat))**(-1./b))
         return soil_q
     
     # Compute soil water potential (single level)

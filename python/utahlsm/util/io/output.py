@@ -15,7 +15,6 @@
 import json
 import time
 import netCDF4 as nc
-import numpy as np
 from . import logging_helper
 
 class Output(object):

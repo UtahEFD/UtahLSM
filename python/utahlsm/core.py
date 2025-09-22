@@ -19,7 +19,8 @@ import numpy as np
 
 from .data_models import AtmosphericState, SurfaceState, SolverState
 from .physics import Radiation, Soil, Surface
-from .util import constants as c, solvers
+from .util import solvers
+from .util import constants as c
 from .util.io import Input, Output, logging_helper
 
 # land-surface model class
@@ -74,10 +75,10 @@ class UtahLSM:
         self.atm_state: AtmosphericState = None
         
         # initialize solver state
-        self.solver_state = SolverState()
+        self.solver_state: SolverState = SolverState()
         
         # initialize local time data
-        self.tstep = 0    # current time step
+        self.tstep: float = 0    # current time step
 
         # set reference to output dimensions
         self.output_dims = {
@@ -167,6 +168,13 @@ class UtahLSM:
     # Compute fluxes using similarity theory
     def compute_fluxes(self, sfc_T, sfc_q):
         
+        # Local constants
+        VK  = c.physical.VON_KARMAN
+        G   = c.physical.GRAVITY
+        RHO = c.air.DENSITY
+        CP  = c.thermodynamic.SPECIFIC_HEAT
+        LV  = c.thermodynamic.LATENT_HEAT_VAPORIZATION
+        
         # Local variables
         converged = False
         iter_max  = self.input.surface.flux_iter_max
@@ -195,13 +203,13 @@ class UtahLSM:
             
             # Compute latent flux
             self.sfc_state.wq[0] = (gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*fh
-                
+            
             # Compute virtual heat flux
             flux_wTv = self.sfc_state.wT[0] + ref_T*0.61*self.sfc_state.wq[0]
             
             # Compute L
             last_L = self.sfc_state.obl[0]
-            self.sfc_state.obl[0] = -(self.sfc_state.ust[0]**3)*ref_T/(c.vonk*c.grav*flux_wTv)
+            self.sfc_state.obl[0] = -(self.sfc_state.ust[0]**3)*ref_T/(VK*G*flux_wTv)
             
             # Bounds check on L
             if (self.input.surface.z_m/self.sfc_state.obl[0] > 5.): 
@@ -212,8 +220,8 @@ class UtahLSM:
             # Check for convergence
             converged = np.abs(last_L-self.sfc_state.obl[0]) <= criteria
             if (converged):
-                self.sfc_state.shf[0] = c.rho_air*c.Cp_air*self.sfc_state.wT[0]
-                self.sfc_state.lhf[0] = c.rho_air*c.Lv*self.sfc_state.wq[0]
+                self.sfc_state.shf[0] = RHO*CP*self.sfc_state.wT[0]
+                self.sfc_state.lhf[0] = RHO*LV*self.sfc_state.wq[0]
                 break
     
     # Solve the surface energy budget using a custom implementation of Brent's Method
@@ -237,8 +245,8 @@ class UtahLSM:
         # 1. Establish an initial temperature bracket
         temp_a = self.soil_state.T[0] - 1.0
         temp_b = self.soil_state.T[0] + 1.0
-        seb_a = seb_function(temp_a)
-        seb_b = seb_function(temp_b)
+        seb_a  = seb_function(temp_a)
+        seb_b  = seb_function(temp_b)
         
         # 2. Aggressively expand the bracket if the root is not contained within it.
         #    This loop ensures f(a) and f(b) have opposite signs.
@@ -287,6 +295,10 @@ class UtahLSM:
     # Solve the surface moisture budget
     def solve_smb(self):
         
+        # Local constants
+        RHO_W = c.water.DENSITY
+        RHO_A = c.air.DENSITY
+        
         # Local variables
         max_iter_flux = 200
         delta         = 0.5 
@@ -303,11 +315,11 @@ class UtahLSM:
         D1    = self.soil.diffusivity_moisture(self.soil_state.q[1],1) 
         D_avg = 0.5*(D0+D1)
         
-        flux_sm  = c.rho_wat*Kmid*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
+        flux_sm  = RHO_W*Kmid*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
         #flux_sm  = c.rho_wat*D_avg*(self.soil_state.q[0]-self.soil_state.q[1])/(self.input.grid.z[0]-self.input.grid.z[1]) + c.rho_wat*Kmid
         
         # Compute evaporation
-        E = c.rho_air*self.sfc_state.wq[0]
+        E = RHO_A*self.sfc_state.wq[0]
         
         # Convergence loop for moisture flux
         for ff in range(0,max_iter_flux):
@@ -320,7 +332,7 @@ class UtahLSM:
             
             # Re-compute moisture potential
             
-            psi0 = psi1 + (self.input.grid.z[0]-self.input.grid.z[1])*((flux_sm/(c.rho_wat*Kmid))-1.0)
+            psi0 = psi1 + (self.input.grid.z[0]-self.input.grid.z[1])*((flux_sm/(RHO_W*Kmid))-1.0)
             
             if (psi0 > self.soil.properties[0].psi_sat):
                 psi0 = self.soil.properties[0].psi_sat
@@ -329,7 +341,7 @@ class UtahLSM:
             self.sfc_state.qs = self.soil.surface_water_content(psi0)
             
             gnd_q = self.soil.surface_mixing_ratio(self.sfc_state.Ts,self.sfc_state.qs,self.atm_state.p)
-            E     = c.rho_air*(gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.sfc_state.obl[0])
+            E     = RHO_A*(gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.sfc_state.obl[0])
             
             # Update soil moisture transfer
             K0    = self.soil.conductivity_moisture(self.sfc_state.qs,0)

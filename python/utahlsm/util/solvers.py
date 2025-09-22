@@ -29,8 +29,8 @@ def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> n
     :param r: The right-hand side vector (size n).
     :return: The solution vector u (size n).
     """
-    n = len(b)
-    u = np.zeros(n)
+    n   = len(b)
+    u   = np.zeros(n)
     gam = np.zeros(n)
     
     if b[0] == 0.0:

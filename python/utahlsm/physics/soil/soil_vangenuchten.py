@@ -42,6 +42,11 @@ class VanGenuchten(Soil):
     
     # Estimate soil surface moisture from surface mixing ratio
     def surface_water_content_estimate(self, sfc_T, sfc_q, atm_p):
+        
+        # local constants
+        G  = c.physical.GRAVITY
+        RV = c.thermodynamic.GAS_CONSTANT_DRY
+        
         b        = self.properties[0].b
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
@@ -51,7 +56,7 @@ class VanGenuchten(Soil):
         ln       = np.log(sfc_q/qs)
         soil_e   = porosity-residual
         m        = 1 / (1+b)
-        soil_q   = residual+soil_e*( (1+ ( ((c.Rv*sfc_T*ln)/(c.grav*psi_sat))**(1/(1-m)) ))**(-m) )
+        soil_q   = residual+soil_e*( (1+ ( ((RV*sfc_T*ln)/(G*psi_sat))**(1/(1-m)) ))**(-m) )
         return soil_q
     
     # Compute soil water potential (single level)

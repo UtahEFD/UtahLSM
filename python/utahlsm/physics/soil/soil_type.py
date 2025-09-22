@@ -18,12 +18,12 @@ class SoilType(object):
         
         # TODO: implement check on type
         
-        self.b=0.0        # exponent (unitless)
-        self.psi_sat=0.0  # saturation moisture potential (m)
-        self.porosity=0.0 # saturated soil moisture 
-        self.residual=0.0 # residual moisture (volume/volume)
-        self.K_sat=0.0    # hydraulic conductivity (m/s)
-        self.ci=0.0       # volumetric heat capacity (J/m^3/K)
+        self.b        = 0.0 # exponent (unitless)
+        self.psi_sat  = 0.0 # saturation moisture potential (m)
+        self.porosity = 0.0 # saturated soil moisture 
+        self.residual = 0.0 # residual moisture (volume/volume)
+        self.K_sat    = 0.0 # hydraulic conductivity (m/s)
+        self.ci       = 0.0 # volumetric heat capacity (J/m^3/K)
     
     @staticmethod
     def get_properties(dataset,soil_type):

@@ -39,6 +39,11 @@ class BrooksCorey(Soil):
     
     # Estimate soil surface moisture from surface mixing ratio
     def surface_water_content_estimate(self, sfc_T, sfc_q, atm_p):
+        
+        # local constants
+        G  = c.physical.GRAVITY
+        RV = c.thermodynamic.GAS_CONSTANT_DRY
+        
         b        = self.properties[0].b
         psi_sat  = self.properties[0].psi_sat
         porosity = self.properties[0].porosity
@@ -47,7 +52,7 @@ class BrooksCorey(Soil):
         qs       = 0.622*(es/(atm_p-0.378*es))
         ln       = np.log(sfc_q/qs)
         soil_e   = porosity-residual
-        soil_q   = residual+soil_e*( ( (c.Rv*sfc_T*ln) / (c.grav*psi_sat) )**(-1./b) )
+        soil_q   = residual+soil_e*( ( (RV*sfc_T*ln) / (G*psi_sat) )**(-1./b) )
         return soil_q
     
     # Compute soil water potential (single level)

@@ -77,9 +77,13 @@ class SurfaceMOST(Surface):
     
     # integral stability correction for momentum under unstable conditions
     def psim_unstable(self,zeta):
+        
+        # local constants
+        PI = c.physical.PI
+        
         x = (1.-(16.*zeta))**(0.25)
         
-        return 2.*np.log((1.+x)/2.)+np.log((1.+x**2.)/2.)-2.*math.atan2(1.,self.phim_unstable(zeta))+c.pi/2.
+        return 2.*np.log((1.+x)/2.)+np.log((1.+x**2.)/2.)-2.*math.atan2(1.,self.phim_unstable(zeta))+PI/2.
     
     # integral stability correction for scalars
     def psih(self,z,obukL):
@@ -101,10 +105,18 @@ class SurfaceMOST(Surface):
     
     # common log-law function for momentum
     def fm(self, z1, z0, obukL):
-        fm = c.vonk / (np.log(z1/z0) - self.psim(z1,obukL) + self.psim(z0,obukL))
+        
+        # local constants
+        VK = c.physical.VON_KARMAN
+        
+        fm = VK / (np.log(z1/z0) - self.psim(z1,obukL) + self.psim(z0,obukL))
         return fm
     
     # common log-law function for heat
     def fh(self, z1, z0h, obukL):
-        fh = c.vonk / (np.log(z1/z0h) - self.psih(z1,obukL) + self.psih(z0h,obukL))
+        
+        # local constants
+        VK = c.physical.VON_KARMAN
+        
+        fh = VK / (np.log(z1/z0h) - self.psih(z1,obukL) + self.psih(z0h,obukL))
         return fh
