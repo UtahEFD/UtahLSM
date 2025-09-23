@@ -233,9 +233,11 @@ class UtahLSM:
         """
         
         # Calculate and store Kmid in the solver_state object
-        K0 = self.soil.conductivity_thermal(self.soil_state.q[0], 0)
-        K1 = self.soil.conductivity_thermal(self.soil_state.q[1], 1)
-        self.solver_state.Kmid = 0.5 * (K0 + K1)
+        # Calculate thermal conductivity for the entire soil column at once
+        K_all = self.soil.conductivity_thermal(self.soil_state.q)
+        
+        # Store the mid-point conductivity between the top two layers
+        self.solver_state.Kmid = 0.5 * (K_all[0] + K_all[1])
         
         # Objective function for the root finder. The root is found when SEB is zero.
         def seb_function(sfc_T):
@@ -303,16 +305,21 @@ class UtahLSM:
         delta         = 0.5 
         flux_criteria = .001
         
-        # Moisture potential at first two levels below ground
-        psi0 = self.soil.water_potential(self.soil_state.q[0], 0)
-        psi1 = self.soil.water_potential(self.soil_state.q[1], 1)
+        psi_all = self.soil.water_potential(self.soil_state.q)
+        D_all   = self.soil.diffusivity_moisture(self.soil_state.q)
+        K_all   = self.soil.conductivity_moisture(self.soil_state.q)
         
-        # Compute initial soil moisture flux
-        Kmid = self.solver_state.Kmid
+        # Moisture potential at the top two levels
+        psi0 = psi_all[0]
+        psi1 = psi_all[1]
         
-        D0    = self.soil.diffusivity_moisture(self.soil_state.q[0],0)
-        D1    = self.soil.diffusivity_moisture(self.soil_state.q[1],1) 
-        D_avg = 0.5*(D0+D1)
+        # Average diffusivity and conductivity between the top two levels
+        Dmid = 0.5 * (D_all[0] + D_all[1])
+        Kmid = 0.5 * (K_all[0] + K_all[1])
+        
+        #D0    = self.soil.diffusivity_moisture(self.soil_state.q[0],0)
+        #D1    = self.soil.diffusivity_moisture(self.soil_state.q[1],1) 
+        #D_avg = 0.5*(D0+D1)
         
         flux_sm  = RHO_W*Kmid*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
         #flux_sm  = c.rho_wat*D_avg*(self.soil_state.q[0]-self.soil_state.q[1])/(self.input.grid.z[0]-self.input.grid.z[1]) + c.rho_wat*Kmid
@@ -333,8 +340,9 @@ class UtahLSM:
             
             psi0 = psi1 + (self.input.grid.z[0]-self.input.grid.z[1])*((flux_sm/(RHO_W*Kmid))-1.0)
             
-            if (psi0 > self.soil.properties[0].psi_sat):
-                psi0 = self.soil.properties[0].psi_sat
+            psi_sat = self.soil.properties.psi_sat[0]
+            if (psi0 > psi_sat):
+                psi0 = psi_sat
             
             # Update soil moisture
             self.sfc_state.qs = self.soil.surface_water_content(psi0)
@@ -343,8 +351,8 @@ class UtahLSM:
             E     = RHO_A*(gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.sfc_state.obl[0])
             
             # Update soil moisture transfer
-            K0    = self.soil.conductivity_moisture(self.sfc_state.qs,0)
-            K1    = self.soil.conductivity_moisture(self.soil_state.q[1],1)
+            K0    = self.soil.conductivity_moisture_scalar(self.sfc_state.qs,0)
+            K1    = K_all[1]
             Kmid = 0.5*(K0+K1)
             
             # Check for convergence
@@ -365,19 +373,11 @@ class UtahLSM:
         dz2      = dz**2
         step_dif = self.input.time.step_dif
         
-        K     = np.zeros(nz)
-        K_mid = np.zeros(nz-1)
-        z_mid = np.zeros(nz-1)
-        r     = np.zeros(nz-1)
-        e     = np.zeros(nz-1)
-        f     = np.zeros(nz-1)
-        g     = np.zeros(nz-1)
+        r, e, f, g = [np.zeros(self.input.grid.nz - 1) for _ in range(4)]
         
-        for i in range(0,nz-1):
-            K[i]     = self.soil.diffusivity_thermal(self.soil_state.q[i],i)
-            K[i+1]   = self.soil.diffusivity_thermal(self.soil_state.q[i+1],i+1)
-            K_mid[i] = 0.5*(K[i]+K[i+1])
-            z_mid[i] = 0.5*(self.input.grid.z[i]+self.input.grid.z[i+1])
+        K_all = self.soil.diffusivity_thermal(self.soil_state.q)
+        
+        K_mid = K_mid = 0.5 * (K_all[:-1] + K_all[1:]) 
         
         # Get the time step restriction
         dt_T = self.tstep
@@ -385,7 +385,15 @@ class UtahLSM:
         # loop through diffusion by sub-step
         t = 0
         while (t<=self.tstep):
-
+            
+            # Get the time step restriction
+            #K_max = np.max(K_all)
+            dt_T  = self.tstep#dz2 / (2.0 * K_max)
+            
+            # Ensure the last sub-step lands exactly on the main time step
+            # if t + dt_T > self.tstep:
+            #     dt_T = self.tstep - t
+            
             # Set up and solve a tridiagonal matrix
             # AT(n+1) = r(n), where n denotes the time level
             # e, f, g the components of A matrix
@@ -444,31 +452,13 @@ class UtahLSM:
             f[j] = (CB + 2.0 * CBm)
             g[j] = 0
             r[j] = (CFp - CFm) * self.soil_state.T[j] + (CF + 2.0* CFm) * self.soil_state.T[j+1]
-                    
+            
             # now we can add new sfc T to column array
             self.soil_state.T[0] = self.sfc_state.Ts
         
             # Solve the tridiagonal system
             # we only need to send the layers below surface
             self.soil_state.T[1::] = solvers.tridiagonal(e,f,g,r)
-            
-            # update conductivities for sub-step
-            for i in range(0, self.input.grid.nz-1):
-                K[i]     = self.soil.diffusivity_thermal(self.soil_state.q[i],i)
-                K[i+1]   = self.soil.diffusivity_thermal(self.soil_state.q[i+1],i+1)
-                K_mid[i] = 0.5*(K[i]+K[i+1])
-                z_mid[i] = 0.5*(self.input.grid.z[i]+self.input.grid.z[i+1])
-            
-            # adjust time step if not at final time
-            if (t!=self.tstep):
-                
-                # compute new diffusion time step
-                Kmax = np.max(K)
-                dt_T = dz2 / (2.0*Kmax)
-                
-                # check if we need to relax dt to meet end time exactly
-                if (t+dt_T>self.tstep):
-                    dt_T = self.tstep - t
             
             # update time
             t+=dt_T
@@ -482,21 +472,23 @@ class UtahLSM:
         dz  = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
         
-        K_lin = np.zeros(self.input.grid.nz)
-        D     = np.zeros(self.input.grid.nz)
-        D_mid = np.zeros(self.input.grid.nz-1)
-        z_mid = np.zeros(self.input.grid.nz-1)
-        r     = np.zeros(self.input.grid.nz-1)
-        e     = np.zeros(self.input.grid.nz-1)
-        f     = np.zeros(self.input.grid.nz-1)
-        g     = np.zeros(self.input.grid.nz-1)
-        
-        # Get the time step restriction
-        dt_q = self.tstep # 1.0
+        r, e, f, g = [np.zeros(self.input.grid.nz - 1) for _ in range(4)]
         
         # loop through diffusion by sub-step
         t = 0
         while (t<=self.tstep):
+            
+            D_all = self.soil.diffusivity_moisture(self.soil_state.q)
+            K_all = self.soil.conductivity_moisture(self.soil_state.q)
+            D_mid = 0.5 * (D_all[:-1] + D_all[1:])
+            K_lin = K_all/self.soil_state.q
+            
+            #D_max = np.max(D_all)
+            dt_q = self.tstep#dz2 / (2.0 * D_max)
+            
+            # if t + dt_q > self.tstep:
+            #     dt_q = self.tstep - t
+            
             # Set up and solve a tridiagonal matrix
             # AT(n+1) = r(n), where n denotes the time level
             # e, f, g the components of A matrix
@@ -539,7 +531,7 @@ class UtahLSM:
                 # for soil_T in this loop:
                 # i   -> j+1 level
                 # i+1 -> j   level
-                # i+2 -> j-1 level# 
+                # i+2 -> j-1 level
                 
                 # common coefficients
                 Cpd  = float(self.input.time.step_dif) * dt_q * D_mid[i] / dz2
@@ -610,29 +602,6 @@ class UtahLSM:
             # solve the tridiagonal system
             # we only need the layers below the surface
             self.soil_state.q[1::] = solvers.tridiagonal(e,f,g,r)
-                
-            # update diffusivities and conductivities for sub-step
-            for i in range(0,self.input.grid.nz-1):
-                D[i]     = self.soil.diffusivity_moisture(self.soil_state.q[i],i)
-                D[i+1]   = self.soil.diffusivity_moisture(self.soil_state.q[i+1],i+1)
-                D_mid[i] = 0.5*(D[i]+D[i+1])
-                z_mid[i] = 0.5*(self.input.grid.z[i]+self.input.grid.z[i+1])
-                
-                # linearized K
-                K_lin[i] = self.soil.conductivity_moisture(self.soil_state.q[i],i)/self.soil_state.q[i]
-                if (i==self.input.grid.nz-2):
-                    K_lin[i+1] = self.soil.conductivity_moisture(self.soil_state.q[i+1],i+1)/self.soil_state.q[i+1]
-            
-            # adjust time step if not at final time
-            if (t!=self.tstep):
-                
-                # compute new diffusion time step
-                Dmax = np.max(D)
-                dt_q = dz2 / (2.0*Dmax)
-                
-                # check if we need to relax dt to meet end time exactly
-                if (t+dt_q>self.tstep):
-                    dt_q = self.tstep - t
             
             # update time
             t+=dt_q
