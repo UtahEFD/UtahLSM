@@ -351,7 +351,7 @@ class UtahLSM:
             E     = RHO_A*(gnd_q-self.atm_state.q)*self.sfc_state.ust[0]*self.sfc.fh(self.input.surface.z_s,self.input.surface.z_t,self.sfc_state.obl[0])
             
             # Update soil moisture transfer
-            K0    = self.soil.conductivity_moisture_scalar(self.sfc_state.qs,0)
+            K0    = self.soil.conductivity_moisture(self.sfc_state.qs,level=0)
             K1    = K_all[1]
             Kmid = 0.5*(K0+K1)
             

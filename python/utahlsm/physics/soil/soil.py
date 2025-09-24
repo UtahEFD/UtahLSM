@@ -100,7 +100,7 @@ class Soil(object):
         G  = c.physical.GRAVITY
         RV = c.thermodynamic.GAS_CONSTANT_VAPOR
          
-        psi      = self.water_potential_scalar(sfc_q,0)
+        psi      = self.water_potential(sfc_q,level=0)
         h        = np.exp(G*psi/(RV*sfc_T))
         es       = 6.1078*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
         hum_sat  = 0.622*(es/(atm_p-0.378*es))
