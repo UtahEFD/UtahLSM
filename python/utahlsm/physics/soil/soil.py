@@ -11,9 +11,10 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 import numpy as np
+from typing import Union
 from .soil_type import SoilType
 from ...util import constants as c
 from ...util.io import logging_helper
@@ -27,7 +28,7 @@ class SoilProperties:
     K_sat:    np.ndarray # hydraulic conductivity (m/s)
     ci:       np.ndarray # volumetric heat capacity (J/m^3/K)
 
-class Soil(object):
+class Soil(ABC):
     
     def __init__(self,input):
         
@@ -79,6 +80,29 @@ class Soil(object):
         except KeyError as e:
             self.logger.error(e)
             raise
+    
+    # Abstract Methods
+    @abstractmethod
+    def water_potential(self, soil_q: Union[float, np.ndarray], level: int = None) -> Union[float, np.ndarray]:
+        """Computes soil water potential."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def conductivity_moisture(self, soil_q: Union[float, np.ndarray], level: int = None) -> Union[float, np.ndarray]:
+        """Computes soil moisture conductivity."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def diffusivity_moisture(self, soil_q: np.ndarray) -> np.ndarray:
+        """Computes soil moisture diffusivity."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def surface_water_content(self, psi_sfc: float) -> float:
+        """Computes surface soil water content from surface water potential."""
+        raise NotImplementedError
+    
+    # Shared Methods
     
     # Compute heat capacity
     def heat_capacity(self, soil_q: np.ndarray) -> np.ndarray:

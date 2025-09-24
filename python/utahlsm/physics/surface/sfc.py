@@ -11,9 +11,10 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+from abc import ABC, abstractmethod
 from ...util.io import logging_helper
 
-class Surface(object):
+class Surface(ABC):
     
     def __init__(self):
         self.logger =  logging_helper.get_logger("SFC")
@@ -41,3 +42,14 @@ class Surface(object):
                 self.logger.error(f"\t{k} ({v.__name__})")
             self.logger.error("x"*62)
             raise SystemExit(1)
+    
+    # Abstract methods    
+    @abstractmethod
+    def fm(self, z_m: float, z_o: float, obl: float) -> float:
+        """Computes the stability function for momentum."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    def fh(self, z_s: float, z_t: float, obl: float) -> float:
+        """Computes the stability function for heat."""
+        raise NotImplementedError

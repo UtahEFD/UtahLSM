@@ -30,7 +30,7 @@ class RadBasic(Radiation):
         super().__init__(input)
         
     # Computes the surface net radiation
-    def compute_net(self, julian_day:int, time_utc:int, atm_state:AtmosphericState, sfc_state:SurfaceState):
+    def compute_net(self, julian_day: int, time_utc: int, atm_state: AtmosphericState, sfc_state: SurfaceState):
         
         # local copies of constants
         latitude    = self.input.radiation.latitude

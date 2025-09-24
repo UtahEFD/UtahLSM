@@ -10,10 +10,12 @@
 # 
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
-# 
+#
+from abc import ABC, abstractmethod
+from ...data_models import AtmosphericState, SurfaceState
 from ...util.io import logging_helper
 
-class Radiation(object):
+class Radiation(ABC):
     
     def __init__(self, input):
         
@@ -43,3 +45,9 @@ class Radiation(object):
                 self.logger.error(f"\t{k} ({v.__name__})")
             self.logger.error("x"*62)
             raise SystemExit(1)
+    
+    # Abstract methods ---
+    @abstractmethod
+    def compute_net(self, julian_day: int, utc: float, atm_state: AtmosphericState, sfc_state: SurfaceState) -> float:
+        """Computes the net radiation at the surface."""
+        raise NotImplementedError
