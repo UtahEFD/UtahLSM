@@ -11,74 +11,155 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
-"""
-data_models.py
 
-This module defines the core, shared data structures (using dataclasses) for the UtahLSM model.
-These classes provide a structured blueprint for configuration, initial conditions, and forcing data,
-ensuring consistency across different parts of the model.
+"""Core Data Models for UtahLSM.
+
+This module defines the core data structures used throughout the UtahLSM model.
+These structures are implemented as Python `dataclasses` to provide a clear
+and robust way to manage the model's state and configuration. The module is
+divided into two main sections:
+
+1.  **State Data Models**: Represent the physical state of different components
+    of the model at a given time (e.g., `AtmosphericState`, `SoilState`).
+2.  **Configuration Data Models**: Hold the static parameters and settings
+    loaded from the `lsm_namelist.json` file (e.g., `TimeConfig`, `GridConfig`).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
+from numpy.typing import NDArray
 from typing import List
 
-# --- Core Physical State Dataclasses ---
+# --- State Data Models ---
 
 @dataclass
 class AtmosphericState:
-    """Represents the atmospheric conditions at a single point in time."""
-    U: float      # Wind speed [m/s]
-    T: float      # Air temperature [K]
-    q: float      # Specific humidity [kg/kg]
-    p: float      # Air pressure [Pa]
-    R_net: float  # Net radiation [W/m^2]
+    """Holds the state of the atmosphere at a given time step.
+    
+    This data is provided by an external forcing file or a coupled 
+    atmospheric model, and represents the near-surface atmospheric 
+    conditions driving the land-surface model.
+    
+    Attributes:
+        U: Wind speed [m/s].
+        T: Air temperature [K].
+        q: Specific humidity [kg/kg].
+        p: Atmospheric pressure [Pa].
+        R_net: Net radiation [W/m^2].
+    """
+    U: float = 0.0
+    T: float = 0.0
+    q: float = 0.0
+    p: float = 0.0
+    R_net: float = 0.0
 
 @dataclass
 class SoilState:
-    """Represents the state of the soil column."""
-    T: np.ndarray     # soil temperature [K]
-    q: np.ndarray     # soil moisture [g/g]
-    type: np.ndarray  # soil type [category]
+    """Holds the prognostic state of the soil column.
+    
+    This class represents the vertical profile of temperature and moisture
+    within the soil, which is evolved over time by the model's diffusion solvers.
+    
+    Attributes:
+        T: Soil temperature profile [K].
+        q: Soil moisture profile [m^3/m^3].
+        type: Soil type integer ID for each layer.
+    """
+    T: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    q: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    type: NDArray[np.int_] = field(default_factory=lambda: np.array([]))
 
 @dataclass
 class SurfaceState:
-    """Represents the surface conditions at a single point in time."""
-    Ts:  float      # surface skin temperature [K]
-    qs:  float      # surface skin water content [g/g]
-    qa:  float      # surface skin mixing ratio [g/g]
-    ust: np.ndarray # friction velocity [m/s]
-    obl: np.ndarray # obukhov length [m]
-    wT:  np.ndarray # kinematic heat flux [K m/s]
-    wq:  np.ndarray # kinematic moisture flux [m/s]
-    shf: np.ndarray # sensible heat flux [W/m^2]
-    lhf: np.ndarray # latent heat flux [W/m^2]
-    ghf: np.ndarray # ground heat flux [W/m^2]
+    """Holds the diagnostic state of the land surface at a given time step.
+    
+    These variables are calculated by the model and represent the interaction
+    between the soil, the surface, and the atmosphere.
+    
+    Attributes:
+        Ts: Surface temperature [K].
+        qs: Surface specific humidity [kg/kg].
+        qa: Surface-air specific humidity [kg/kg].
+        ust: Friction velocity (u*) [m/s].
+        obl: Obukhov length (L) [m].
+        wT: Kinematic heat flux (w'T') [K m/s].
+        wq: Kinematic moisture flux (w'q') [kg/kg m/s].
+        shf: Sensible heat flux [W/m^2].
+        lhf: Latent heat flux [W/m^2].
+        ghf: Ground heat flux [W/m^2].
+    """
+    Ts: float = 0.0              
+    qs: float = 0.0              
+    qa: float = 0.0              
+    ust: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    obl: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    wT: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    wq: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    shf: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    lhf: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    ghf: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
 
 @dataclass
 class SolverState:
-    """Holds temporary variables for use in numerical solvers."""
-    Kmid: float = 0.0  # soil thermal conductivity for SEB[W/(m*K)]
+    """Holds intermediate variables used by the numerical solvers.
+    
+    This is a convenience class to store values that are calculated in one
+    part of a solver and needed in another, avoiding recalculation and
+    clarifying the data flow within complex numerical schemes.
+    
+    Attributes:
+        Kmid: Thermal conductivity at the midpoint between the top
+            two soil layers [W/m/K].
+    """
+    K_mid: float = 0.0
 
 @dataclass(frozen=True)
 class ForcingData:
-    """Represents the entire time-series of meteorological forcing data."""
+    """Represents the entire time-series of meteorological forcing data.
+    
+    This class is the forcing data provided by an offline file and is not 
+    used if the land-surface model is driven by a coupled atmospheric model.
+    
+    Attributes:
+        ntime: The number of time steps in the forcing data.
+        tstep: The time step interval [s].
+        atmos: A list of `AtmosphericState` objects, one for each time step.
+    """
     ntime: int
     tstep: float
     atmos: List[AtmosphericState] # A list of atmospheric states, one for each timestep
 
-# --- Configuration Dataclasses (from Namelist) ---
+# --- Configuration Data Models ---
 
 @dataclass(frozen=True)
 class GeneralConfig:
+    """General simulation settings.
+    
+    Attributes:
+        log_level: Logging level for the simulation (e.g., 'info', 'debug').
+    """
     log_level: str
     
 @dataclass(frozen=True)
 class NumericsConfig:
+    """Numerical scheme parameters.
+    
+    Attributes:
+        diffusion_back_weight: Backward weighting factor for the
+            diffusion solver (0.5 for Crank-Nicolson).
+    """
     diffusion_back_weight: float
 
 @dataclass(frozen=True)
 class TimeConfig:
+    """Time-related parameters for the simulation.
+    
+    Attributes:
+        step_seb: Frequency (in time steps) for solving the surface energy budget.
+        step_dif: Frequency (in time steps) for solving the diffusion equations.
+        utc_start: The starting time of the simulation in UTC seconds from midnight.
+        julian_day: The starting Julian day of the year.
+    """
     step_seb: int
     step_dif: int
     utc_start: int
@@ -86,13 +167,35 @@ class TimeConfig:
 
 @dataclass(frozen=True)
 class GridConfig:
+    """Grid and spatial discretization parameters.
+    
+    Attributes:
+        nx: Number of grid points in the x-direction.
+        ny: Number of grid points in the y-direction.
+        nz: Number of soil layers (grid points in the z-direction).
+        z: Soil layer depths [m].
+    """
     nx: int
     ny: int
     nz: int
-    z : np.ndarray
+    z : NDArray[np.float64]
 
 @dataclass(frozen=True)
 class SurfaceConfig:
+    """Surface-related parameters.
+    
+    Attributes:
+        z_o: Aerodynamic roughness length [m].
+        z_t: Thermal roughness length [m].
+        z_m: Measurement height for wind speed [m].
+        z_s: Measurement height for temperature and humidity [m].
+        albedo: Surface albedo (dimensionless).
+        emissivity: Surface emissivity (dimensionless).
+        model: Integer ID for the surface layer model to use.
+        flux_iter_max: Maximum iterations for the surface flux calculation.
+        flux_criteria: Convergence criteria for the surface flux calculation.
+        temperature_reference: Reference temperature [K] for flux calculations.
+    """
     z_o: float
     z_t: float
     z_m: float
@@ -106,16 +209,35 @@ class SurfaceConfig:
 
 @dataclass(frozen=True)
 class SoilConfig:
+    """Soil model configuration.
+    
+    Attributes:
+        param: Integer ID for the soil parameter dataset to use.
+        model: Integer ID for the soil physics model to use.
+    """
     param: int
     model: int
 
 @dataclass(frozen=True)
 class RadiationConfig:
+    """Radiation model configuration.
+    
+    Attributes:
+        model: Integer ID for the radiation model to use.
+        latitude: Site latitude [degrees].
+        longitude: Site longitude [degrees].
+    """
     model: int
     latitude: float
     longitude: float
 
 @dataclass(frozen=True)
 class OutputConfig:
+    """Output file configuration.
+    
+    Attributes:
+        save: Boolean flag to enable or disable saving output.
+        fields: A list of strings specifying which variables to save.
+    """
     save: bool
     fields: List[str]
