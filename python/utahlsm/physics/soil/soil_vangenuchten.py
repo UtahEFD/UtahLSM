@@ -11,100 +11,130 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+"""Van Genuchten (1980) soil physics parameterization.
 
+This module provides an implementation of the Soil abstract base class using
+the hydraulic relationships described by van Genuchten (1980). This is a
+widely used, flexible model for describing the soil water retention curve.
+"""
 import numpy as np
+from numpy.typing import NDArray
 from typing import Union
 from .soil import Soil
 from ...util import constants as c
 from ...util.io import Input, logging_helper
 
 class VanGenuchten(Soil):
-
-    # class initialization
+    """Implements the van Genuchten (1980) soil physics model.
+    
+    This class provides concrete implementations for calculating water potential,
+    hydraulic conductivity, and diffusivity based on the van Genuchten model.
+    """
     def __init__(self,input: Input):
+        """Initializes the VanGenuchten soil model.
         
-        self.logger =  logging_helper.get_logger("SOIL")
+        Args:
+            input: An `Input` object with the model's configuration settings.
+        """
+        self.logger = logging_helper.get_logger("SOIL")
         self.logger.info("[UtahLSM: Soil] \tUsing the Van Genuchten model")
-        
-        # initialize parent class
         super().__init__(input)
         
-    # Compute soil surface moisture
     def surface_water_content(self, psi: float) -> float:
-        b        = self.properties.b[0]
-        psi_sat  = self.properties.psi_sat[0]
+        """Computes surface soil water content from surface water potential.
+        
+        Args:
+            psi: The soil water potential at the surface [m].
+        
+        Returns:
+            The volumetric soil moisture content at the surface [m^3/m^3].
+        """
+        b = self.properties.b[0]
+        psi_sat = self.properties.psi_sat[0]
         porosity = self.properties.porosity[0]
         residual = self.properties.residual[0]
-        soil_e   = porosity-residual
-        m        = 1 / (1+b)
-        soil_q   = residual + soil_e * (1 / ( 1 + (psi/psi_sat)**(1/(1-m)) ))**(m)
+        soil_e = porosity-residual
+        m = 1 / (1+b)
+        soil_q = residual + soil_e * (1 / ( 1 + (psi/psi_sat)**(1/(1-m)) ))**(m)
         
         return soil_q
     
-    # Compute soil water potential (column)
-    def water_potential(self, soil_q: Union[float, np.ndarray], level: int = None) -> Union[float, np.ndarray]:
-        """
-        Computes soil water potential.
+    def water_potential(self, soil_q: Union[float,  NDArray[np.float64]], level: int = None) -> Union[float,  NDArray[np.float64]]:
+        """Computes soil water potential from soil moisture.
         
-        :param soil_q: Soil moisture content (scalar or array).
-        :param level: The soil level for a scalar calculation (optional).
-        :return: Soil water potential (scalar or array).
+        Args:
+            soil_q: Soil moisture content [m^3/m^3]. Can be a scalar for a
+                single level or an array for the entire column.
+            level: The specific soil layer index. Required if `soil_q` is a
+                scalar, ignored if it is an array. Defaults to None.
+        
+        Returns:
+            The soil water potential in meters [m].
         """
         if level is not None:
-            b        = self.properties.b[level]
-            psi_sat  = self.properties.psi_sat[level]
+            b = self.properties.b[level]
+            psi_sat = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
         else:
-            b        = self.properties.b
-            psi_sat  = self.properties.psi_sat
+            b = self.properties.b
+            psi_sat = self.properties.psi_sat
             porosity = self.properties.porosity
             residual = self.properties.residual
         
-        Se       = (soil_q-residual)/(porosity-residual)
-        m        = 1 / (1+b)
-        psi      = psi_sat*( ( (Se**(-1/m))-1 )**(1-m) )
+        Se = (soil_q-residual)/(porosity-residual)
+        m = 1 / (1+b)
+        psi = psi_sat*( ( (Se**(-1/m))-1 )**(1-m) )
         
         return psi
     
-    # Computes soil moisture conductivity.
-    def conductivity_moisture(self, soil_q: Union[float, np.ndarray], level: int = None) -> Union[float, np.ndarray]:
-        """
-        Computes soil moisture conductivity.
+    def conductivity_moisture(self, soil_q: Union[float,  NDArray[np.float64]], level: int = None) -> Union[float,  NDArray[np.float64]]:
+        """Computes soil hydraulic conductivity from soil moisture.
         
-        :param soil_q: Soil moisture content (scalar or array).
-        :param level: The soil level for a scalar calculation (optional).
-        :return: Soil moisture conductivity (scalar or array).
+        Args:
+            soil_q: Soil moisture content [m^3/m^3]. Can be a scalar or an array.
+            level: The specific soil layer index if `soil_q` is a scalar.
+                Defaults to None.
+        
+        Returns:
+            The soil hydraulic conductivity [m/s].
         """
         if level is not None:
-            b            = self.properties.b[level]
-            porosity     = self.properties.porosity[level]
-            residual     = self.properties.residual[level]
-            K_sat        = self.properties.K_sat[level]
+            b = self.properties.b[level]
+            porosity = self.properties.porosity[level]
+            residual = self.properties.residual[level]
+            K_sat = self.properties.K_sat[level]
         else:
-            b            = self.properties.b
-            porosity     = self.properties.porosity
-            residual     = self.properties.residual
-            K_sat        = self.properties.K_sat
+            b = self.properties.b
+            porosity = self.properties.porosity
+            residual = self.properties.residual
+            K_sat = self.properties.K_sat
         
-        Se           = (soil_q-residual)/(porosity-residual)
-        m            = 1 / (1+b)
+        Se = (soil_q-residual)/(porosity-residual)
+        m = 1 / (1+b)
         conductivity = K_sat*np.sqrt(Se)*( (1 - (1 - (Se**(1/m)) )**m )**2 )
         
         return conductivity
     
-    # Computes soil moisture diffusivity
-    def diffusivity_moisture(self, soil_q: np.ndarray) -> np.ndarray:
-        b            = self.properties.b
-        psi_sat      = self.properties.psi_sat
-        porosity     = self.properties.porosity
-        residual     = self.properties.residual
-        K_sat        = self.properties.K_sat
-        Se           = (soil_q-residual)/(porosity-residual)
-        soil_e       = porosity-residual
-        m            = 1 / (1+b)
-        A            = (1-m)*K_sat*psi_sat / (m*soil_e)
-        C            = Se**(0.5-(1/m))*( (1 - Se**(1/m))**(-m) + (1- Se**(1/m))**m - 2 )
+    def diffusivity_moisture(self, soil_q:  NDArray[np.float64]) ->  NDArray[np.float64]:
+        """Computes soil moisture diffusivity for the entire soil column.
+        
+        Args:
+            soil_q: The soil moisture content for all layers [m^3/m^3].
+        
+        Returns:
+            The soil moisture diffusivity for all layers [m^2/s].
+        """
+        b = self.properties.b
+        psi_sat = self.properties.psi_sat
+        porosity = self.properties.porosity
+        residual = self.properties.residual
+        K_sat = self.properties.K_sat
+        Se = (soil_q-residual)/(porosity-residual)
+        soil_e = porosity-residual
+        m = 1 / (1+b)
+        A = (1-m)*K_sat*psi_sat / (m*soil_e)
+        C = Se**(0.5-(1/m))*( (1 - Se**(1/m))**(-m) + (1- Se**(1/m))**m - 2 )
         diffusivity  = A*C
         
         return diffusivity

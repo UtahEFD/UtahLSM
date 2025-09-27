@@ -1,19 +1,30 @@
-# 
+#
 # UtahLSM
-# 
+#
 # Copyright (c) 2017–2025 Jeremy A. Gibbs
 # Copyright (c) 2017–2025 Rob Stoll
 # Copyright (c) 2017–2025 Eric Pardyjak
 # Copyright (c) 2017–2025 Pete Willemsen
-# 
+#
 # This file is part of UtahLSM.
-# 
+#
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
-# 
+#
+"""Abstract base class for soil models in UtahLSM.
+
+This module defines the data structures and interface for all soil physics
+parameterizations. It provides:
+    1.  A `SoilProperties` dataclass to hold soil parameter arrays.
+    2.  The `Soil` abstract base class, which ensures that any concrete soil
+        model implements the necessary methods.
+    3.  A factory function (`get_model`) for creating instances of specific
+        soil models.
+"""
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 import numpy as np
+from numpy.typing import NDArray
 from typing import Union
 from .soil_type import SoilType
 from ...util import constants as c
@@ -21,21 +32,54 @@ from ...util.io import logging_helper
 
 @dataclass
 class SoilProperties:
-    b:        np.ndarray # exponent (unitless)
-    psi_sat:  np.ndarray # saturation moisture potential (m)
-    porosity: np.ndarray # saturated soil moisture 
-    residual: np.ndarray # residual moisture (volume/volume)
-    K_sat:    np.ndarray # hydraulic conductivity (m/s)
-    ci:       np.ndarray # volumetric heat capacity (J/m^3/K)
+    """A container for soil property arrays.
+    
+    This dataclass holds the soil parameters for each layer in the soil
+    column as NumPy arrays.
+    
+    Attributes:
+        b: Clapp and Hornberger "b" exponent (unitless).
+        psi_sat: Saturation moisture potential [m].
+        porosity: Saturated soil moisture content (volumetric) [m^3/m^3].
+        residual: Residual moisture content (volumetric) [m^3/m^3].
+        K_sat: Saturated hydraulic conductivity [m/s].
+        ci: Volumetric heat capacity [J/m^3-K].
+    """
+    b: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    psi_sat: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    porosity: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    residual: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    K_sat: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    ci: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
 
 class Soil(ABC):
+    """Abstract base class for soil physics models.
     
+    This class defines the standard interface for all soil models and acts
+    as a factory. It also contains shared methods for calculating various
+    soil-related quantities that are common across different parameterizations.
+    
+    Attributes:
+        logger: A logger for this class.
+        input: An `Input` object containing model configuration.
+        properties: A `SoilProperties` object holding the soil parameters
+            for each layer of the soil column.
+    """
     def __init__(self,input):
         
+        """Initializes the Soil model.
+        
+        This constructor populates the `properties` attribute by looking up
+        the soil type for each layer from the input files and assembling the
+        corresponding physical parameters into NumPy arrays.
+        
+        Args:
+            input: An `Input` object with the model's configuration.
+        """
         self.logger = logging_helper.get_logger("SOIL")
-        self.input  = input    
-        nz          = self.input.grid.nz
-        dataset     = self.input.soil.param
+        self.input = input    
+        nz = self.input.grid.nz
+        dataset = self.input.soil.param
         
         DATASET_NAMES = {
             1: "Clapp/Hornberger",
@@ -60,7 +104,18 @@ class Soil(ABC):
     
     @staticmethod
     def get_model(key,input):
+        """Factory method to select and instantiate a soil model.
         
+        Args:
+            key: An integer ID for the soil model to use.
+            input: An `Input` object to be passed to the model's constructor.
+        
+        Returns:
+            An instance of a concrete `Soil` subclass.
+        
+        Raises:
+            KeyError: If the provided `key` is not a valid model ID.
+        """
         # import soil sub-classes
         from .soil_brookscorey import BrooksCorey
         from .soil_campbell import Campbell
@@ -81,77 +136,98 @@ class Soil(ABC):
             self.logger.error(e)
             raise
     
-    # Abstract Methods
+    #--- Abstract Methods ---
+    
     @abstractmethod
-    def water_potential(self, soil_q: Union[float, np.ndarray], level: int = None) -> Union[float, np.ndarray]:
-        """Computes soil water potential."""
+    def water_potential(self, soil_q: Union[float, NDArray[np.float64]], level: int = None) -> Union[float, NDArray[np.float64]]:
+        """Computes soil water potential. Must be implemented by subclasses."""
         raise NotImplementedError
     
     @abstractmethod
-    def conductivity_moisture(self, soil_q: Union[float, np.ndarray], level: int = None) -> Union[float, np.ndarray]:
-        """Computes soil moisture conductivity."""
+    def conductivity_moisture(self, soil_q: Union[float, NDArray[np.float64]], level: int = None) -> Union[float, NDArray[np.float64]]:
+        """Computes soil moisture conductivity. Must be implemented by subclasses."""
         raise NotImplementedError
     
     @abstractmethod
-    def diffusivity_moisture(self, soil_q: np.ndarray) -> np.ndarray:
-        """Computes soil moisture diffusivity."""
+    def diffusivity_moisture(self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Computes soil moisture diffusivity. Must be implemented by subclasses."""
         raise NotImplementedError
     
     @abstractmethod
     def surface_water_content(self, psi_sfc: float) -> float:
-        """Computes surface soil water content from surface water potential."""
+        """Computes sfc water content from potential. Must be implemented by subclasses."""
         raise NotImplementedError
     
-    # Shared Methods
+    # --- Shared Methods ---
     
-    # Compute heat capacity
-    def heat_capacity(self, soil_q: np.ndarray) -> np.ndarray:
+    def heat_capacity(self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Computes the volumetric heat capacity of the soil.
         
-        # Local constants
+        Args:
+            soil_q: The soil moisture content for each layer [m^3/m^3].
+        
+        Returns:
+            The volumetric heat capacity for each layer [J/m^3-K].
+        """
         CI_W = c.water.SPECIFIC_HEAT
         CP_A = c.thermodynamic.SPECIFIC_HEAT
         
         porosity = self.properties.porosity
-        Ci       = self.properties.ci
-        Ks       = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CP_A
+        Ci = self.properties.ci
+        Ks = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CP_A
         
         return Ks
         
-    # Compute surface mixing ratio
     def surface_mixing_ratio(self, sfc_T: float, sfc_q: float, atm_p: float):
+        """Computes the specific humidity at the soil surface.
         
-        # Local constants
+        Args:
+            sfc_T: The surface temperature [K].
+            sfc_q: The surface soil moisture content [m^3/m^3].
+            atm_p: The atmospheric pressure [Pa].
+        
+        Returns:
+            The specific humidity at the surface [kg/kg].
+        """
         G  = c.physical.GRAVITY
         RV = c.thermodynamic.GAS_CONSTANT_VAPOR
          
-        psi      = self.water_potential(sfc_q,level=0)
-        h        = np.exp(G*psi/(RV*sfc_T))
-        es       = 6.1078*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
-        hum_sat  = 0.622*(es/(atm_p-0.378*es))
+        psi = self.water_potential(sfc_q,level=0)
+        h = np.exp(G*psi/(RV*sfc_T))
+        es = 6.1078*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
+        hum_sat = 0.622*(es/(atm_p-0.378*es))
         hum_spec = h*hum_sat
          
         return hum_spec
     
-    # Compute soil thermal conductivity
-    def conductivity_thermal(self, soil_q: np.ndarray) -> np.ndarray:
-
-        psi = self.water_potential(soil_q)
-        pf  = np.log10(np.abs(psi * 100) + 1e-9)
+    def conductivity_thermal(self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Computes the soil thermal conductivity.
         
-        # 3. Use np.where for conditional logic on the entire pf array.
-        #    Where pf <= 5.1, calculate conductivity with the first formula.
-        #    Otherwise, use the constant value 0.172.
+        Args:
+            soil_q: The soil moisture content for each layer [m^3/m^3].
+        
+        Returns:
+            The thermal conductivity for each layer [W/m-K].
+        """
+        psi = self.water_potential(soil_q)
+        pf = np.log10(np.abs(psi * 100) + 1e-9)
         conductivity = np.where(
             pf <= 5.1,
-            418.46 * np.exp(-(pf + 2.7)), # Value if True
-            0.172                         # Value if False
+            418.46 * np.exp(-(pf + 2.7)), # If True
+            0.172                         # If False
         )
-        
         return conductivity
     
-    # Compute soil thermal diffusivity
-    def diffusivity_thermal(self, soil_q: np.ndarray) -> np.ndarray:
-        heat_cap     = self.heat_capacity(soil_q)
+    def diffusivity_thermal(self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Computes the soil thermal diffusivity.
+        
+        Args:
+            soil_q: The soil moisture content for each layer [m^3/m^3].
+        
+        Returns:
+            The thermal diffusivity for each layer [m^2/s].
+        """
+        heat_cap = self.heat_capacity(soil_q)
         conductivity = self.conductivity_thermal(soil_q)
-        diffusivity  = conductivity / heat_cap
+        diffusivity = conductivity / heat_cap
         return diffusivity

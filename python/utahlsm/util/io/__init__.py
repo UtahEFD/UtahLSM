@@ -11,9 +11,14 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+"""UtahLSM Input/Output Subpackage.
 
+This module serves as the entry point for the I/O utilities of the
+land-surface model. It imports and exposes the main `Input` and `Output`
+classes, making them directly accessible under the `utahlsm.util.io`
+namespace for convenience.
+"""
 from .input import Input
 from .output import Output
 
-__all__ = ['Input']
-__all__ = ['Output']
+__all__ = ['Input', 'Output']

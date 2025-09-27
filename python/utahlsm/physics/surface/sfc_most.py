@@ -11,7 +11,12 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+"""Surface layer parameterization based on Monin-Obukhov Similarity Theory.
 
+This module provides an implementation of the `Surface` abstract base class
+using standard Monin-Obukhov Similarity Theory (MOST) functions to describe
+the stability and flux-profile relationships in the atmospheric surface layer.
+"""
 import math
 import numpy as np
 from .sfc import Surface
@@ -19,104 +24,131 @@ from ...util import constants as c
 from ...util.io import logging_helper
 
 class SurfaceMOST(Surface):
-
-    # class initialization
+    """Implements surface layer physics using MOST.
+    
+    This class provides concrete implementations for the stability correction
+    functions for momentum and heat based on the widely used Businger-Dyer
+    relations.
+    """
     def __init__(self):
-        
+        """Initializes the SurfaceMOST model."""
         self.logger = logging_helper.get_logger("SFC")
         self.logger.info("Using the MOST model")
-        # initialize parent class
         super().__init__()
         
-    # gradient momentum function
-    def phim(self,z, obukL):
+    def phim(self, z: float, obukL: float) -> float:
+        """Computes the dimensionless stability function for momentum (phi_m).
         
-        # z/L
+        Args:
+            z: Height above the surface [m].
+            obukL: Obukhov length [m].
+        
+        Returns:
+            The value of phi_m.
+        """
         zeta = 0 if obukL==0 else z/obukL
-        
-        # compute gradient momentum function
         return self.phim_stable(zeta) if zeta >= 0 else self.phim_unstable(zeta)
     
-    # gradient momentum function under neutral/stable conditions
-    def phim_stable(self,zeta):
+    def phim_stable(self,zeta: float) -> float:
+        """Computes phi_m for stable conditions (zeta >= 0)."""
         return 1. + 5.*zeta
     
-    # gradient momentum function under unstable conditions
-    def phim_unstable(self,zeta):
+    def phim_unstable(self,zeta: float) -> float:
+        """Computes phi_m for unstable conditions (zeta < 0)."""
         return (1.-(16.*zeta))**(-0.25)
     
-    # gradient scalar function
-    def phih(self,z, obukL):
+    def phih(self,z: float, obukL: float) -> float:
+        """Computes the dimensionless stability function for heat (phi_h).
         
-        # z/L
+        Args:
+            z: Height above the surface [m].
+            obukL: Obukhov length [m].
+        
+        Returns:
+            The value of phi_h.
+        """
         zeta = 0 if obukL==0 else z/obukL
-        
-        # compute gradient scalar function
         return self.phih_stable(zeta) if zeta >= 0 else self.phih_unstable(zeta)
         
-    # gradient scalar function under neutral/stable conditions
-    def phih_stable(self,zeta):
+    def phih_stable(self,zeta: float) -> float:
+        """Computes phi_h for stable conditions (zeta >= 0)."""
         return 1. + 5.*zeta
     
-    # gradient scalar function under unstable conditions
-    def phih_unstable(self,zeta):
+    def phih_unstable(self,zeta:float) -> float:
+        """Computes phi_h for unstable conditions (zeta < 0)."""
         return (1.-(16.*zeta))**(-0.50)
     
-    # integral stability correction for momentum
-    def psim(self,z,obukL):
+    def psim(self,z: float,obukL: float) -> float:
+        """Computes the integrated stability function for momentum (psi_m).
         
-        # z/L
+        Args:
+            z: Height above the surface [m].
+            obukL: Obukhov length [m].
+        
+        Returns:
+            The value of psi_m.
+        """
         zeta = 0 if obukL==0 else z/obukL
-        
-        # compute integral stability correction
         return self.psim_stable(zeta) if zeta >= 0 else self.psim_unstable(zeta)
     
-    # integral stability correction for momentum under neutral/stable conditions
-    def psim_stable(self,zeta):
+    def psim_stable(self,zeta: float) -> float:
+        """Computes psi_m for stable conditions (zeta >= 0)."""
         return -5.*zeta
     
-    # integral stability correction for momentum under unstable conditions
-    def psim_unstable(self,zeta):
-        
-        # local constants
+    def psim_unstable(self,zeta: float) -> float:
+        """Computes psi_m for unstable conditions (zeta < 0)."""
         PI = c.physical.PI
-        
         x = (1.-(16.*zeta))**(0.25)
-        
         return 2.*np.log((1.+x)/2.)+np.log((1.+x**2.)/2.)-2.*math.atan2(1.,self.phim_unstable(zeta))+PI/2.
     
-    # integral stability correction for scalars
-    def psih(self,z,obukL):
-        # z/L
-        zeta = 0 if obukL==0 else z/obukL
+    def psih(self,z: float,obukL: float) -> float:
+        """Computes the integrated stability function for heat (psi_h).
         
-        # compute integral stability correction
+        Args:
+            z: Height above the surface [m].
+            obukL: Obukhov length [m].
+        
+        Returns:
+            The value of psi_h.
+        """
+        zeta = 0 if obukL==0 else z/obukL
         return self.psih_stable(zeta) if zeta >= 0 else self.psih_unstable(zeta)
         
-    # integral stability correction for scalars under neutral/stable conditions
-    def psih_stable(self,zeta):
+    def psih_stable(self,zeta: float) -> float:
+        """Computes psi_h for stable conditions (zeta >= 0)."""
         return -5.*zeta
     
-    # integral stability correction for scalars under unstable conditions
-    def psih_unstable(self,zeta):
+    def psih_unstable(self,zeta: float) -> float:
+        """Computes psi_h for unstable conditions (zeta < 0)."""
         x = (1.-(16.*zeta))**(0.50)
-        
         return 2.*np.log((1.+x)/2.)
     
-    # common log-law function for momentum
-    def fm(self, z1, z0, obukL):
+    def fm(self, z1: float, z0: float, obukL: float) -> float:
+        """Computes the log-law stability function for momentum.
         
-        # local constants
+        Args:
+            z1: Upper height [m].
+            z0: Lower height (roughness length) [m].
+            obukL: Obukhov length [m].
+        
+        Returns:
+            The stability-corrected log-law function value.
+        """
         VK = c.physical.VON_KARMAN
-        
         fm = VK / (np.log(z1/z0) - self.psim(z1,obukL) + self.psim(z0,obukL))
         return fm
     
-    # common log-law function for heat
-    def fh(self, z1, z0h, obukL):
+    def fh(self, z1: float, z0h: float, obukL: float) -> float:
+        """Computes the log-law stability function for heat.
         
-        # local constants
+        Args:
+            z1: Upper height [m].
+            z0h: Lower height (thermal roughness length) [m].
+            obukL: Obukhov length [m].
+        
+        Returns:
+            The stability-corrected log-law function value.
+        """
         VK = c.physical.VON_KARMAN
-        
         fh = VK / (np.log(z1/z0h) - self.psih(z1,obukL) + self.psih(z0h,obukL))
         return fh

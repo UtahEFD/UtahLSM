@@ -11,26 +11,38 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+"""A collection of numerical solver functions.
 
+This module provides robust and efficient numerical solvers for common
+mathematical problems encountered in the land-surface model, such as
+solving systems of linear equations and finding roots of functions.
+"""
 import numpy as np
 from ..util.io import logging_helper
 
-# Module-level logger
 logger = logging_helper.get_logger("UTIL: Solvers")
 
 def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> np.ndarray:
+    """Solves a tridiagonal system of equations using the Thomas algorithm.
+    
+    This function efficiently solves the equation Ax = r, where A is a
+    tridiagonal matrix defined by its sub-diagonal (a), main diagonal (b),
+    and super-diagonal (c).
+    
+    Args:
+        a: The sub-diagonal of the matrix (size n). a[0] is ignored.
+        b: The main diagonal of the matrix (size n).
+        c: The super-diagonal of the matrix (size n). c[n-1] is ignored.
+        r: The right-hand side vector (size n).
+    
+    Returns:
+        The solution vector u (size n).
+    
+    Raises:
+        ValueError: If an element on the main diagonal is zero during factorization.
     """
-    Solves a tridiagonal system of equations using the Thomas algorithm.
-    Solves the equation Ax = r, where A is a tridiagonal matrix.
-
-    :param a: The sub-diagonal of the matrix (size n). a[0] is ignored.
-    :param b: The main diagonal of the matrix (size n).
-    :param c: The super-diagonal of the matrix (size n). c[n-1] is ignored.
-    :param r: The right-hand side vector (size n).
-    :return: The solution vector u (size n).
-    """
-    n   = len(b)
-    u   = np.zeros(n)
+    n = len(b)
+    u = np.zeros(n)
     gam = np.zeros(n)
     
     if b[0] == 0.0:
@@ -54,17 +66,26 @@ def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> n
     return u
 
 def root_brent(f, a, b, tol=1e-6, max_iter=100) -> float:
-    """
-    Finds the root of a function within a bracketed interval using Brent's method.
-    This is a robust and fast hybrid of bisection, secant, and inverse quadratic interpolation.
+    """Finds the root of a function using Brent's method.
     
-    :param f: The function for which to find a root, f(x) = 0.
-    :param a: The lower bound of the bracket [a, b].
-    :param b: The upper bound of the bracket [a, b].
-    :param tol: The desired tolerance for the root.
-    :param max_iter: The maximum number of iterations to perform.
-    :return: The root of the function.
-    :raises ValueError: If the root is not bracketed.
+    This is a robust and fast root-finding algorithm that combines bisection,
+    the secant method, and inverse quadratic interpolation. It is guaranteed
+    to find a root if one exists within the given bracket.
+    
+    Args:
+        f: The function for which to find a root, f(x) = 0.
+        a: The lower bound of the bracket [a, b].
+        b: The upper bound of the bracket [a, b].
+        tol: The desired tolerance for the root. Defaults to 1e-6.
+        max_iter: The maximum number of iterations. Defaults to 100.
+    
+    Returns:
+        A tuple containing:
+            - The approximate root of the function.
+            - A boolean indicating whether the solver converged.
+    
+    Raises:
+        ValueError: If the root is not bracketed (i.e., f(a) * f(b) >= 0).
     """
     fa = f(a)
     fb = f(b)
@@ -93,9 +114,7 @@ def root_brent(f, a, b, tol=1e-6, max_iter=100) -> float:
         # Otherwise, fall back to the secant method
         else:
             s = b - fb * (b - a) / (fb - fa)
-             
-        # This block is the core of Brent's method's robustness.
-        # It decides whether to accept the interpolated point 's' or fall back to bisection.
+        
         # Condition 1: Is the new point outside the desired range?
         cond1 = (s < (3 * a + b) / 4.0) or (s > b)
         # Condition 2: Is the step not decreasing fast enough (bisection was last step)?

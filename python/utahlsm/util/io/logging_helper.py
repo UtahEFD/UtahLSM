@@ -11,8 +11,13 @@
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 # 
+"""A helper module for configuring logging.
 
-# logging_helper.py
+This module provides a two-stage logging setup. It allows modules to
+start logging immediately upon import, buffering the messages in memory.
+Once the main configuration is loaded, `finalize_logging` is called to
+set up the final file and console handlers and flush all buffered messages.
+"""
 import logging
 import logging.handlers
 
@@ -20,7 +25,13 @@ _buffer_handler = None
 _initialized = False
 
 def _ensure_buffered():
-    """Start buffered logging if not already active."""
+    """Starts buffered logging if it is not already active.
+    
+    This internal function sets up a `MemoryHandler` on the root logger
+    to capture all log messages generated before the main logging
+    configuration is finalized. This ensures no messages are lost during
+    the initial setup phase of the model.
+    """
     global _buffer_handler, _initialized
     if _initialized:
         return
@@ -31,20 +42,39 @@ def _ensure_buffered():
         root_logger.setLevel(logging.DEBUG)
     _initialized = True
 
-def get_logger(name: str = None):
-    """
-    Ensures buffered logging is active if no config yet.
+def get_logger(name: str = None) -> logging.Logger:
+    """Gets a logger instance and ensures buffering is active.
+    
+    This is the main function that should be called by other modules to get
+    a logger. It guarantees that the buffering handler is in place before
+    returning the logger.
+    
+    Args:
+        name: The name of the logger, typically `__name__`.
+    
+    Returns:
+        A `logging.Logger` instance.
     """
     _ensure_buffered()
     return logging.getLogger(name)
 
 def finalize_logging(level_str: str = "info"):
-    """Replace buffer with real handlers and flush stored logs."""
+    """Replaces the buffer with final handlers and flushes stored logs.
+    
+    This function should be called once after the main configuration has been
+    read. It removes the temporary memory handler and replaces it with
+    configured file and console handlers. It then flushes any messages that
+    were buffered during startup to the new handlers.
+    
+    Args:
+        level_str: The desired logging level as a string (e.g., 'info', 'debug').
+            Defaults to "info".
+    """
     global _buffer_handler
     root_logger = logging.getLogger()
 
     LOG_LEVELS = {"info": logging.INFO, "debug": logging.DEBUG}
-    log_level  = LOG_LEVELS.get(level_str.lower(), logging.INFO)
+    log_level = LOG_LEVELS.get(level_str.lower(), logging.INFO)
     filler = "_"
     log_format = logging.Formatter(
         "{asctime} [{levelname:^8s}] {name:.>10s}: {message}",
