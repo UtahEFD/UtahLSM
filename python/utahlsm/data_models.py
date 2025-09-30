@@ -1,16 +1,16 @@
-# 
+#
 # UtahLSM
-# 
+#
 # Copyright (c) 2017–2025 Jeremy A. Gibbs
 # Copyright (c) 2017–2025 Rob Stoll
 # Copyright (c) 2017–2025 Eric Pardyjak
 # Copyright (c) 2017–2025 Pete Willemsen
-# 
+#
 # This file is part of UtahLSM.
-# 
+#
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
-# 
+#
 
 """Core Data Models for UtahLSM.
 
@@ -26,9 +26,9 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
+from typing import List
 import numpy as np
 from numpy.typing import NDArray
-from typing import List
 
 # --- State Data Models ---
 
@@ -41,17 +41,17 @@ class AtmosphericState:
     conditions driving the land-surface model.
     
     Attributes:
-        U: Wind speed [m/s].
-        T: Air temperature [K].
-        q: Specific humidity [kg/kg].
-        p: Atmospheric pressure [Pa].
-        R_net: Net radiation [W/m^2].
+        wind_speed: Wind speed [m/s].
+        temperature: Air temperature [K].
+        specific_humidity: Specific humidity [kg/kg].
+        pressure: Atmospheric pressure [Pa].
+        radiation_net: Net radiation [W/m^2].
     """
-    U: float = 0.0
-    T: float = 0.0
-    q: float = 0.0
-    p: float = 0.0
-    R_net: float = 0.0
+    wind_speed: float = 0.0
+    temperature: float = 0.0
+    specific_humidity: float = 0.0
+    pressure: float = 0.0
+    radiation_net: float = 0.0
 
 @dataclass
 class SoilState:
@@ -61,13 +61,41 @@ class SoilState:
     within the soil, which is evolved over time by the model's diffusion solvers.
     
     Attributes:
-        T: Soil temperature profile [K].
-        q: Soil moisture profile [m^3/m^3].
+        temperature: Soil temperature profile [K].
+        moisture: Soil moisture profile [m^3/m^3].
         type: Soil type integer ID for each layer.
     """
-    T: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
-    q: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    temperature: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    moisture: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     type: NDArray[np.int_] = field(default_factory=lambda: np.array([]))
+
+@dataclass
+class Fluxes:
+    """Holds all surface flux quantities.
+    
+    Attributes:
+        kinematic_heat: Kinematic heat flux (w'T') [K m/s].
+        kinematic_moisture: Kinematic moisture flux (w'q') [kg/kg m/s].
+        sensible_heat: Sensible heat flux [W/m^2].
+        latent_heat: Latent heat flux [W/m^2].
+        ground_heat: Ground heat flux [W/m^2].
+    """
+    kinematic_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    kinematic_moisture: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    sensible_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    latent_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    ground_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+
+@dataclass
+class TurbulenceScales:
+    """Holds Monin-Obukhov turbulence scales.
+    
+    Attributes:
+        friction_velocity: Friction velocity (u*) [m/s].
+        obukhov_length: Obukhov length (L) [m].
+    """
+    friction_velocity: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    obukhov_length: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
 
 @dataclass
 class SurfaceState:
@@ -77,27 +105,18 @@ class SurfaceState:
     between the soil, the surface, and the atmosphere.
     
     Attributes:
-        Ts: Surface temperature [K].
-        qs: Surface specific humidity [kg/kg].
-        qa: Surface-air specific humidity [kg/kg].
-        ust: Friction velocity (u*) [m/s].
-        obl: Obukhov length (L) [m].
-        wT: Kinematic heat flux (w'T') [K m/s].
-        wq: Kinematic moisture flux (w'q') [kg/kg m/s].
-        shf: Sensible heat flux [W/m^2].
-        lhf: Latent heat flux [W/m^2].
-        ghf: Ground heat flux [W/m^2].
+        temperature: Surface temperature [K].
+        water_content: Surface water content [kg/kg].
+        specific_humidity: Surface-air specific humidity [kg/kg].
+        fluxes: A dataclass containing all surface fluxes.
+        turbulence: A dataclass containing turbulence scales.
+            
     """
-    Ts: float = 0.0              
-    qs: float = 0.0              
-    qa: float = 0.0              
-    ust: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
-    obl: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
-    wT: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
-    wq: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
-    shf: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
-    lhf: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
-    ghf: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    temperature: float = 0.0
+    water_content: float = 0.0
+    specific_humidity: float = 0.0
+    fluxes: Fluxes = field(default_factory=Fluxes)
+    turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
 
 @dataclass
 class SolverState:
@@ -111,7 +130,7 @@ class SolverState:
         Kmid: Thermal conductivity at the midpoint between the top
             two soil layers [W/m/K].
     """
-    K_mid: float = 0.0
+    conductivity_thermal_mid: float = 0.0
 
 @dataclass(frozen=True)
 class ForcingData:
@@ -139,7 +158,7 @@ class GeneralConfig:
         log_level: Logging level for the simulation (e.g., 'info', 'debug').
     """
     log_level: str
-    
+
 @dataclass(frozen=True)
 class NumericsConfig:
     """Numerical scheme parameters.

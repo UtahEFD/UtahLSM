@@ -86,8 +86,8 @@ class Input(object):
                                            z  = init_data["z"]
                                         )
         self.initial: SoilState = SoilState(
-            T = init_data["T"],
-            q = init_data["q"],
+            temperature = init_data["temperature"],
+            moisture = init_data["moisture"],
             type = init_data["type"]
         )
         
@@ -145,8 +145,8 @@ class Input(object):
                 inifile.set_auto_mask(False)
                 init_dict = {
                     "z" : (-1)*inifile.variables['soil_z'][:].astype('float'),
-                    "T" : inifile.variables['soil_T'][:].astype('float'),
-                    "q" : inifile.variables['soil_q'][:].astype('float'),
+                    "temperature" : inifile.variables['soil_T'][:].astype('float'),
+                    "moisture" : inifile.variables['soil_q'][:].astype('float'),
                     "type" : inifile.variables['soil_type'][:].astype('int')
                 }
             self.logger.info("--- initial conditions loaded successfully")
@@ -177,7 +177,7 @@ class Input(object):
                 r_net    = metfile.variables['R_net'][:].astype('float')
                 
                 atm_data = [
-                    AtmosphericState(U=atm_U[i], T=atm_T[i], q=atm_q[i], p=atm_p[i], R_net=r_net[i])
+                    AtmosphericState(wind_speed=atm_U[i], temperature=atm_T[i], specific_humidity=atm_q[i], pressure=atm_p[i], radiation_net=r_net[i])
                     for i in range(ntime)
                 ]
                 
@@ -199,8 +199,8 @@ class Input(object):
         if self.surface.z_s <= self.surface.z_t:
             raise ValueError(f"z_s={self.surface.z_s} must be > z_t={self.surface.z_t}.")
         
-        if len(self.initial.T) != self.grid.nz:
+        if len(self.initial.temperature) != self.grid.nz:
             raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
-                             f"init file soil_T length of {len(self.initial.T)}.")
+                             f"init file soil_T length of {len(self.initial.temperature)}.")
         
         self.logger.info("Physical consistency checks passed")

@@ -32,19 +32,28 @@ class Radiation(ABC):
     
     Attributes:
         logger: A logger for this class.
-        input: An `Input` object containing model configuration.
+        latitude: The site latitude in degrees.
+        longitude: The site longitude in degrees.
+        albedo: The surface albedo (dimensionless).
+        emissivity: The surface emissivity (dimensionless).
     """
-    def __init__(self, input):
+    def __init__(self, latitude: float, longitude: float, albedo: float, emissivity: float):
         """Initializes the Radiation base class.
         
         Args:
-            input: An `Input` object with the model's configuration settings.
+            latitude: The site latitude in degrees.
+            longitude: The site longitude in degrees.
+            albedo: The surface albedo (dimensionless).
+            emissivity: The surface emissivity (dimensionless).
         """
         self.logger = logging_helper.get_logger("RAD")
-        self.input = input
+        self.latitude = latitude
+        self.longitude = longitude
+        self.albedo = albedo
+        self.emissivity = emissivity
         
     @staticmethod
-    def get_model(key, input):
+    def get_model(key: int, latitude: float, longitude: float, albedo: float, emissivity: float):
         """Factory method to select and instantiate a radiation model.
         
         Based on the integer key provided in the namelist, this method imports
@@ -52,7 +61,10 @@ class Radiation(ABC):
         
         Args:
             key: An integer identifying the radiation model to use.
-            input: An `Input` object to be passed to the model's constructor.
+            latitude: The site latitude in degrees.
+            longitude: The site longitude in degrees.
+            albedo: The surface albedo (dimensionless).
+            emissivity: The surface emissivity (dimensionless).
         
         Returns:
             An instance of a concrete `Radiation` subclass.
@@ -71,7 +83,7 @@ class Radiation(ABC):
         # return class or throw error
         try:
             # look up model class from dictionary
-            return RAD_MODELS[key](input)
+            return RAD_MODELS[key](latitude, longitude, albedo, emissivity)
         except KeyError as e:
             self.logger.error("x"*62)
             self.logger.error(f"Namelist Error: {key} is an invalid radiation model.")

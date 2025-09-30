@@ -32,15 +32,16 @@ class Campbell(Soil):
     hydraulic conductivity, and diffusivity based on the Campbell model.
     """
 
-    def __init__(self,input: Input):
+    def __init__(self, dataset_id: int, soil_type_array: NDArray[np.int_]):
         """Initializes the Campbell soil model.
         
         Args:
-            input: An `Input` object with the model's configuration settings.
+            dataset_id: An integer ID for the soil parameter dataset to use.
+            soil_type_array: A NumPy array of soil type IDs for each layer.
         """
         self.logger = logging_helper.get_logger("SOIL")
         self.logger.info("Using the Campbell model")
-        super().__init__(input)
+        super().__init__(dataset_id, soil_type_array)
     
     def surface_water_content(self, psi: float) -> float:
         """Computes surface soil water content from surface water potential.

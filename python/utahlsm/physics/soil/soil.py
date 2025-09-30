@@ -65,7 +65,7 @@ class Soil(ABC):
         properties: A `SoilProperties` object holding the soil parameters
             for each layer of the soil column.
     """
-    def __init__(self,input):
+    def __init__(self, dataset_id: int, soil_type_array: NDArray[np.int_]):
         
         """Initializes the Soil model.
         
@@ -74,26 +74,24 @@ class Soil(ABC):
         corresponding physical parameters into NumPy arrays.
         
         Args:
-            input: An `Input` object with the model's configuration.
+            dataset_id: An integer ID for the soil parameter dataset to use.
+            soil_type_array: A NumPy array of soil type IDs for each layer.
         """
         self.logger = logging_helper.get_logger("SOIL")
-        self.input = input    
-        nz = self.input.grid.nz
-        dataset = self.input.soil.param
         
         DATASET_NAMES = {
             1: "Clapp/Hornberger",
             2: "Cosby et al",
             3: "Rawls/Brakensiek"
         }
-        self.logger.info(f"Using the {DATASET_NAMES[dataset]} dataset")
+        self.logger.info(f"Using the {DATASET_NAMES[dataset_id]} dataset")
         
         # Create temporary lists to hold properties for each layer
         prop_lists = {f.name: [] for f in fields(SoilProperties)}
         
         # Loop to gather properties from the original SoilType objects
-        for k in range(nz):
-            props = SoilType.get_properties(dataset, self.input.initial.type[k])
+        for soil_type in soil_type_array:
+            props = SoilType.get_properties(dataset_id, soil_type)
             for prop_name in prop_lists.keys():
                 prop_lists[prop_name].append(getattr(props, prop_name))
         
@@ -103,12 +101,13 @@ class Soil(ABC):
         )
     
     @staticmethod
-    def get_model(key,input):
+    def get_model(key: int, dataset_id: int, soil_type_array: NDArray[np.int_]):
         """Factory method to select and instantiate a soil model.
         
         Args:
             key: An integer ID for the soil model to use.
-            input: An `Input` object to be passed to the model's constructor.
+            dataset_id: An integer ID for the soil parameter dataset.
+            soil_type_array: A NumPy array of soil type IDs for each layer.
         
         Returns:
             An instance of a concrete `Soil` subclass.
@@ -131,7 +130,7 @@ class Soil(ABC):
         # return class or throw error
         try:
             # look up model class from dictionary
-            return SOIL_MODELS[key](input)
+            return SOIL_MODELS[key](dataset_id, soil_type_array)
         except KeyError as e:
             self.logger.error(e)
             raise
