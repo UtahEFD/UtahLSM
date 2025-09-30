@@ -28,8 +28,9 @@ from numpy.typing import NDArray
 from typing import Dict, List, Optional
 
 from ...data_models import (
-    GeneralConfig, NumericsConfig, TimeConfig, GridConfig, SurfaceConfig, SoilConfig, 
-    RadiationConfig, OutputConfig, SoilState, ForcingData, AtmosphericState
+    GeneralConfig, NumericsConfig, IterationsConfig, TolerancesConfig,
+    TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig, 
+    OutputConfig, SoilState, ForcingData, AtmosphericState
 )
 from utahlsm.util.io import logging_helper
 
@@ -74,7 +75,13 @@ class Input(object):
         init_data = self._load_initial_conditions(inputfile)
         
         self.general: GeneralConfig = GeneralConfig(**namelist_data["general"])
-        self.numerics: NumericsConfig = NumericsConfig(**namelist_data["numerics"])
+        iterations_data = namelist_data["numerics"]["iterations"]
+        tolerances_data = namelist_data["numerics"]["tolerances"]
+        self.numerics = NumericsConfig(
+            diffusion_back_weight=namelist_data["numerics"]["diffusion_back_weight"],
+            iterations=IterationsConfig(**iterations_data),
+            tolerances=TolerancesConfig(**tolerances_data)
+        )
         self.time: TimeConfig = TimeConfig(**namelist_data["time"])
         self.surface: SurfaceConfig = SurfaceConfig(**namelist_data["surface"])
         self.soil: SoilConfig = SoilConfig(**namelist_data["soil"])

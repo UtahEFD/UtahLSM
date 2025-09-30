@@ -208,6 +208,8 @@ metr.close()
 namelist = {}
 namelist['general'] = {}
 namelist['numerics'] = {}
+namelist['numerics']['iterations'] = {}
+namelist['numerics']['tolerances'] = {}
 namelist['time'] = {}
 namelist['grid'] = {}
 namelist['surface'] = {}
@@ -220,6 +222,13 @@ namelist['general']['log_level'] = "info"
 
 # numerics section
 namelist['numerics']['diffusion_back_weight'] = float(0.5)
+namelist['numerics']['iterations']['sfc_flux'] = 100
+namelist['numerics']['iterations']['seb_bracket'] = 100
+namelist['numerics']['iterations']['seb_root'] = 100
+namelist['numerics']['iterations']['smb_flux'] = 100
+namelist['numerics']['tolerances']['sfc_flux'] = 1e-3
+namelist['numerics']['tolerances']['seb_root'] = 1e-6
+namelist['numerics']['tolerances']['smb_flux'] = 1e-3
 
 # time section
 namelist['time']['step_seb']   = 1
@@ -240,9 +249,6 @@ namelist['surface']['z_s']                   = float(2.0)
 namelist['surface']['albedo']                = float(0.33)
 namelist['surface']['emissivity']            = float(0.99)
 namelist['surface']['model']                 = 1
-namelist['surface']['flux_iter_max']         = 200
-namelist['surface']['flux_criteria']         = float(0.1)
-namelist['surface']['temperature_reference'] = float(300)
 
 # soil section
 namelist['soil']['param'] = 3

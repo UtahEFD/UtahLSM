@@ -70,7 +70,7 @@ class SoilState:
     type: NDArray[np.int_] = field(default_factory=lambda: np.array([]))
 
 @dataclass
-class Fluxes:
+class SurfaceFluxes:
     """Holds all surface flux quantities.
     
     Attributes:
@@ -115,7 +115,7 @@ class SurfaceState:
     temperature: float = 0.0
     water_content: float = 0.0
     specific_humidity: float = 0.0
-    fluxes: Fluxes = field(default_factory=Fluxes)
+    fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
 
 @dataclass
@@ -127,8 +127,8 @@ class SolverState:
     clarifying the data flow within complex numerical schemes.
     
     Attributes:
-        Kmid: Thermal conductivity at the midpoint between the top
-            two soil layers [W/m/K].
+        conductivity_thermal_mid: Thermal conductivity at the midpoint between 
+            the top two soil layers [W/m/K].
     """
     conductivity_thermal_mid: float = 0.0
 
@@ -160,14 +160,52 @@ class GeneralConfig:
     log_level: str
 
 @dataclass(frozen=True)
+class IterationsConfig:
+    """Maximum iterations for looping procedures.
+    
+    Several fields require an iterative approach to solve. This 
+    dataclass sets a maximum number of iterations to reach convergence.
+    
+    Attributes:
+        sfc_flux: iterations to solve Obukhov length.
+        seb_bracket: iterations to find root brackets.
+        seb_root: iterations to find seb root.
+        smb_flux: iterations to solve soil moisture flux.
+    """
+    sfc_flux: float
+    seb_bracket: float
+    seb_root: float
+    smb_flux: float
+
+@dataclass(frozen=True)
+class TolerancesConfig:
+    """Convergence criteria for fields requiring an iterative solution.
+    
+    Several fields require an iterative approach to solve. This 
+    dataclass sets a tolerance nneded to achieve convergence.
+    
+    Attributes:
+        sfc_flux: tolerance for Obukhov length.
+        seb_root: tolerance for seb root.
+        smb_flux: tolerance for soil moisture flux.
+    """
+    sfc_flux: float
+    seb_root: float
+    smb_flux: float
+
+@dataclass(frozen=True)
 class NumericsConfig:
     """Numerical scheme parameters.
     
     Attributes:
         diffusion_back_weight: Backward weighting factor for the
             diffusion solver (0.5 for Crank-Nicolson).
+        iterations: a dataclass holding numerical iteration limits.
+        tolerances: a dataclass holding numerical convergence criteria.
     """
     diffusion_back_weight: float
+    iterations: IterationsConfig = field(default_factory=IterationsConfig)
+    tolerances: TolerancesConfig = field(default_factory=TolerancesConfig)
 
 @dataclass(frozen=True)
 class TimeConfig:
@@ -211,9 +249,6 @@ class SurfaceConfig:
         albedo: Surface albedo (dimensionless).
         emissivity: Surface emissivity (dimensionless).
         model: Integer ID for the surface layer model to use.
-        flux_iter_max: Maximum iterations for the surface flux calculation.
-        flux_criteria: Convergence criteria for the surface flux calculation.
-        temperature_reference: Reference temperature [K] for flux calculations.
     """
     z_o: float
     z_t: float
@@ -222,9 +257,6 @@ class SurfaceConfig:
     albedo: float
     emissivity: float
     model: int
-    flux_iter_max: int
-    flux_criteria: float
-    temperature_reference: float
 
 @dataclass(frozen=True)
 class SoilConfig:

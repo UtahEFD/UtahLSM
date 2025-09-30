@@ -203,9 +203,9 @@ class UtahLSM:
         seb_b  = self._compute_seb(temp_b)
         
         # Expand the bracket if the root is not contained within it
-        max_bracket_iter = 50
+        iter_max = self.input.numerics.iterations.seb_bracket
         iter_count = 0
-        while seb_a * seb_b > 0 and iter_count < max_bracket_iter:
+        while seb_a * seb_b > 0 and iter_count < iter_max:
             if abs(seb_a) < abs(seb_b):
                 temp_a -= 5.0
                 seb_a = self._compute_seb(temp_a)
@@ -214,13 +214,15 @@ class UtahLSM:
                 seb_b = self._compute_seb(temp_b)
             iter_count += 1
         
-        if iter_count >= max_bracket_iter:
+        if iter_count >= iter_max:
             self.logger.error("Failed to find a valid bracket for _solve_seb.")
             raise SystemExit(1)
         
         # Find the root (surface temperature)
         try:
-            temp_root, converged = solvers.root_brent(self._compute_seb, temp_a, temp_b)
+            iter_max = self.input.numerics.iterations.seb_root
+            tolerance = self.input.numerics.tolerances.seb_root
+            temp_root, converged = solvers.root_brent(self._compute_seb, temp_a, temp_b, iter_max, tolerance)
             if not converged:
                 self.logger.warning("SEB root-finder did not converge.")
             self.sfc_state.temperature = temp_root
@@ -255,9 +257,9 @@ class UtahLSM:
         # Local constants and variables
         RHO_W = c.water.DENSITY
         RHO_A = c.air.DENSITY
-        max_iter_flux = 200
+        iter_max = self.input.numerics.iterations.smb_flux
         delta = 0.5
-        flux_criteria = 0.001
+        tol = self.input.numerics.tolerances.smb_flux
         
         psi_all = self.soil.water_potential(self.soil_state.moisture)
         D_all = self.soil.diffusivity_moisture(self.soil_state.moisture)
@@ -273,7 +275,7 @@ class UtahLSM:
         E = RHO_A*self.sfc_state.fluxes.kinematic_moisture[0]
         
         # Iteratively solve for moisture flux
-        for _ in range(0,max_iter_flux):
+        for _ in range(0,iter_max):
             flux_sm_last = flux_sm
             flux_sm = delta*flux_sm_last - (1.0-delta)*E
                 
@@ -290,7 +292,7 @@ class UtahLSM:
             K0 = self.soil.conductivity_moisture(self.sfc_state.moisture,level=0)
             K_mid = 0.5*(K0+K1)
             
-            if abs((E + flux_sm) / E) <= flux_criteria:
+            if abs((E + flux_sm) / E) <= tol:
                 break
 
     def _compute_fluxes(self, sfc_T: float, sfc_q: float):
@@ -311,8 +313,8 @@ class UtahLSM:
         CP = c.thermodynamic.SPECIFIC_HEAT
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
         converged = False
-        iter_max = self.input.surface.flux_iter_max
-        criteria = self.input.surface.flux_criteria
+        iter_max = self.input.numerics.iterations.sfc_flux
+        tol = self.input.numerics.tolerances.sfc_flux
         ref_T = self.atm_state.temperature
         
         # Compute surface-air specific humidity
@@ -345,7 +347,7 @@ class UtahLSM:
                 self.sfc_state.turbulence.obukhov_length[0] = -self.input.surface.z_m/5.0
             
             # Check for convergence
-            if abs(last_L - self.sfc_state.turbulence.obukhov_length[0]) <= criteria:
+            if abs(last_L - self.sfc_state.turbulence.obukhov_length[0]) <= tol:
                 self.sfc_state.fluxes.sensible_heat[0] = RHO*CP*self.sfc_state.fluxes.kinematic_heat[0]
                 self.sfc_state.fluxes.latent_heat[0] = RHO*LV*self.sfc_state.fluxes.kinematic_moisture[0]
                 converged = True

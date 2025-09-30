@@ -65,7 +65,7 @@ def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> n
         
     return u
 
-def root_brent(f, a, b, tol=1e-6, max_iter=100) -> float:
+def root_brent(f, a, b, iter_max=100, tol=1e-6) -> float:
     """Finds the root of a function using Brent's method.
     
     This is a robust and fast root-finding algorithm that combines bisection,
@@ -76,8 +76,8 @@ def root_brent(f, a, b, tol=1e-6, max_iter=100) -> float:
         f: The function for which to find a root, f(x) = 0.
         a: The lower bound of the bracket [a, b].
         b: The upper bound of the bracket [a, b].
+        iter_max: The maximum number of iterations. Defaults to 100.
         tol: The desired tolerance for the root. Defaults to 1e-6.
-        max_iter: The maximum number of iterations. Defaults to 100.
     
     Returns:
         A tuple containing:
@@ -101,7 +101,7 @@ def root_brent(f, a, b, tol=1e-6, max_iter=100) -> float:
     c, fc = a, fa  # c is the previous best approximation
     mflag = True   # mflag is true if the last step was a bisection
     
-    for i in range(max_iter):
+    for i in range(iter_max):
         # Check for convergence: if the bracket is smaller than the tolerance
         if abs(b - a) < tol:
             return b

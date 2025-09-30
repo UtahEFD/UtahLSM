@@ -14,9 +14,28 @@
         "numerics": {
             "type": "object",
             "properties": {
-                "diffusion_back_weight": { "type": "number",  "minimum": 0, "maximum": 1}
+                "diffusion_back_weight": { "type": "number",  "minimum": 0, "maximum": 1},
+                "iterations": {
+                    "type": "object",
+                    "properties": {
+                        "sfc_flux": { "type": "number", "minimum": 1 },
+                        "seb_bracket": { "type": "number", "minimum": 1 },
+                        "seb_root": { "type": "number", "minimum": 1 },
+                        "smb_flux": { "type": "number", "minimum": 1 }
+                    },
+                    "required": ["sfc_flux", "seb_bracket", "seb_root", "smb_flux"]
+                },
+                "tolerances": {
+                    "type": "object",
+                    "properties": {
+                        "sfc_flux": { "type": "number" },
+                        "seb_root": { "type": "number" },
+                        "smb_flux": { "type": "number" }
+                    },
+                    "required": ["sfc_flux", "seb_root", "smb_flux"]
+                }
             },
-            "required": ["diffusion_back_weight"]
+            "required": ["diffusion_back_weight", "iterations", "tolerances"]
         },
         "time": {
             "type": "object",
@@ -46,10 +65,7 @@
                 "z_s": { "type": "number", "minimum": 0 },
                 "albedo": { "type": "number", "minimum": 0, "maximum": 1 },
                 "emissivity": { "type": "number", "minimum": 0, "maximum": 1 },
-                "model": { "type": "integer", "enum": [1] },
-                "flux_iter_max": { "type": "integer", "minimum": 1, "maximum": 200 },
-                "flux_criteria": { "type": "number", "minimum": 0.001 },
-                "temperature_reference": { "type": "number", "minimum": 260}
+                "model": { "type": "integer", "enum": [1] }
                 
             },
             "required": ["z_o", "z_t", "z_m", "z_s", "albedo", "emissivity", "model"]
