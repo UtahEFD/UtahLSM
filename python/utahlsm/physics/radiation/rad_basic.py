@@ -18,7 +18,7 @@ methods for calculating incoming and outgoing shortwave and longwave radiation
 based on fundamental physical principles and empirical relationships.
 """
 import numpy as np
-from data_models import AtmosphericState, SurfaceState
+from ...data_models import AtmosphericState, SurfaceState
 from .radiation import Radiation
 from ...util import constants as c
 from ...util.io import logging_helper

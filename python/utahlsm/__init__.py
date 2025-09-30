@@ -23,8 +23,8 @@ for various physics parameterizations for the surface, soil, and radiation.
 
 Main Features:
     - Modular physics components for easy extension and testing.
-    - Support for different soil, radiation, and surface layer schemes.
-    - NetCDF input/output for compatibility with standard atmospheric data formats.
+    - Support for different soil, radiation, and surface-layer schemes.
+    - NetCDF input/output for compatibility with standard data formats.
 """
 
 # --- Top-Level Imports ---

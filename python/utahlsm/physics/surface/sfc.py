@@ -20,7 +20,12 @@ necessary stability functions, and a factory function (`get_model`) for
 creating instances of those models.
 """
 from abc import ABC, abstractmethod
+from typing import TypeVar
+from ...exceptions import NamelistError
 from ...util.io import logging_helper
+
+ST = TypeVar('ST', bound='Surface')
+logger = logging_helper.get_logger("SFC")
 
 class Surface(ABC):
     """Abstract base class for surface layer models.
@@ -37,7 +42,7 @@ class Surface(ABC):
         self.logger =  logging_helper.get_logger("SFC")
    
     @staticmethod
-    def get_model(key):
+    def get_model(key)->ST:
         """Factory method to select and instantiate a surface layer model.
         
         Args:
@@ -53,22 +58,22 @@ class Surface(ABC):
         from .sfc_most import SurfaceMOST
        
         # dictionary to map keys to classes
-        SFC_MODELS = {
+        sfc_models = {
             1: SurfaceMOST,
         }
        
         # return class or throw error
         try:
-            # look up model class from dictionary
-            return SFC_MODELS[key]()
+            return sfc_models[key]()
         except KeyError as e:
-            self.logger.error("x"*62)
-            self.logger.error(f"Namelist Error: {e} is an invalid surface model.")
-            self.logger.error(f"Valid options are:")
-            for k,v in SFC_MODELS.items():
-                self.logger.error(f"\t{k} ({v.__name__})")
-            self.logger.error("x"*62)
-            raise SystemExit(1)
+            error_msg = f"{key} is an invalid surface model."
+            logger.error("x"*62)
+            logger.error(f"Namelist Error: {error_msg}")
+            logger.error(f"Valid options are:")
+            for k,v in sfc_models.items():
+                logger.error(f"\t{k} ({v.__name__})")
+            logger.error("x"*62)
+            raise NamelistError(error_msg)
    
     #--- Abstract methods ---   
     @abstractmethod

@@ -26,6 +26,7 @@ import logging
 import numpy as np
 
 from .data_models import AtmosphericState, SurfaceState, SolverState
+from .exceptions import NamelistError, UtahLSMError
 from .physics import Radiation, Soil, Surface
 from .util import constants as c, solvers
 from .util.io import Input, Output, logging_helper
@@ -41,7 +42,7 @@ class UtahLSM:
     Attributes:
         input: An instance of the Input class containing all configuration.
         output: An instance of the Output class for writing simulation results.
-        soil_state: The current state of the soil column (temperature and moisture).
+        soil_state: The current state of the soil column (temperature/moisture).
         sfc_state: The current state of the surface diagnostics (fluxes, etc.).
         atm_state: The current near-surface atmospheric forcing conditions.
         solver_state: Intermediate variables for the numerical solvers.
@@ -64,38 +65,46 @@ class UtahLSM:
         self.input  = input_lsm
         self.output = output_lsm
         
-        # Make a mutable copy of the initial soil state
-        self.soil_state  = replace(self.input.initial)
+        #--- Set Initial States ---
+        try:
+            self.tstep: float = 0
+            self.soil_state  = replace(self.input.initial)
+            self.sfc_state = SurfaceState()
+            self.atm_state: AtmosphericState = AtmosphericState()
+            self.solver_state: SolverState = SolverState()
+        except Exception as e:
+            raise
         
-        # Initialize physics modules based on user configuration
-        if self.input.radiation.model:            
-            self.rad = Radiation.get_model(
-                self.input.radiation.model,
-                self.input.radiation.latitude,
-                self.input.radiation.longitude,
-                self.input.surface.albedo,
-                self.input.surface.emissivity
-            )
-        else:
-            self.logger.info("Using radiation forcing data")
-        self.soil = Soil.get_model(
-            self.input.soil.model, 
-            self.input.soil.param, 
-            self.input.initial.type
-        )
-        self.sfc = Surface.get_model(self.input.surface.model) 
-        
-        ## Initialize state containers
-        self.sfc_state = SurfaceState()
-        self.atm_state: AtmosphericState = AtmosphericState()
-        self.solver_state: SolverState = SolverState()
-        self.tstep: float = 0
+        #--- Set Physical Models ---
+        try:
+            if self.input.radiation.model:        
+                self.rad = Radiation.get_model(
+                    self.input.radiation.model,
+                    self.input.radiation.latitude,
+                    self.input.radiation.longitude,
+                    self.input.surface.albedo,
+                    self.input.surface.emissivity
+                )
+            else:
+                self.logger.info("Using radiation forcing data")
+            
+            self.soil = Soil.get_model(
+                self.input.soil.model, 
+                self.input.soil.param, 
+                self.input.initial.type
+                )
+            
+            self.sfc = Surface.get_model(self.input.surface.model)
+        except NamelistError as e:
+            self.logger.error(f"Failed to initialize physics: {e}")
+            raise 
 
         # Configure and write initial output
         self._setup_output()
         
     def update(self, dt: float, runtime: float, atm_state: AtmosphericState):
-        """Updates the model with new atmospheric forcing data for the current step.
+        """Updates the model with new atmospheric forcing data for the current 
+            step.
         
         Args:
             dt: The time step duration [s].
@@ -147,7 +156,8 @@ class UtahLSM:
             self._solve_smb()
         else:
             # just return new fluxes
-            self._compute_fluxes(self.soil_state.temperature[0],self.soil_state.moisture[0])
+            self._compute_fluxes(self.soil_state.temperature[0],
+                                 self.soil_state.moisture[0])
         
         # Solve diffusion equations at the specified frequency
         if (step_count % self.input.time.step_dif)==0:
@@ -163,6 +173,8 @@ class UtahLSM:
         """
         self.logger.info(f"Saving data to file\n{'-'*19}")
         self.output.save(self.output_fields,step_count,runtime)
+    
+    # --- 
     
     def _setup_output(self):
         """Sets up the output file dimensions and fields."""
@@ -186,11 +198,11 @@ class UtahLSM:
         self.output.save(self.output_fields, 0, 0, initial=True)
     
     def _solve_seb(self):
-        """Solves the Surface Energy Budget (SEB) to find the surface temperature.
+        """Solves the Surface Energy Budget (SEB) to find surface temperature.
         
-        This function first establishes a valid temperature bracket [a, b] where the
-        SEB function changes sign, then uses a robust root-finding algorithm
-        (solvers.root_brent) to find the precise temperature.
+        This function first establishes a valid temperature bracket [a, b] 
+        where the SEB function changes sign, then uses a robust root-finding 
+        algorithm (solvers.root_brent) to find the precise temperature.
         """
         # Calculate thermal conductivity for the entire soil column
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
@@ -222,19 +234,22 @@ class UtahLSM:
         try:
             iter_max = self.input.numerics.iterations.seb_root
             tolerance = self.input.numerics.tolerances.seb_root
-            temp_root, converged = solvers.root_brent(self._compute_seb, temp_a, temp_b, iter_max, tolerance)
+            temp, converged = solvers.root_brent(self._compute_seb, temp_a, 
+                                                 temp_b, iter_max, tolerance)
             if not converged:
                 self.logger.warning("SEB root-finder did not converge.")
-            self.sfc_state.temperature = temp_root
-            self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
+            self.sfc_state.temperature = temp
+            self._compute_fluxes(self.sfc_state.temperature, 
+                                 self.sfc_state.moisture)
             self.logger.debug(f"SEB converged to T_sfc = {self.sfc_state.temperature:.3f} K")
         except Exception as e:
-            self.logger.error(f"An exception occurred during SEB root finding: {e}")
-            raise SystemExit(1)
+            self.logger.error(f"Error during SEB root finding: {e}")
+            raise
 
     # Compute the surface energy budget
     def _compute_seb(self, sfc_T: float) -> float:
-        """Computes the surface energy budget residual for a given surface temperature.
+        """Computes the surface energy budget residual for a given surface 
+            temperature.
         
         Args:
             sfc_T: The surface temperature [K] to test.

@@ -25,10 +25,14 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
 import numpy as np
 from numpy.typing import NDArray
-from typing import Union
+from typing import TypeVar, Union
 from .soil_type import SoilType
+from ...exceptions import NamelistError
 from ...util import constants as c
 from ...util.io import logging_helper
+
+ST = TypeVar('ST', bound='Soil')
+logger = logging_helper.get_logger("SOIL")
 
 @dataclass
 class SoilProperties:
@@ -79,12 +83,12 @@ class Soil(ABC):
         """
         self.logger = logging_helper.get_logger("SOIL")
         
-        DATASET_NAMES = {
+        dataset_names = {
             1: "Clapp/Hornberger",
             2: "Cosby et al",
             3: "Rawls/Brakensiek"
         }
-        self.logger.info(f"Using the {DATASET_NAMES[dataset_id]} dataset")
+        self.logger.info(f"Using the {dataset_names[dataset_id]} dataset")
         
         # Create temporary lists to hold properties for each layer
         prop_lists = {f.name: [] for f in fields(SoilProperties)}
@@ -101,7 +105,8 @@ class Soil(ABC):
         )
     
     @staticmethod
-    def get_model(key: int, dataset_id: int, soil_type_array: NDArray[np.int_]):
+    def get_model(key: int, dataset_id: int, 
+                  soil_type_array: NDArray[np.int_])->ST:
         """Factory method to select and instantiate a soil model.
         
         Args:
@@ -121,7 +126,7 @@ class Soil(ABC):
         from .soil_vangenuchten import VanGenuchten
         
         # dictionary to map keys to classes
-        SOIL_MODELS = {
+        soil_models = {
             1: BrooksCorey,
             2: Campbell,
             3: VanGenuchten,
@@ -130,10 +135,16 @@ class Soil(ABC):
         # return class or throw error
         try:
             # look up model class from dictionary
-            return SOIL_MODELS[key](dataset_id, soil_type_array)
+            return soil_models[key](dataset_id, soil_type_array)
         except KeyError as e:
-            self.logger.error(e)
-            raise
+            error_msg = f"{key} is an invalid soil model."
+            logger.error("x"*62)
+            logger.error(f"Namelist Error: {error_msg}")
+            logger.error(f"Valid options are:")
+            for k,v in soil_models.items():
+                logger.error(f"\t{k} ({v.__name__})")
+            logger.error("x"*62)
+            raise NamelistError(error_msg)
     
     #--- Abstract Methods ---
     

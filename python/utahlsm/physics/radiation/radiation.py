@@ -20,8 +20,13 @@ methods, and a factory function (`get_model`) for creating instances of those
 models.
 """
 from abc import ABC, abstractmethod
+from typing import TypeVar
 from ...data_models import AtmosphericState, SurfaceState
+from ...exceptions import NamelistError
 from ...util.io import logging_helper
+
+RT = TypeVar('RT', bound='Radiation')
+logger = logging_helper.get_logger("RAD")
 
 class Radiation(ABC):
     """Abstract base class for radiation models.
@@ -37,7 +42,8 @@ class Radiation(ABC):
         albedo: The surface albedo (dimensionless).
         emissivity: The surface emissivity (dimensionless).
     """
-    def __init__(self, latitude: float, longitude: float, albedo: float, emissivity: float):
+    def __init__(self, latitude: float, longitude: float, albedo: float, 
+                 emissivity: float):
         """Initializes the Radiation base class.
         
         Args:
@@ -51,9 +57,10 @@ class Radiation(ABC):
         self.longitude = longitude
         self.albedo = albedo
         self.emissivity = emissivity
-        
+            
     @staticmethod
-    def get_model(key: int, latitude: float, longitude: float, albedo: float, emissivity: float):
+    def get_model(key: int, latitude: float, longitude: float, albedo: float, 
+                  emissivity: float)->RT:
         """Factory method to select and instantiate a radiation model.
         
         Based on the integer key provided in the namelist, this method imports
@@ -70,32 +77,34 @@ class Radiation(ABC):
             An instance of a concrete `Radiation` subclass.
         
         Raises:
-            SystemExit: If the provided `key` is not a valid model ID.
+            NamelistError: If the provided `key` is not a valid model ID.
         """
         # import radiation sub-classes
         from .rad_basic import RadBasic
         
         # dictionary to map keys to classes
-        RAD_MODELS = {
+        rad_models: dict = {
             1: RadBasic,
         }
             
         # return class or throw error
         try:
-            # look up model class from dictionary
-            return RAD_MODELS[key](latitude, longitude, albedo, emissivity)
-        except KeyError as e:
-            self.logger.error("x"*62)
-            self.logger.error(f"Namelist Error: {key} is an invalid radiation model.")
-            self.logger.error(f"Valid options are:")
-            for k,v in RAD_MODELS.items():
-                self.logger.error(f"\t{k} ({v.__name__})")
-            self.logger.error("x"*62)
-            raise SystemExit(1)
+            return rad_models[key](latitude, longitude, albedo, emissivity)
+        except KeyError:
+            error_msg = f"{key} is an invalid radiation model."
+            logger.error("x"*62)
+            logger.error(f"Namelist Error: {error_msg}")
+            logger.error(f"Valid options are:")
+            for k,v in rad_models.items():
+                logger.error(f"\t{k} ({v.__name__})")
+            logger.error("x"*62)
+            raise NamelistError(error_msg)
     
     # Abstract methods ---
     @abstractmethod
-    def compute_net(self, julian_day: int, utc: float, atm_state: AtmosphericState, sfc_state: SurfaceState) -> float:
+    def compute_net(self, julian_day: int, utc: float, 
+                    atm_state: AtmosphericState, 
+                    sfc_state: SurfaceState) -> float:
         """Computes the net radiation at the surface.
         
         This is an abstract method that must be implemented by any concrete

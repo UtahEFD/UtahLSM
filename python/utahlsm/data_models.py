@@ -58,7 +58,7 @@ class SoilState:
     """Holds the prognostic state of the soil column.
     
     This class represents the vertical profile of temperature and moisture
-    within the soil, which is evolved over time by the model's diffusion solvers.
+    within the soil, which evolves over time by the model's diffusion solvers.
     
     Attributes:
         temperature: Soil temperature profile [K].

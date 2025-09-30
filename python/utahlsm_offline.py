@@ -25,9 +25,11 @@ To run an offline simulation, provide the case name via the command line:
 import argparse
 import time
 import utahlsm
+from utahlsm.exceptions import UtahLSMError
 
 def main():
     """Parses arguments, runs the simulation, and prints timing information."""
+    
     # Start a timer for the simulation
     t1 = time.time()
 
@@ -42,8 +44,8 @@ def main():
     outf = args.outfile
 
     # Define file paths based on the case name
-    namelist    = f'../cases/{case}/lsm_namelist.json'
-    initfile    = f'../cases/{case}/lsm_init.nc'
+    namelist = f'../cases/{case}/lsm_namelist.json'
+    initfile = f'../cases/{case}/lsm_init.nc'
     offlinefile = f'../cases/{case}/lsm_offline.nc'
 
     # Display a welcome message
@@ -55,34 +57,39 @@ def main():
     print("#                                                            #")
     print("##############################################################")
 
-    # Create Input and Output instances
     try:
+        # Create input and output objects
         input_lsm = utahlsm.Input(namelist, initfile, offlinefile)
         if not outf:
             outf = f'lsm_{case}_py.nc'
         output_lsm = utahlsm.Output(outf)
-    except Exception as e:
-        print(f"Error during initialization: {e}")
+        
+        # Create the main LSM object
+        lsm = utahlsm.UtahLSM(input_lsm, output_lsm)
+        
+        # --- Main Time-Stepping Loop ---
+        runtime = 0
+        tstep = input_lsm.forcing.tstep
+        for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
+            runtime += tstep
+            
+            # Update the model with the latest atmospheric forcing
+            lsm.update(tstep, runtime, atm_state)
+            
+            # Run the core physics solvers
+            lsm.run(step_count, runtime)
+            
+            # Save the output for the current time step
+            lsm.save(step_count, runtime)
+    except (UtahLSMError) as e:
+        print(f"\nAn error occurred: {e} Check namelist settings.")
+        print("UtahLSM simulation failed.")
         raise SystemExit(1)
-
-    # Create the main LSM object
-    lsm = utahlsm.UtahLSM(input_lsm, output_lsm)
-
-    # --- Main Time-Stepping Loop ---
-    runtime = 0
-    tstep   = input_lsm.forcing.tstep
-    for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
-        runtime += tstep
-
-        # Update the model with the latest atmospheric forcing
-        lsm.update(tstep, runtime, atm_state)
-
-        # Run the core physics solvers
-        lsm.run(step_count, runtime)
-
-        # Save the output for the current time step
-        lsm.save(step_count, runtime)
-
+    except (FileNotFoundError, Exception) as e:
+        print(f"\nAn error occurred: {e}")
+        print("UtahLSM simulation failed.")
+        raise SystemExit(1)
+    
     # Calculate and print the total runtime
     t2 = time.time()
     tt = t2 - t1
