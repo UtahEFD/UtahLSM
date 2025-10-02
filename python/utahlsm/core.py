@@ -65,43 +65,12 @@ class UtahLSM:
         self.input  = input_lsm
         self.output = output_lsm
         
-        #--- Set Initial States ---
-        try:
-            self.tstep: float = 0
-            self.soil_state  = replace(self.input.initial)
-            self.sfc_state = SurfaceState()
-            self.atm_state: AtmosphericState = AtmosphericState()
-            self.solver_state: SolverState = SolverState()
-        except Exception as e:
-            raise
-        
-        #--- Set Physical Models ---
-        try:
-            if self.input.radiation.model:        
-                self.rad = Radiation.get_model(
-                    self.input.radiation.model,
-                    self.input.radiation.latitude,
-                    self.input.radiation.longitude,
-                    self.input.surface.albedo,
-                    self.input.surface.emissivity
-                )
-            else:
-                self.logger.info("Using radiation forcing data")
-            
-            self.soil = Soil.get_model(
-                self.input.soil.model, 
-                self.input.soil.param, 
-                self.input.initial.type
-                )
-            
-            self.sfc = Surface.get_model(self.input.surface.model)
-        except NamelistError as e:
-            self.logger.error(f"Failed to initialize physics: {e}")
-            raise 
-
-        # Configure and write initial output
+        self._setup_states()
+        self._setup_physics()
         self._setup_output()
-        
+    
+    #--- Public Methods ---
+    
     def update(self, dt: float, runtime: float, atm_state: AtmosphericState):
         """Updates the model with new atmospheric forcing data for the current 
             step.
@@ -174,7 +143,43 @@ class UtahLSM:
         self.logger.info(f"Saving data to file\n{'-'*19}")
         self.output.save(self.output_fields,step_count,runtime)
     
-    # --- 
+    # --- Internal Methods ---
+    
+    def _setup_states(self):
+        """Initializes all state containers for the model."""
+        self.logger.info("Setting up initial states")
+        try:
+            self.tstep: float = 0
+            self.soil_state: SoilState  = replace(self.input.initial)
+            self.sfc_state: SurfaceState = SurfaceState()
+            self.atm_state: AtmosphericState = AtmosphericState()
+            self.solver_state: SolverState = SolverState()
+        except:
+            raise
+    
+    def _setup_physics(self):
+        """Initializes the physics modules based on user configuration."""
+        self.logger.info("Initializing physics modules")
+        try:
+            if self.input.radiation.model:        
+                self.rad: Radiation = Radiation.get_model(
+                    self.input.radiation.model,
+                    self.input.radiation.latitude,
+                    self.input.radiation.longitude,
+                    self.input.surface.albedo,
+                    self.input.surface.emissivity
+                )
+            else:
+                self.logger.info("Using radiation forcing data")
+            self.soil: Soil = Soil.get_model(
+                self.input.soil.model, 
+                self.input.soil.param, 
+                self.input.initial.type
+            )
+            self.sfc: Surface = Surface.get_model(self.input.surface.model)
+        except NamelistError as e:
+            self.logger.error(f"Failed to initialize physics modules: {e}.")
+            raise 
     
     def _setup_output(self):
         """Sets up the output file dimensions and fields."""

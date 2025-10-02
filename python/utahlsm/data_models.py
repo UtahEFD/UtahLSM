@@ -172,10 +172,10 @@ class IterationsConfig:
         seb_root: iterations to find seb root.
         smb_flux: iterations to solve soil moisture flux.
     """
-    sfc_flux: float
-    seb_bracket: float
-    seb_root: float
-    smb_flux: float
+    sfc_flux: int
+    seb_bracket: int
+    seb_root: int
+    smb_flux: int
 
 @dataclass(frozen=True)
 class TolerancesConfig:
@@ -204,8 +204,8 @@ class NumericsConfig:
         tolerances: a dataclass holding numerical convergence criteria.
     """
     diffusion_back_weight: float
-    iterations: IterationsConfig = field(default_factory=IterationsConfig)
-    tolerances: TolerancesConfig = field(default_factory=TolerancesConfig)
+    iterations: IterationsConfig
+    tolerances: TolerancesConfig
 
 @dataclass(frozen=True)
 class TimeConfig:

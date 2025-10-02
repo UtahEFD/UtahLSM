@@ -18,10 +18,10 @@
                 "iterations": {
                     "type": "object",
                     "properties": {
-                        "sfc_flux": { "type": "number", "minimum": 1 },
-                        "seb_bracket": { "type": "number", "minimum": 1 },
-                        "seb_root": { "type": "number", "minimum": 1 },
-                        "smb_flux": { "type": "number", "minimum": 1 }
+                        "sfc_flux": { "type": "integer", "minimum": 1 },
+                        "seb_bracket": { "type": "integer", "minimum": 1 },
+                        "seb_root": { "type": "integer", "minimum": 1 },
+                        "smb_flux": { "type": "integer", "minimum": 1 }
                     },
                     "required": ["sfc_flux", "seb_bracket", "seb_root", "smb_flux"]
                 },
