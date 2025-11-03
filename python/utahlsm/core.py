@@ -92,7 +92,7 @@ class UtahLSM:
         qa = self.soil.surface_mixing_ratio(Ts, qs, self.atm_state.pressure)
         self.sfc_state.temperature = Ts
         self.sfc_state.moisture = qs
-        self.sfc_state.qa = qa
+        self.sfc_state.specific_humidity = qa
         
         # Run radiation model if configured
         if self.input.radiation.model:
