@@ -30,6 +30,11 @@ class _Thermodynamic:
     LATENT_HEAT_VAPORIZATION: float = 2.45e6 # Latent heat of vaporization [J/kg]
 
 @dataclass(frozen=True)
+class _Numerical:
+    """Groups constants for numerical stability and methods."""
+    EPSILON: float = 1e-9 # Small constant to prevent division by zero
+
+@dataclass(frozen=True)
 class _Physical:
     """Groups fundamental physical constants."""
     VON_KARMAN: float = 0.41            # Von Karman constant []
@@ -54,3 +59,4 @@ air: _Air = _Air()
 physical: _Physical = _Physical()
 thermodynamic: _Thermodynamic = _Thermodynamic()
 water: _Water = _Water()
+numerical: _Numerical = _Numerical()

@@ -46,7 +46,11 @@ class SurfaceMOST(Surface):
         Returns:
             The value of phi_m.
         """
-        zeta = 0 if obukL==0 else z/obukL
+        obukL_min = 0.1
+        obukL_mag = max(abs(obukL), obukL_min)
+        obukL_cap = np.copysign(obukL_mag, obukL)
+        
+        zeta = z / (obukL_cap)
         return self.phim_stable(zeta) if zeta >= 0 else self.phim_unstable(zeta)
     
     def phim_stable(self,zeta: float) -> float:
@@ -67,7 +71,11 @@ class SurfaceMOST(Surface):
         Returns:
             The value of phi_h.
         """
-        zeta = 0 if obukL==0 else z/obukL
+        obukL_min = 0.1
+        obukL_mag = max(abs(obukL), obukL_min)
+        obukL_cap = np.copysign(obukL_mag, obukL)
+        
+        zeta = z / (obukL_cap)
         return self.phih_stable(zeta) if zeta >= 0 else self.phih_unstable(zeta)
         
     def phih_stable(self,zeta: float) -> float:
@@ -88,7 +96,11 @@ class SurfaceMOST(Surface):
         Returns:
             The value of psi_m.
         """
-        zeta = 0 if obukL==0 else z/obukL
+        obukL_min = 0.1
+        obukL_mag = max(abs(obukL), obukL_min)
+        obukL_cap = np.copysign(obukL_mag, obukL)
+        
+        zeta = z / (obukL_cap)
         return self.psim_stable(zeta) if zeta >= 0 else self.psim_unstable(zeta)
     
     def psim_stable(self,zeta: float) -> float:
@@ -111,7 +123,11 @@ class SurfaceMOST(Surface):
         Returns:
             The value of psi_h.
         """
-        zeta = 0 if obukL==0 else z/obukL
+        obukL_min = 0.1
+        obukL_mag = max(abs(obukL), obukL_min)
+        obukL_cap = np.copysign(obukL_mag, obukL)
+        
+        zeta = z / (obukL_cap)
         return self.psih_stable(zeta) if zeta >= 0 else self.psih_unstable(zeta)
         
     def psih_stable(self,zeta: float) -> float:
