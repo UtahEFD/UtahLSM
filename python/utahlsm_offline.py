@@ -22,31 +22,32 @@ LSM, and executes the main time-stepping loop.
 To run an offline simulation, provide the case name via the command line:
     $ python utahlsm_offline.py -c my_case_name
 """
+from typing import Optional
 import argparse
 import time
 import utahlsm
 from utahlsm.exceptions import UtahLSMError
 
-def main():
+def main() -> None:
     """Parses arguments, runs the simulation, and prints timing information."""
     
     # Start a timer for the simulation
-    t1 = time.time()
+    t1: float = time.time()
 
     # Set up command-line argument parsing
-    parser = argparse.ArgumentParser(description="Run a case with UtahLSM")
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Run a case with UtahLSM")
     parser.add_argument("-c", "--case", dest='case', required=True,
                         action='store', type=str, help="Case name")
     parser.add_argument("-o", "--output", dest='outfile',
                         action='store', type=str, help="Output file name")
-    args = parser.parse_args()
-    case = args.case
-    outf = args.outfile
+    args: argparse.Namespace = parser.parse_args()
+    case: str = args.case
+    outf: Optional[str] = args.outfile
 
     # Define file paths based on the case name
-    namelist = f'../cases/{case}/lsm_namelist.json'
-    initfile = f'../cases/{case}/lsm_init.nc'
-    offlinefile = f'../cases/{case}/lsm_offline.nc'
+    namelist: str = f'../cases/{case}/lsm_namelist.json'
+    initfile: str = f'../cases/{case}/lsm_init.nc'
+    offlinefile: str = f'../cases/{case}/lsm_offline.nc'
 
     # Display a welcome message
     print("##############################################################")
@@ -59,17 +60,17 @@ def main():
 
     try:
         # Create input and output objects
-        input_lsm = utahlsm.Input(namelist, initfile, offlinefile)
+        input_lsm: utahlsm.Input = utahlsm.Input(namelist, initfile, offlinefile)
         if not outf:
             outf = f'lsm_{case}_py.nc'
-        output_lsm = utahlsm.Output(outf)
-        
+        output_lsm: utahlsm.Output = utahlsm.Output(outf)
+
         # Create the main LSM object
-        lsm = utahlsm.UtahLSM(input_lsm, output_lsm)
-        
+        lsm: utahlsm.UtahLSM = utahlsm.UtahLSM(input_lsm, output_lsm)
+
         # --- Main Time-Stepping Loop ---
-        runtime = 0
-        tstep = input_lsm.forcing.tstep
+        runtime: float = 0
+        tstep: float = input_lsm.forcing.tstep
         for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
             runtime += tstep
             
@@ -91,8 +92,8 @@ def main():
         raise SystemExit(1)
     
     # Calculate and print the total runtime
-    t2 = time.time()
-    tt = t2 - t1
+    t2: float = time.time()
+    tt: float = t2 - t1
     print(f"Done! Completed in {tt:0.4f} seconds")
     print("##############################################################")
 

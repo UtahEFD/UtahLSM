@@ -17,6 +17,7 @@ This module provides an implementation of the Soil abstract base class using
 the hydraulic relationships described by van Genuchten (1980). This is a
 widely used, flexible model for describing the soil water retention curve.
 """
+import logging
 import numpy as np
 from numpy.typing import NDArray
 from typing import Union
@@ -37,7 +38,7 @@ class VanGenuchten(Soil):
             dataset_id: An integer ID for the soil parameter dataset to use.
             soil_type_array: A NumPy array of soil type IDs for each layer.
         """
-        self.logger = logging_helper.get_logger("SOIL")
+        self.logger: logging.Logger = logging_helper.get_logger("SOIL")
         self.logger.info("Using the Van Genuchten model")
         super().__init__(dataset_id, soil_type_array)
         

@@ -17,6 +17,7 @@ This module provides a simple, clear-sky radiation parameterization. It includes
 methods for calculating incoming and outgoing shortwave and longwave radiation
 based on fundamental physical principles and empirical relationships.
 """
+import logging
 import numpy as np
 from ...data_models import AtmosphericState, SurfaceState
 from .radiation import Radiation
@@ -39,24 +40,30 @@ class RadBasic(Radiation):
             albedo: The surface albedo (dimensionless).
             emissivity: The surface emissivity (dimensionless).
         """
-        self.logger = logging_helper.get_logger("RAD: Basic")
+        self.logger: logging.Logger = logging_helper.get_logger("RAD: Basic")
         self.logger.info("Using the basic model")
         super().__init__(latitude, longitude, albedo, emissivity)
         
     
-    def compute_net(self, julian_day: int, time_utc: int, atm_state: AtmosphericState, sfc_state: SurfaceState):
+    def compute_net(
+        self,
+        julian_day: int,
+        time_utc: int,
+        atm_state: AtmosphericState,
+        sfc_state: SurfaceState
+    ) -> float:
         """Computes the surface net radiation.
-        
+
         This method calculates the four components of the radiation budget
         (incoming/outgoing shortwave and longwave radiation) and sums them
         to find the net radiation at the surface.
-        
+
         Args:
             julian_day: The current Julian day of the year.
             time_utc: The current time in UTC seconds from midnight.
             atm_state: The current state of the atmosphere.
             sfc_state: The current state of the surface.
-        
+
         Returns:
             The net radiation in W/m^2.
         """
@@ -67,13 +74,13 @@ class RadBasic(Radiation):
         
         return sw_in - sw_out + lw_in - lw_out
     
-    def _shortwave_in(self, julian_day, time_utc):
+    def _shortwave_in(self, julian_day: int, time_utc: int) -> float:
         """Computes downward shortwave radiation for clear-sky conditions.
-        
+
         Args:
             julian_day: The current Julian day of the year.
             time_utc: The current time in UTC seconds from midnight.
-        
+
         Returns:
             The incoming shortwave radiation in W/m^2, or 0 if the sun is down.
         """
@@ -90,56 +97,56 @@ class RadBasic(Radiation):
             sw_in = 0
         return sw_in
     
-    def _shortwave_out(self, sw_in):
+    def _shortwave_out(self, sw_in: float) -> float:
         """Computes upward shortwave radiation based on surface albedo.
-        
+
         Args:
             sw_in: The incoming shortwave radiation in W/m^2.
-        
+
         Returns:
             The outgoing shortwave radiation in W/m^2.
         """
         return self.albedo*sw_in
     
-    def _longwave_in(self, atm_state, sfc_state):
+    def _longwave_in(self, atm_state: AtmosphericState, sfc_state: SurfaceState) -> float:
         """Computes clear-sky downwelling longwave radiation via Brutsaert (1975).
-        
+
         Args:
             atm_state: The current state of the atmosphere.
             sfc_state: The current state of the surface.
-        
+
         Returns:
             The incoming longwave radiation in W/m^2.
         """
         # local constants
         EPSILON = c.thermodynamic.EPSILON
         SB = c.physical.STEFAN_BOLTZMANN
-        
-        # local references to atmospheric state
-        pa = atm_state.p
-        qa = sfc_state.qa
-        Ts = sfc_state.Ts
-        
+
+        # local references to atmospheric and surface state
+        pa: float = atm_state.pressure
+        qa: float = atm_state.specific_humidity
+        Ts: float = sfc_state.temperature
+
         # vapor pressure and effective emissivity
-        vapor_pressure = (pa*qa) / (EPSILON + qa)
-        emissivity_eff = 1.24*(vapor_pressure/Ts)**(1/7.)
-        
-        return emissivity_eff*SB*(Ts**4)
+        vapor_pressure: float = (pa * qa) / (EPSILON + qa)
+        emissivity_eff: float = 1.24 * (vapor_pressure / Ts) ** (1 / 7.0)
+
+        return emissivity_eff * SB * (Ts ** 4)
             
-    def _longwave_out(self, sfc_state):
+    def _longwave_out(self, sfc_state: SurfaceState) -> float:
         """Computes upward longwave radiation using the Stefan-Boltzmann law.
-        
+
         Args:
             sfc_state: The current state of the surface.
-        
+
         Returns:
             The outgoing longwave radiation in W/m^2.
         """
         # local constants
-        SB = c.physical.STEFAN_BOLTZMANN
-        
-        # local references to atmospheric state
-        Ts = sfc_state.Ts
-        
-        return self.emissivity*SB*(Ts**4)
+        SB: float = c.physical.STEFAN_BOLTZMANN
+
+        # local references to surface state
+        Ts: float = sfc_state.temperature
+
+        return self.emissivity * SB * (Ts ** 4)
     

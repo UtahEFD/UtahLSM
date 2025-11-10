@@ -18,8 +18,10 @@ configuring, and writing simulation results to a NetCDF file. It manages
 file dimensions, variables, and attributes, providing a simple interface
 for saving the model's state at each time step.
 """
+from typing import Dict, Any
 import json
 import time
+import logging
 import netCDF4 as nc
 from . import logging_helper
 
@@ -39,22 +41,22 @@ class Output(object):
         attributes: A dictionary defining the metadata (dimensions, units, etc.)
             for each possible output variable.
     """        
-    def __init__(self,outfile: str):
+    def __init__(self, outfile: str) -> None:
         """Initializes the Output class and creates the NetCDF file.
-        
+
         Args:
             outfile: The path and name for the output NetCDF file.
         """
-        self.logger = logging_helper.get_logger("Output")
+        self.logger: logging.Logger = logging_helper.get_logger("Output")
         self.logger.info(f"Saving output to {outfile}")
-        self.outfile = nc.Dataset(outfile,'w')
+        self.outfile: nc.Dataset = nc.Dataset(outfile, 'w')
         # self.outfile.description = "UtahLSM output"
         # self.outfile.source      = "Jeremy A. Gibbs"
         # self.outfile.history     = "Created " + time.ctime(time.time())
     
-        self.fields_time   = {}
-        self.fields_static = {}
-        self.attributes = {
+        self.fields_time: Dict[str, Any] = {}
+        self.fields_static: Dict[str, Any] = {}
+        self.attributes: Dict[str, Dict[str, Any]] = {
             'time': {
                 'dimension':("t",),
                 'long_name':'time',
@@ -107,9 +109,9 @@ class Output(object):
             },
         }
     
-    def set_dims(self,dims: dict):
+    def set_dims(self, dims: Dict[str, int]) -> None:
         """Sets the dimensions in the NetCDF output file.
-        
+
         Args:
             dims: A dictionary mapping dimension names to their sizes. A size
                 of 0 indicates an unlimited dimension.
@@ -121,9 +123,9 @@ class Output(object):
             else:
                 self.outfile.createDimension(dim,size)
     
-    def set_fields(self,fields: dict):
+    def set_fields(self, fields: Dict[str, Any]) -> None:
         """Creates the variables (fields) in the NetCDF output file.
-        
+
         Args:
             fields: A dictionary of fields to be created in the output file.
         """
@@ -148,9 +150,9 @@ class Output(object):
             else:
                 self.fields_static[field] = ncvar
     
-    def save(self,fields: dict, tidx: int, time: float, initial: bool = False):
+    def save(self, fields: Dict[str, Any], tidx: int, time: float, initial: bool = False) -> None:
         """Saves a snapshot of the model's state to the output file.
-        
+
         Args:
             fields: A dictionary of data fields to save.
             tidx: The time index for the current snapshot.
@@ -174,7 +176,7 @@ class Output(object):
     
         self.outfile.sync()
     
-    def close(self):
+    def close(self) -> None:
         """Closes the NetCDF output file."""
         self.outfile.close()
     

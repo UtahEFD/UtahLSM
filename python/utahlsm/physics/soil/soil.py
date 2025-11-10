@@ -23,6 +23,7 @@ parameterizations. It provides:
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
+import logging
 import numpy as np
 from numpy.typing import NDArray
 from typing import TypeVar, Union
@@ -81,7 +82,7 @@ class Soil(ABC):
             dataset_id: An integer ID for the soil parameter dataset to use.
             soil_type_array: A NumPy array of soil type IDs for each layer.
         """
-        self.logger = logging_helper.get_logger("SOIL")
+        self.logger: logging.Logger = logging_helper.get_logger("SOIL")
         
         dataset_names = {
             1: "Clapp/Hornberger",

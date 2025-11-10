@@ -21,6 +21,7 @@ models.
 """
 from abc import ABC, abstractmethod
 from typing import TypeVar
+import logging
 from ...data_models import AtmosphericState, SurfaceState
 from ...exceptions import NamelistError
 from ...util.io import logging_helper
@@ -52,11 +53,11 @@ class Radiation(ABC):
             albedo: The surface albedo (dimensionless).
             emissivity: The surface emissivity (dimensionless).
         """
-        self.logger = logging_helper.get_logger("RAD")
-        self.latitude = latitude
-        self.longitude = longitude
-        self.albedo = albedo
-        self.emissivity = emissivity
+        self.logger: logging.Logger = logging_helper.get_logger("RAD")
+        self.latitude: float = latitude
+        self.longitude: float = longitude
+        self.albedo: float = albedo
+        self.emissivity: float = emissivity
             
     @staticmethod
     def get_model(key: int, latitude: float, longitude: float, albedo: float, 

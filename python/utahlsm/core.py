@@ -25,7 +25,7 @@ from dataclasses import replace
 import logging
 import numpy as np
 
-from .data_models import AtmosphericState, SurfaceState, SolverState
+from .data_models import AtmosphericState, SurfaceState, SolverState, SoilState
 from .exceptions import NamelistError, UtahLSMError
 from .physics import Radiation, Soil, Surface
 from .util import constants as c, solvers
@@ -54,9 +54,9 @@ class UtahLSM:
         output_dims: A dictionary of dimensions for the output file.
         output_fields: A dictionary of fields to be written to the output file.
     """
-    def __init__(self,input_lsm, output_lsm):
+    def __init__(self, input_lsm: Input, output_lsm: Output) -> None:
         """Initializes the UtahLSM model.
-        
+
         Args:
             input_lsm: An `Input` object containing the model configuration.
             output_lsm: An `Output` object for handling data output.
@@ -71,10 +71,10 @@ class UtahLSM:
     
     #--- Public Methods ---
     
-    def update(self, dt: float, runtime: float, atm_state: AtmosphericState):
-        """Updates the model with new atmospheric forcing data for the current 
+    def update(self, dt: float, runtime: float, atm_state: AtmosphericState) -> None:
+        """Updates the model with new atmospheric forcing data for the current
             step.
-        
+
         Args:
             dt: The time step duration [s].
             runtime: The total elapsed simulation time [s].
@@ -103,12 +103,12 @@ class UtahLSM:
         # Prevent zero wind speed, which can cause numerical issues
         if (self.atm_state.wind_speed==0): self.atm_state.wind_speed = 1E-4
         
-    def run(self, step_count: int, runtime: float) -> SurfaceState:
+    def run(self, step_count: int, runtime: float) -> None:
         """Runs the core model physics for a single time step.
-        
+
         This includes solving the surface energy and moisture budgets and
         updating the soil profiles via diffusion solvers.
-        
+
         Args:
             step_count: The current time step number.
             runtime: The total elapsed simulation time [s].
@@ -133,9 +133,9 @@ class UtahLSM:
             self._solve_diffusion_heat()
             self._solve_diffusion_mois()
         
-    def save(self, step_count: int, runtime: float):
+    def save(self, step_count: int, runtime: float) -> None:
         """Saves the model's current state to the output file.
-        
+
         Args:
             step_count: The current time step number.
             runtime: The total elapsed simulation time [s].
@@ -145,7 +145,7 @@ class UtahLSM:
     
     # --- Internal Methods ---
     
-    def _setup_states(self):
+    def _setup_states(self) -> None:
         """Initializes all state containers for the model."""
         self.logger.info("Setting up initial states")
         try:
@@ -157,7 +157,7 @@ class UtahLSM:
         except:
             raise
     
-    def _setup_physics(self):
+    def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
         self.logger.info("Initializing physics modules")
         try:
@@ -181,7 +181,7 @@ class UtahLSM:
             self.logger.error(f"Failed to initialize physics modules: {e}.")
             raise 
     
-    def _setup_output(self):
+    def _setup_output(self) -> None:
         """Sets up the output file dimensions and fields."""
         self.output_dims = {
             't': 0,
@@ -202,11 +202,11 @@ class UtahLSM:
         self.output.set_fields(self.output_fields)
         self.output.save(self.output_fields, 0, 0, initial=True)
     
-    def _solve_seb(self):
+    def _solve_seb(self) -> None:
         """Solves the Surface Energy Budget (SEB) to find surface temperature.
-        
-        This function first establishes a valid temperature bracket [a, b] 
-        where the SEB function changes sign, then uses a robust root-finding 
+
+        This function first establishes a valid temperature bracket [a, b]
+        where the SEB function changes sign, then uses a robust root-finding
         algorithm (solvers.root_brent) to find the precise temperature.
         """
         # Calculate thermal conductivity for the entire soil column
@@ -267,10 +267,9 @@ class UtahLSM:
         
         return SEB
     
-    # Solve the surface moisture budget
-    def _solve_smb(self):
+    def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB).
-        
+
         This function finds the soil moisture flux and surface evaporation.
         It then iteratively blends the two in time until convergence.
         """
@@ -315,13 +314,13 @@ class UtahLSM:
             if abs((E + flux_sm) / E) <= tol:
                 break
 
-    def _compute_fluxes(self, sfc_T: float, sfc_q: float):
+    def _compute_fluxes(self, sfc_T: float, sfc_q: float) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
-        
+
         This is an iterative process to find the friction velocity (ustar)
         and Obukhov length (L) that are consistent with the calculated
         sensible and latent heat fluxes.
-        
+
         Args:
             sfc_T: Surface temperature [K].
             sfc_q: Surface moisture [m^3/m^3].
@@ -376,17 +375,17 @@ class UtahLSM:
         if not converged:
             self.logger.warning(f"Obukhov length did not converge. Final value = {self.sfc_state.turbulence.obukhov_length[0]}")
     
-    def _solve_diffusion_heat(self):
+    def _solve_diffusion_heat(self) -> None:
         """Solves the soil heat diffusion equation using a theta scheme.
-           
-        This solves the 1D diffusion equation for heat using a theta 
+
+        This solves the 1D diffusion equation for heat using a theta
         scheme, where: theta = 0.0 -> FTCS
                              = 0.5 -> Crank-Nicolson
                              = 1.0 -> BTCS
-        Dirichlet conditions are applied at the top boundary using new 
-        surface temperature. Neumann conditions are applied at the lower 
+        Dirichlet conditions are applied at the top boundary using new
+        surface temperature. Neumann conditions are applied at the lower
         boundary by assuming zero gradient.
-        
+
         The resulting matrix is given by:
             AT(n+1) = r(n), where n denotes the time level
             e, f, g are the components of A matrix
@@ -453,7 +452,7 @@ class UtahLSM:
         self.soil_state.temperature[0] = self.sfc_state.temperature
         self.soil_state.temperature[1::] = solvers.tridiagonal(e,f,g,r)
     
-    def _solve_diffusion_mois(self):
+    def _solve_diffusion_mois(self) -> None:
         """Solves the soil moisture diffusion equation using a theta scheme.
            
         This solves the 1D diffusion equation for moisture using a theta 

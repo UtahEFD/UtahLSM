@@ -18,6 +18,7 @@ the hydraulic relationships described by Campbell (1974). This model is
 often used for its simplicity and effectiveness in representing soil hydraulic
 properties.
 """
+import logging
 import numpy as np
 from numpy.typing import NDArray
 from typing import Union
@@ -39,7 +40,7 @@ class Campbell(Soil):
             dataset_id: An integer ID for the soil parameter dataset to use.
             soil_type_array: A NumPy array of soil type IDs for each layer.
         """
-        self.logger = logging_helper.get_logger("SOIL")
+        self.logger: logging.Logger = logging_helper.get_logger("SOIL")
         self.logger.info("Using the Campbell model")
         super().__init__(dataset_id, soil_type_array)
     

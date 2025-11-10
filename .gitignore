@@ -11,3 +11,4 @@ lsm*.nc
 **/__pycache__
 **/.vscode
 cases/*/*.json
+CLAUDE.md

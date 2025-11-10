@@ -37,12 +37,12 @@ class Surface(ABC):
     Attributes:
         logger: A logger for this class.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the Surface base class."""
-        self.logger =  logging_helper.get_logger("SFC")
+        self.logger: logging.Logger = logging_helper.get_logger("SFC")
    
     @staticmethod
-    def get_model(key)->ST:
+    def get_model(key: int) -> ST:
         """Factory method to select and instantiate a surface layer model.
         
         Args:

@@ -18,15 +18,16 @@ start logging immediately upon import, buffering the messages in memory.
 Once the main configuration is loaded, `finalize_logging` is called to
 set up the final file and console handlers and flush all buffered messages.
 """
+from typing import Optional, Dict
 import logging
 import logging.handlers
 
-_buffer_handler = None
-_initialized = False
+_buffer_handler: Optional[logging.handlers.MemoryHandler] = None
+_initialized: bool = False
 
-def _ensure_buffered():
+def _ensure_buffered() -> None:
     """Starts buffered logging if it is not already active.
-    
+
     This internal function sets up a `MemoryHandler` on the root logger
     to capture all log messages generated before the main logging
     configuration is finalized. This ensures no messages are lost during
@@ -58,14 +59,14 @@ def get_logger(name: str = None) -> logging.Logger:
     _ensure_buffered()
     return logging.getLogger(name)
 
-def finalize_logging(level_str: str = "info"):
+def finalize_logging(level_str: str = "info") -> None:
     """Replaces the buffer with final handlers and flushes stored logs.
-    
+
     This function should be called once after the main configuration has been
     read. It removes the temporary memory handler and replaces it with
     configured file and console handlers. It then flushes any messages that
     were buffered during startup to the new handlers.
-    
+
     Args:
         level_str: The desired logging level as a string (e.g., 'info', 'debug').
             Defaults to "info".
@@ -73,7 +74,7 @@ def finalize_logging(level_str: str = "info"):
     global _buffer_handler
     root_logger = logging.getLogger()
 
-    LOG_LEVELS = {"info": logging.INFO, "debug": logging.DEBUG}
+    LOG_LEVELS: Dict[str, int] = {"info": logging.INFO, "debug": logging.DEBUG}
     log_level = LOG_LEVELS.get(level_str.lower(), logging.INFO)
     filler = "_"
     log_format = logging.Formatter(

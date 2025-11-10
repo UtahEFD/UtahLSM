@@ -17,27 +17,34 @@ This module provides robust and efficient numerical solvers for common
 mathematical problems encountered in the land-surface model, such as
 solving systems of linear equations and finding roots of functions.
 """
+from typing import Callable, Tuple
 import numpy as np
+from numpy.typing import NDArray
 from ..util.io import logging_helper
 
 logger = logging_helper.get_logger("UTIL: Solvers")
 
-def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> np.ndarray:
+def tridiagonal(
+    a: NDArray[np.float64],
+    b: NDArray[np.float64],
+    c: NDArray[np.float64],
+    r: NDArray[np.float64]
+) -> NDArray[np.float64]:
     """Solves a tridiagonal system of equations using the Thomas algorithm.
-    
+
     This function efficiently solves the equation Ax = r, where A is a
     tridiagonal matrix defined by its sub-diagonal (a), main diagonal (b),
     and super-diagonal (c).
-    
+
     Args:
         a: The sub-diagonal of the matrix (size n). a[0] is ignored.
         b: The main diagonal of the matrix (size n).
         c: The super-diagonal of the matrix (size n). c[n-1] is ignored.
         r: The right-hand side vector (size n).
-    
+
     Returns:
         The solution vector u (size n).
-    
+
     Raises:
         ValueError: If an element on the main diagonal is zero during factorization.
     """
@@ -65,25 +72,31 @@ def tridiagonal(a: np.ndarray, b: np.ndarray, c: np.ndarray, r: np.ndarray) -> n
         
     return u
 
-def root_brent(f, a, b, iter_max=100, tol=1e-6) -> float:
+def root_brent(
+    f: Callable[[float], float],
+    a: float,
+    b: float,
+    iter_max: int = 100,
+    tol: float = 1e-6
+) -> Tuple[float, bool]:
     """Finds the root of a function using Brent's method.
-    
+
     This is a robust and fast root-finding algorithm that combines bisection,
     the secant method, and inverse quadratic interpolation. It is guaranteed
     to find a root if one exists within the given bracket.
-    
+
     Args:
         f: The function for which to find a root, f(x) = 0.
         a: The lower bound of the bracket [a, b].
         b: The upper bound of the bracket [a, b].
         iter_max: The maximum number of iterations. Defaults to 100.
         tol: The desired tolerance for the root. Defaults to 1e-6.
-    
+
     Returns:
         A tuple containing:
             - The approximate root of the function.
             - A boolean indicating whether the solver converged.
-    
+
     Raises:
         ValueError: If the root is not bracketed (i.e., f(a) * f(b) >= 0).
     """
@@ -99,13 +112,14 @@ def root_brent(f, a, b, iter_max=100, tol=1e-6) -> float:
         fa, fb = fb, fa
     
     c, fc = a, fa  # c is the previous best approximation
+    d: float = a   # d is the second to last best guess
     mflag = True   # mflag is true if the last step was a bisection
-    
+
     for i in range(iter_max):
         # Check for convergence: if the bracket is smaller than the tolerance
         if abs(b - a) < tol:
-            return b
-    
+            return b, True
+
         # Use fast inverse quadratic interpolation if the three points are distinct
         if abs(fa) > tol and abs(fb) > tol and abs(fc) > tol and fa != fc and fb != fc:
             s = (a * fb * fc / ((fa - fb) * (fa - fc)) +
@@ -114,7 +128,7 @@ def root_brent(f, a, b, iter_max=100, tol=1e-6) -> float:
         # Otherwise, fall back to the secant method
         else:
             s = b - fb * (b - a) / (fb - fa)
-        
+
         # Condition 1: Is the new point outside the desired range?
         cond1 = (s < (3 * a + b) / 4.0) or (s > b)
         # Condition 2: Is the step not decreasing fast enough (bisection was last step)?

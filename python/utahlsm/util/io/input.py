@@ -26,6 +26,7 @@ import netCDF4 as nc
 import numpy as np
 from numpy.typing import NDArray
 from typing import Dict, List, Optional
+import logging
 
 from ...data_models import (
     GeneralConfig, NumericsConfig, IterationsConfig, TolerancesConfig,
@@ -56,7 +57,7 @@ class Input(object):
             or None if not provided.
     """
     
-    def __init__(self, namelist_path: str, inputfile: str, offlinefile: str = None):
+    def __init__(self, namelist_path: str, inputfile: str, offlinefile: Optional[str] = None) -> None:
         """Initializes the Input class and loads all data.
         
         Args:
@@ -65,7 +66,7 @@ class Input(object):
             offlinefile: The optional file path to the NetCDF offline
                 forcing file. Defaults to None.
         """
-        self.logger = logging_helper.get_logger("Input")
+        self.logger: logging.Logger = logging_helper.get_logger("Input")
         self.logger.info(f"Reading {namelist_path}")
         namelist_data = self._load_and_validate_namelist(namelist_path)
         log_level = namelist_data["general"]["log_level"]
@@ -162,7 +163,7 @@ class Input(object):
             self.logger.error(f"--- initial conditions error: {e}")
             raise
     
-    def _load_offline_data(self, offlinefile: str):
+    def _load_offline_data(self, offlinefile: str) -> None:
         """Loads data from the NetCDF offline forcing file.
         
         Args:
@@ -194,7 +195,7 @@ class Input(object):
             self.logger.error(f"--- offline forcing error: {e}")
             raise
     
-    def _validate_physical_consistency(self):
+    def _validate_physical_consistency(self) -> None:
         """Performs validation checks on inter-variable relationships.
         
         Raises:

@@ -18,6 +18,7 @@ using standard Monin-Obukhov Similarity Theory (MOST) functions to describe
 the stability and flux-profile relationships in the atmospheric surface layer.
 """
 import math
+import logging
 import numpy as np
 from .sfc import Surface
 from ...util import constants as c
@@ -32,7 +33,7 @@ class SurfaceMOST(Surface):
     """
     def __init__(self):
         """Initializes the SurfaceMOST model."""
-        self.logger = logging_helper.get_logger("SFC")
+        self.logger: logging.Logger = logging_helper.get_logger("SFC")
         self.logger.info("Using the MOST model")
         super().__init__()
         
