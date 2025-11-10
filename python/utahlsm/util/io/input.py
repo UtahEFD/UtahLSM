@@ -20,7 +20,6 @@ dataclasses, and provides a single, clean interface for the main model to
 access all setup information.
 """
 from dataclasses import dataclass
-import importlib.resources
 import json
 import jsonschema
 import netCDF4 as nc
@@ -120,7 +119,7 @@ class Input(object):
             json.JSONDecodeError: If the namelist is not valid JSON.
             jsonschema.ValidationError: If the namelist does not match the schema.
         """
-        schema_path = importlib.resources.files('utahlsm.util.io').joinpath('schema_namelist.json')
+        schema_path = "utahlsm/util/io/schema_namelist.json"
         
         try:
             with open(schema_path) as f: 
