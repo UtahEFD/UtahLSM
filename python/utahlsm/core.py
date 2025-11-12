@@ -97,7 +97,8 @@ class UtahLSM:
         # Run radiation model if configured
         if self.input.radiation.model:
             utc = np.fmod((self.input.time.utc_start+runtime),86400)
-            julian_day = self.input.time.julian_day + int(utc/86400)
+            # Wrap julian day to stay in valid range [1, 365] for multi-year simulations
+            julian_day = ((self.input.time.julian_day + int(utc/86400) - 1) % 365) + 1
             self.atm_state.radiation_net = self.rad.compute_net(julian_day,utc,self.atm_state,self.sfc_state)
 
     def run(self, step_count: int, runtime: float) -> None:
