@@ -99,10 +99,7 @@ class UtahLSM:
             utc = np.fmod((self.input.time.utc_start+runtime),86400)
             julian_day = self.input.time.julian_day + int(utc/86400)
             self.atm_state.radiation_net = self.rad.compute_net(julian_day,utc,self.atm_state,self.sfc_state)
-        
-        # Prevent zero wind speed, which can cause numerical issues
-        if (self.atm_state.wind_speed==0): self.atm_state.wind_speed = 1E-4
-        
+
     def run(self, step_count: int, runtime: float) -> None:
         """Runs the core model physics for a single time step.
 

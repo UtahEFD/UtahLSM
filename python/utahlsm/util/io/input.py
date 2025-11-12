@@ -183,12 +183,23 @@ class Input(object):
                 atm_q    = metfile.variables['atm_q'][:].astype('float')
                 atm_p    = metfile.variables['atm_p'][:].astype('float')
                 r_net    = metfile.variables['R_net'][:].astype('float')
-                
+
+                # Ensure wind speed is never zero or negative (causes numerical issues)
+                min_wind_speed = 1.0e-4  # m/s
+                zero_wind_mask = atm_U <= 0
+                num_zero_wind = np.sum(zero_wind_mask)
+                if num_zero_wind > 0:
+                    self.logger.warning(
+                        f"Found {num_zero_wind} timesteps with zero/negative wind speed. "
+                        f"Setting to minimum threshold {min_wind_speed} m/s."
+                    )
+                    atm_U[zero_wind_mask] = min_wind_speed
+
                 atm_data = [
                     AtmosphericState(wind_speed=atm_U[i], temperature=atm_T[i], specific_humidity=atm_q[i], pressure=atm_p[i], radiation_net=r_net[i])
                     for i in range(ntime)
                 ]
-                
+
                 self.forcing = ForcingData(ntime=ntime, tstep=tstep, atmos=atm_data)
                 self.logger.info(f"--- loaded {ntime} timesteps of forcing data")
         except (IOError, KeyError) as e:
