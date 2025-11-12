@@ -208,18 +208,31 @@ class Input(object):
     
     def _validate_physical_consistency(self) -> None:
         """Performs validation checks on inter-variable relationships.
-        
+
         Raises:
             ValueError: If a physical consistency check fails.
         """
+        # Grid size validation
+        if self.grid.nz < 2:
+            raise ValueError(f"Grid must have at least 2 soil layers for diffusion solvers, "
+                           f"got nz={self.grid.nz}.")
+
         if self.surface.z_m <= self.surface.z_o:
             raise ValueError(f"z_m={self.surface.z_m} must be > z_o={self.surface.z_o}.")
-        
+
         if self.surface.z_s <= self.surface.z_t:
             raise ValueError(f"z_s={self.surface.z_s} must be > z_t={self.surface.z_t}.")
-        
+
         if len(self.initial.temperature) != self.grid.nz:
             raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
                              f"init file soil_T length of {len(self.initial.temperature)}.")
-        
+
+        if len(self.initial.moisture) != self.grid.nz:
+            raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
+                             f"init file soil_q length of {len(self.initial.moisture)}.")
+
+        if len(self.initial.type) != self.grid.nz:
+            raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
+                             f"init file soil_type length of {len(self.initial.type)}.")
+
         self.logger.info("Physical consistency checks passed")
