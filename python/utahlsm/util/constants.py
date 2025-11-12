@@ -52,7 +52,11 @@ class _Water:
 @dataclass(frozen=True)
 class _Air:
     """Groups constants related to the properties of air."""
-    DENSITY: float = 1.204 # Density of air [kg/m^3]
+    # Reference density of air at sea level and 20°C [kg/m^3]
+    # NOTE: Air density is calculated dynamically in the model using the ideal gas law
+    # (RHO = P / (Rd * T)) to account for variations in temperature, pressure, and elevation.
+    # This constant is provided for reference only.
+    DENSITY: float = 1.204
 
 # Create singleton instances for use throughout the model
 air: _Air = _Air()

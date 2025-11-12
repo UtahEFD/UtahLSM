@@ -271,7 +271,8 @@ class UtahLSM:
         """
         # Local constants and variables
         RHO_W = c.water.DENSITY
-        RHO_A = c.air.DENSITY
+        # Calculate air density from ideal gas law: RHO = P / (Rd * T)
+        RHO_A = self.atm_state.pressure / (c.thermodynamic.GAS_CONSTANT_DRY * self.atm_state.temperature)
         iter_max = self.input.numerics.iterations.smb_flux
         delta = 0.5
         tol = self.input.numerics.tolerances.smb_flux
@@ -324,7 +325,8 @@ class UtahLSM:
         # Local constants and variables
         VK = c.physical.VON_KARMAN
         G = c.physical.GRAVITY
-        RHO = c.air.DENSITY
+        # Calculate air density from ideal gas law: RHO = P / (Rd * T)
+        RHO = self.atm_state.pressure / (c.thermodynamic.GAS_CONSTANT_DRY * self.atm_state.temperature)
         CP = c.thermodynamic.SPECIFIC_HEAT
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
         converged = False
