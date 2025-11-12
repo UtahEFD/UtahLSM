@@ -233,7 +233,9 @@ class UtahLSM:
         
         if iter_count >= iter_max:
             self.logger.error("Failed to find a valid bracket for _solve_seb.")
-            raise SystemExit(1)
+            raise UtahLSMError(
+                f"Failed to find a valid bracket for surface energy balance after {iter_max} iterations."
+            )
         
         # Find the root (surface temperature)
         try:
@@ -480,7 +482,10 @@ class UtahLSM:
         D_all = self.soil.diffusivity_moisture(self.soil_state.moisture)
         K_all = self.soil.conductivity_moisture(self.soil_state.moisture)
         D_mid = 0.5 * (D_all[:-1] + D_all[1:])
-        K_lin = K_all/self.soil_state.moisture
+        # Avoid division by zero in dry conditions
+        K_lin = np.where(self.soil_state.moisture > 1e-9,
+                         K_all / self.soil_state.moisture,
+                         0.0)
         
         # First soil level below surface
         Cpd = float(self.input.time.step_dif) * dt_q * D_mid[0] / dz2

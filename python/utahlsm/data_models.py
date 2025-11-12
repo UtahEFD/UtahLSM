@@ -100,20 +100,20 @@ class TurbulenceScales:
 @dataclass
 class SurfaceState:
     """Holds the diagnostic state of the land surface at a given time step.
-    
+
     These variables are calculated by the model and represent the interaction
     between the soil, the surface, and the atmosphere.
-    
+
     Attributes:
         temperature: Surface temperature [K].
-        water_content: Surface water content [kg/kg].
+        moisture: Surface moisture content [kg/kg].
         specific_humidity: Surface-air specific humidity [kg/kg].
         fluxes: A dataclass containing all surface fluxes.
         turbulence: A dataclass containing turbulence scales.
-            
+
     """
     temperature: float = 0.0
-    water_content: float = 0.0
+    moisture: float = 0.0
     specific_humidity: float = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
