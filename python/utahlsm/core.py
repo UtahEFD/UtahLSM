@@ -446,7 +446,7 @@ class UtahLSM:
         r[j] = (CFp - CFm) * self.soil_state.temperature[j] + (CF + 2.0* CFm) * self.soil_state.temperature[j+1]
         
         self.soil_state.temperature[0] = self.sfc_state.temperature
-        self.soil_state.temperature[1::] = solvers.tridiagonal(e,f,g,r)
+        self.soil_state.temperature[1:] = solvers.tridiagonal(e,f,g,r)
     
     def _solve_diffusion_mois(self) -> None:
         """Solves the soil moisture diffusion equation using a theta scheme.
@@ -557,4 +557,4 @@ class UtahLSM:
         r[j] = (CFp - CFm)*self.soil_state.moisture[j] + (CF + 2.0*CFm)*self.soil_state.moisture[j+1]
             
         self.soil_state.moisture[0] = self.sfc_state.moisture
-        self.soil_state.moisture[1::] = solvers.tridiagonal(e,f,g,r)
+        self.soil_state.moisture[1:] = solvers.tridiagonal(e,f,g,r)
