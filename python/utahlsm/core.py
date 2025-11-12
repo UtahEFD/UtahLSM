@@ -24,6 +24,7 @@ through the simulation in time.
 from dataclasses import replace
 import logging
 import numpy as np
+from typing import Optional
 
 from .data_models import AtmosphericState, SurfaceState, SolverState, SoilState
 from .exceptions import NamelistError, UtahLSMError
@@ -61,10 +62,22 @@ class UtahLSM:
             input_lsm: An `Input` object containing the model configuration.
             output_lsm: An `Output` object for handling data output.
         """
+        # Type declarations for instance variables
+        self.logger: logging.Logger
+        self.input: Input = input_lsm
+        self.output: Output = output_lsm
+        self.tstep: float
+        self.soil_state: SoilState
+        self.sfc_state: SurfaceState
+        self.atm_state: AtmosphericState
+        self.solver_state: SolverState
+        self.rad: Optional[Radiation]
+        self.soil: Soil
+        self.sfc: Surface
+        self.output_dims: dict
+        self.output_fields: dict
+
         self.logger = logging_helper.get_logger("UtahLSM")
-        self.input  = input_lsm
-        self.output = output_lsm
-        
         self._setup_states()
         self._setup_physics()
         self._setup_output()
@@ -146,11 +159,11 @@ class UtahLSM:
     def _setup_states(self) -> None:
         """Initializes all state containers for the model."""
         self.logger.info("Setting up initial states")
-        self.tstep: float = 0
-        self.soil_state: SoilState  = replace(self.input.initial)
-        self.sfc_state: SurfaceState = SurfaceState()
-        self.atm_state: AtmosphericState = AtmosphericState()
-        self.solver_state: SolverState = SolverState()
+        self.tstep = 0
+        self.soil_state = replace(self.input.initial)
+        self.sfc_state = SurfaceState()
+        self.atm_state = AtmosphericState()
+        self.solver_state = SolverState()
     
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
