@@ -58,12 +58,13 @@ def main() -> None:
     print("#                                                            #")
     print("##############################################################")
 
+    output_lsm: Optional[utahlsm.Output] = None
     try:
         # Create input and output objects
         input_lsm: utahlsm.Input = utahlsm.Input(namelist, initfile, offlinefile)
         if not outf:
             outf = f'lsm_{case}_py.nc'
-        output_lsm: utahlsm.Output = utahlsm.Output(outf)
+        output_lsm = utahlsm.Output(outf)
 
         # Create the main LSM object
         lsm: utahlsm.UtahLSM = utahlsm.UtahLSM(input_lsm, output_lsm)
@@ -73,13 +74,13 @@ def main() -> None:
         tstep: float = input_lsm.forcing.tstep
         for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
             runtime += tstep
-            
+
             # Update the model with the latest atmospheric forcing
             lsm.update(tstep, runtime, atm_state)
-            
+
             # Run the core physics solvers
             lsm.run(step_count, runtime)
-            
+
             # Save the output for the current time step
             lsm.save(step_count, runtime)
     except (UtahLSMError) as e:
@@ -90,6 +91,10 @@ def main() -> None:
         print(f"\nAn error occurred: {e}")
         print("UtahLSM simulation failed.")
         raise SystemExit(1)
+    finally:
+        # Ensure the output file is properly closed, even if an error occurred
+        if output_lsm is not None:
+            output_lsm.close()
     
     # Calculate and print the total runtime
     t2: float = time.time()
