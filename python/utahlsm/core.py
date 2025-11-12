@@ -148,14 +148,11 @@ class UtahLSM:
     def _setup_states(self) -> None:
         """Initializes all state containers for the model."""
         self.logger.info("Setting up initial states")
-        try:
-            self.tstep: float = 0
-            self.soil_state: SoilState  = replace(self.input.initial)
-            self.sfc_state: SurfaceState = SurfaceState()
-            self.atm_state: AtmosphericState = AtmosphericState()
-            self.solver_state: SolverState = SolverState()
-        except:
-            raise
+        self.tstep: float = 0
+        self.soil_state: SoilState  = replace(self.input.initial)
+        self.sfc_state: SurfaceState = SurfaceState()
+        self.atm_state: AtmosphericState = AtmosphericState()
+        self.solver_state: SolverState = SolverState()
     
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
