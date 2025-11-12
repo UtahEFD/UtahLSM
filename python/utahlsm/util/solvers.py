@@ -24,6 +24,9 @@ from ..util.io import logging_helper
 
 logger = logging_helper.get_logger("UTIL: Solvers")
 
+# Tolerance for floating-point comparisons in numerical solvers
+_SOLVER_TOL = 1e-12
+
 def tridiagonal(
     a: NDArray[np.float64],
     b: NDArray[np.float64],
@@ -46,15 +49,15 @@ def tridiagonal(
         The solution vector u (size n).
 
     Raises:
-        ValueError: If an element on the main diagonal is zero during factorization.
+        ValueError: If an element on the main diagonal is effectively zero during factorization.
     """
     n = len(b)
     u = np.zeros(n)
     gam = np.zeros(n)
-    
-    if b[0] == 0.0:
-        logger.error("Error in solve_tridiagonal: b[0] is zero.")
-        raise ValueError("Main diagonal cannot have a zero on the first element.")
+
+    if abs(b[0]) < _SOLVER_TOL:
+        logger.error(f"Error in solve_tridiagonal: b[0] = {b[0]} is effectively zero.")
+        raise ValueError(f"Main diagonal cannot have a zero on the first element (b[0] = {b[0]}).")
 
     bet = b[0]
     u[0] = r[0] / bet
@@ -62,9 +65,9 @@ def tridiagonal(
     for j in range(1, n):
         gam[j] = c[j-1] / bet
         bet = b[j] - a[j] * gam[j]
-        if bet == 0.0:
-            logger.error(f"Error in solve_tridiagonal: zero on main diagonal at index {j}.")
-            raise ValueError(f"Zero on main diagonal at index {j} during factorization.")
+        if abs(bet) < _SOLVER_TOL:
+            logger.error(f"Error in solve_tridiagonal: effective zero on main diagonal at index {j} (bet = {bet}).")
+            raise ValueError(f"Effective zero on main diagonal at index {j} during factorization (bet = {bet}).")
         u[j] = (r[j] - a[j] * u[j-1]) / bet
 
     for j in range(n-2, -1, -1):
