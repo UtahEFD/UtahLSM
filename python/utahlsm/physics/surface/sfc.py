@@ -19,6 +19,7 @@ class, which ensures that any concrete surface layer model implements the
 necessary stability functions, and a factory function (`get_model`) for
 creating instances of those models.
 """
+import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar
 from ...exceptions import NamelistError
