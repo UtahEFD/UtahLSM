@@ -36,22 +36,37 @@ class SurfaceMOST(Surface):
         self.logger: logging.Logger = logging_helper.get_logger("SFC")
         self.logger.info("Using the MOST model")
         super().__init__()
-        
+
+    def _cap_obukhov_length(self, obukL: float, min_val: float = 0.1) -> float:
+        """Caps and preserves sign of Obukhov length.
+
+        Ensures |obukL| >= min_val while preserving the original sign.
+        This prevents division by zero and numerical instability in stability
+        functions when Obukhov length is very small.
+
+        Args:
+            obukL: Original Obukhov length [m].
+            min_val: Minimum magnitude threshold [m].
+
+        Returns:
+            Capped Obukhov length with original sign preserved.
+        """
+        obukL_mag = max(abs(obukL), min_val)
+        return np.copysign(obukL_mag, obukL)
+
     def phim(self, z: float, obukL: float) -> float:
         """Computes the dimensionless stability function for momentum (phi_m).
-        
+
         Args:
             z: Height above the surface [m].
             obukL: Obukhov length [m].
-        
+
         Returns:
             The value of phi_m.
         """
-        obukL_min = 0.1
-        obukL_mag = max(abs(obukL), obukL_min)
-        obukL_cap = np.copysign(obukL_mag, obukL)
-        
-        zeta = z / (obukL_cap)
+        obukL_cap = self._cap_obukhov_length(obukL)
+
+        zeta = z / obukL_cap
         return self.phim_stable(zeta) if zeta >= 0 else self.phim_unstable(zeta)
     
     def phim_stable(self,zeta: float) -> float:
@@ -64,19 +79,17 @@ class SurfaceMOST(Surface):
     
     def phih(self,z: float, obukL: float) -> float:
         """Computes the dimensionless stability function for heat (phi_h).
-        
+
         Args:
             z: Height above the surface [m].
             obukL: Obukhov length [m].
-        
+
         Returns:
             The value of phi_h.
         """
-        obukL_min = 0.1
-        obukL_mag = max(abs(obukL), obukL_min)
-        obukL_cap = np.copysign(obukL_mag, obukL)
-        
-        zeta = z / (obukL_cap)
+        obukL_cap = self._cap_obukhov_length(obukL)
+
+        zeta = z / obukL_cap
         return self.phih_stable(zeta) if zeta >= 0 else self.phih_unstable(zeta)
         
     def phih_stable(self,zeta: float) -> float:
@@ -89,19 +102,17 @@ class SurfaceMOST(Surface):
     
     def psim(self,z: float,obukL: float) -> float:
         """Computes the integrated stability function for momentum (psi_m).
-        
+
         Args:
             z: Height above the surface [m].
             obukL: Obukhov length [m].
-        
+
         Returns:
             The value of psi_m.
         """
-        obukL_min = 0.1
-        obukL_mag = max(abs(obukL), obukL_min)
-        obukL_cap = np.copysign(obukL_mag, obukL)
-        
-        zeta = z / (obukL_cap)
+        obukL_cap = self._cap_obukhov_length(obukL)
+
+        zeta = z / obukL_cap
         return self.psim_stable(zeta) if zeta >= 0 else self.psim_unstable(zeta)
     
     def psim_stable(self,zeta: float) -> float:
@@ -116,19 +127,17 @@ class SurfaceMOST(Surface):
     
     def psih(self,z: float,obukL: float) -> float:
         """Computes the integrated stability function for heat (psi_h).
-        
+
         Args:
             z: Height above the surface [m].
             obukL: Obukhov length [m].
-        
+
         Returns:
             The value of psi_h.
         """
-        obukL_min = 0.1
-        obukL_mag = max(abs(obukL), obukL_min)
-        obukL_cap = np.copysign(obukL_mag, obukL)
-        
-        zeta = z / (obukL_cap)
+        obukL_cap = self._cap_obukhov_length(obukL)
+
+        zeta = z / obukL_cap
         return self.psih_stable(zeta) if zeta >= 0 else self.psih_unstable(zeta)
         
     def psih_stable(self,zeta: float) -> float:

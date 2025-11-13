@@ -184,17 +184,9 @@ class Input(object):
                 atm_p    = metfile.variables['atm_p'][:].astype('float')
                 r_net    = metfile.variables['R_net'][:].astype('float')
 
-                # Ensure wind speed is never zero or negative (causes numerical issues)
-                min_wind_speed = 1.0e-4  # m/s
-                zero_wind_mask = atm_U <= 0
-                num_zero_wind = np.sum(zero_wind_mask)
-                if num_zero_wind > 0:
-                    self.logger.warning(
-                        f"Found {num_zero_wind} timesteps with zero/negative wind speed. "
-                        f"Setting to minimum threshold {min_wind_speed} m/s."
-                    )
-                    atm_U[zero_wind_mask] = min_wind_speed
-
+                # Validate and correct forcing data
+                self._validate_forcing_data(atm_U, atm_T, atm_q, atm_p, r_net, ntime)
+                
                 atm_data = [
                     AtmosphericState(wind_speed=atm_U[i], temperature=atm_T[i], specific_humidity=atm_q[i], pressure=atm_p[i], radiation_net=r_net[i])
                     for i in range(ntime)
@@ -206,6 +198,90 @@ class Input(object):
             self.logger.error(f"--- offline forcing error: {e}")
             raise
     
+    def _validate_forcing_data(self, atm_U: NDArray, atm_T: NDArray, atm_q: NDArray,
+                               atm_p: NDArray, r_net: NDArray, ntime: int) -> None:
+        """Validates and corrects atmospheric forcing data for physical consistency.
+
+        Checks that forcing variables are within reasonable physical ranges and
+        corrects minor issues. Raises errors for impossible values.
+
+        Args:
+            atm_U: Wind speed array [m/s].
+            atm_T: Temperature array [K].
+            atm_q: Specific humidity array [kg/kg].
+            atm_p: Pressure array [Pa].
+            r_net: Net radiation array [W/m²].
+            ntime: Number of time steps.
+
+        Raises:
+            ValueError: If forcing data contains impossible values.
+        """
+        # Physical bounds for atmospheric variables
+        T_min, T_max = 200.0, 350.0  # Reasonable atmospheric temperature range [K]
+        p_min, p_max = 50000.0, 110000.0  # Pressure range [Pa]
+        q_min, q_max = 0.0, 0.05  # Specific humidity range [kg/kg]
+        U_min, U_max = 1e-4, 50.0  # Wind speed range [m/s]
+        R_min, R_max = -100.0, 1200.0  # Net radiation range [W/m²]
+
+        issues_found = False
+
+        # Check temperature
+        T_bad = (atm_T < T_min) | (atm_T > T_max)
+        if np.any(T_bad):
+            num_bad = np.sum(T_bad)
+            self.logger.warning(f"Found {num_bad} timesteps with out-of-range temperature "
+                              f"(expected {T_min}-{T_max} K). Values: {atm_T[T_bad]}")
+            issues_found = True
+            # Clamp to valid range
+            atm_T[T_bad] = np.clip(atm_T[T_bad], T_min, T_max)
+
+        # Check pressure
+        p_bad = (atm_p < p_min) | (atm_p > p_max)
+        if np.any(p_bad):
+            num_bad = np.sum(p_bad)
+            self.logger.warning(f"Found {num_bad} timesteps with out-of-range pressure "
+                              f"(expected {p_min}-{p_max} Pa). Values: {atm_p[p_bad]}")
+            issues_found = True
+            # Clamp to valid range
+            atm_p[p_bad] = np.clip(atm_p[p_bad], p_min, p_max)
+
+        # Check specific humidity
+        q_bad = (atm_q < q_min) | (atm_q > q_max)
+        if np.any(q_bad):
+            num_bad = np.sum(q_bad)
+            self.logger.warning(f"Found {num_bad} timesteps with out-of-range humidity "
+                              f"(expected {q_min}-{q_max} kg/kg). Values: {atm_q[q_bad]}")
+            issues_found = True
+            # Clamp to valid range (especially fix negative values)
+            atm_q[q_bad] = np.clip(atm_q[q_bad], q_min, q_max)
+
+        # Check wind speed
+        U_bad = (atm_U <= U_min) | (atm_U > U_max)
+        if np.any(U_bad):
+            num_bad = np.sum(U_bad)
+            self.logger.warning(f"Found {num_bad} timesteps with out-of-range wind speed "
+                              f"(expected {U_min}-{U_max} m/s). Values: {atm_U[U_bad]}")
+            issues_found = True
+            # Fix zero/negative and excessive wind speeds
+            atm_U[atm_U <= U_min] = U_min
+            atm_U[atm_U > U_max] = U_max
+
+        # Check net radiation
+        R_bad = (r_net < R_min) | (r_net > R_max)
+        if np.any(R_bad):
+            num_bad = np.sum(R_bad)
+            self.logger.warning(f"Found {num_bad} timesteps with suspicious radiation "
+                              f"(expected {R_min}-{R_max} W/m²). Values: {r_net[R_bad]}")
+            issues_found = True
+            # Clamp to physically reasonable range
+            r_net[R_bad] = np.clip(r_net[R_bad], R_min, R_max)
+
+        if issues_found:
+            self.logger.info("Forcing data validation: Issues found and corrected. "
+                           "Please review input data quality.")
+        else:
+            self.logger.info("Forcing data validation: All variables within expected ranges")
+
     def _validate_physical_consistency(self) -> None:
         """Performs validation checks on inter-variable relationships.
 

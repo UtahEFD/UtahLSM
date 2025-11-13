@@ -107,7 +107,7 @@ init_T.long_name = "soil temperature"
 init_T.units = "T"
 init_q = init.createVariable("soil_q", "f8", ("z"))
 init_q.long_name = "soil moisture"
-init_q.units = "g g-1"
+init_q.units = "m3 m-3"
 init_i = init.createVariable("soil_type", "f8", ("z"))
 init_i.long_name = "soil type"
 init_i.units = ""
@@ -136,7 +136,7 @@ tm = met.variables['time'][tidx:tend] * 3600.
 ws = met.variables['F010'][tidx:tend]
 wd = met.variables['D010'][tidx:tend]
 pt = met.variables['TA002'][tidx:tend]
-pa = met.variables['P0'][tidx:tend]
+pa = met.variables['P0'][tidx:tend] * 100
 qs = met.variables['Q002'][tidx:tend] / 1000
 
 # compute wind components
@@ -186,7 +186,7 @@ metr_q.long_name = "mixing ratio"
 metr_q.units = "g g-1"
 metr_p = metr.createVariable("atm_p", "f8", ("t"))
 metr_p.long_name = "pressure"
-metr_p.units = "hPa"
+metr_p.units = "Pa"
 metr_r = metr.createVariable("R_net", "f8", ("t"))
 metr_r.long_name = "net radiation"
 metr_r.units = "W m-2"
