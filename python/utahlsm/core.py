@@ -292,12 +292,12 @@ class UtahLSM:
         
         psi_all = self.soil.water_potential(self.soil_state.moisture)
         D_all = self.soil.diffusivity_moisture(self.soil_state.moisture)
-        K_all = self.soil.conductivity_moisture(self.soil_state.moisture)
-        
+        K_hydraulic = self.soil.conductivity_moisture(self.soil_state.moisture)
+
         psi0 = psi_all[0]
         psi1 = psi_all[1]
-        K0 = K_all[0]
-        K1 = K_all[1]
+        K0 = K_hydraulic[0]
+        K1 = K_hydraulic[1]
         K_mid = 0.5 * (K0 + K1)
         
         flux_sm  = RHO_W*K_mid*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
@@ -319,7 +319,7 @@ class UtahLSM:
             E = RHO_A*(gnd_q-self.atm_state.specific_humidity)*self.sfc_state.turbulence.friction_velocity[0]*fh
             
             K0 = self.soil.conductivity_moisture(self.sfc_state.moisture,level=0)
-            K_mid = 0.5*(K0+K1)
+            K_mid = 0.5*(K0+K1)  # K_mid is hydraulic conductivity at midpoint
             
             if abs((E + flux_sm) / E) <= tol:
                 break
@@ -412,12 +412,12 @@ class UtahLSM:
         step_dif = self.input.time.step_dif
         e, f, g, r = [np.zeros(nz - 1) for _ in range(4)]
         
-        K_all = self.soil.diffusivity_thermal(self.soil_state.moisture)
-        K_mid = 0.5 * (K_all[:-1] + K_all[1:]) 
+        D_thermal = self.soil.diffusivity_thermal(self.soil_state.moisture)
+        D_mid = 0.5 * (D_thermal[:-1] + D_thermal[1:]) 
         
         # First soil level below surface
-        Cp = float(step_dif) * dt_T * K_mid[0] / dz2
-        Cm = float(step_dif) * dt_T * K_mid[1] / dz2
+        Cp = float(step_dif) * dt_T * D_mid[0] / dz2
+        Cm = float(step_dif) * dt_T * D_mid[1] / dz2
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
@@ -433,8 +433,8 @@ class UtahLSM:
             # i   -> j+1 level
             # i+1 -> j   level
             # i+2 -> j-1 level
-            Cp = float(step_dif) * dt_T * K_mid[i] / dz2
-            Cm = float(step_dif) * dt_T * K_mid[i+1] / dz2
+            Cp = float(step_dif) * dt_T * D_mid[i] / dz2
+            Cm = float(step_dif) * dt_T * D_mid[i+1] / dz2
             CBp = -theta_b * Cp
             CBm = -theta_b * Cm
             CB = 1.0 - CBp - CBm
@@ -448,8 +448,8 @@ class UtahLSM:
         
         # Bottom level
         j = nz-2
-        Cp = float(step_dif) * dt_T * K_mid[j] / dz2
-        Cm = float(step_dif) * dt_T * K_mid[j] / dz2
+        Cp = float(step_dif) * dt_T * D_mid[j] / dz2
+        Cm = float(step_dif) * dt_T * D_mid[j] / dz2
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
@@ -488,16 +488,16 @@ class UtahLSM:
         dt_q = self.tstep
         e, f, g, r = [np.zeros(nz - 1) for _ in range(4)]
         
-        D_all = self.soil.diffusivity_moisture(self.soil_state.moisture)
-        K_all = self.soil.conductivity_moisture(self.soil_state.moisture)
-        D_mid = 0.5 * (D_all[:-1] + D_all[1:])
+        D_hydraulic = self.soil.diffusivity_moisture(self.soil_state.moisture)
+        K_hydraulic = self.soil.conductivity_moisture(self.soil_state.moisture)
+        D_mid = 0.5 * (D_hydraulic[:-1] + D_hydraulic[1:])
         # Avoid division by zero in dry conditions
         K_lin = np.where(self.soil_state.moisture > 1e-9,
-                         K_all / self.soil_state.moisture,
+                         K_hydraulic / self.soil_state.moisture,
                          0.0)
         
         # First soil level below surface
-        Cpd = float(self.input.time.step_dif) * dt_q * D_mid[0] / dz2
+        Cpd = float(self.input.time.step_dif) * dt_q * D_mid[0] / dz2  # D_mid is hydraulic diffusivity at midpoint
         Cmd = float(self.input.time.step_dif) * dt_q * D_mid[1] / dz2
         Cpk = float(self.input.time.step_dif) * dt_q * K_lin[0] / (2*dz)
         Cmk = float(self.input.time.step_dif) * dt_q * K_lin[2] / (2*dz)
