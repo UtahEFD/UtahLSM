@@ -234,6 +234,7 @@ namelist['numerics']['tolerances']['smb_flux'] = 1e-3
 namelist['time']['step_seb']   = 1
 namelist['time']['step_dif']   = 1
 namelist['time']['utc_start']  = float(t_utc[0])
+namelist['time']['utc_year']  = 2006
 namelist['time']['julian_day'] = 183
 
 # grid section

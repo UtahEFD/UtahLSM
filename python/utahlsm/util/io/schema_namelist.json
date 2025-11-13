@@ -43,9 +43,10 @@
                 "step_seb": { "type": "integer", "minimum": 1 },
                 "step_dif": { "type": "integer", "minimum": 1 },
                 "utc_start": { "type": "integer", "minimum": 0, "maximum": 86359 },
+                "utc_year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
                 "julian_day": { "type": "integer", "minimum": 1, "maximum": 366 }
             },
-            "required": ["step_seb", "step_dif", "utc_start", "julian_day"]
+            "required": ["step_seb", "step_dif", "utc_start", "utc_year", "julian_day"]
         },
         "grid": {
             "type": "object",

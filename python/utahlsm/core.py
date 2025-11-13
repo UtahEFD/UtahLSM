@@ -110,8 +110,9 @@ class UtahLSM:
         # Run radiation model if configured
         if self.input.radiation.model:
             utc = np.fmod((self.input.time.utc_start+runtime),86400)
-            # Wrap julian day to stay in valid range [1, 365] for multi-year simulations
-            julian_day = ((self.input.time.julian_day + int(utc/86400) - 1) % 365) + 1
+            # Wrap julian day to stay in valid range [1, 365/366] accounting for leap years
+            days_per_year = 366 if self._is_leap_year(self.input.time.utc_year) else 365
+            julian_day = ((self.input.time.julian_day + int(utc/86400) - 1) % days_per_year) + 1
             self.atm_state.radiation_net = self.rad.compute_net(julian_day,utc,self.atm_state,self.sfc_state)
 
     def run(self, step_count: int, runtime: float) -> None:
@@ -209,7 +210,23 @@ class UtahLSM:
         }
         self.output.set_fields(self.output_fields)
         self.output.save(self.output_fields, 0, 0, initial=True)
-    
+
+    @staticmethod
+    def _is_leap_year(year: int) -> bool:
+        """Determines if a year is a leap year.
+
+        A year is a leap year if:
+        - It is divisible by 4 AND not divisible by 100, OR
+        - It is divisible by 400
+
+        Args:
+            year: The year to check.
+
+        Returns:
+            True if the year is a leap year, False otherwise.
+        """
+        return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+
     def _solve_seb(self) -> None:
         """Solves the Surface Energy Budget (SEB) to find surface temperature.
 
