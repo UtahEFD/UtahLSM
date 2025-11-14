@@ -62,22 +62,11 @@ class UtahLSM:
             input_lsm: An `Input` object containing the model configuration.
             output_lsm: An `Output` object for handling data output.
         """
-        # Type declarations for instance variables
-        self.logger: logging.Logger
+        self.logger: logging.Logger = logging_helper.get_logger("UtahLSM")
         self.input: Input = input_lsm
         self.output: Output = output_lsm
-        self.tstep: float
-        self.soil_state: SoilState
-        self.sfc_state: SurfaceState
-        self.atm_state: AtmosphericState
-        self.solver_state: SolverState
-        self.rad: Optional[Radiation]
-        self.soil: Soil
-        self.sfc: Surface
-        self.output_dims: dict
-        self.output_fields: dict
+        self.tstep: float = 0.0
 
-        self.logger = logging_helper.get_logger("UtahLSM")
         self._setup_states()
         self._setup_physics()
         self._setup_output()
@@ -154,17 +143,16 @@ class UtahLSM:
     def _setup_states(self) -> None:
         """Initializes all state containers for the model."""
         self.logger.info("Setting up initial states")
-        self.tstep = 0
-        self.soil_state = replace(self.input.initial)
-        self.sfc_state = SurfaceState()
-        self.atm_state = AtmosphericState()
-        self.solver_state = SolverState()
+        self.soil_state: SoilState = replace(self.input.initial)
+        self.sfc_state: SurfaceState = SurfaceState()
+        self.atm_state: AtmosphericState = AtmosphericState()
+        self.solver_state: SolverState = SolverState()
     
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
         self.logger.info("Initializing physics modules")
         try:
-            if self.input.radiation.model:        
+            if self.input.radiation.model:
                 self.rad: Radiation = Radiation.get_model(
                     self.input.radiation.model,
                     self.input.radiation.latitude,
@@ -173,10 +161,11 @@ class UtahLSM:
                     self.input.surface.emissivity
                 )
             else:
+                self.rad: Radiation = None  # type: ignore
                 self.logger.info("Using radiation forcing data")
             self.soil: Soil = Soil.get_model(
-                self.input.soil.model, 
-                self.input.soil.param, 
+                self.input.soil.model,
+                self.input.soil.param,
                 self.input.initial.type
             )
             self.sfc: Surface = Surface.get_model(self.input.surface.model)
@@ -186,13 +175,13 @@ class UtahLSM:
     
     def _setup_output(self) -> None:
         """Sets up the output file dimensions and fields."""
-        self.output_dims = {
+        self.output_dims: dict = {
             't': 0,
             'z': self.input.grid.nz
         }
         self.output.set_dims(self.output_dims)
-        
-        self.output_fields = {
+
+        self.output_fields: dict = {
             'ust': self.sfc_state.turbulence.friction_velocity,
             'obl': self.sfc_state.turbulence.obukhov_length,
             'shf': self.sfc_state.fluxes.sensible_heat,
@@ -283,7 +272,7 @@ class UtahLSM:
         Returns:
             The residual of the surface energy budget [W/m^2].
         """
-        self._compute_fluxes(sfc_T,self.sfc_state.moisture);
+        self._compute_fluxes(sfc_T, self.sfc_state.moisture)
         SEB = self.atm_state.radiation_net - self.sfc_state.fluxes.ground_heat[0] - self.sfc_state.fluxes.sensible_heat[0] - self.sfc_state.fluxes.latent_heat[0]
         
         return SEB
