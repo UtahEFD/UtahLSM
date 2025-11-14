@@ -23,6 +23,7 @@ To run an offline simulation, provide the case name via the command line:
     $ python utahlsm_offline.py -c my_case_name
 """
 from typing import Optional
+from pathlib import Path
 import argparse
 import time
 import utahlsm
@@ -44,10 +45,20 @@ def main() -> None:
     case: str = args.case
     outf: Optional[str] = args.outfile
 
-    # Define file paths based on the case name
-    namelist: str = f'../cases/{case}/lsm_namelist.json'
-    initfile: str = f'../cases/{case}/lsm_init.nc'
-    offlinefile: str = f'../cases/{case}/lsm_offline.nc'
+    # Define file paths based on the case name with path traversal protection
+    base_path: Path = Path('../cases').resolve()
+    case_path: Path = (base_path / case).resolve()
+
+    # Validate that the resolved path stays within the base directory
+    if not str(case_path).startswith(str(base_path)):
+        raise ValueError(
+            f"Invalid case name '{case}': path traversal detected. "
+            f"Case directory must be within {base_path}."
+        )
+
+    namelist: str = str(case_path / 'lsm_namelist.json')
+    initfile: str = str(case_path / 'lsm_init.nc')
+    offlinefile: str = str(case_path / 'lsm_offline.nc')
 
     # Display a welcome message
     print("##############################################################")
@@ -83,12 +94,20 @@ def main() -> None:
 
             # Save the output for the current time step
             lsm.save(step_count, runtime)
-    except (UtahLSMError) as e:
+    except ValueError as e:
+        print(f"\nConfiguration error: {e}")
+        print("UtahLSM simulation failed.")
+        raise SystemExit(1)
+    except UtahLSMError as e:
         print(f"\nAn error occurred: {e} Check namelist settings.")
         print("UtahLSM simulation failed.")
         raise SystemExit(1)
-    except (FileNotFoundError, Exception) as e:
-        print(f"\nAn error occurred: {e}")
+    except FileNotFoundError as e:
+        print(f"\nFile not found: {e}")
+        print("UtahLSM simulation failed.")
+        raise SystemExit(1)
+    except Exception as e:
+        print(f"\nAn unexpected error occurred: {e}")
         print("UtahLSM simulation failed.")
         raise SystemExit(1)
     finally:
