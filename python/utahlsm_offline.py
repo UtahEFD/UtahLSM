@@ -106,10 +106,6 @@ def main() -> None:
         print(f"\nFile not found: {e}")
         print("UtahLSM simulation failed.")
         raise SystemExit(1)
-    except Exception as e:
-        print(f"\nAn unexpected error occurred: {e}")
-        print("UtahLSM simulation failed.")
-        raise SystemExit(1)
     finally:
         # Ensure the output file is properly closed, even if an error occurred
         if output_lsm is not None:
