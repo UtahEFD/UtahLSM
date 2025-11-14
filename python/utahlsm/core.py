@@ -126,24 +126,18 @@ class UtahLSM:
             runtime: The total elapsed simulation time [s].
         """
         self.logger.info(f"Solving soil state")
-        
+
         # Set initial guesses for new surface temp and moisture
         self.sfc_state.temperature = self.soil_state.temperature[0]
         self.sfc_state.moisture = self.soil_state.moisture[0]
-        
-        # Solve surface budgets at the specified frequency
-        if ( (step_count % self.input.time.step_seb)==0 ):
-            self._solve_seb()
-            self._solve_smb()
-        else:
-            # just return new fluxes
-            self._compute_fluxes(self.soil_state.temperature[0],
-                                 self.soil_state.moisture[0])
-        
-        # Solve diffusion equations at the specified frequency
-        if (step_count % self.input.time.step_dif)==0:
-            self._solve_diffusion_heat()
-            self._solve_diffusion_mois()
+
+        # Solve surface energy and moisture budgets
+        self._solve_seb()
+        self._solve_smb()
+
+        # Solve diffusion equations for heat and moisture
+        self._solve_diffusion_heat()
+        self._solve_diffusion_mois()
         
     def save(self, step_count: int, runtime: float) -> None:
         """Saves the model's current state to the output file.
@@ -426,15 +420,14 @@ class UtahLSM:
         dz = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
         dt_T = self.tstep
-        step_dif = self.input.time.step_dif
         e, f, g, r = [np.zeros(nz - 1) for _ in range(4)]
-        
+
         D_thermal = self.soil.diffusivity_thermal(self.soil_state.moisture)
-        D_mid = 0.5 * (D_thermal[:-1] + D_thermal[1:]) 
-        
+        D_mid = 0.5 * (D_thermal[:-1] + D_thermal[1:])
+
         # First soil level below surface
-        Cp = float(step_dif) * dt_T * D_mid[0] / dz2
-        Cm = float(step_dif) * dt_T * D_mid[1] / dz2
+        Cp = dt_T * D_mid[0] / dz2
+        Cm = dt_T * D_mid[1] / dz2
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
@@ -450,8 +443,8 @@ class UtahLSM:
             # i   -> j+1 level
             # i+1 -> j   level
             # i+2 -> j-1 level
-            Cp = float(step_dif) * dt_T * D_mid[i] / dz2
-            Cm = float(step_dif) * dt_T * D_mid[i+1] / dz2
+            Cp = dt_T * D_mid[i] / dz2
+            Cm = dt_T * D_mid[i+1] / dz2
             CBp = -theta_b * Cp
             CBm = -theta_b * Cm
             CB = 1.0 - CBp - CBm
@@ -465,8 +458,8 @@ class UtahLSM:
         
         # Bottom level
         j = nz-2
-        Cp = float(step_dif) * dt_T * D_mid[j] / dz2
-        Cm = float(step_dif) * dt_T * D_mid[j] / dz2
+        Cp = dt_T * D_mid[j] / dz2
+        Cm = dt_T * D_mid[j] / dz2
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
@@ -514,10 +507,10 @@ class UtahLSM:
                          0.0)
         
         # First soil level below surface
-        Cpd = float(self.input.time.step_dif) * dt_q * D_mid[0] / dz2  # D_mid is hydraulic diffusivity at midpoint
-        Cmd = float(self.input.time.step_dif) * dt_q * D_mid[1] / dz2
-        Cpk = float(self.input.time.step_dif) * dt_q * K_lin[0] / (2*dz)
-        Cmk = float(self.input.time.step_dif) * dt_q * K_lin[2] / (2*dz)
+        Cpd = dt_q * D_mid[0] / dz2  # D_mid is hydraulic diffusivity at midpoint
+        Cmd = dt_q * D_mid[1] / dz2
+        Cpk = dt_q * K_lin[0] / (2*dz)
+        Cmk = dt_q * K_lin[2] / (2*dz)
         CBpd = -theta_b * Cpd
         CBmd = -theta_b * Cmd
         CBpk = -theta_b * Cpk
@@ -541,10 +534,10 @@ class UtahLSM:
             # i   -> j+1 level
             # i+1 -> j   level
             # i+2 -> j-1 level
-            Cpd = float(self.input.time.step_dif) * dt_q * D_mid[i] / dz2
-            Cmd = float(self.input.time.step_dif) * dt_q * D_mid[i+1] / dz2
-            Cpk = float(self.input.time.step_dif) * dt_q * K_lin[i] / (2*dz)
-            Cmk = float(self.input.time.step_dif) * dt_q * K_lin[i+2] / (2*dz)
+            Cpd = dt_q * D_mid[i] / dz2
+            Cmd = dt_q * D_mid[i+1] / dz2
+            Cpk = dt_q * K_lin[i] / (2*dz)
+            Cmk = dt_q * K_lin[i+2] / (2*dz)
             CBpd = -theta_b * Cpd
             CBmd = -theta_b * Cmd
             CBpk = -theta_b * Cpk
@@ -566,10 +559,10 @@ class UtahLSM:
             
         # Bottom level
         j = nz-2
-        Cpd  = float(self.input.time.step_dif) * dt_q * D_mid[j] / dz2
-        Cmd  = float(self.input.time.step_dif) * dt_q * D_mid[j] / dz2
-        Cpk  = float(self.input.time.step_dif) * dt_q * K_lin[j] / (2*dz)
-        Cmk  = float(self.input.time.step_dif) * dt_q * K_lin[j] / (2*dz)
+        Cpd  = dt_q * D_mid[j] / dz2
+        Cmd  = dt_q * D_mid[j] / dz2
+        Cpk  = dt_q * K_lin[j] / (2*dz)
+        Cmk  = dt_q * K_lin[j] / (2*dz)
         CBpd = -theta_b * Cpd
         CBmd = -theta_b * Cmd
         CBpk = -theta_b * Cpk

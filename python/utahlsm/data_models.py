@@ -212,14 +212,10 @@ class TimeConfig:
     """Time-related parameters for the simulation.
 
     Attributes:
-        step_seb: Frequency (in time steps) for solving the surface energy budget.
-        step_dif: Frequency (in time steps) for solving the diffusion equations.
         utc_start: The starting time of the simulation in UTC seconds from midnight.
         utc_year: The year (UTC) at the start of the simulation.
         julian_day: The starting Julian day of the year.
     """
-    step_seb: int
-    step_dif: int
     utc_start: int
     utc_year: int
     julian_day: int

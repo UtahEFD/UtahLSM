@@ -90,10 +90,10 @@ stype = np.full((nsoil),11)
 # stype = np.array([13,13,13,13,13,13,14,14,15])
 
 # initialization file
-init             = nc.Dataset('lsm_init.nc','w')
+init = nc.Dataset('lsm_init.nc','w')
 init.description = "UtahLSM input file"
-init.source      = "Jeremy A. Gibbs"
-init.history     = "Created " + time.ctime(time.time())
+init.source = "Jeremy A. Gibbs"
+init.history = "Created " + time.ctime(time.time())
 
 # add dimensions
 init.createDimension('z', nsoil)
@@ -126,7 +126,7 @@ init.close()
 ###################################
 
 # end time is 9 hours, so 6*9 = 54
-tend  = tidx + 55
+tend = tidx + 55
 
 # open MET data
 met = nc.MFDataset('observations/cesar_surface_meteo_lc1_t10_v1.0_200607.nc')
@@ -144,7 +144,7 @@ uc = -ws * np.sin(wd * np.pi / 180)
 vc = -ws * np.cos(wd * np.pi / 180)
 
 # time dimension
-dt    = tm[1] - tm[0]
+dt = tm[1] - tm[0]
 ntime = len(tm)
 t_utc = (tm - 86400) % 86400
 
@@ -163,10 +163,10 @@ net = swd - swu + lwd - lwu
 ##############################
 
 # time-series file
-metr             = nc.Dataset('lsm_offline.nc','w')
+metr = nc.Dataset('lsm_offline.nc','w')
 metr.description = "UtahLSM input file for offline run"
-metr.source      = "Jeremy A. Gibbs"
-metr.history     = "Created " + time.ctime(time.time())
+metr.source = "Jeremy A. Gibbs"
+metr.history = "Created " + time.ctime(time.time())
 
 # add dimensions
 metr.createDimension('t', ntime)
@@ -231,8 +231,6 @@ namelist['numerics']['tolerances']['seb_root'] = 1e-6
 namelist['numerics']['tolerances']['smb_flux'] = 1e-3
 
 # time section
-namelist['time']['step_seb']   = 1
-namelist['time']['step_dif']   = 1
 namelist['time']['utc_start']  = float(t_utc[0])
 namelist['time']['utc_year']  = 2006
 namelist['time']['julian_day'] = 183
@@ -243,25 +241,25 @@ namelist['grid']['ny'] = 1
 namelist['grid']['nz'] = nsoil
 
 # surface section
-namelist['surface']['z_o']                   = float(0.15)
-namelist['surface']['z_t']                   = float(0.0015)
-namelist['surface']['z_m']                   = float(10.0)
-namelist['surface']['z_s']                   = float(2.0)
-namelist['surface']['albedo']                = float(0.33)
-namelist['surface']['emissivity']            = float(0.99)
-namelist['surface']['model']                 = 1
+namelist['surface']['z_o'] = float(0.15)
+namelist['surface']['z_t'] = float(0.0015)
+namelist['surface']['z_m'] = float(10.0)
+namelist['surface']['z_s'] = float(2.0)
+namelist['surface']['albedo'] = float(0.33)
+namelist['surface']['emissivity'] = float(0.99)
+namelist['surface']['model'] = 1
 
 # soil section
 namelist['soil']['param'] = 3
 namelist['soil']['model'] = 2
 
 # radiation section
-namelist['radiation']['model']     = 0
-namelist['radiation']['latitude']  = float(51.9711)
+namelist['radiation']['model'] = 0
+namelist['radiation']['latitude'] = float(51.9711)
 namelist['radiation']['longitude'] = float(-4.9267)
 
 # output section
-namelist['output']['save']   = True
+namelist['output']['save'] = True
 namelist['output']['fields'] = ['all']
 
 with open('lsm_namelist.json', 'w') as outfile:
