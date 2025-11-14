@@ -3,6 +3,7 @@ bin/
 doc/
 build/
 output/
+logs/
 lsm*.nc
 .vscode/
 **.log

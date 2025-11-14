@@ -19,6 +19,7 @@ Once the main configuration is loaded, `finalize_logging` is called to
 set up the final file and console handlers and flush all buffered messages.
 """
 from typing import Optional, Dict
+from pathlib import Path
 import logging
 import logging.handlers
 
@@ -82,8 +83,13 @@ def finalize_logging(level_str: str = "info") -> None:
         datefmt="%Y-%m-%d %H:%M:%S", style="{"
     )
 
-    # file handlers
-    file_handler = logging.FileHandler("utahlsm.log", mode="w")
+    # Create logs directory in the python folder (go up 3 levels from this file)
+    log_dir: Path = Path(__file__).resolve().parents[3] / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file: Path = log_dir / "utahlsm.log"
+
+    # file handler
+    file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setLevel(log_level)
     file_handler.setFormatter(log_format)
     
