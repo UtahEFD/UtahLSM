@@ -26,7 +26,7 @@ from dataclasses import dataclass, field, fields
 import logging
 import numpy as np
 from numpy.typing import NDArray
-from typing import TypeVar, Union
+from typing import TypeVar, Union, overload
 from .soil_type import SoilType
 from ...exceptions import NamelistError
 from ...util import constants as c
@@ -148,12 +148,24 @@ class Soil(ABC):
             raise NamelistError(error_msg)
     
     #--- Abstract Methods ---
-    
+
+    @overload
+    def water_potential(self, soil_q: float, level: int = None) -> float: ...
+
+    @overload
+    def water_potential(self, soil_q: NDArray[np.float64], level: int = None) -> NDArray[np.float64]: ...
+
     @abstractmethod
     def water_potential(self, soil_q: Union[float, NDArray[np.float64]], level: int = None) -> Union[float, NDArray[np.float64]]:
         """Computes soil water potential. Must be implemented by subclasses."""
         raise NotImplementedError
     
+    @overload
+    def conductivity_moisture(self, soil_q: float, level: int = None) -> float: ...
+
+    @overload
+    def conductivity_moisture(self, soil_q: NDArray[np.float64], level: int = None) -> NDArray[np.float64]: ...
+
     @abstractmethod
     def conductivity_moisture(self, soil_q: Union[float, NDArray[np.float64]], level: int = None) -> Union[float, NDArray[np.float64]]:
         """Computes soil moisture conductivity. Must be implemented by subclasses."""
@@ -189,7 +201,7 @@ class Soil(ABC):
         
         return Ks
         
-    def surface_mixing_ratio(self, sfc_T: float, sfc_q: float, atm_p: float):
+    def surface_mixing_ratio(self, sfc_T: float, sfc_q: float, atm_p: float) -> float:
         """Computes the specific humidity at the soil surface.
         
         Args:
