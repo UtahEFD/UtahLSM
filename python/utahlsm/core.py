@@ -239,9 +239,9 @@ class UtahLSM:
         seb_b  = self._compute_seb(temp_b)
         
         # Expand the bracket if the root is not contained within it
-        iter_max = self.input.numerics.iterations.seb_bracket
+        ITER_MAX = self.input.numerics.iterations.seb_bracket
         iter_count = 0
-        while seb_a * seb_b > 0 and iter_count < iter_max:
+        while seb_a * seb_b > 0 and iter_count < ITER_MAX:
             if abs(seb_a) < abs(seb_b):
                 temp_a -= 5.0
                 seb_a = self._compute_seb(temp_a)
@@ -250,7 +250,7 @@ class UtahLSM:
                 seb_b = self._compute_seb(temp_b)
             iter_count += 1
         
-        if iter_count >= iter_max:
+        if iter_count >= ITER_MAX:
             self.logger.error("Failed to find a valid bracket for _solve_seb.")
             raise UtahLSMError(
                 f"Failed to find a valid bracket for surface energy balance after {iter_max} iterations."
@@ -258,10 +258,10 @@ class UtahLSM:
         
         # Find the root (surface temperature)
         try:
-            iter_max = self.input.numerics.iterations.seb_root
-            tolerance = self.input.numerics.tolerances.seb_root
+            ITER_MAX = self.input.numerics.iterations.seb_root
+            TOLERANCE = self.input.numerics.tolerances.seb_root
             temp, converged = solvers.root_brent(self._compute_seb, temp_a, 
-                                                 temp_b, iter_max, tolerance)
+                                                 temp_b, ITER_MAX, TOLERANCE)
             if not converged:
                 self.logger.warning("SEB root-finder did not converge.")
             self.sfc_state.temperature = temp
@@ -295,44 +295,61 @@ class UtahLSM:
         It then iteratively blends the two in time until convergence.
         """
         # Local constants and variables
-        RHO_W = c.water.DENSITY
-        RHO_A = self.atm_state.pressure / (c.thermodynamic.GAS_CONSTANT_DRY * self.atm_state.temperature)
-        iter_max = self.input.numerics.iterations.smb_flux
         delta = 0.5
-        tol = self.input.numerics.tolerances.smb_flux
         
+        RHO_W = c.water.DENSITY
+        RD = c.thermodynamic.GAS_CONSTANT_DRY
+        TOL = self.input.numerics.tolerances.smb_flux
+        ITER_MAX = self.input.numerics.iterations.smb_flux
+        
+        z_m = self.input.surface.z_m
+        z_o = self.input.surface.z_o
+        z_s = self.input.surface.z_s
+        z_t = self.input.surface.z_t
+        dz = self.input.grid.z[0] - self.input.grid.z[1]
+        
+        atm_T = self.atm_state.temperature
+        atm_p = self.atm_state.pressure
+        atm_q = self.atm_state.specific_humidity
+        sfc_T = self.sfc_state.temperature
+        L = self.sfc_state.turbulence.obukhov_length[0]
+        ust = self.sfc_state.turbulence.friction_velocity[0]
+        rho_a = atm_p / (RD * atm_T)
+        fh = self.sfc.fh(z_s, z_t, L)
+        
+        psi_sat = self.soil.properties.psi_sat[0]
         psi_all = self.soil.water_potential(self.soil_state.moisture)
         D_all = self.soil.diffusivity_moisture(self.soil_state.moisture)
         K_hydraulic = self.soil.conductivity_moisture(self.soil_state.moisture)
-
         psi0 = psi_all[0]
         psi1 = psi_all[1]
         K0 = K_hydraulic[0]
         K1 = K_hydraulic[1]
         K_mid = 0.5 * (K0 + K1)
         
-        flux_sm  = RHO_W*K_mid*((psi0 - psi1)/(self.input.grid.z[0]-self.input.grid.z[1]) + 1.0)
-        E = RHO_A*self.sfc_state.fluxes.kinematic_moisture[0]
-        
+        # Soil moisture flux and evaporation
+        flux_sm  = RHO_W*K_mid*((psi0 - psi1)/dz + 1.0)
+        E = rho_a*self.sfc_state.fluxes.kinematic_moisture[0]
+
         # Iteratively solve for moisture flux
-        for _ in range(0,iter_max):
+        for _ in range(0,ITER_MAX):
+            
+            # New blended soil moisture flux
             flux_sm_last = flux_sm
             flux_sm = delta*flux_sm_last - (1.0-delta)*E
-                
-            psi0 = psi1 + (self.input.grid.z[0]-self.input.grid.z[1])*((flux_sm/(RHO_W*K_mid))-1.0)
-            psi_sat = self.soil.properties.psi_sat[0]
+            
+            # New evaporation
+            psi0 = psi1 + dz*((flux_sm/(RHO_W*K_mid))-1.0)
             if (psi0 > psi_sat):
                 psi0 = psi_sat
-            
             self.sfc_state.moisture = self.soil.surface_water_content(psi0)
-            gnd_q = self.soil.surface_mixing_ratio(self.sfc_state.temperature,self.sfc_state.moisture,self.atm_state.pressure)
-            fh = self.sfc.fh(self.input.surface.z_s, self.input.surface.z_t, self.sfc_state.turbulence.obukhov_length[0])
-            E = RHO_A*(gnd_q-self.atm_state.specific_humidity)*self.sfc_state.turbulence.friction_velocity[0]*fh
-            
+            gnd_q = self.soil.surface_mixing_ratio(sfc_T, self.sfc_state.moisture, atm_p)
+            E = rho_a*(gnd_q-atm_q)*ust*fh
+
             K0 = self.soil.conductivity_moisture(self.sfc_state.moisture,level=0)
             K_mid = 0.5*(K0+K1)  # K_mid is hydraulic conductivity at midpoint
-            
-            if abs((E + flux_sm) / E) <= tol:
+
+            if abs((E + flux_sm) / E) <= TOL:
                 break
 
     def _compute_fluxes(self, sfc_T: float, sfc_q: float) -> None:
@@ -347,55 +364,80 @@ class UtahLSM:
             sfc_q: Surface moisture [m^3/m^3].
         """
         # Local constants and variables
+        converged = False
+        
         VK = c.physical.VON_KARMAN
         G = c.physical.GRAVITY
-        # Calculate air density from ideal gas law: RHO = P / (Rd * T)
-        RHO = self.atm_state.pressure / (c.thermodynamic.GAS_CONSTANT_DRY * self.atm_state.temperature)
         CP = c.thermodynamic.SPECIFIC_HEAT
+        RD = c.thermodynamic.GAS_CONSTANT_DRY
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
-        converged = False
-        iter_max = self.input.numerics.iterations.sfc_flux
-        tol = self.input.numerics.tolerances.sfc_flux
-        ref_T = self.atm_state.temperature
+        TOL = self.input.numerics.tolerances.sfc_flux
+        ITER_MAX = self.input.numerics.iterations.sfc_flux
+
+        atm_T = self.atm_state.temperature
+        atm_p = self.atm_state.pressure
+        atm_q = self.atm_state.specific_humidity
+        atm_ws = self.atm_state.wind_speed
+        ref_T = atm_T
+        rho = atm_p / (RD * atm_T)
         
+        z_m = self.input.surface.z_m
+        z_o = self.input.surface.z_o
+        z_s = self.input.surface.z_s
+        z_t = self.input.surface.z_t
+        dz = self.input.grid.z[0] - self.input.grid.z[1]
+
         # Compute surface-air specific humidity
-        gnd_q  = self.soil.surface_mixing_ratio(sfc_T,sfc_q,self.atm_state.pressure)
-        
+        gnd_q  = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+
         # Compute ground heat flux
         K_mid = self.solver_state.K_mid
-        self.sfc_state.fluxes.ground_heat[0] = K_mid*(sfc_T - self.soil_state.temperature[1])/(self.input.grid.z[0]-self.input.grid.z[1])
-        
+        self.sfc_state.fluxes.ground_heat[0] = K_mid*(sfc_T - self.soil_state.temperature[1])/dz
+
         # Iteratively solve for fluxes and stability
-        for i in range(0,iter_max):
-            fm = self.sfc.fm(self.input.surface.z_m, self.input.surface.z_o, self.sfc_state.turbulence.obukhov_length[0])
-            fh = self.sfc.fh(self.input.surface.z_s, self.input.surface.z_t, self.sfc_state.turbulence.obukhov_length[0])
+        L = self.sfc_state.turbulence.obukhov_length[0]
+        for i in range(0,ITER_MAX):
             
-            self.sfc_state.turbulence.friction_velocity[0] = self.atm_state.wind_speed*fm
-            self.sfc_state.fluxes.kinematic_heat[0] = (sfc_T-self.atm_state.temperature)*self.sfc_state.turbulence.friction_velocity[0]*fh
-            self.sfc_state.fluxes.kinematic_moisture[0] = (gnd_q-self.atm_state.specific_humidity)*self.sfc_state.turbulence.friction_velocity[0]*fh
-            flux_wTv = self.sfc_state.fluxes.kinematic_heat[0] + ref_T*0.61*self.sfc_state.fluxes.kinematic_moisture[0]
+            # Stability functions
+            fm = self.sfc.fm(z_m, z_o, L)
+            fh = self.sfc.fh(z_s, z_t, L)
             
-            last_L = self.sfc_state.turbulence.obukhov_length[0]
+            # Friction velocity
+            self.sfc_state.turbulence.friction_velocity[0] = atm_ws*fm
+            ustar = self.sfc_state.turbulence.friction_velocity[0]
+            
+            # Kinematic fluxes
+            flux_wT = (sfc_T-atm_T)*ustar*fh
+            flux_wq = (gnd_q-atm_q)*ustar*fh
+            self.sfc_state.fluxes.kinematic_heat[0] = flux_wT
+            self.sfc_state.fluxes.kinematic_moisture[0] = flux_wq
+            flux_wTv = flux_wT + ref_T*0.61*flux_wq
+            
+            # Obukhov length
+            last_L = L
             if flux_wTv != 0:
-                self.sfc_state.turbulence.obukhov_length[0] = -(self.sfc_state.turbulence.friction_velocity[0]**3) * ref_T / (VK * G * flux_wTv)
+                L = -(ustar**3) * ref_T / (VK * G * flux_wTv)
             else:
-                self.sfc_state.turbulence.obukhov_length[0] = 1e6 # Large positive for neutral
-            
+                L = 1e6 # Large positive for neutral
+
             # Bound L to prevent extreme instability/stability
-            if (self.input.surface.z_m/self.sfc_state.turbulence.obukhov_length[0] > 5.0): 
-                self.sfc_state.turbulence.obukhov_length[0] =  self.input.surface.z_m/5.0
-            if (self.input.surface.z_m/self.sfc_state.turbulence.obukhov_length[0] < -5.0): 
-                self.sfc_state.turbulence.obukhov_length[0] = -self.input.surface.z_m/5.0
-            
+            if (z_m/L > 5.0):
+                L = z_m/5.0
+            elif (z_m/L < -5.0):
+                L = -z_m/5.0
+
             # Check for convergence
-            if abs(last_L - self.sfc_state.turbulence.obukhov_length[0]) <= tol:
-                self.sfc_state.fluxes.sensible_heat[0] = RHO*CP*self.sfc_state.fluxes.kinematic_heat[0]
-                self.sfc_state.fluxes.latent_heat[0] = RHO*LV*self.sfc_state.fluxes.kinematic_moisture[0]
+            if abs(last_L - L) <= TOL:
+                self.sfc_state.turbulence.obukhov_length[0] = L
+                self.sfc_state.fluxes.sensible_heat[0] = rho*CP*flux_wT
+                self.sfc_state.fluxes.latent_heat[0] = rho*LV*flux_wq
                 converged = True
                 break
-                
+
+        # Set final Obukhov length if loop completed without converging
         if not converged:
-            self.logger.warning(f"Obukhov length did not converge. Final value = {self.sfc_state.turbulence.obukhov_length[0]}")
+            self.sfc_state.turbulence.obukhov_length[0] = L
+            self.logger.warning(f"Obukhov length did not converge. Final value = {L}")
     
     def _solve_diffusion_heat(self) -> None:
         """Solves the soil heat diffusion equation using a theta scheme.
