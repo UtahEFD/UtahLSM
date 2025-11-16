@@ -21,6 +21,8 @@ Clapp and Hornberger (1974).
 A factory function, `get_properties`, is used to retrieve an object
 containing the correct properties based on a dataset ID and a soil type ID.
 """
+from ...exceptions import NamelistError
+
 class SoilType(object):
     """A base class for defining soil properties.
     This class serves as a template for specific soil types and provides
@@ -42,44 +44,47 @@ class SoilType(object):
         self.K_sat = 0.0
         self.ci = 0.0
     @staticmethod
-    def get_properties(dataset: int, soil_type:int):
+    def get_properties(dataset: int, soil_type: int):
         """Factory method to get a soil properties object.
-            Args:
+
+        Args:
             dataset: An integer ID for the soil parameter dataset.
-            soil_type: An integer ID for the soil type.
-            Returns:
+            soil_type: An integer ID for the soil type (must be 1-15).
+
+        Returns:
             An instance of a SoilType subclass with the correct properties.
+
+        Raises:
+            NamelistError: If soil_type is not in the valid range (1-15).
         """
-        if soil_type == 1:
-            return Sand(dataset)
-        if soil_type == 2:
-            return LoamySand(dataset)
-        if soil_type == 3:
-            return SandyLoam(dataset)
-        if soil_type == 4:
-            return SiltyLoam(dataset)
-        if soil_type == 5:
-            return Loam(dataset)
-        if soil_type == 6:
-            return SandyClayLoam(dataset)
-        if soil_type == 7:
-            return SiltyClayLoam(dataset)
-        if soil_type == 8:
-            return ClayLoam(dataset)
-        if soil_type == 9:
-            return SandyClay(dataset)
-        if soil_type == 10:
-            return SiltyClay(dataset)
-        if soil_type == 11:
-            return Clay(dataset)
-        if soil_type == 12:
-            return Peat(dataset)
-        if soil_type == 13:
-            return B11(dataset)
-        if soil_type == 14:
-            return O12(dataset)
-        if soil_type == 15:
-            return O16(dataset)
+        soil_type_map = {
+            1: Sand,
+            2: LoamySand,
+            3: SandyLoam,
+            4: SiltyLoam,
+            5: Loam,
+            6: SandyClayLoam,
+            7: SiltyClayLoam,
+            8: ClayLoam,
+            9: SandyClay,
+            10: SiltyClay,
+            11: Clay,
+            12: Peat,
+            13: B11,
+            14: O12,
+            15: O16,
+        }
+
+        if soil_type not in soil_type_map:
+            raise NamelistError(
+                f"Invalid soil type ID: {soil_type}. "
+                f"Valid soil types are: 1 (Sand), 2 (LoamySand), 3 (SandyLoam), "
+                f"4 (SiltyLoam), 5 (Loam), 6 (SandyClayLoam), 7 (SiltyClayLoam), "
+                f"8 (ClayLoam), 9 (SandyClay), 10 (SiltyClay), 11 (Clay), "
+                f"12 (Peat), 13 (B11), 14 (O12), 15 (O16)."
+            )
+
+        return soil_type_map[soil_type](dataset)
 
 class Sand(SoilType):
     """Properties for sand (type=1)."""

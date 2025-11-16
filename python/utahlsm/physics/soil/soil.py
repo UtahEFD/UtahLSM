@@ -181,8 +181,50 @@ class Soil(ABC):
         """Computes sfc water content from potential. Must be implemented by subclasses."""
         raise NotImplementedError
     
+    # --- Validation Methods ---
+
+    def _validate_moisture_bounds(self, soil_q: Union[float, NDArray[np.float64]], level: int = None) -> None:
+        """Validates that soil moisture is within physically possible bounds.
+
+        Issues warnings for out-of-bounds values instead of raising errors,
+        allowing simulation to continue with imperfect data for debugging.
+
+        Args:
+            soil_q: Soil moisture content [m^3/m^3].
+            level: The specific soil layer index if soil_q is a scalar.
+        """
+        if level is not None:
+            residual = self.properties.residual[level]
+            porosity = self.properties.porosity[level]
+            if isinstance(soil_q, (int, float)):
+                if soil_q < 0:
+                    self.logger.warning(
+                        f"Layer {level}: soil moisture {soil_q} is negative. "
+                        f"Moisture must be >= 0."
+                    )
+                if soil_q > porosity:
+                    self.logger.warning(
+                        f"Layer {level}: soil moisture {soil_q} exceeds porosity {porosity}."
+                    )
+        else:
+            residual = self.properties.residual
+            porosity = self.properties.porosity
+            if isinstance(soil_q, np.ndarray):
+                invalid_neg = np.where(soil_q < 0)[0]
+                if len(invalid_neg) > 0:
+                    self.logger.warning(
+                        f"Layers {invalid_neg.tolist()} have negative soil moisture: "
+                        f"{soil_q[invalid_neg].tolist()}. Moisture must be >= 0."
+                    )
+                invalid_high = np.where(soil_q > porosity)[0]
+                if len(invalid_high) > 0:
+                    self.logger.warning(
+                        f"Layers {invalid_high.tolist()} have soil moisture exceeding porosity: "
+                        f"{soil_q[invalid_high].tolist()} > {porosity[invalid_high].tolist()}."
+                    )
+
     # --- Shared Methods ---
-    
+
     def heat_capacity(self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
         """Computes the volumetric heat capacity of the soil.
         

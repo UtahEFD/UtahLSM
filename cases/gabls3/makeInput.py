@@ -59,7 +59,7 @@ sm_30 = np.mean([obs.variables['SM3'][jdi],obs.variables['SM9'][jdi], obs.variab
 sm_45 = np.mean([obs.variables['SM4'][jdi],obs.variables['SM10'][jdi],obs.variables['SM16'][jdi],obs.variables['SM22'][jdi]])
 sm_60 = np.mean([obs.variables['SM5'][jdi],obs.variables['SM11'][jdi],obs.variables['SM17'][jdi],obs.variables['SM23'][jdi]])
 sm_73 = np.mean([obs.variables['SM6'][jdi],obs.variables['SM12'][jdi],obs.variables['SM18'][jdi],obs.variables['SM24'][jdi]])
-
+print(obs.variables['SM13'][jdi],obs.variables['SM14'][jdi], obs.variables['SM15'][jdi],obs.variables['SM16'][jdi],obs.variables['SM17'][jdi],obs.variables['SM18'][jdi])
 sm_ob = np.array([sm_05,sm_05,sm_15,sm_30,sm_45,sm_60,sm_73])
 z_obm = np.array([0.0,0.05,0.15,0.30,0.45,0.60,0.725])
 

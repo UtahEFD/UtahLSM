@@ -89,12 +89,12 @@ class UtahLSM:
         self.atm_state = atm_state
         
         # Update surface state from the top soil layer
-        Ts = self.soil_state.temperature[0]
-        qs = self.soil_state.moisture[0]
-        qa = self.soil.surface_mixing_ratio(Ts, qs, self.atm_state.pressure)
-        self.sfc_state.temperature = Ts
-        self.sfc_state.moisture = qs
-        self.sfc_state.specific_humidity = qa
+        sfc_T = self.soil_state.temperature[0]
+        sfc_q = self.soil_state.moisture[0]
+        sfc_r = self.soil.surface_mixing_ratio(sfc_T, sfc_q, self.atm_state.pressure)
+        self.sfc_state.temperature = sfc_T
+        self.sfc_state.moisture = sfc_q
+        self.sfc_state.specific_humidity = sfc_r
         
         # Run radiation model if configured
         if self.input.radiation.model:

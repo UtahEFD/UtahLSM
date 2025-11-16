@@ -63,16 +63,21 @@ class VanGenuchten(Soil):
     
     def water_potential(self, soil_q: Union[float,  NDArray[np.float64]], level: int = None) -> Union[float,  NDArray[np.float64]]:
         """Computes soil water potential from soil moisture.
-        
+
         Args:
             soil_q: Soil moisture content [m^3/m^3]. Can be a scalar for a
                 single level or an array for the entire column.
             level: The specific soil layer index. Required if `soil_q` is a
                 scalar, ignored if it is an array. Defaults to None.
-        
+
         Returns:
             The soil water potential in meters [m].
+
+        Raises:
+            ValueError: If soil_q is out of valid bounds.
         """
+        self._validate_moisture_bounds(soil_q, level)
+
         if level is not None:
             b = self.properties.b[level]
             psi_sat = self.properties.psi_sat[level]
@@ -83,24 +88,29 @@ class VanGenuchten(Soil):
             psi_sat = self.properties.psi_sat
             porosity = self.properties.porosity
             residual = self.properties.residual
-        
+
         Se = (soil_q-residual)/(porosity-residual)
         m = 1 / (1+b)
         psi = psi_sat*( ( (Se**(-1/m))-1 )**(1-m) )
-        
+
         return psi
     
     def conductivity_moisture(self, soil_q: Union[float,  NDArray[np.float64]], level: int = None) -> Union[float,  NDArray[np.float64]]:
         """Computes soil hydraulic conductivity from soil moisture.
-        
+
         Args:
             soil_q: Soil moisture content [m^3/m^3]. Can be a scalar or an array.
             level: The specific soil layer index if `soil_q` is a scalar.
                 Defaults to None.
-        
+
         Returns:
             The soil hydraulic conductivity [m/s].
+
+        Raises:
+            ValueError: If soil_q is out of valid bounds.
         """
+        self._validate_moisture_bounds(soil_q, level)
+
         if level is not None:
             b = self.properties.b[level]
             porosity = self.properties.porosity[level]
@@ -111,22 +121,27 @@ class VanGenuchten(Soil):
             porosity = self.properties.porosity
             residual = self.properties.residual
             K_sat = self.properties.K_sat
-        
+
         Se = (soil_q-residual)/(porosity-residual)
         m = 1 / (1+b)
         conductivity = K_sat*np.sqrt(Se)*( (1 - (1 - (Se**(1/m)) )**m )**2 )
-        
+
         return conductivity
     
     def diffusivity_moisture(self, soil_q:  NDArray[np.float64]) ->  NDArray[np.float64]:
         """Computes soil moisture diffusivity for the entire soil column.
-        
+
         Args:
             soil_q: The soil moisture content for all layers [m^3/m^3].
-        
+
         Returns:
             The soil moisture diffusivity for all layers [m^2/s].
+
+        Raises:
+            ValueError: If soil_q is out of valid bounds.
         """
+        self._validate_moisture_bounds(soil_q)
+
         b = self.properties.b
         psi_sat = self.properties.psi_sat
         porosity = self.properties.porosity

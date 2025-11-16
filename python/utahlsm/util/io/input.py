@@ -30,9 +30,10 @@ import logging
 
 from ...data_models import (
     GeneralConfig, NumericsConfig, IterationsConfig, TolerancesConfig,
-    TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig, 
+    TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig,
     OutputConfig, SoilState, ForcingData, AtmosphericState
 )
+from ...physics.soil.soil_type import SoilType
 from utahlsm.util.io import logging_helper
 
 class Input(object):
@@ -310,5 +311,26 @@ class Input(object):
         if len(self.initial.type) != self.grid.nz:
             raise ValueError(f"Namelist nlevs={self.grid.nz} does not match "
                              f"init file soil_type length of {len(self.initial.type)}.")
+
+        # Validate soil type IDs are within valid range (1-15)
+        valid_soil_types = set(range(1, 16))
+        invalid_types = set(self.initial.type) - valid_soil_types
+        if invalid_types:
+            raise ValueError(f"Invalid soil type IDs found: {sorted(invalid_types)}. "
+                           f"Valid soil types are 1-15.")
+
+        # Validate soil moisture values are within physically possible bounds
+        # Moisture must be >= 0 and <= porosity (will be validated against residual later)
+        # Issues warnings instead of errors to allow running with imperfect data
+        for i, (moisture, soil_type) in enumerate(zip(self.initial.moisture, self.initial.type)):
+            if moisture < 0:
+                self.logger.warning(f"Layer {i}: soil moisture {moisture} is negative. "
+                                   f"Moisture must be >= 0.")
+            # Get porosity for this soil type to validate upper bound
+            soil_props = SoilType.get_properties(self.soil.param, int(soil_type))
+            if soil_props is None:
+                self.logger.warning(f"Layer {i}: cannot get properties for soil type {soil_type}.")
+            elif moisture > soil_props.porosity:
+                self.logger.warning(f"Layer {i}: soil moisture {moisture} exceeds porosity {soil_props.porosity}.")
 
         self.logger.info("Physical consistency checks passed")
