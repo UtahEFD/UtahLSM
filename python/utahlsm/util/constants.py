@@ -28,6 +28,10 @@ class _Thermodynamic:
     EPSILON: float = 0.6220199393            # Ratio of dry/vapor gas constants
     SPECIFIC_HEAT: float = 1004.0            # Specific heat of air [J/kg-K]
     LATENT_HEAT_VAPORIZATION: float = 2.45e6 # Latent heat of vaporization [J/kg]
+    # Magnus formula parameters (Tetens 1930) for saturation vapor pressure
+    TETENS_A: float = 17.269                 # Tetens parameter A (dimensionless)
+    TETENS_B: float = 35.86                  # Tetens parameter B [K]
+    ES_REF: float = 610.78                   # Reference vapor pressure at 0°C [Pa]
 
 @dataclass(frozen=True)
 class _Numerical:
@@ -36,12 +40,10 @@ class _Numerical:
 
 @dataclass(frozen=True)
 class _Physical:
-    """Groups fundamental physical constants."""
+    """Groups fundamental physical constants (universal)."""
     VON_KARMAN: float = 0.41            # Von Karman constant []
     GRAVITY: float = 9.81               # Gravitational acceleration [m/s^2]
     PI: float = 3.14159265358979        # Pi
-    STEFAN_BOLTZMANN: float = 5.6697e-8 # Stefan-Boltzmann constant [W/m^2-K^4]
-    SOLAR_CONSTANT: float = 1367.0      # Solar constant [W/m^2]
 
 @dataclass(frozen=True)
 class _Water:
@@ -56,7 +58,26 @@ class _Air:
     # NOTE: Air density is calculated dynamically in the model using the ideal gas law
     # (RHO = P / (Rd * T)) to account for variations in temperature, pressure, and elevation.
     # This constant is provided for reference only.
-    DENSITY: float = 1.204
+    DENSITY_REF: float = 1.204               # Reference density [kg/m^3]
+    TEMPERATURE_REF: float = 273.15          # Reference temperature (absolute zero offset) [K]
+
+@dataclass(frozen=True)
+class _Radiation:
+    """Groups solar radiation model parameters (Spencer 1971)."""
+    DECLINATION_AMPLITUDE: float = 23.45     # Solar declination [degrees]
+    SOLSTICE_DAY: float = 173                # Summer solstice reference day
+    DAYS_PER_YEAR: float = 365.25            # Days per year (leap year adjusted)
+    STEFAN_BOLTZMANN: float = 5.6697e-8      # Stefan-Boltzmann constant [W/m^2-K^4]
+    SOLAR_CONSTANT: float = 1367.0           # Solar constant [W/m^2]
+
+@dataclass(frozen=True)
+class _Soil:
+    """Groups constants related to soil physics models."""
+    # Johansen (1975) soil thermal conductivity model parameters
+    CONDUCTIVITY_PF_THRESHOLD: float = 5.1   # Pore fraction threshold
+    CONDUCTIVITY_COEFF: float = 418.46       # Empirical coefficient [W/m-K]
+    CONDUCTIVITY_EXP: float = 2.7            # Exponential parameter
+    CONDUCTIVITY_MIN: float = 0.172          # Minimum conductivity [W/m-K]
 
 # Create singleton instances for use throughout the model
 air: _Air = _Air()
@@ -64,3 +85,5 @@ physical: _Physical = _Physical()
 thermodynamic: _Thermodynamic = _Thermodynamic()
 water: _Water = _Water()
 numerical: _Numerical = _Numerical()
+radiation: _Radiation = _Radiation()
+soil: _Soil = _Soil()

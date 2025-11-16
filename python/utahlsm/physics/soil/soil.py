@@ -257,10 +257,10 @@ class Soil(ABC):
         G  = c.physical.GRAVITY
         RV = c.thermodynamic.GAS_CONSTANT_VAPOR
         
-        psi = self.water_potential(sfc_q,level=0)
+        psi = self.water_potential(sfc_q, level=0)
         h = np.exp(G*psi/(RV*sfc_T))
-        es = 610.78*np.exp(17.269*(sfc_T-273.15)/(sfc_T-35.86))
-        hum_sat = 0.622*(es/(atm_p-0.378*es))
+        es = c.thermodynamic.ES_REF*np.exp(c.thermodynamic.TETENS_A*(sfc_T-c.air.TEMPERATURE_REF)/(sfc_T-c.thermodynamic.TETENS_B))
+        hum_sat = c.thermodynamic.EPSILON*(es/(atm_p-0.378*es))
         hum_spec = h*hum_sat
          
         return hum_spec
@@ -277,9 +277,9 @@ class Soil(ABC):
         psi = self.water_potential(soil_q)
         pf = np.log10(np.abs(psi * 100) + 1e-9)
         conductivity = np.where(
-            pf <= 5.1,
-            418.46 * np.exp(-(pf + 2.7)), # If True
-            0.172                         # If False
+            pf <= c.soil.CONDUCTIVITY_PF_THRESHOLD,
+            c.soil.CONDUCTIVITY_COEFF * np.exp(-(pf + c.soil.CONDUCTIVITY_EXP)),
+            c.soil.CONDUCTIVITY_MIN
         )
         return conductivity
     

@@ -86,9 +86,9 @@ class RadBasic(Radiation):
         """
         # local constants
         PI = c.physical.PI
-        SC = c.physical.SOLAR_CONSTANT
-        
-        declination = 23.45*(PI/180.0)*np.cos(2.0*PI*(julian_day-173)/365.25)
+        SC = c.radiation.SOLAR_CONSTANT
+
+        declination = c.radiation.DECLINATION_AMPLITUDE*(PI/180.0)*np.cos(2.0*PI*(julian_day-c.radiation.SOLSTICE_DAY)/c.radiation.DAYS_PER_YEAR)
         sin_elevation = np.sin(self.latitude)*np.sin(declination) - np.cos(self.latitude)*np.cos(declination)*np.cos((2*PI*time_utc/(24.0*3600.0))-self.longitude)
         if (sin_elevation > 0):
             transmissivity = (0.6 + 0.2*sin_elevation)
