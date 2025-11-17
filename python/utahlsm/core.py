@@ -24,7 +24,7 @@ through the simulation in time.
 from dataclasses import replace
 import logging
 import numpy as np
-from typing import Optional
+from typing import Callable, Optional
 
 from .data_models import AtmosphericState, SurfaceState, SolverState, SoilState
 from .exceptions import NamelistError, UtahLSMError
@@ -428,189 +428,171 @@ class UtahLSM:
             self.sfc_state.turbulence.obukhov_length[0] = L
             self.logger.warning(f"Obukhov length did not converge. Final value = {L}")
     
-    def _solve_diffusion_heat(self) -> None:
-        """Solves the soil heat diffusion equation using a theta scheme.
+    def _solve_diffusion(
+        self,
+        state_field: np.ndarray,
+        get_diffusivity: Callable,
+        get_conductivity: Optional[Callable],
+        sfc_boundary: float,
+        field_name: str = "field"
+    ) -> None:
+        """Solves a generic 1D diffusion equation using a theta scheme.
 
-        This solves the 1D diffusion equation for heat using a theta
-        scheme, where: theta = 0.0 -> FTCS
-                             = 0.5 -> Crank-Nicolson
-                             = 1.0 -> BTCS
-        Dirichlet conditions are applied at the top boundary using new
-        surface temperature. Neumann conditions are applied at the lower
-        boundary by assuming zero gradient.
+        This is a parameterized diffusion solver that handles both heat and
+        moisture diffusion. The key difference is that moisture diffusion
+        includes an additional hydraulic conductivity gradient term.
 
-        The resulting matrix is given by:
-            AT(n+1) = r(n), where n denotes the time level
-            e, f, g are the components of A matrix
-            T(n+1) is the soil temperature vector at t=n+1
-            r(n) is the soil temperature vector at t=n multiplied by coefficients
+        Args:
+            state_field: Reference to the field to update (temperature or moisture).
+            get_diffusivity: Callable that computes diffusivity from soil moisture.
+            get_conductivity: Callable that computes conductivity (None for heat).
+            sfc_boundary: Surface boundary value for Dirichlet BC.
+            field_name: Name of the field for logging/documentation.
+
+        Physics:
+            - Diffusivity always depends on soil moisture (not the state being solved)
+            - Conductivity (if present) also depends on soil moisture
+            - Dirichlet BC at top (surface): uses sfc_boundary
+            - Neumann BC at bottom: assumes zero gradient
+            - Theta scheme parameterization:
+              theta = 0.0 -> FTCS (explicit)
+              theta = 0.5 -> Crank-Nicolson
+              theta = 1.0 -> BTCS (implicit)
         """
         theta_b = self.input.numerics.diffusion_back_weight
-        theta_f = 1.0-theta_b
+        theta_f = 1.0 - theta_b
         nz = self.input.grid.nz
         dz = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
-        dt_T = self.tstep
+        dt = self.tstep
         e, f, g, r = [np.zeros(nz - 1) for _ in range(4)]
 
-        D_thermal = self.soil.diffusivity_thermal(self.soil_state.moisture)
-        D_mid = 0.5 * (D_thermal[:-1] + D_thermal[1:])
+        # Compute diffusivity using soil moisture (always, for both heat and moisture)
+        D = get_diffusivity(self.soil_state.moisture)
+        D_mid = 0.5 * (D[:-1] + D[1:])
 
-        # First soil level below surface
-        Cp = dt_T * D_mid[0] / dz2
-        Cm = dt_T * D_mid[1] / dz2
+        # Compute conductivity terms if provided (moisture case)
+        K_lin = None
+        if get_conductivity is not None:
+            K_hydraulic = get_conductivity(state_field)
+            # Avoid division by zero in dry conditions
+            K_lin = np.where(state_field > 1e-9, K_hydraulic / state_field, 0.0)
+
+        # === First soil level below surface (i=0) ===
+        Cp = dt * D_mid[0] / dz2
+        Cm = dt * D_mid[1] / dz2
+
+        # Backward (implicit) coefficients
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
+
+        # Forward (explicit) coefficients
         CFp = theta_f * Cp
         CFm = theta_f * Cm
         CF = 1.0 - CFp - CFm
+
+        # Add conductivity terms if applicable (moisture case)
+        if K_lin is not None:
+            Cpk = dt * K_lin[0] / (2 * dz)
+            Cmk = dt * K_lin[2] / (2 * dz)
+            CBpk = -theta_b * Cpk
+            CBmk = -theta_b * Cmk
+            CBp += CBpk
+            CBm -= CBmk
+            CFpk = theta_f * Cpk
+            CFmk = theta_f * Cmk
+            CFp += CFpk
+            CFm -= CFmk
+
         f[0] = CB
         g[0] = CBm
-        r[0] = CFp * self.soil_state.temperature[0] + CF * self.soil_state.temperature[1] + CFm * self.soil_state.temperature[2] - CBp*self.sfc_state.temperature
-            
-        # Interior levels
-        for i in range(1,nz-2):
-            # i   -> j+1 level
-            # i+1 -> j   level
-            # i+2 -> j-1 level
-            Cp = dt_T * D_mid[i] / dz2
-            Cm = dt_T * D_mid[i+1] / dz2
+        r[0] = (CFp * state_field[0] + CF * state_field[1] + CFm * state_field[2] -
+                CBp * sfc_boundary)
+
+        # === Interior soil levels ===
+        for i in range(1, nz - 2):
+            Cp = dt * D_mid[i] / dz2
+            Cm = dt * D_mid[i + 1] / dz2
+
             CBp = -theta_b * Cp
             CBm = -theta_b * Cm
             CB = 1.0 - CBp - CBm
+
             CFp = theta_f * Cp
             CFm = theta_f * Cm
             CF = 1.0 - CFp - CFm
+
+            # Add conductivity terms if applicable
+            if K_lin is not None:
+                Cpk = dt * K_lin[i] / (2 * dz)
+                Cmk = dt * K_lin[i + 2] / (2 * dz)
+                CBpk = -theta_b * Cpk
+                CBmk = -theta_b * Cmk
+                CBp += CBpk
+                CBm -= CBmk
+                CFpk = theta_f * Cpk
+                CFmk = theta_f * Cmk
+                CFp += CFpk
+                CFm -= CFmk
+
             e[i] = CBp
             f[i] = CB
             g[i] = CBm
-            r[i] = CFp * self.soil_state.temperature[i] + CF * self.soil_state.temperature[i+1] + CFm * self.soil_state.temperature[i+2]
-        
-        # Bottom level
-        j = nz-2
-        Cp = dt_T * D_mid[j] / dz2
-        Cm = dt_T * D_mid[j] / dz2
+            r[i] = (CFp * state_field[i] + CF * state_field[i + 1] +
+                    CFm * state_field[i + 2])
+
+        # === Bottom level (Neumann BC: zero gradient) ===
+        j = nz - 2
+        Cp = dt * D_mid[j] / dz2
+        Cm = dt * D_mid[j] / dz2
+
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
+
         CFp = theta_f * Cp
         CFm = theta_f * Cm
         CF = 1.0 - CFp - CFm
-        e[j] = (CBp - CBm)
-        f[j] = (CB + 2.0 * CBm)
-        r[j] = (CFp - CFm) * self.soil_state.temperature[j] + (CF + 2.0* CFm) * self.soil_state.temperature[j+1]
-        
-        self.soil_state.temperature[0] = self.sfc_state.temperature
-        self.soil_state.temperature[1:] = solvers.tridiagonal(e,f,g,r)
-    
-    def _solve_diffusion_mois(self) -> None:
-        """Solves the soil moisture diffusion equation using a theta scheme.
-           
-        This solves the 1D diffusion equation for moisture using a theta 
-        scheme, where: theta = 0.0 -> FTCS
-                             = 0.5 -> Crank-Nicolson
-                             = 1.0 -> BTCS
-        Dirichlet conditions are applied at the top boundary using new 
-        surface moisture. Neumann conditions are applied at the lower 
-        boundary by assuming zero gradient.
-            
-        The resulting matrix is given by:
-            AT(n+1) = r(n), where n denotes the time level
-            e, f, g are the components of A matrix
-            T(n+1) is the soil moisture vector at t=n+1
-            r(n) is the soil moisture vector at t=n multiplied by coefficients
-        """
-        theta_b = self.input.numerics.diffusion_back_weight
-        theta_f = 1.0-theta_b
-        nz = self.input.grid.nz
-        dz = self.input.grid.z[0] - self.input.grid.z[1]
-        dz2 = dz**2
-        dt_q = self.tstep
-        e, f, g, r = [np.zeros(nz - 1) for _ in range(4)]
-        
-        D_hydraulic = self.soil.diffusivity_moisture(self.soil_state.moisture)
-        K_hydraulic = self.soil.conductivity_moisture(self.soil_state.moisture)
-        D_mid = 0.5 * (D_hydraulic[:-1] + D_hydraulic[1:])
-        # Avoid division by zero in dry conditions
-        K_lin = np.where(self.soil_state.moisture > 1e-9,
-                         K_hydraulic / self.soil_state.moisture,
-                         0.0)
-        
-        # First soil level below surface
-        Cpd = dt_q * D_mid[0] / dz2  # D_mid is hydraulic diffusivity at midpoint
-        Cmd = dt_q * D_mid[1] / dz2
-        Cpk = dt_q * K_lin[0] / (2*dz)
-        Cmk = dt_q * K_lin[2] / (2*dz)
-        CBpd = -theta_b * Cpd
-        CBmd = -theta_b * Cmd
-        CBpk = -theta_b * Cpk
-        CBmk = -theta_b * Cmk
-        CB = (1.0 - CBpd - CBmd)
-        CBp = CBpd + CBpk
-        CBm = CBmd - CBmk
-        CFpd = theta_f * Cpd
-        CFmd = theta_f * Cmd
-        CFpk = theta_f * Cpk
-        CFmk = theta_f * Cmk
-        CF = (1.0 - CFpd - CFmd)
-        CFp = CFpd + CFpk
-        CFm = CFmd - CFmk
-        f[0] = CB
-        g[0] = CBm
-        r[0] = CFp*self.soil_state.moisture[0] + CF*self.soil_state.moisture[1] + CFm*self.soil_state.moisture[2] - CBp*self.sfc_state.moisture
-            
-        # Interior soil levels
-        for i in range(1,nz-2):
-            # i   -> j+1 level
-            # i+1 -> j   level
-            # i+2 -> j-1 level
-            Cpd = dt_q * D_mid[i] / dz2
-            Cmd = dt_q * D_mid[i+1] / dz2
-            Cpk = dt_q * K_lin[i] / (2*dz)
-            Cmk = dt_q * K_lin[i+2] / (2*dz)
-            CBpd = -theta_b * Cpd
-            CBmd = -theta_b * Cmd
+
+        # Add conductivity terms if applicable
+        if K_lin is not None:
+            Cpk = dt * K_lin[j] / (2 * dz)
+            Cmk = dt * K_lin[j] / (2 * dz)
             CBpk = -theta_b * Cpk
             CBmk = -theta_b * Cmk
-            CB = (1.0 - CBpd - CBmd)
-            CBp = CBpd + CBpk
-            CBm = CBmd - CBmk
-            CFpd = theta_f * Cpd
-            CFmd = theta_f * Cmd
+            CBp += CBpk
+            CBm -= CBmk
             CFpk = theta_f * Cpk
             CFmk = theta_f * Cmk
-            CF = (1.0 - CFpd - CFmd)
-            CFp = CFpd + CFpk
-            CFm = CFmd - CFmk
-            e[i] = CBp
-            f[i] = CB
-            g[i] = CBm
-            r[i] = CFp*self.soil_state.moisture[i] + CF*self.soil_state.moisture[i+1] + CFm*self.soil_state.moisture[i+2]
-            
-        # Bottom level
-        j = nz-2
-        Cpd  = dt_q * D_mid[j] / dz2
-        Cmd  = dt_q * D_mid[j] / dz2
-        Cpk  = dt_q * K_lin[j] / (2*dz)
-        Cmk  = dt_q * K_lin[j] / (2*dz)
-        CBpd = -theta_b * Cpd
-        CBmd = -theta_b * Cmd
-        CBpk = -theta_b * Cpk
-        CBmk = -theta_b * Cmk
-        CB   = (1.0 - CBpd - CBmd)
-        CBp  = CBpd + CBpk
-        CBm  = CBmd - CBmk
-        CFpd = theta_f * Cpd
-        CFmd = theta_f * Cmd
-        CFpk = theta_f * Cpk
-        CFmk = theta_f * Cmk
-        CF   = (1.0 - CFpd - CFmd)
-        CFp  = CFpd + CFpk
-        CFm  = CFmd - CFmk
-        e[j] = (CBp - CBm)
-        f[j] = (CB + 2.0 * CBm)
-        r[j] = (CFp - CFm)*self.soil_state.moisture[j] + (CF + 2.0*CFm)*self.soil_state.moisture[j+1]
-            
-        self.soil_state.moisture[0] = self.sfc_state.moisture
-        self.soil_state.moisture[1:] = solvers.tridiagonal(e,f,g,r)
+            CFp += CFpk
+            CFm -= CFmk
+
+        e[j] = CBp - CBm
+        f[j] = CB + 2.0 * CBm
+        r[j] = ((CFp - CFm) * state_field[j] +
+                (CF + 2.0 * CFm) * state_field[j + 1])
+
+        # Solve and update
+        state_field[0] = sfc_boundary
+        state_field[1:] = solvers.tridiagonal(e, f, g, r)
+
+    def _solve_diffusion_heat(self) -> None:
+        """Solves the soil heat diffusion equation using a theta scheme."""
+        self._solve_diffusion(
+            state_field=self.soil_state.temperature,
+            get_diffusivity=self.soil.diffusivity_thermal,
+            get_conductivity=None,
+            sfc_boundary=self.sfc_state.temperature,
+            field_name="temperature"
+        )
+
+    def _solve_diffusion_mois(self) -> None:
+        """Solves the soil moisture diffusion equation using a theta scheme."""
+        self._solve_diffusion(
+            state_field=self.soil_state.moisture,
+            get_diffusivity=self.soil.diffusivity_moisture,
+            get_conductivity=self.soil.conductivity_moisture,
+            sfc_boundary=self.sfc_state.moisture,
+            field_name="moisture"
+        )
