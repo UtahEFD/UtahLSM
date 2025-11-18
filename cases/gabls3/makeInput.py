@@ -250,7 +250,7 @@ namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model'] = 1
 
 # soil section
-namelist['soil']['param'] = 3
+namelist['soil']['param'] = "rawls-brakensiek"
 namelist['soil']['model'] = 2
 
 # radiation section

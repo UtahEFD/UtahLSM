@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "dataset_name": "rawls-brakensiek-1982",
+    "dataset_name": "rawls-brakensiek",
     "citation": "Rawls, W. J., and D. L. Brakensiek (1982), Estimating soil water retention characteristics from particle size distribution, US Dept. of Agriculture, Tech. Publ., 1316",
     "description": "Soil hydraulic properties estimated from particle size distributions by Rawls and Brakensiek (1982)"
   },

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "dataset_name": "cosby-1984",
+    "dataset_name": "cosby",
     "citation": "Cosby, B. J., G. M. Hornberger, R. B. Clapp, and T. R. Ginn (1984), A statistical exploration of the relationships of soil properties to soil hydraulic conductivity, J. Soil Sci. Soc. Am., 48(2), 305-314",
     "description": "Soil hydraulic properties from texture-based pedotransfer functions by Cosby et al. (1984)"
   },

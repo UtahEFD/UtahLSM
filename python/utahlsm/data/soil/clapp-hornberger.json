@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "dataset_name": "clapp-hornberger-1974",
+    "dataset_name": "clapp-hornberger",
     "citation": "Clapp, R. B., and G. M. Hornberger (1974), Empirical equations for some soil hydraulic properties, Water Resour. Res., 10(4), 601-604",
     "description": "Soil hydraulic properties from Clapp and Hornberger (1974) empirical equations"
   },
