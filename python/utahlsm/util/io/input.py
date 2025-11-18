@@ -157,7 +157,7 @@ class Input:
             raise
 
     def _load_initial_conditions(
-            self, inputfile: str) -> Dict[str, NDArray[np.float64]]:
+            self, inputfile: str) -> Dict[str, NDArray]:
         """Loads data from the NetCDF initialization file.
 
         Args:
@@ -165,7 +165,8 @@ class Input:
 
         Returns:
             A dictionary of NumPy arrays for soil depth, temperature,
-            moisture, and type.
+            moisture, and type. The 'type' array contains soil type names
+            as strings.
 
         Raises:
             IOError: If the file cannot be read.
@@ -179,11 +180,29 @@ class Input:
                 soil_T_var = inifile.variables['soil_T'][:]
                 soil_q_var = inifile.variables['soil_q'][:]
                 soil_type_var = inifile.variables['soil_type'][:]
+
+                # soil_type_var should be a string array with soil type names
+                # Handle various string representations: Unicode, byte strings, or object arrays
+                if soil_type_var.dtype.kind in ('U', 'S', 'O'):  # Unicode, byte string, or object
+                    try:
+                        soil_type_names = np.array(
+                            [str(s) for s in soil_type_var], dtype=object
+                        )
+                    except (TypeError, ValueError) as e:
+                        raise ValueError(
+                            f"Failed to convert soil_type variable to strings: {e}"
+                        ) from e
+                else:
+                    raise ValueError(
+                        f"soil_type variable must contain strings, "
+                        f"got dtype {soil_type_var.dtype}"
+                    )
+
                 init_dict = {
                     'z': (-1) * soil_z_var.astype('float'),
                     'temperature': soil_T_var.astype('float'),
                     'moisture': soil_q_var.astype('float'),
-                    'type': soil_type_var.astype('int')
+                    'type': soil_type_names
                 }
             self.logger.info('--- initial conditions loaded successfully')
             return init_dict
@@ -192,50 +211,37 @@ class Input:
             raise
 
     def _load_soil_properties(
-        self, soil_config: dict, soil_type_array: NDArray[np.int_]
+        self, soil_config: dict, soil_type_array: NDArray
     ) -> None:
-        """Loads soil properties from JSON files and maps soil types.
+        """Loads soil properties from JSON files and validates soil types.
 
         Args:
             soil_config: Dictionary from namelist with 'properties' and 'model'.
-            soil_type_array: Array of soil type IDs from initial conditions.
+            soil_type_array: Array of soil type names (strings) from initial
+                conditions.
 
         Raises:
-            NamelistError: If soil property file not found or invalid.
+            NamelistError: If soil property file not found or invalid, or if
+                soil types in initial conditions are not found in properties.
         """
         try:
             properties_spec = soil_config['properties']
             self.soil_properties = SoilPropertiesLoader.load(properties_spec)
             self.soil_properties_name = properties_spec
 
-            # Map soil type IDs to names
-            # Legacy mapping: ID -> name (for compatibility if needed)
-            soil_type_map = {
-                1: 'sand',
-                2: 'loamy_sand',
-                3: 'sandy_loam',
-                4: 'silty_loam',
-                5: 'loam',
-                6: 'sandy_clay_loam',
-                7: 'silty_clay_loam',
-                8: 'clay_loam',
-                9: 'sandy_clay',
-                10: 'silty_clay',
-                11: 'clay',
-                12: 'peat',
-                13: 'b11',
-                14: 'o12',
-                15: 'o16'
-            }
-
+            # Validate that all soil types in initial conditions are available
+            # in the loaded properties
             self.soil_type_names = []
-            for soil_type_id in soil_type_array:
-                if soil_type_id not in soil_type_map:
+            for soil_type_name in soil_type_array:
+                soil_type_lower = soil_type_name.lower()
+                if soil_type_lower not in self.soil_properties:
+                    available = ', '.join(sorted(self.soil_properties.keys()))
                     raise NamelistError(
-                        f"Invalid soil type ID {soil_type_id}. "
-                        f"Valid range is 1-15."
+                        f"Soil type '{soil_type_name}' from initial conditions "
+                        f"not found in properties dataset '{properties_spec}'. "
+                        f"Available soil types: {available}"
                     )
-                self.soil_type_names.append(soil_type_map[soil_type_id])
+                self.soil_type_names.append(soil_type_lower)
 
             self.logger.info(
                 'Soil properties loaded from: %s', properties_spec
@@ -431,14 +437,6 @@ class Input:
             raise ValueError(
                 f"Namelist nlevs={self.grid.nz} does not match "
                 f"init file soil_type length of {len(self.initial.type)}.")
-
-        # Validate soil type IDs are within valid range (1-15)
-        valid_soil_types = set(range(1, 16))
-        invalid_types = set(self.initial.type) - valid_soil_types
-        if invalid_types:
-            raise ValueError(
-                f"Invalid soil type IDs found: {sorted(invalid_types)}. "
-                f"Valid soil types are 1-15.")
 
         # Validate soil moisture values are within physically possible bounds
         # Moisture must be >= 0 and <= porosity (will be validated

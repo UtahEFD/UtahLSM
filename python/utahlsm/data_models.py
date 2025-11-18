@@ -63,13 +63,15 @@ class SoilState:
     Attributes:
         temperature: Soil temperature profile [K].
         moisture: Soil moisture profile [m^3/m^3].
-        type: Soil type integer ID for each layer.
+        type: Soil type name for each layer (string, e.g., 'clay', 'sand',
+            'b11'). Names are lowercase and must match keys in the loaded
+            soil properties dataset.
     """
     temperature: NDArray[np.float64] = field(
         default_factory=lambda: np.array([]))
     moisture: NDArray[np.float64] = field(
         default_factory=lambda: np.array([]))
-    type: NDArray[np.int_] = field(
+    type: NDArray = field(
         default_factory=lambda: np.array([]))
 
 @dataclass

@@ -59,7 +59,6 @@ sm_30 = np.mean([obs.variables['SM3'][jdi],obs.variables['SM9'][jdi], obs.variab
 sm_45 = np.mean([obs.variables['SM4'][jdi],obs.variables['SM10'][jdi],obs.variables['SM16'][jdi],obs.variables['SM22'][jdi]])
 sm_60 = np.mean([obs.variables['SM5'][jdi],obs.variables['SM11'][jdi],obs.variables['SM17'][jdi],obs.variables['SM23'][jdi]])
 sm_73 = np.mean([obs.variables['SM6'][jdi],obs.variables['SM12'][jdi],obs.variables['SM18'][jdi],obs.variables['SM24'][jdi]])
-print(obs.variables['SM13'][jdi],obs.variables['SM14'][jdi], obs.variables['SM15'][jdi],obs.variables['SM16'][jdi],obs.variables['SM17'][jdi],obs.variables['SM18'][jdi])
 sm_ob = np.array([sm_05,sm_05,sm_15,sm_30,sm_45,sm_60,sm_73])
 z_obm = np.array([0.0,0.05,0.15,0.30,0.45,0.60,0.725])
 
@@ -69,25 +68,25 @@ nsoil = len(z_int)
 st_oi = np.interp(z_int,z_obs,st_ob)
 sm_oi = np.interp(z_int,z_obm,sm_ob)
 
-# soil type from USDA 11-category + peat
-#  1 = sand
-#  2 = loamy sand
-#  3 = sandy loam
-#  4 = silty loam
-#  5 = loam
-#  6 = sandy clay loam
-#  7 = silty clay loam
-#  8 = clay loam
-#  9 = sandy clay
-# 10 = silty clay
-# 11 = clay
-# 12 = peat
-# 13 = B11
-# 14 = O12
-# 15 = O16
-stype = np.full((nsoil),11)
-# stype = np.array([11,11,11,11,11,11,11,11,11,11,12])
-# stype = np.array([13,13,13,13,13,13,14,14,15])
+# soil type from USDA 11-category + peat _ 3 custom for Cabauw
+#    named options in our built-in properties are:
+# sand
+# loamy sand
+# sandy loam
+# silty loam
+# loam
+# sandy clay loam
+# silty clay loam
+# clay loam
+# sandy clay
+# silty clay
+# clay
+# peat
+# B11
+# O12
+# O16
+
+stype = np.array(['clay']*7+['peat']*4)
 
 # initialization file
 init = nc.Dataset('lsm_init.nc','w')
@@ -108,7 +107,7 @@ init_T.units = "T"
 init_q = init.createVariable("soil_q", "f8", ("z"))
 init_q.long_name = "soil moisture"
 init_q.units = "m3 m-3"
-init_i = init.createVariable("soil_type", "f8", ("z"))
+init_i = init.createVariable("soil_type", "str", ("z"))
 init_i.long_name = "soil type"
 init_i.units = ""
 
@@ -250,7 +249,7 @@ namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model'] = 1
 
 # soil section
-namelist['soil']['param'] = "rawls-brakensiek"
+namelist['soil']['properties'] = "rawls-brakensiek"
 namelist['soil']['model'] = 2
 
 # radiation section
