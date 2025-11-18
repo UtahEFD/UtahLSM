@@ -68,6 +68,12 @@ class Input:
             inputfile: The file path to the NetCDF initial conditions file.
             offlinefile: The optional file path to the NetCDF offline
                 forcing file. Defaults to None.
+
+        Raises:
+            FileNotFoundError: If any of the required input files do not exist.
+            json.JSONDecodeError: If the namelist JSON file is malformed.
+            jsonschema.ValidationError: If the namelist does not conform to the
+                expected schema.
         """
         self.logger: logging.Logger = logging_helper.get_logger('Input')
         self.logger.info('Reading %s', namelist_path)
@@ -226,18 +232,21 @@ class Input:
         consistency.
 
         Checks that forcing variables are within reasonable physical ranges
-        and corrects minor issues. Raises errors for impossible values.
+        and corrects minor issues. Raises errors for impossible values. Provides
+        informative warnings for values at the edges of valid ranges.
 
         Args:
-            atm_U: Wind speed array [m/s].
-            atm_T: Temperature array [K].
-            atm_q: Specific humidity array [kg/kg].
-            atm_p: Pressure array [Pa].
-            r_net: Net radiation array [W/m²].
-            _ntime: Number of time steps (unused but kept for API compatibility).
+            atm_U: Wind speed array with one value per time step [m/s].
+            atm_T: Temperature array with one value per time step [K].
+            atm_q: Specific humidity array with one value per time step [kg/kg].
+            atm_p: Pressure array with one value per time step [Pa].
+            r_net: Net radiation array with one value per time step [W/m²].
+            _ntime: Number of time steps in forcing arrays (unused but kept for
+                API compatibility with other validation functions).
 
         Raises:
-            ValueError: If forcing data contains impossible values.
+            ValueError: If forcing data contains impossible or physically
+                unrealistic values that cannot be corrected.
         """
         # Physical bounds for atmospheric variables
         # Reasonable atmospheric temperature range [K]

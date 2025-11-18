@@ -365,6 +365,10 @@ class UtahLSM:
         Args:
             sfc_T: Surface temperature [K].
             sfc_q: Surface moisture [m^3/m^3].
+
+        Raises:
+            Exception: If the flux computation encounters an unrecoverable error
+                in the Monin-Obukhov iteration process.
         """
         # Local constants and variables
         converged = False
@@ -462,13 +466,15 @@ class UtahLSM:
 
         Args:
             state_field: Reference to the field to update (temperature or
-                moisture).
-            get_diffusivity: Callable that computes diffusivity from soil
-                moisture.
-            get_conductivity: Callable that computes conductivity (None for
-                heat).
-            sfc_boundary: Surface boundary value for Dirichlet BC.
-            field_name: Name of the field for logging/documentation.
+                moisture) [NDArray[np.float64]].
+            get_diffusivity: Callable that computes diffusivity profile from
+                soil moisture [Callable[[NDArray[np.float64]], NDArray[np.float64]]].
+            get_conductivity: Optional callable that computes conductivity
+                profile from soil moisture. None for heat diffusion,
+                function for moisture diffusion
+                [Optional[Callable[[NDArray[np.float64]], NDArray[np.float64]]]].
+            sfc_boundary: Surface boundary value for Dirichlet BC [float].
+            field_name: Name of the field for logging/documentation [str].
 
         Physics:
             - Diffusivity always depends on soil moisture (not the state

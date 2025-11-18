@@ -69,12 +69,34 @@ class SurfaceMOST(Surface):
         zeta = z / obukL_cap
         return self.phim_stable(zeta) if zeta >= 0 else self.phim_unstable(zeta)
 
-    def phim_stable(self,zeta: float) -> float:
-        """Computes phi_m for stable conditions (zeta >= 0)."""
+    def phim_stable(self, zeta: float) -> float:
+        """Computes momentum stability function for stable conditions.
+
+        Computes phi_m using the standard Holtslag and De Bruin stability
+        function for stable stratification (zeta >= 0).
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Momentum stability function value [dimensionless].
+        """
         return 1. + 5.*zeta
 
-    def phim_unstable(self,zeta: float) -> float:
-        """Computes phi_m for unstable conditions (zeta < 0)."""
+    def phim_unstable(self, zeta: float) -> float:
+        """Computes momentum stability function for unstable conditions.
+
+        Computes phi_m using the Beljaars and Holtslag stability function
+        for unstable stratification (zeta < 0).
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Momentum stability function value [dimensionless].
+        """
         return (1.-(16.*zeta))**(-0.25)
 
     def phih(self,z: float, obukL: float) -> float:
@@ -92,12 +114,34 @@ class SurfaceMOST(Surface):
         zeta = z / obukL_cap
         return self.phih_stable(zeta) if zeta >= 0 else self.phih_unstable(zeta)
 
-    def phih_stable(self,zeta: float) -> float:
-        """Computes phi_h for stable conditions (zeta >= 0)."""
+    def phih_stable(self, zeta: float) -> float:
+        """Computes heat stability function for stable conditions.
+
+        Computes phi_h using the standard Holtslag and De Bruin stability
+        function for stable stratification (zeta >= 0).
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Heat stability function value [dimensionless].
+        """
         return 1. + 5.*zeta
 
-    def phih_unstable(self,zeta:float) -> float:
-        """Computes phi_h for unstable conditions (zeta < 0)."""
+    def phih_unstable(self, zeta: float) -> float:
+        """Computes heat stability function for unstable conditions.
+
+        Computes phi_h using the Beljaars and Holtslag stability function
+        for unstable stratification (zeta < 0).
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Heat stability function value [dimensionless].
+        """
         return (1.-(16.*zeta))**(-0.50)
 
     def psim(self,z: float,obukL: float) -> float:
@@ -115,12 +159,34 @@ class SurfaceMOST(Surface):
         zeta = z / obukL_cap
         return self.psim_stable(zeta) if zeta >= 0 else self.psim_unstable(zeta)
 
-    def psim_stable(self,zeta: float) -> float:
-        """Computes psi_m for stable conditions (zeta >= 0)."""
+    def psim_stable(self, zeta: float) -> float:
+        """Computes integrated momentum stability function for stable conditions.
+
+        Computes psi_m (the height-integrated stability function for momentum)
+        for stable stratification (zeta >= 0).
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Integrated momentum stability function value [dimensionless].
+        """
         return -5.*zeta
 
-    def psim_unstable(self,zeta: float) -> float:
-        """Computes psi_m for unstable conditions (zeta < 0)."""
+    def psim_unstable(self, zeta: float) -> float:
+        """Computes integrated momentum stability function for unstable conditions.
+
+        Computes psi_m (the height-integrated stability function for momentum)
+        for unstable stratification (zeta < 0) using the Paulson formulation.
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Integrated momentum stability function value [dimensionless].
+        """
         PI = c.physical.PI
         x = (1.-(16.*zeta))**(0.25)
         return (2.*np.log((1.+x)/2.) + np.log((1.+x**2.)/2.) -
@@ -141,12 +207,34 @@ class SurfaceMOST(Surface):
         zeta = z / obukL_cap
         return self.psih_stable(zeta) if zeta >= 0 else self.psih_unstable(zeta)
 
-    def psih_stable(self,zeta: float) -> float:
-        """Computes psi_h for stable conditions (zeta >= 0)."""
+    def psih_stable(self, zeta: float) -> float:
+        """Computes integrated heat stability function for stable conditions.
+
+        Computes psi_h (the height-integrated stability function for heat)
+        for stable stratification (zeta >= 0).
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Integrated heat stability function value [dimensionless].
+        """
         return -5.*zeta
 
-    def psih_unstable(self,zeta: float) -> float:
-        """Computes psi_h for unstable conditions (zeta < 0)."""
+    def psih_unstable(self, zeta: float) -> float:
+        """Computes integrated heat stability function for unstable conditions.
+
+        Computes psi_h (the height-integrated stability function for heat)
+        for unstable stratification (zeta < 0) using the Paulson formulation.
+
+        Args:
+            zeta: Dimensionless height parameter (z/L), where L is the
+                Obukhov length [dimensionless].
+
+        Returns:
+            Integrated heat stability function value [dimensionless].
+        """
         x = (1.-(16.*zeta))**(0.50)
         return 2.*np.log((1.+x)/2.)
 

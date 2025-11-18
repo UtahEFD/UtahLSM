@@ -119,7 +119,22 @@ class Soil(ABC):
     def water_potential(
         self, soil_q: Union[float, NDArray[np.float64]], level: int = None
     ) -> Union[float, NDArray[np.float64]]:
-        """Computes soil water potential. Must be implemented by subclasses."""
+        """Computes soil water potential using soil moisture content.
+
+        This method must be implemented by subclasses to compute the water
+        potential (matric potential) based on the soil moisture and soil
+        water retention properties.
+
+        Args:
+            soil_q: Soil moisture content [m^3/m^3]. Can be a scalar value
+                or an array of values.
+            level: Optional specific soil layer index. If provided with a
+                scalar soil_q, indicates which layer the moisture belongs to.
+
+        Returns:
+            Water potential [Pa]. Returns the same type as soil_q (float
+            or NDArray).
+        """
         raise NotImplementedError
 
     @overload
@@ -136,22 +151,60 @@ class Soil(ABC):
     def conductivity_moisture(
         self, soil_q: Union[float, NDArray[np.float64]], level: int = None
     ) -> Union[float, NDArray[np.float64]]:
-        """Computes soil moisture conductivity. Must be implemented by
-        subclasses."""
+        """Computes soil moisture conductivity.
+
+        This method must be implemented by subclasses to compute the water
+        conductivity as a function of soil moisture using the soil's
+        water retention and conductivity relationships.
+
+        Args:
+            soil_q: Soil moisture content [m^3/m^3]. Can be a scalar value
+                or an array of values.
+            level: Optional specific soil layer index. If provided with a
+                scalar soil_q, indicates which layer the moisture belongs to.
+
+        Returns:
+            Moisture conductivity [m/s]. Returns the same type as soil_q
+            (float or NDArray).
+        """
         raise NotImplementedError
 
     @abstractmethod
     def diffusivity_moisture(
         self, soil_q: NDArray[np.float64]
     ) -> NDArray[np.float64]:
-        """Computes soil moisture diffusivity. Must be implemented by
-        subclasses."""
+        """Computes soil moisture diffusivity profile.
+
+        This method must be implemented by subclasses to compute the moisture
+        diffusivity as a function of soil moisture for all soil layers. The
+        moisture diffusivity is used in the implicit diffusion solver for
+        soil moisture transport.
+
+        Args:
+            soil_q: Soil moisture content profile [m^3/m^3]. Array with
+                one element per soil layer.
+
+        Returns:
+            Moisture diffusivity profile [m^2/s]. Array with one element
+            per soil layer.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def surface_water_content(self, psi_sfc: float) -> float:
-        """Computes sfc water content from potential. Must be implemented by
-        subclasses."""
+        """Computes surface soil moisture from water potential.
+
+        This method must be implemented by subclasses to compute the soil
+        moisture at the surface given a water potential value. This is used
+        to determine surface moisture content from the surface water
+        potential solution.
+
+        Args:
+            psi_sfc: Water potential at the surface [Pa].
+
+        Returns:
+            Soil moisture content at the surface [m^3/m^3].
+        """
         raise NotImplementedError
 
     # --- Validation Methods ---

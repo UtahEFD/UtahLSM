@@ -44,7 +44,7 @@ def _ensure_buffered() -> None:
         root_logger.setLevel(logging.DEBUG)
     _initialized = True
 
-def get_logger(name: str = None) -> logging.Logger:
+def get_logger(name: Optional[str] = None) -> logging.Logger:
     """Gets a logger instance and ensures buffering is active.
 
     This is the main function that should be called by other modules to get
@@ -52,10 +52,12 @@ def get_logger(name: str = None) -> logging.Logger:
     returning the logger.
 
     Args:
-        name: The name of the logger, typically `__name__`.
+        name: The name of the logger, typically `__name__`. If None, returns
+            the root logger [Optional[str]].
 
     Returns:
-        A `logging.Logger` instance.
+        A `logging.Logger` instance with the specified name or the root logger
+        if name is None.
     """
     _ensure_buffered()
     return logging.getLogger(name)

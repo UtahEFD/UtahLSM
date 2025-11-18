@@ -91,7 +91,15 @@ class SoilType:
 
 class Sand(SoilType):
     """Properties for sand (type=1)."""
-    def __init__(self,dataset):
+    def __init__(self, dataset: int) -> None:
+        """Initializes sand soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -121,7 +129,15 @@ class Sand(SoilType):
 
 class LoamySand(SoilType):
     """Properties for loamy sand (type=2)"""
-    def __init__(self,dataset):
+    def __init__(self, dataset: int) -> None:
+        """Initializes loamy sand soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -151,7 +167,15 @@ class LoamySand(SoilType):
 
 class SandyLoam(SoilType):
     """Properties for sandy loam (type=3)"""
-    def __init__(self,dataset):
+    def __init__(self, dataset: int) -> None:
+        """Initializes sandy loam soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -181,7 +205,15 @@ class SandyLoam(SoilType):
 
 class SiltyLoam(SoilType):
     """Properties for silty loam (type=4)"""
-    def __init__(self,dataset):
+    def __init__(self, dataset: int) -> None:
+        """Initializes silty loam soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -210,8 +242,16 @@ class SiltyLoam(SoilType):
             self.ci = 1270000.0
 
 class Loam(SoilType):
-    """ Properties for loam (type=5)"""
-    def __init__(self,dataset):
+    """Properties for loam (type=5)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes loam soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -240,8 +280,16 @@ class Loam(SoilType):
             self.ci = 1210000.0
 
 class SandyClayLoam(SoilType):
-    """ Properties for sandy clay loam (type=6)"""
-    def __init__(self,dataset):
+    """Properties for sandy clay loam (type=6)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes sandy clay loam soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -270,8 +318,16 @@ class SandyClayLoam(SoilType):
             self.ci = 1180000.0
 
 class SiltyClayLoam(SoilType):
-    """ Properties for silty clay loam (type=7)"""
-    def __init__(self,dataset):
+    """Properties for silty clay loam (type=7)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes silty clay loam soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -300,8 +356,16 @@ class SiltyClayLoam(SoilType):
             self.ci = 1320000.0
 
 class ClayLoam(SoilType):
-    """ Properties for clay loam (type=8)"""
-    def __init__(self,dataset):
+    """Properties for clay loam (type=8)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes clay loam soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -330,8 +394,16 @@ class ClayLoam(SoilType):
             self.ci = 1230000.0
 
 class SandyClay(SoilType):
-    """ Properties for sandy clay (type=9)"""
-    def __init__(self,dataset):
+    """Properties for sandy clay (type=9)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes sandy clay soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -360,8 +432,16 @@ class SandyClay(SoilType):
             self.ci = 1180000.0
 
 class SiltyClay(SoilType):
-    """ Properties for silty clay (type=10)"""
-    def __init__(self,dataset):
+    """Properties for silty clay (type=10)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes silty clay soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -390,8 +470,16 @@ class SiltyClay(SoilType):
             self.ci = 1150000.0
 
 class Clay(SoilType):
-    """ Properties for clay (type=11)"""
-    def __init__(self,dataset):
+    """Properties for clay (type=11)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes clay soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -420,8 +508,16 @@ class Clay(SoilType):
             self.ci = 1090000.0
 
 class Peat(SoilType):
-    """ Properties for clay (type=12)"""
-    def __init__(self,dataset):
+    """Properties for peat (type=12)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes peat soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset (1-3).
+                1 = Clapp and Hornberger (1974)
+                2 = Cosby et al. (1984)
+                3 = Rawls and Brakensiek (1982)
+        """
         super().__init__()
 
         # Clapp and Hornberger (1974)
@@ -450,8 +546,14 @@ class Peat(SoilType):
             self.ci = 840000.0
 
 class B11(SoilType):
-    """ Properties for B11 (type=13)"""
-    def __init__(self,dataset):
+    """Properties for B11 soil (type=13)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes B11 soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset. For B11,
+                dataset 4 = Heinen, Bakker, Wosten (Cabauw-specific).
+        """
         super().__init__()
 
         # Heinen, Bakker, Wosten (Cabauw-specific)
@@ -464,10 +566,16 @@ class B11(SoilType):
             self.ci = 1090000.0
 
 class O12(SoilType):
-    """ Properties for O12 (type=14)"""
-    def __init__(self,dataset):
+    """Properties for O12 soil (type=14)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes O12 soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset. For O12,
+                dataset 4 = Heinen, Bakker, Wosten (Cabauw-specific).
+        """
         super().__init__()
-            # Heinen, Bakker, Wosten (Cabauw-specific)
+        # Heinen, Bakker, Wosten (Cabauw-specific)
         if dataset==4:
             self.b = 6.33
             self.psi_sat = -1.14
@@ -477,8 +585,14 @@ class O12(SoilType):
             self.ci = 1090000.0
 
 class O16(SoilType):
-    """ Properties for O16 (type=15)"""
-    def __init__(self,dataset):
+    """Properties for O16 soil (type=15)."""
+    def __init__(self, dataset: int) -> None:
+        """Initializes O16 soil properties from the specified dataset.
+
+        Args:
+            dataset: Integer ID for the soil parameter dataset. For O16,
+                dataset 4 = Heinen, Bakker, Wosten (Cabauw-specific).
+        """
         super().__init__()
 
         # Heinen, Bakker, Wosten (Cabauw-specific)

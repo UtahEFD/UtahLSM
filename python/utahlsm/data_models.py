@@ -193,7 +193,7 @@ class TolerancesConfig:
     """Convergence criteria for fields requiring an iterative solution.
 
     Several fields require an iterative approach to solve. This
-    dataclass sets a tolerance nneded to achieve convergence.
+    dataclass sets a tolerance needed to achieve convergence.
 
     Attributes:
         sfc_flux: tolerance for Obukhov length.

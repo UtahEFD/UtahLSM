@@ -31,7 +31,14 @@ import utahlsm
 from utahlsm.exceptions import UtahLSMError
 
 def main() -> None:
-    """Parses arguments, runs the simulation, and prints timing information."""
+    """Parses arguments, runs the simulation, and prints timing information.
+
+    Raises:
+        ValueError: If the case path contains path traversal attempts.
+        UtahLSMError: If an error occurs during model setup or execution.
+        FileNotFoundError: If required input files (namelist, init file) cannot
+            be found.
+    """
 
     # Start a timer for the simulation
     t1: float = time.time()
