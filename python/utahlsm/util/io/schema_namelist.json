@@ -72,10 +72,10 @@
         "soil": {
             "type": "object",
             "properties": {
-                "param": { "type": "integer", "enum": [1, 2, 3] },
+                "properties": { "type": "string", "minLength": 1 },
                 "model": { "type": "integer", "enum": [1, 2, 3] }
             },
-            "required": ["param", "model"]
+            "required": ["properties", "model"]
         },
         "radiation": {
             "type": "object",

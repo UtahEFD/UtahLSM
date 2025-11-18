@@ -173,8 +173,9 @@ class UtahLSM:
                 self.logger.info('Using radiation forcing data')
             self.soil: Soil = get_soil_model(
                 self.input.soil.model,
-                self.input.soil.param,
-                self.input.initial.type
+                self.input.soil_properties,
+                self.input.soil_type_names,
+                self.input.soil_properties_name
             )
             self.sfc: Surface = get_surface_model(self.input.surface.model)
         except NamelistError as e:

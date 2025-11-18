@@ -29,12 +29,13 @@ import numpy as np
 from numpy.typing import NDArray
 
 from utahlsm.util.io import logging_helper
+from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
 from ...data_models import (
     GeneralConfig, NumericsConfig, IterationsConfig, TolerancesConfig,
     TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig,
     OutputConfig, SoilState, ForcingData, AtmosphericState
 )
-from ...physics.soil.soil_type import SoilType
+from ...exceptions import NamelistError
 
 
 class Input:
@@ -57,6 +58,9 @@ class Input:
         initial: Dataclass holding the initial soil state.
         forcing: Dataclass holding the time-series of offline forcing data,
             or None if not provided.
+        soil_properties: Dictionary mapping soil type names to their properties.
+        soil_properties_name: Name of the soil property dataset being used.
+        soil_type_names: List of soil type names for each layer.
     """
 
     def __init__(self, namelist_path: str, inputfile: str,
@@ -83,6 +87,10 @@ class Input:
 
         self.logger.info('Reading %s', inputfile)
         init_data = self._load_initial_conditions(inputfile)
+
+        # Load soil properties before creating configs
+        self.logger.info('Loading soil properties')
+        self._load_soil_properties(namelist_data['soil'], init_data['type'])
 
         self.general: GeneralConfig = GeneralConfig(**namelist_data['general'])
         iterations_data = namelist_data['numerics']['iterations']
@@ -182,6 +190,63 @@ class Input:
         except (IOError, KeyError) as e:
             self.logger.error('--- initial conditions error: %s', e)
             raise
+
+    def _load_soil_properties(
+        self, soil_config: dict, soil_type_array: NDArray[np.int_]
+    ) -> None:
+        """Loads soil properties from JSON files and maps soil types.
+
+        Args:
+            soil_config: Dictionary from namelist with 'properties' and 'model'.
+            soil_type_array: Array of soil type IDs from initial conditions.
+
+        Raises:
+            NamelistError: If soil property file not found or invalid.
+        """
+        try:
+            properties_spec = soil_config['properties']
+            self.soil_properties = SoilPropertiesLoader.load(properties_spec)
+            self.soil_properties_name = properties_spec
+
+            # Map soil type IDs to names
+            # Legacy mapping: ID -> name (for compatibility if needed)
+            soil_type_map = {
+                1: 'sand',
+                2: 'loamy_sand',
+                3: 'sandy_loam',
+                4: 'silty_loam',
+                5: 'loam',
+                6: 'sandy_clay_loam',
+                7: 'silty_clay_loam',
+                8: 'clay_loam',
+                9: 'sandy_clay',
+                10: 'silty_clay',
+                11: 'clay',
+                12: 'peat',
+                13: 'b11',
+                14: 'o12',
+                15: 'o16'
+            }
+
+            self.soil_type_names = []
+            for soil_type_id in soil_type_array:
+                if soil_type_id not in soil_type_map:
+                    raise NamelistError(
+                        f"Invalid soil type ID {soil_type_id}. "
+                        f"Valid range is 1-15."
+                    )
+                self.soil_type_names.append(soil_type_map[soil_type_id])
+
+            self.logger.info(
+                'Soil properties loaded from: %s', properties_spec
+            )
+        except NamelistError:
+            raise
+        except Exception as e:
+            self.logger.error('Error loading soil properties: %s', e)
+            raise NamelistError(
+                f'Failed to load soil properties: {e}'
+            ) from e
 
     def _load_offline_data(self, offlinefile: str) -> None:
         """Loads data from the NetCDF offline forcing file.
@@ -379,21 +444,22 @@ class Input:
         # Moisture must be >= 0 and <= porosity (will be validated
         # against residual later). Issues warnings instead of errors to
         # allow running with imperfect data
-        for i, (moisture, soil_type) in enumerate(
-                zip(self.initial.moisture, self.initial.type)):
+        for i, (moisture, soil_type_name) in enumerate(
+                zip(self.initial.moisture, self.soil_type_names)):
             if moisture < 0:
                 self.logger.warning('Layer %d: soil moisture %f is negative. '
                                    'Moisture must be >= 0.', i, moisture)
             # Get porosity for this soil type to validate upper bound
-            soil_props = SoilType.get_properties(self.soil.param,
-                                                int(soil_type))
-            if soil_props is None:
+            soil_type_lower = soil_type_name.lower()
+            if soil_type_lower not in self.soil_properties:
                 self.logger.warning(
-                    'Layer %d: cannot get properties for soil type %d.',
-                    i, soil_type)
-            elif moisture > soil_props.porosity:
-                self.logger.warning(
-                    'Layer %d: soil moisture %f exceeds porosity %f.',
-                    i, moisture, soil_props.porosity)
+                    'Layer %d: soil type %s not found in properties.',
+                    i, soil_type_name)
+            else:
+                porosity = self.soil_properties[soil_type_lower]['porosity']
+                if moisture > porosity:
+                    self.logger.warning(
+                        'Layer %d: soil moisture %f exceeds porosity %f.',
+                        i, moisture, porosity)
 
         self.logger.info('Physical consistency checks passed')

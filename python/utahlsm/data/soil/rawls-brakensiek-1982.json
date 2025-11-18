@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "dataset_name": "rawls-brakensiek-1982",
+    "citation": "Rawls, W. J., and D. L. Brakensiek (1982), Estimating soil water retention characteristics from particle size distribution, US Dept. of Agriculture, Tech. Publ., 1316",
+    "description": "Soil hydraulic properties estimated from particle size distributions by Rawls and Brakensiek (1982)"
+  },
+  "soil_types": {
+    "sand": {
+      "b": 1.44,
+      "psi_sat": -0.16,
+      "porosity": 0.437,
+      "residual": 0.02,
+      "K_sat": 5.83e-5,
+      "ci": 1470000.0
+    },
+    "loamy_sand": {
+      "b": 1.0,
+      "psi_sat": -0.206,
+      "porosity": 0.437,
+      "residual": 0.035,
+      "K_sat": 1.7e-5,
+      "ci": 1410000.0
+    },
+    "sandy_loam": {
+      "b": 81.0,
+      "psi_sat": -0.302,
+      "porosity": 0.453,
+      "residual": 0.041,
+      "K_sat": 7.19e-6,
+      "ci": 1340000.0
+    },
+    "silty_loam": {
+      "b": 2.65,
+      "psi_sat": -0.401,
+      "porosity": 0.463,
+      "residual": 0.027,
+      "K_sat": 1.89e-6,
+      "ci": 1270000.0
+    },
+    "loam": {
+      "b": 3.97,
+      "psi_sat": -0.509,
+      "porosity": 0.501,
+      "residual": 0.015,
+      "K_sat": 3.67e-6,
+      "ci": 1210000.0
+    },
+    "sandy_clay_loam": {
+      "b": 4.27,
+      "psi_sat": -0.594,
+      "porosity": 0.398,
+      "residual": 0.068,
+      "K_sat": 1.19e-6,
+      "ci": 1180000.0
+    },
+    "silty_clay_loam": {
+      "b": 3.13,
+      "psi_sat": -0.564,
+      "porosity": 0.464,
+      "residual": 0.075,
+      "K_sat": 6.39e-7,
+      "ci": 1320000.0
+    },
+    "clay_loam": {
+      "b": 4.13,
+      "psi_sat": -0.703,
+      "porosity": 0.471,
+      "residual": 0.04,
+      "K_sat": 4.17e-7,
+      "ci": 1230000.0
+    },
+    "sandy_clay": {
+      "b": 5.65,
+      "psi_sat": -0.795,
+      "porosity": 0.43,
+      "residual": 0.109,
+      "K_sat": 3.33e-7,
+      "ci": 1180000.0
+    },
+    "silty_clay": {
+      "b": 4.48,
+      "psi_sat": -0.765,
+      "porosity": 0.479,
+      "residual": 0.056,
+      "K_sat": 2.5e-7,
+      "ci": 1150000.0
+    },
+    "clay": {
+      "b": 6.67,
+      "psi_sat": -0.856,
+      "porosity": 0.475,
+      "residual": 0.09,
+      "K_sat": 1.67e-7,
+      "ci": 1090000.0
+    },
+    "peat": {
+      "b": 6.06,
+      "psi_sat": -0.356,
+      "porosity": 0.863,
+      "residual": 0.1763,
+      "K_sat": 8.0e-6,
+      "ci": 840000.0
+    },
+    "b11": {
+      "b": 9.35,
+      "psi_sat": -0.463,
+      "porosity": 0.591,
+      "residual": 0.01,
+      "K_sat": 7.3e-7,
+      "ci": 1090000.0
+    },
+    "o12": {
+      "b": 6.33,
+      "psi_sat": -1.14,
+      "porosity": 0.561,
+      "residual": 0.01,
+      "K_sat": 1.25e-7,
+      "ci": 1090000.0
+    },
+    "o16": {
+      "b": 2.75,
+      "psi_sat": -1.03,
+      "porosity": 0.889,
+      "residual": 0.0,
+      "K_sat": 1.69e-7,
+      "ci": 1090000.0
+    }
+  }
+}

@@ -34,16 +34,18 @@ class BrooksCorey(Soil):
     potential,
     hydraulic conductivity, and diffusivity based on the Brooks-Corey model.
     """
-    def __init__(self, dataset_id: int, soil_type_array: NDArray[np.int_]):
+    def __init__(self, properties_dict: dict, soil_type_names: list,
+                 dataset_name: str = 'custom'):
         """Initializes the BrooksCorey soil model.
 
         Args:
-            dataset_id: An integer ID for the soil parameter dataset to use.
-            soil_type_array: A NumPy array of soil type IDs for each layer.
+            properties_dict: Dictionary mapping soil type names to properties.
+            soil_type_names: List of soil type names for each layer.
+            dataset_name: Human-readable name of the dataset being used.
         """
         self.logger: logging.Logger = logging_helper.get_logger('SOIL')
         self.logger.info('--- Using the Brooks-Corey model')
-        super().__init__(dataset_id, soil_type_array)
+        super().__init__(properties_dict, soil_type_names, dataset_name)
 
     def surface_water_content(self, psi_sfc: float) -> float:
         """Computes surface soil water content from surface water potential.

@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Soil Properties Dataset",
+  "description": "Schema for soil property datasets containing hydraulic and thermal parameters for various soil types",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the soil property dataset",
+      "properties": {
+        "dataset_name": {
+          "type": "string",
+          "description": "Unique identifier for the dataset (e.g., 'cosby-1984')"
+        },
+        "citation": {
+          "type": "string",
+          "description": "Citation or reference for the dataset"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the dataset source and methodology"
+        }
+      },
+      "required": ["dataset_name"],
+      "additionalProperties": false
+    },
+    "soil_types": {
+      "type": "object",
+      "description": "Dictionary mapping soil type names to their properties",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "description": "Properties for a specific soil type",
+          "properties": {
+            "b": {
+              "type": "number",
+              "description": "Clapp-Hornberger 'b' exponent (unitless)"
+            },
+            "psi_sat": {
+              "type": "number",
+              "description": "Saturation moisture potential [m]"
+            },
+            "porosity": {
+              "type": "number",
+              "description": "Saturated soil moisture content (volumetric) [m³/m³]"
+            },
+            "residual": {
+              "type": "number",
+              "description": "Residual moisture content (volumetric) [m³/m³]"
+            },
+            "K_sat": {
+              "type": "number",
+              "description": "Saturated hydraulic conductivity [m/s]"
+            },
+            "ci": {
+              "type": "number",
+              "description": "Volumetric heat capacity of dry soil [J/m³-K]"
+            }
+          },
+          "required": ["b", "psi_sat", "porosity", "residual", "K_sat", "ci"],
+          "additionalProperties": false
+        }
+      },
+      "minProperties": 1
+    }
+  },
+  "required": ["metadata", "soil_types"],
+  "additionalProperties": false
+}

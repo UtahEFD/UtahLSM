@@ -13,8 +13,6 @@
 #
 """Factory for creating soil model instances."""
 
-import numpy as np
-from numpy.typing import NDArray
 
 from ...exceptions import NamelistError
 from ...util.io import logging_helper
@@ -25,15 +23,19 @@ from .soil_vangenuchten import VanGenuchten
 
 logger = logging_helper.get_logger('SOIL')
 
-
-def get_soil_model(key: int, dataset_id: int,
-                   soil_type_array: NDArray[np.int_]) -> Soil:
+def get_soil_model(
+    key: int,
+    properties_dict: dict,
+    soil_type_names: list,
+    dataset_name: str = 'custom'
+) -> Soil:
     """Factory function to select and instantiate a soil model.
 
     Args:
         key: An integer ID for the soil model to use.
-        dataset_id: An integer ID for the soil parameter dataset.
-        soil_type_array: A NumPy array of soil type IDs for each layer.
+        properties_dict: Dictionary mapping soil type names to property dicts.
+        soil_type_names: List of soil type names for each layer.
+        dataset_name: Human-readable name of the dataset being used.
 
     Returns:
         An instance of a concrete `Soil` subclass.
@@ -49,7 +51,7 @@ def get_soil_model(key: int, dataset_id: int,
     }
 
     try:
-        return soil_models[key](dataset_id, soil_type_array)
+        return soil_models[key](properties_dict, soil_type_names, dataset_name)
     except KeyError as e:
         error_msg = f'{key} is an invalid soil model.'
         logger.error('x' * 62)

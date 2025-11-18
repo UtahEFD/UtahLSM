@@ -28,9 +28,9 @@ from typing import TypeVar, Union, overload
 import numpy as np
 from numpy.typing import NDArray
 
-from .soil_type import SoilType
 from ...util import constants as c
 from ...util.io import logging_helper
+from ...exceptions import NamelistError
 
 ST = TypeVar('ST', bound='Soil')
 logger = logging_helper.get_logger('SOIL')
@@ -70,35 +70,56 @@ class Soil(ABC):
         properties: A `SoilProperties` object holding the soil parameters
             for each layer of the soil column.
     """
-    def __init__(self, dataset_id: int, soil_type_array: NDArray[np.int_]):
-
+    def __init__(
+        self,
+        properties_dict: dict,
+        soil_type_names: list,
+        dataset_name: str = 'custom'
+    ) -> None:
         """Initializes the Soil model.
 
-        This constructor populates the `properties` attribute by looking up
-        the soil type for each layer from the input files and assembling the
-        corresponding physical parameters into NumPy arrays.
+        This constructor populates the `properties` attribute from a pre-loaded
+        properties dictionary. The dictionary maps soil type names to their
+        property dictionaries.
 
         Args:
-            dataset_id: An integer ID for the soil parameter dataset to use.
-            soil_type_array: A NumPy array of soil type IDs for each layer.
+            properties_dict: Dictionary mapping soil type names (lowercase strings)
+                to property dicts. Each property dict must contain keys:
+                'b', 'psi_sat', 'porosity', 'residual', 'K_sat', 'ci'.
+            soil_type_names: List of soil type names for each layer (e.g.,
+                ['sand', 'loam', 'clay']).
+            dataset_name: Human-readable name of the dataset being used
+                (for logging). Defaults to 'custom'.
+
+        Raises:
+            NamelistError: If a soil type is not found in properties_dict.
         """
         self.logger: logging.Logger = logging_helper.get_logger('SOIL')
 
-        dataset_names = {
-            1: 'Clapp/Hornberger',
-            2: 'Cosby et al',
-            3: 'Rawls/Brakensiek'
-        }
-        self.logger.info('Using the %s dataset', dataset_names[dataset_id])
+        self.logger.info('Using soil property dataset: %s', dataset_name)
 
         # Create temporary lists to hold properties for each layer
         prop_lists = {f.name: [] for f in fields(SoilProperties)}
 
-        # Loop to gather properties from the original SoilType objects
-        for soil_type in soil_type_array:
-            props = SoilType.get_properties(dataset_id, soil_type)
+        # Loop to gather properties from the pre-loaded dictionary
+        for soil_type_name in soil_type_names:
+            soil_type_lower = soil_type_name.lower()
+
+            if soil_type_lower not in properties_dict:
+                available = ', '.join(sorted(properties_dict.keys()))
+                raise NamelistError(
+                    f"Soil type '{soil_type_name}' not found in property set "
+                    f"'{dataset_name}'. Available types: {available}"
+                )
+
+            props = properties_dict[soil_type_lower]
             for prop_name in prop_lists.keys():
-                prop_lists[prop_name].append(getattr(props, prop_name))
+                if prop_name not in props:
+                    raise NamelistError(
+                        f"Missing property '{prop_name}' for soil type "
+                        f"'{soil_type_name}' in dataset '{dataset_name}'"
+                    )
+                prop_lists[prop_name].append(props[prop_name])
 
         # Convert lists to arrays and store them in our dataclass
         self.properties = SoilProperties(

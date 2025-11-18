@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "dataset_name": "clapp-hornberger-1974",
+    "citation": "Clapp, R. B., and G. M. Hornberger (1974), Empirical equations for some soil hydraulic properties, Water Resour. Res., 10(4), 601-604",
+    "description": "Soil hydraulic properties from Clapp and Hornberger (1974) empirical equations"
+  },
+  "soil_types": {
+    "sand": {
+      "b": 4.05,
+      "psi_sat": -0.121,
+      "porosity": 0.395,
+      "residual": 0.0,
+      "K_sat": 1.76e-4,
+      "ci": 1470000.0
+    },
+    "loamy_sand": {
+      "b": 4.38,
+      "psi_sat": -0.09,
+      "porosity": 0.41,
+      "residual": 0.0,
+      "K_sat": 1.56e-4,
+      "ci": 1410000.0
+    },
+    "sandy_loam": {
+      "b": 4.9,
+      "psi_sat": -0.218,
+      "porosity": 0.435,
+      "residual": 0.0,
+      "K_sat": 3.41e-5,
+      "ci": 1340000.0
+    },
+    "silty_loam": {
+      "b": 5.3,
+      "psi_sat": -0.786,
+      "porosity": 0.485,
+      "residual": 0.0,
+      "K_sat": 7.2e-6,
+      "ci": 1270000.0
+    },
+    "loam": {
+      "b": 5.39,
+      "psi_sat": -0.478,
+      "porosity": 0.451,
+      "residual": 0.0,
+      "K_sat": 7.0e-6,
+      "ci": 1210000.0
+    },
+    "sandy_clay_loam": {
+      "b": 7.12,
+      "psi_sat": -0.299,
+      "porosity": 0.42,
+      "residual": 0.0,
+      "K_sat": 6.3e-6,
+      "ci": 1180000.0
+    },
+    "silty_clay_loam": {
+      "b": 7.75,
+      "psi_sat": -0.356,
+      "porosity": 0.477,
+      "residual": 0.0,
+      "K_sat": 1.7e-6,
+      "ci": 1320000.0
+    },
+    "clay_loam": {
+      "b": 8.52,
+      "psi_sat": -0.63,
+      "porosity": 0.476,
+      "residual": 0.0,
+      "K_sat": 2.5e-6,
+      "ci": 1230000.0
+    },
+    "sandy_clay": {
+      "b": 10.4,
+      "psi_sat": -0.153,
+      "porosity": 0.426,
+      "residual": 0.0,
+      "K_sat": 2.2e-6,
+      "ci": 1180000.0
+    },
+    "silty_clay": {
+      "b": 10.4,
+      "psi_sat": -0.49,
+      "porosity": 0.492,
+      "residual": 0.0,
+      "K_sat": 1.0e-6,
+      "ci": 1150000.0
+    },
+    "clay": {
+      "b": 11.4,
+      "psi_sat": -0.405,
+      "porosity": 0.482,
+      "residual": 0.0,
+      "K_sat": 1.3e-6,
+      "ci": 1090000.0
+    },
+    "peat": {
+      "b": 7.75,
+      "psi_sat": -0.356,
+      "porosity": 0.863,
+      "residual": 0.0,
+      "K_sat": 8.0e-6,
+      "ci": 840000.0
+    },
+    "b11": {
+      "b": 9.35,
+      "psi_sat": -0.463,
+      "porosity": 0.591,
+      "residual": 0.01,
+      "K_sat": 7.3e-7,
+      "ci": 1090000.0
+    },
+    "o12": {
+      "b": 6.33,
+      "psi_sat": -1.14,
+      "porosity": 0.561,
+      "residual": 0.01,
+      "K_sat": 1.25e-7,
+      "ci": 1090000.0
+    },
+    "o16": {
+      "b": 2.75,
+      "psi_sat": -1.03,
+      "porosity": 0.889,
+      "residual": 0.0,
+      "K_sat": 1.69e-7,
+      "ci": 1090000.0
+    }
+  }
+}

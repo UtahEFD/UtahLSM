@@ -273,10 +273,12 @@ class SoilConfig:
     """Soil model configuration.
 
     Attributes:
-        param: Integer ID for the soil parameter dataset to use.
-        model: Integer ID for the soil physics model to use.
+        properties: Name of soil property dataset (e.g., 'cosby-1984') or path
+            to custom JSON file.
+        model: Integer ID for the soil physics model to use (1=BrooksCorey,
+            2=Campbell, 3=VanGenuchten).
     """
-    param: int
+    properties: str
     model: int
 
 @dataclass(frozen=True)
