@@ -13,10 +13,10 @@
 #
 """Custom exception types for the UtahLSM model."""
 
+
 class UtahLSMError(Exception):
     """Base class for all custom exceptions in the UtahLSM model."""
-    pass
+
 
 class NamelistError(UtahLSMError):
     """Raised for errors found in the namelist configuration."""
-    pass

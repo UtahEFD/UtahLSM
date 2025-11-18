@@ -1,0 +1,61 @@
+#
+# UtahLSM
+#
+# Copyright (c) 2017–2025 Jeremy A. Gibbs
+# Copyright (c) 2017–2025 Rob Stoll
+# Copyright (c) 2017–2025 Eric Pardyjak
+# Copyright (c) 2017–2025 Pete Willemsen
+#
+# This file is part of UtahLSM.
+#
+# This software is free and is distributed under the MIT License.
+# See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
+#
+"""Factory for creating soil model instances."""
+
+import numpy as np
+from numpy.typing import NDArray
+
+from ...exceptions import NamelistError
+from ...util.io import logging_helper
+from .soil import Soil
+from .soil_brookscorey import BrooksCorey
+from .soil_campbell import Campbell
+from .soil_vangenuchten import VanGenuchten
+
+logger = logging_helper.get_logger('SOIL')
+
+
+def get_soil_model(key: int, dataset_id: int,
+                   soil_type_array: NDArray[np.int_]) -> Soil:
+    """Factory function to select and instantiate a soil model.
+
+    Args:
+        key: An integer ID for the soil model to use.
+        dataset_id: An integer ID for the soil parameter dataset.
+        soil_type_array: A NumPy array of soil type IDs for each layer.
+
+    Returns:
+        An instance of a concrete `Soil` subclass.
+
+    Raises:
+        NamelistError: If the provided `key` is not a valid model ID.
+    """
+    # Dictionary to map keys to classes
+    soil_models = {
+        1: BrooksCorey,
+        2: Campbell,
+        3: VanGenuchten,
+    }
+
+    try:
+        return soil_models[key](dataset_id, soil_type_array)
+    except KeyError as e:
+        error_msg = f'{key} is an invalid soil model.'
+        logger.error('x' * 62)
+        logger.error('Namelist Error: %s', error_msg)
+        logger.error('Valid options are:')
+        for k, v in soil_models.items():
+            logger.error('\t%d (%s)', k, v.__name__)
+        logger.error('x' * 62)
+        raise NamelistError(error_msg) from e

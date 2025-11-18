@@ -1,16 +1,16 @@
-# 
+#
 # UtahLSM
-# 
+#
 # Copyright (c) 2017–2025 Jeremy A. Gibbs
 # Copyright (c) 2017–2025 Rob Stoll
 # Copyright (c) 2017–2025 Eric Pardyjak
 # Copyright (c) 2017–2025 Pete Willemsen
-# 
+#
 # This file is part of UtahLSM.
-# 
+#
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
-# 
+#
 """A collection of numerical solver functions.
 
 This module provides robust and efficient numerical solvers for common
@@ -22,7 +22,7 @@ import numpy as np
 from numpy.typing import NDArray
 from ..util.io import logging_helper
 
-logger = logging_helper.get_logger("UTIL: Solvers")
+logger = logging_helper.get_logger('UTIL: Solvers')
 
 # Tolerance for floating-point comparisons in numerical solvers
 _SOLVER_TOL = 1e-12
@@ -49,15 +49,20 @@ def tridiagonal(
         The solution vector u (size n).
 
     Raises:
-        ValueError: If an element on the main diagonal is effectively zero during factorization.
+        ValueError: If an element on the main diagonal is effectively zero
+            during factorization.
     """
     n = len(b)
     u = np.zeros(n)
     gam = np.zeros(n)
 
     if abs(b[0]) < _SOLVER_TOL:
-        logger.error(f"Error in solve_tridiagonal: b[0] = {b[0]} is effectively zero.")
-        raise ValueError(f"Main diagonal cannot have a zero on the first element (b[0] = {b[0]}).")
+        logger.error(
+            'Error in solve_tridiagonal: b[0] = %f is effectively zero.',
+            b[0])
+        raise ValueError(
+            f'Main diagonal cannot have a zero on the first element '
+            f'(b[0] = {b[0]}).')
 
     bet = b[0]
     u[0] = r[0] / bet
@@ -66,22 +71,21 @@ def tridiagonal(
         gam[j] = c[j-1] / bet
         bet = b[j] - a[j] * gam[j]
         if abs(bet) < _SOLVER_TOL:
-            logger.error(f"Error in solve_tridiagonal: effective zero on main diagonal at index {j} (bet = {bet}).")
-            raise ValueError(f"Effective zero on main diagonal at index {j} during factorization (bet = {bet}).")
+            logger.error(
+                'Error in solve_tridiagonal: effective zero on main '
+                'diagonal at index %d (bet = %f).', j, bet)
+            raise ValueError(
+                f'Effective zero on main diagonal at index {j} during '
+                f'factorization (bet = {bet}).')
         u[j] = (r[j] - a[j] * u[j-1]) / bet
 
     for j in range(n-2, -1, -1):
         u[j] -= gam[j+1] * u[j+1]
-        
+
     return u
 
-def root_brent(
-    f: Callable[[float], float],
-    a: float,
-    b: float,
-    iter_max: int = 100,
-    tol: float = 1e-6
-) -> Tuple[float, bool]:
+def root_brent(f: Callable[[float], float],a: float,b: float,
+    iter_max: int = 100,tol: float = 1e-6) -> Tuple[float, bool]:
     """Finds the root of a function using Brent's method.
 
     This is a robust and fast root-finding algorithm that combines bisection,
@@ -105,26 +109,30 @@ def root_brent(
     """
     fa = f(a)
     fb = f(b)
-    
+
     if fa * fb >= 0:
-        raise ValueError("Root not bracketed in solve_root_brent (f(a) * f(b) >= 0).")
-    
-    # Ensure 'b' is the best current guess (the one with the function value closer to zero)
+        raise ValueError(
+            'Root not bracketed in solve_root_brent (f(a) * f(b) >= 0).')
+
+    # Ensure 'b' is the best current guess (the one with the function
+    # value closer to zero)
     if abs(fa) < abs(fb):
         a, b = b, a
         fa, fb = fb, fa
-    
+
     c, fc = a, fa  # c is the previous best approximation
     d: float = a   # d is the second to last best guess
     mflag = True   # mflag is true if the last step was a bisection
 
-    for i in range(iter_max):
+    for _ in range(iter_max):
         # Check for convergence: if the bracket is smaller than the tolerance
         if abs(b - a) < tol:
             return b, True
 
-        # Use fast inverse quadratic interpolation if the three points are distinct
-        if abs(fa) > tol and abs(fb) > tol and abs(fc) > tol and fa != fc and fb != fc:
+        # Use fast inverse quadratic interpolation if the three points
+        # are distinct
+        if (abs(fa) > tol and abs(fb) > tol and abs(fc) > tol and
+                fa != fc and fb != fc):
             s = (a * fb * fc / ((fa - fb) * (fa - fc)) +
                  b * fa * fc / ((fb - fa) * (fb - fc)) +
                  c * fa * fb / ((fc - fa) * (fc - fb)))
@@ -134,39 +142,43 @@ def root_brent(
 
         # Condition 1: Is the new point outside the desired range?
         cond1 = (s < (3 * a + b) / 4.0) or (s > b)
-        # Condition 2: Is the step not decreasing fast enough (bisection was last step)?
+        # Condition 2: Is the step not decreasing fast enough
+        # (bisection was last step)?
         cond2 = mflag and (abs(s - b) >= abs(b - c) / 2.0)
-        # Condition 3: Is the step not decreasing fast enough (interpolation was last step)?
+        # Condition 3: Is the step not decreasing fast enough
+        # (interpolation was last step)?
         cond3 = (not mflag) and (abs(s - b) >= abs(c - d) / 2.0)
-        # Condition 4: Is the bracket shrinking too slowly (bisection was last step)?
+        # Condition 4: Is the bracket shrinking too slowly
+        # (bisection was last step)?
         cond4 = mflag and (abs(b - c) < tol)
-        # Condition 5: Is the bracket shrinking too slowly (interpolation was last step)?
+        # Condition 5: Is the bracket shrinking too slowly
+        # (interpolation was last step)?
         cond5 = (not mflag) and (abs(c - d) < tol)
-    
+
         if cond1 or cond2 or cond3 or cond4 or cond5:
             # Fallback to bisection
             s = (a + b) / 2.0
             mflag = True
         else:
             mflag = False
-            
+
         fs = f(s)
         d = c          # d is now the second to last best guess
         c, fc = b, fb  # The last best guess becomes the second to last
-        
+
         # Move the bounds to keep the root bracketed
         if fa * fs < 0:
             b, fb = s, fs
         else:
             a, fa = s, fs
-             
+
         # Ensure 'b' is always the best current root estimate
         if abs(fa) < abs(fb):
             a, b = b, a
             fa, fb = fb, fa
-        
+
         # Check for convergence
         if abs(b - a) < tol:
             return b, True
-    
+
     return b, False

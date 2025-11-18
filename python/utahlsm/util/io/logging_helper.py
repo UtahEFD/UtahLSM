@@ -1,16 +1,16 @@
-# 
+#
 # UtahLSM
-# 
+#
 # Copyright (c) 2017–2025 Jeremy A. Gibbs
 # Copyright (c) 2017–2025 Rob Stoll
 # Copyright (c) 2017–2025 Eric Pardyjak
 # Copyright (c) 2017–2025 Pete Willemsen
-# 
+#
 # This file is part of UtahLSM.
-# 
+#
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
-# 
+#
 """A helper module for configuring logging.
 
 This module provides a two-stage logging setup. It allows modules to
@@ -34,7 +34,7 @@ def _ensure_buffered() -> None:
     configuration is finalized. This ensures no messages are lost during
     the initial setup phase of the model.
     """
-    global _buffer_handler, _initialized
+    global _buffer_handler, _initialized  # pylint: disable=global-statement
     if _initialized:
         return
     root_logger = logging.getLogger()
@@ -46,21 +46,21 @@ def _ensure_buffered() -> None:
 
 def get_logger(name: str = None) -> logging.Logger:
     """Gets a logger instance and ensures buffering is active.
-    
+
     This is the main function that should be called by other modules to get
     a logger. It guarantees that the buffering handler is in place before
     returning the logger.
-    
+
     Args:
         name: The name of the logger, typically `__name__`.
-    
+
     Returns:
         A `logging.Logger` instance.
     """
     _ensure_buffered()
     return logging.getLogger(name)
 
-def finalize_logging(level_str: str = "info") -> None:
+def finalize_logging(level_str: str = 'info') -> None:
     """Replaces the buffer with final handlers and flushes stored logs.
 
     This function should be called once after the main configuration has been
@@ -69,30 +69,29 @@ def finalize_logging(level_str: str = "info") -> None:
     were buffered during startup to the new handlers.
 
     Args:
-        level_str: The desired logging level as a string (e.g., 'info', 'debug').
-            Defaults to "info".
+        level_str: The desired logging level as a string (e.g., 'info',
+            'debug'). Defaults to 'info'.
     """
-    global _buffer_handler
+    global _buffer_handler  # pylint: disable=global-statement
     root_logger = logging.getLogger()
 
-    LOG_LEVELS: Dict[str, int] = {"info": logging.INFO, "debug": logging.DEBUG}
-    log_level = LOG_LEVELS.get(level_str.lower(), logging.INFO)
-    filler = "_"
+    log_levels: Dict[str, int] = {'info': logging.INFO, 'debug': logging.DEBUG}
+    log_level = log_levels.get(level_str.lower(), logging.INFO)
     log_format = logging.Formatter(
-        "{asctime} [{levelname:^8s}] {name:.>10s}: {message}",
-        datefmt="%Y-%m-%d %H:%M:%S", style="{"
+        '{asctime} [{levelname:^8s}] {name:.>10s}: {message}',
+        datefmt='%Y-%m-%d %H:%M:%S', style='{'
     )
 
     # Create logs directory in the python folder (go up 3 levels from this file)
-    log_dir: Path = Path(__file__).resolve().parents[3] / "logs"
+    log_dir: Path = Path(__file__).resolve().parents[3] / 'logs'
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_file: Path = log_dir / "utahlsm.log"
+    log_file: Path = log_dir / 'utahlsm.log'
 
     # file handler
-    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler = logging.FileHandler(log_file, mode='w')
     file_handler.setLevel(log_level)
     file_handler.setFormatter(log_format)
-    
+
     # console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(log_level)

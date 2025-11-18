@@ -26,25 +26,27 @@ from ...util.io import logging_helper
 
 class RadBasic(Radiation):
     """A basic clear-sky radiation model.
-    
+
     This class implements the `Radiation` interface and provides simple
     calculations for the four components of the surface radiation budget.
     """
-    
-    def __init__(self, latitude: float, longitude: float, albedo: float, emissivity: float):
+
+    def __init__(
+        self, latitude: float, longitude: float, albedo: float,
+        emissivity: float
+    ):
         """Initializes the RadBasic model.
-        
+
         Args:
             latitude: The site latitude in degrees.
             longitude: The site longitude in degrees.
             albedo: The surface albedo (dimensionless).
             emissivity: The surface emissivity (dimensionless).
         """
-        self.logger: logging.Logger = logging_helper.get_logger("RAD: Basic")
-        self.logger.info("Using the basic model")
+        self.logger: logging.Logger = logging_helper.get_logger('RAD: Basic')
+        self.logger.info('Using the basic model')
         super().__init__(latitude, longitude, albedo, emissivity)
-        
-    
+
     def compute_net(
         self,
         julian_day: int,
@@ -71,9 +73,9 @@ class RadBasic(Radiation):
         sw_out = self._shortwave_out(sw_in)
         lw_out = self._longwave_out(sfc_state)
         lw_in = self._longwave_in(atm_state,sfc_state)
-        
+
         return sw_in - sw_out + lw_in - lw_out
-    
+
     def _shortwave_in(self, julian_day: int, time_utc: int) -> float:
         """Computes downward shortwave radiation for clear-sky conditions.
 
@@ -88,15 +90,20 @@ class RadBasic(Radiation):
         PI = c.physical.PI
         SC = c.radiation.SOLAR_CONSTANT
 
-        declination = c.radiation.DECLINATION_AMPLITUDE*(PI/180.0)*np.cos(2.0*PI*(julian_day-c.radiation.SOLSTICE_DAY)/c.radiation.DAYS_PER_YEAR)
-        sin_elevation = np.sin(self.latitude)*np.sin(declination) - np.cos(self.latitude)*np.cos(declination)*np.cos((2*PI*time_utc/(24.0*3600.0))-self.longitude)
-        if (sin_elevation > 0):
-            transmissivity = (0.6 + 0.2*sin_elevation)
+        declination = c.radiation.DECLINATION_AMPLITUDE * (PI/180.0) * \
+            np.cos(2.0*PI*(julian_day-c.radiation.SOLSTICE_DAY) /
+                   c.radiation.DAYS_PER_YEAR)
+        sin_elevation = (np.sin(self.latitude)*np.sin(declination) -
+                         np.cos(self.latitude)*np.cos(declination) *
+                         np.cos((2*PI*time_utc/(24.0*3600.0))-
+                                self.longitude))
+        if sin_elevation > 0:
+            transmissivity = 0.6 + 0.2*sin_elevation
             sw_in = SC * transmissivity * sin_elevation
         else:
             sw_in = 0
         return sw_in
-    
+
     def _shortwave_out(self, sw_in: float) -> float:
         """Computes upward shortwave radiation based on surface albedo.
 
@@ -107,9 +114,12 @@ class RadBasic(Radiation):
             The outgoing shortwave radiation in W/m^2.
         """
         return self.albedo*sw_in
-    
-    def _longwave_in(self, atm_state: AtmosphericState, sfc_state: SurfaceState) -> float:
-        """Computes clear-sky downwelling longwave radiation via Brutsaert (1975).
+
+    def _longwave_in(
+        self, atm_state: AtmosphericState, sfc_state: SurfaceState
+    ) -> float:
+        """Computes clear-sky downwelling longwave radiation via Brutsaert
+        (1975).
 
         Args:
             atm_state: The current state of the atmosphere.
@@ -132,7 +142,7 @@ class RadBasic(Radiation):
         emissivity_eff: float = 1.24 * (vapor_pressure / Ts) ** (1 / 7.0)
 
         return emissivity_eff * SB * (Ts ** 4)
-            
+
     def _longwave_out(self, sfc_state: SurfaceState) -> float:
         """Computes upward longwave radiation using the Stefan-Boltzmann law.
 
@@ -149,4 +159,3 @@ class RadBasic(Radiation):
         Ts: float = sfc_state.temperature
 
         return self.emissivity * SB * (Ts ** 4)
-    

@@ -16,96 +16,62 @@
 This module defines the interface for all surface layer physics schemes
 used within the UtahLSM framework. It provides the `Surface` abstract base
 class, which ensures that any concrete surface layer model implements the
-necessary stability functions, and a factory function (`get_model`) for
-creating instances of those models.
+necessary stability functions.
 """
+
 import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar
-from ...exceptions import NamelistError
+
 from ...util.io import logging_helper
 
 ST = TypeVar('ST', bound='Surface')
-logger = logging_helper.get_logger("SFC")
+logger = logging_helper.get_logger('SFC')
 
 class Surface(ABC):
     """Abstract base class for surface layer models.
-    
+
     This class defines the standard interface for surface layer calculations
     and acts as a factory for creating specific model instances. It cannot
     be instantiated directly.
-    
+
     Attributes:
         logger: A logger for this class.
     """
     def __init__(self) -> None:
         """Initializes the Surface base class."""
-        self.logger: logging.Logger = logging_helper.get_logger("SFC")
-   
-    @staticmethod
-    def get_model(key: int) -> ST:
-        """Factory method to select and instantiate a surface layer model.
-        
-        Args:
-            key: An integer identifying the surface layer model to use.
-        
-        Returns:
-            An instance of a concrete `Surface` subclass.
-        
-        Raises:
-            SystemExit: If the provided `key` is not a valid model ID.
-        """
-        # import surface sub-classes
-        from .sfc_most import SurfaceMOST
-       
-        # dictionary to map keys to classes
-        sfc_models = {
-            1: SurfaceMOST,
-        }
-       
-        # return class or throw error
-        try:
-            return sfc_models[key]()
-        except KeyError as e:
-            error_msg = f"{key} is an invalid surface model."
-            logger.error("x"*62)
-            logger.error(f"Namelist Error: {error_msg}")
-            logger.error(f"Valid options are:")
-            for k,v in sfc_models.items():
-                logger.error(f"\t{k} ({v.__name__})")
-            logger.error("x"*62)
-            raise NamelistError(error_msg)
-   
-    #--- Abstract methods ---   
+        self.logger: logging.Logger = logging_helper.get_logger('SFC')
+
+    #--- Abstract methods ---
     @abstractmethod
-    def fm(self, z_m: float, z_o: float, obl: float) -> float:
+    def fm(self, z1: float, z0: float, obukL: float) -> float:
         """Computes the stability function for momentum.
-        
+
         This is an abstract method that must be implemented by any concrete
         subclass.
-        
+
         Args:
-            z_m: Measurement height for wind speed [m].
-            z_o: Aerodynamic roughness length [m].
-            obl: Obukhov length [m].
-        
+            z1: Upper height [m].
+            z0: Lower height (roughness length) [m].
+            obukL: Obukhov length [m].
+
         Returns:
             The dimensionless stability correction factor for momentum.
         """
         raise NotImplementedError
-   
+
     @abstractmethod
-    def fh(self, z_s: float, z_t: float, obl: float) -> float:
+    def fh(self, z1: float, z0h: float, obukL: float) -> float:
         """Computes the stability function for heat.
-        
+
         This is an abstract method that must be implemented by any concrete
         subclass.
-        
+
         Args:
-            z_s: Measurement height for temperature and humidity [m].
-            z_t: Thermal roughness length [m].
-            obl: Obukhov length [m].
-        
+            z1: Upper height [m].
+            z0h: Lower height (thermal roughness length) [m].
+            obukL: Obukhov length [m].
+
         Returns:
             The dimensionless stability correction factor for heat and scalars.
         """

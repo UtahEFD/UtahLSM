@@ -19,23 +19,24 @@ class, which ensures that any concrete radiation model implements the necessary
 methods, and a factory function (`get_model`) for creating instances of those
 models.
 """
+
+import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar
-import logging
+
 from ...data_models import AtmosphericState, SurfaceState
-from ...exceptions import NamelistError
 from ...util.io import logging_helper
 
 RT = TypeVar('RT', bound='Radiation')
-logger = logging_helper.get_logger("RAD")
+logger = logging_helper.get_logger('RAD')
 
 class Radiation(ABC):
     """Abstract base class for radiation models.
-    
+
     This class defines the standard interface for radiation calculations
     and acts as a factory for creating specific radiation model instances.
     It cannot be instantiated directly.
-    
+
     Attributes:
         logger: A logger for this class.
         latitude: The site latitude in degrees.
@@ -43,81 +44,39 @@ class Radiation(ABC):
         albedo: The surface albedo (dimensionless).
         emissivity: The surface emissivity (dimensionless).
     """
-    def __init__(self, latitude: float, longitude: float, albedo: float, 
+    def __init__(self, latitude: float, longitude: float, albedo: float,
                  emissivity: float):
         """Initializes the Radiation base class.
-        
+
         Args:
             latitude: The site latitude in degrees.
             longitude: The site longitude in degrees.
             albedo: The surface albedo (dimensionless).
             emissivity: The surface emissivity (dimensionless).
         """
-        self.logger: logging.Logger = logging_helper.get_logger("RAD")
+        self.logger: logging.Logger = logging_helper.get_logger('RAD')
         self.latitude: float = latitude
         self.longitude: float = longitude
         self.albedo: float = albedo
         self.emissivity: float = emissivity
-            
-    @staticmethod
-    def get_model(key: int, latitude: float, longitude: float, albedo: float, 
-                  emissivity: float)->RT:
-        """Factory method to select and instantiate a radiation model.
-        
-        Based on the integer key provided in the namelist, this method imports
-        and returns an instance of the corresponding radiation model class.
-        
-        Args:
-            key: An integer identifying the radiation model to use.
-            latitude: The site latitude in degrees.
-            longitude: The site longitude in degrees.
-            albedo: The surface albedo (dimensionless).
-            emissivity: The surface emissivity (dimensionless).
-        
-        Returns:
-            An instance of a concrete `Radiation` subclass.
-        
-        Raises:
-            NamelistError: If the provided `key` is not a valid model ID.
-        """
-        # import radiation sub-classes
-        from .rad_basic import RadBasic
-        
-        # dictionary to map keys to classes
-        rad_models: dict = {
-            1: RadBasic,
-        }
-            
-        # return class or throw error
-        try:
-            return rad_models[key](latitude, longitude, albedo, emissivity)
-        except KeyError:
-            error_msg = f"{key} is an invalid radiation model."
-            logger.error("x"*62)
-            logger.error(f"Namelist Error: {error_msg}")
-            logger.error(f"Valid options are:")
-            for k,v in rad_models.items():
-                logger.error(f"\t{k} ({v.__name__})")
-            logger.error("x"*62)
-            raise NamelistError(error_msg)
-    
+
     # Abstract methods ---
     @abstractmethod
-    def compute_net(self, julian_day: int, utc: float, 
-                    atm_state: AtmosphericState, 
+    def compute_net(self, julian_day: int, time_utc: float,
+                    atm_state: AtmosphericState,
                     sfc_state: SurfaceState) -> float:
         """Computes the net radiation at the surface.
-        
+
         This is an abstract method that must be implemented by any concrete
         subclass. It calculates the net radiation flux (shortwave and longwave)
         at the land surface.
-        
+
         Args:
             julian_day: The current Julian day of the year.
-            utc: The current time in UTC seconds from midnight.
+            time_utc: The current time in UTC seconds from midnight.
             atm_state: The current state of the atmosphere.
             sfc_state: The current state of the surface.
-        
+
         Returns:
             The net radiation in W/m^2.
         """

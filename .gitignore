@@ -13,3 +13,4 @@ lsm*.nc
 **/.vscode
 cases/*/*.json
 CLAUDE.md
+.pylintrc

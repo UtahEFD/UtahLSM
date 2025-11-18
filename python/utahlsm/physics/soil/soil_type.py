@@ -1,16 +1,16 @@
-# 
+#
 # UtahLSM
-# 
+#
 # Copyright (c) 2017–2025 Jeremy A. Gibbs
 # Copyright (c) 2017–2025 Rob Stoll
 # Copyright (c) 2017–2025 Eric Pardyjak
 # Copyright (c) 2017–2025 Pete Willemsen
-# 
+#
 # This file is part of UtahLSM.
-# 
+#
 # This software is free and is distributed under the MIT License.
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
-# 
+#
 """Defines soil type properties from various datasets.
 
 This module contains a collection of classes, each representing a specific
@@ -21,9 +21,11 @@ Clapp and Hornberger (1974).
 A factory function, `get_properties`, is used to retrieve an object
 containing the correct properties based on a dataset ID and a soil type ID.
 """
+
 from ...exceptions import NamelistError
 
-class SoilType(object):
+
+class SoilType:
     """A base class for defining soil properties.
     This class serves as a template for specific soil types and provides
     a factory method to retrieve the correct soil property object.
@@ -77,11 +79,12 @@ class SoilType(object):
 
         if soil_type not in soil_type_map:
             raise NamelistError(
-                f"Invalid soil type ID: {soil_type}. "
-                f"Valid soil types are: 1 (Sand), 2 (LoamySand), 3 (SandyLoam), "
-                f"4 (SiltyLoam), 5 (Loam), 6 (SandyClayLoam), 7 (SiltyClayLoam), "
-                f"8 (ClayLoam), 9 (SandyClay), 10 (SiltyClay), 11 (Clay), "
-                f"12 (Peat), 13 (B11), 14 (O12), 15 (O16)."
+                f'Invalid soil type ID: {soil_type}. '
+                f'Valid soil types are: '
+                f'1 (Sand), 2 (LoamySand), 3 (SandyLoam), 4 (SiltyLoam), '
+                f'5 (Loam), 6 (SandyClayLoam), 7 (SiltyClayLoam), '
+                f'8 (ClayLoam), 9 (SandyClay), 10 (SiltyClay), 11 (Clay), '
+                f'12 (Peat), 13 (B11), 14 (O12), 15 (O16).'
             )
 
         return soil_type_map[soil_type](dataset)
@@ -90,9 +93,9 @@ class Sand(SoilType):
     """Properties for sand (type=1)."""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 4.05
             self.psi_sat = -0.121
             self.porosity = 0.395
@@ -100,7 +103,7 @@ class Sand(SoilType):
             self.K_sat = 1.76e-04
             self.ci = 1470000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 2.79
             self.psi_sat = -0.023
             self.porosity = 0.339
@@ -108,7 +111,7 @@ class Sand(SoilType):
             self.K_sat = 1.60e-05
             self.ci = 1470000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 1.44
             self.psi_sat = -0.160
             self.porosity = 0.437
@@ -120,9 +123,9 @@ class LoamySand(SoilType):
     """Properties for loamy sand (type=2)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 4.38
             self.psi_sat = -0.090
             self.porosity = 0.410
@@ -130,7 +133,7 @@ class LoamySand(SoilType):
             self.K_sat = 1.56e-04
             self.ci = 1410000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 4.26
             self.psi_sat = -0.018
             self.porosity = 0.421
@@ -138,7 +141,7 @@ class LoamySand(SoilType):
             self.K_sat = 9.52e-06
             self.ci = 1410000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 1.00
             self.psi_sat = -0.206
             self.porosity = 0.437
@@ -150,9 +153,9 @@ class SandyLoam(SoilType):
     """Properties for sandy loam (type=3)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 4.90
             self.psi_sat = -0.218
             self.porosity = 0.435
@@ -160,7 +163,7 @@ class SandyLoam(SoilType):
             self.K_sat = 3.41e-05
             self.ci = 1340000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 4.74
             self.psi_sat = -0.032
             self.porosity = 0.434
@@ -168,7 +171,7 @@ class SandyLoam(SoilType):
             self.K_sat = 6.19e-06
             self.ci = 1340000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 81.00
             self.psi_sat = -0.302
             self.porosity = 0.453
@@ -180,9 +183,9 @@ class SiltyLoam(SoilType):
     """Properties for silty loam (type=4)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 5.30
             self.psi_sat = -0.786
             self.porosity = 0.485
@@ -190,7 +193,7 @@ class SiltyLoam(SoilType):
             self.K_sat = 7.20e-06
             self.ci = 1270000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 5.33
             self.psi_sat = -0.066
             self.porosity = 0.476
@@ -198,7 +201,7 @@ class SiltyLoam(SoilType):
             self.K_sat = 4.73e-06
             self.ci = 1270000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 2.65
             self.psi_sat = -0.401
             self.porosity = 0.463
@@ -210,9 +213,9 @@ class Loam(SoilType):
     """ Properties for loam (type=5)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 5.39
             self.psi_sat = -0.478
             self.porosity = 0.451
@@ -220,7 +223,7 @@ class Loam(SoilType):
             self.K_sat = 7.00e-06
             self.ci = 1210000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 5.25
             self.psi_sat = -0.047
             self.porosity = 0.439
@@ -228,7 +231,7 @@ class Loam(SoilType):
             self.K_sat = 5.12e-06
             self.ci = 1210000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 3.97
             self.psi_sat = -0.509
             self.porosity = 0.501
@@ -240,9 +243,9 @@ class SandyClayLoam(SoilType):
     """ Properties for sandy clay loam (type=6)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 7.12
             self.psi_sat = -0.299
             self.porosity = 0.420
@@ -250,7 +253,7 @@ class SandyClayLoam(SoilType):
             self.K_sat = 6.30e-06
             self.ci = 1180000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 6.77
             self.psi_sat = -0.031
             self.porosity = 0.404
@@ -258,7 +261,7 @@ class SandyClayLoam(SoilType):
             self.K_sat = 5.78e-06
             self.ci = 1180000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 4.27
             self.psi_sat = -0.594
             self.porosity = 0.398
@@ -270,9 +273,9 @@ class SiltyClayLoam(SoilType):
     """ Properties for silty clay loam (type=7)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 7.75
             self.psi_sat = -0.356
             self.porosity = 0.477
@@ -280,7 +283,7 @@ class SiltyClayLoam(SoilType):
             self.K_sat = 1.70e-06
             self.ci = 1320000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 8.72
             self.psi_sat = -0.060
             self.porosity = 0.464
@@ -288,7 +291,7 @@ class SiltyClayLoam(SoilType):
             self.K_sat = 4.11e-06
             self.ci = 1320000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 3.13
             self.psi_sat = -0.564
             self.porosity = 0.464
@@ -300,9 +303,9 @@ class ClayLoam(SoilType):
     """ Properties for clay loam (type=8)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 8.52
             self.psi_sat = -0.630
             self.porosity = 0.476
@@ -310,7 +313,7 @@ class ClayLoam(SoilType):
             self.K_sat = 2.50e-06
             self.ci = 1230000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 8.17
             self.psi_sat = -0.041
             self.porosity = 0.465
@@ -318,7 +321,7 @@ class ClayLoam(SoilType):
             self.K_sat = 4.45e-06
             self.ci = 1230000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 4.13
             self.psi_sat = -0.703
             self.porosity = 0.471
@@ -330,9 +333,9 @@ class SandyClay(SoilType):
     """ Properties for sandy clay (type=9)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 10.40
             self.psi_sat = -0.153
             self.porosity = 0.426
@@ -340,7 +343,7 @@ class SandyClay(SoilType):
             self.K_sat = 2.20e-06
             self.ci = 1180000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 10.73
             self.psi_sat = -0.027
             self.porosity = 0.406
@@ -348,7 +351,7 @@ class SandyClay(SoilType):
             self.K_sat = 7.12e-05
             self.ci = 1180000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 5.65
             self.psi_sat = -0.795
             self.porosity = 0.430
@@ -360,9 +363,9 @@ class SiltyClay(SoilType):
     """ Properties for silty clay (type=10)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 10.40
             self.psi_sat = -0.490
             self.porosity = 0.492
@@ -370,7 +373,7 @@ class SiltyClay(SoilType):
             self.K_sat = 1.00e-06
             self.ci = 1150000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 10.39
             self.psi_sat = -0.045
             self.porosity = 0.468
@@ -378,7 +381,7 @@ class SiltyClay(SoilType):
             self.K_sat = 3.43e-06
             self.ci = 1150000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 4.48
             self.psi_sat = -0.765
             self.porosity = 0.479
@@ -390,9 +393,9 @@ class Clay(SoilType):
     """ Properties for clay (type=11)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 11.40
             self.psi_sat = -0.405
             self.porosity = 0.482
@@ -400,7 +403,7 @@ class Clay(SoilType):
             self.K_sat = 1.30e-06
             self.ci = 1090000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 10.55
             self.psi_sat = -0.053
             self.porosity = 0.468
@@ -408,7 +411,7 @@ class Clay(SoilType):
             self.K_sat = 2.99e-06
             self.ci = 1090000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 6.67
             self.psi_sat = -0.856
             self.porosity = 0.475
@@ -420,9 +423,9 @@ class Peat(SoilType):
     """ Properties for clay (type=12)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Clapp and Hornberger (1974)
-        if (dataset==1):
+        if dataset==1:
             self.b = 7.75
             self.psi_sat = -0.356
             self.porosity = 0.863
@@ -430,7 +433,7 @@ class Peat(SoilType):
             self.K_sat = 8.00e-06
             self.ci = 840000.0
         # Cosby et al. (1984)
-        if (dataset==2):
+        if dataset==2:
             self.b = 7.75
             self.psi_sat = -0.356
             self.porosity = 0.863
@@ -438,7 +441,7 @@ class Peat(SoilType):
             self.K_sat = 8.00e-06
             self.ci = 840000.0
         # Rawls and Brakensiek (1982)
-        if (dataset==3):
+        if dataset==3:
             self.b = 6.06
             self.psi_sat = -0.356
             self.porosity = 0.863
@@ -450,9 +453,9 @@ class B11(SoilType):
     """ Properties for B11 (type=13)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Heinen, Bakker, Wosten (Cabauw-specific)
-        if (dataset==4):
+        if dataset==4:
             self.b = 9.35
             self.psi_sat = -0.463
             self.porosity = 0.591
@@ -465,7 +468,7 @@ class O12(SoilType):
     def __init__(self,dataset):
         super().__init__()
             # Heinen, Bakker, Wosten (Cabauw-specific)
-        if (dataset==4):
+        if dataset==4:
             self.b = 6.33
             self.psi_sat = -1.14
             self.porosity = 0.561
@@ -477,9 +480,9 @@ class O16(SoilType):
     """ Properties for O16 (type=15)"""
     def __init__(self,dataset):
         super().__init__()
-        
+
         # Heinen, Bakker, Wosten (Cabauw-specific)
-        if (dataset==4):
+        if dataset==4:
             self.b = 2.75
             self.psi_sat = -1.03
             self.porosity = 0.889
