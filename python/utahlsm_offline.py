@@ -58,13 +58,14 @@ def main() -> None:
 
     # Define file paths based on the case name with path traversal protection
     base_path: Path = Path("../cases").resolve()
-    case_path: Path = (base_path / case).resolve()
-
-    # Validate that the resolved path stays within the base directory
-    if not str(case_path).startswith(str(base_path)):
+    
+    try:
+        case_path: Path = (base_path / case).resolve()
+        case_path.relative_to(base_path)
+    except (ValueError, RuntimeError):
         raise ValueError(
-            f"Invalid case name '{case}': path traversal detected. "
-            f"Case directory must be within {base_path}."
+            f'Invalid case name {case}: path traversal detected. '
+            f'Case directory must be within {base_path}.'
         )
 
     namelist: str = str(case_path / "lsm_namelist.json")
