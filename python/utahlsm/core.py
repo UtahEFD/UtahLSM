@@ -105,13 +105,13 @@ class UtahLSM:
 
         # Run radiation model if configured
         if self.input.radiation.model:
-            utc = np.fmod((self.input.time.utc_start+runtime), 86400)
-            # Wrap julian day to stay in valid range [1, 365/366]
-            # accounting for leap years
+            total_seconds = self.input.time.utc_start + runtime
+            days_passed = int(total_seconds // 86400)
+            current_utc = total_seconds % 86400
             days_per_year = (366 if self._is_leap_year(
                 self.input.time.utc_year) else 365)
-            julian_day = ((self.input.time.julian_day + int(utc/86400) - 1)
-                          % days_per_year) + 1
+            julian_day = ((self.input.time.julian_day 
+                + days_passed - 1) % days_per_year) + 1
             self.atm_state.radiation_net = self.rad.compute_net(
                 julian_day, utc, self.atm_state, self.sfc_state)
 
