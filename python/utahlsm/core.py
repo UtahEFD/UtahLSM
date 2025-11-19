@@ -378,6 +378,7 @@ class UtahLSM:
         CP = c.thermodynamic.SPECIFIC_HEAT
         RD = c.thermodynamic.GAS_CONSTANT_DRY
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
+        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         TOL = self.input.numerics.tolerances.sfc_flux
         ITER_MAX = self.input.numerics.iterations.sfc_flux
 
@@ -419,7 +420,7 @@ class UtahLSM:
             flux_wq = (gnd_q-atm_q)*ustar*fh
             self.sfc_state.fluxes.kinematic_heat[0] = flux_wT
             self.sfc_state.fluxes.kinematic_moisture[0] = flux_wq
-            flux_wTv = flux_wT + ref_T*0.61*flux_wq
+            flux_wTv = flux_wT + EVT*ref_T*flux_wq
 
             # Obukhov length
             last_L = L

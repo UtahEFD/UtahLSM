@@ -24,6 +24,7 @@ thermodynamic = SimpleNamespace(
     GAS_CONSTANT_DRY=287.0,  # Gas constant for dry air [J/kg-K]
     GAS_CONSTANT_VAPOR=461.4,  # Gas constant for water vapor [J/kg-K]
     EPSILON=0.6220199393,  # Ratio of dry/vapor gas constants
+    EPSILON_VIRTUAL_TEMPERATURE=0.608,  # Ratio of dry/vapor gas constants
     SPECIFIC_HEAT=1004.0,  # Specific heat of air [J/kg-K]
     LATENT_HEAT_VAPORIZATION=2.45e6,  # Latent heat of vaporization [J/kg]
     # Magnus formula parameters (Tetens 1930) for saturation vapor pressure
