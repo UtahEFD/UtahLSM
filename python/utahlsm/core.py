@@ -28,7 +28,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from .data_models import AtmosphericState, SoilState, SolverState, SurfaceState
-from .exceptions import NamelistError, UtahLSMError
+from .exceptions import NamelistError, SolverError
 from .physics import Radiation, Soil, Surface
 from .physics.radiation.factory import get_radiation_model
 from .physics.soil.factory import get_soil_model
@@ -110,10 +110,10 @@ class UtahLSM:
             current_utc = total_seconds % 86400
             days_per_year = (366 if self._is_leap_year(
                 self.input.time.utc_year) else 365)
-            julian_day = ((self.input.time.julian_day 
+            julian_day = ((self.input.time.julian_day
                 + days_passed - 1) % days_per_year) + 1
             self.atm_state.radiation_net = self.rad.compute_net(
-                julian_day, utc, self.atm_state, self.sfc_state)
+                julian_day, current_utc, self.atm_state, self.sfc_state)
 
     def run(self) -> None:
         """Runs the core model physics for a single time step.
@@ -250,7 +250,7 @@ class UtahLSM:
         if iter_count >= ITER_MAX:
             self.logger.error(
                 'Failed to find a valid bracket for _solve_seb.')
-            raise UtahLSMError(
+            raise SolverError(
                 f'Failed to find a valid bracket for surface energy '
                 f'balance after {ITER_MAX} iterations.'
             )
@@ -548,22 +548,22 @@ class UtahLSM:
         idx     = slice(1, nz - 2)  # corresponds to i
         idx_p1  = slice(2, nz - 1)  # corresponds to i+1
         idx_p2  = slice(3, nz)      # corresponds to i+2
-        
+
         # Compute diffusion coefficients for all interior points
         # D_mid is size (nz-1), so we slice up to nz-2
         Cp = dt * D_mid[idx] / dz2
         Cm = dt * D_mid[idx_p1] / dz2
-        
+
         # Backward (implicit) coefficients
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB  = 1.0 - CBp - CBm
-        
+
         # Forward (explicit) coefficients
         CFp = theta_f * Cp
         CFm = theta_f * Cm
         CF  = 1.0 - CFp - CFm
-        
+
         # Add conductivity terms if applicable (moisture case)
         if K_lin is not None:
             # K_lin is size (nz)
@@ -577,15 +577,15 @@ class UtahLSM:
             CFmk = theta_f * Cmk
             CFp += CFpk
             CFm -= CFmk
-        
+
         # Assign coefficients to tridiagonal matrix arrays
         e[idx] = CBp
         f[idx] = CB
         g[idx] = CBm
-        
+
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
-        r[idx] = (CFp * state_field[idx] + 
+        r[idx] = (CFp * state_field[idx] +
                   CF  * state_field[idx_p1] +
                   CFm * state_field[idx_p2])
 
@@ -593,12 +593,12 @@ class UtahLSM:
         j = nz - 2
         Cp = dt * D_mid[j] / dz2
         Cm = dt * D_mid[j] / dz2
-        
+
         # Backward (implicit) coefficients
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
-        
+
         # Forward (explicit) coefficients
         CFp = theta_f * Cp
         CFm = theta_f * Cm
@@ -616,11 +616,11 @@ class UtahLSM:
             CFmk = theta_f * Cmk
             CFp += CFpk
             CFm -= CFmk
-        
+
         # Assign coefficients to tridiagonal matrix arrays
         e[j] = CBp - CBm
         f[j] = CB + 2.0 * CBm
-        
+
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
         r[j] = ((CFp - CFm) * state_field[j] +

@@ -20,3 +20,6 @@ class UtahLSMError(Exception):
 
 class NamelistError(UtahLSMError):
     """Raised for errors found in the namelist configuration."""
+
+class SolverError(UtahLSMError):
+    """Raised when a numerical solver fails to converge."""

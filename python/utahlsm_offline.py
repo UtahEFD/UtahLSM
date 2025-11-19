@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Optional
 
 import utahlsm
-from utahlsm.exceptions import UtahLSMError
+from utahlsm.exceptions import SolverError, UtahLSMError
 
 
 def main() -> None:
@@ -58,28 +58,28 @@ def main() -> None:
 
     # Define file paths based on the case name with path traversal protection
     base_path: Path = Path("../cases").resolve()
-    
+
     try:
         case_path: Path = (base_path / case).resolve()
         case_path.relative_to(base_path)
-    except (ValueError, RuntimeError):
+    except (ValueError, RuntimeError) as e:
         raise ValueError(
             f'Invalid case name {case}: path traversal detected. '
             f'Case directory must be within {base_path}.'
-        )
+        ) from e
 
     namelist: str = str(case_path / "lsm_namelist.json")
     initfile: str = str(case_path / "lsm_init.nc")
     offlinefile: str = str(case_path / "lsm_offline.nc")
 
     # Display a welcome message
-    print("##############################################################")
-    print("#                                                            #")
-    print("#                     Welcome to UtahLSM                     #")
-    print("#   A land surface model created at the University of Utah   #")
-    print("#       and the NOAA National Severe Storms Laboratory       #")
-    print("#                                                            #")
-    print("##############################################################")
+    print('##############################################################')
+    print('#                                                            #')
+    print('#                     Welcome to UtahLSM                     #')
+    print('#   A land surface model created at the University of Utah   #')
+    print('#       and the NOAA National Severe Storms Laboratory       #')
+    print('#                                                            #')
+    print('##############################################################')
 
     output_lsm: Optional[utahlsm.Output] = None
     try:
@@ -107,18 +107,36 @@ def main() -> None:
 
             # Save the output for the current time step
             lsm.save(step_count+1, runtime)
+    except SolverError as e:
+        print('\n!!! NUMERICAL SOLVER FAILURE !!!')
+        print(f'Error details: {e}')
+        if lsm is not None:
+            crash_file = f'lsm_crash_{case}.nc'
+            print(f'Attempting to save debug state to: {crash_file}')
+            try:
+                # Create a specialized output object for the crash dump
+                crash_out = utahlsm.Output(crash_file)
+                crash_out.set_dims(lsm.output_dims)
+                crash_out.set_fields(lsm.output_fields)
+                crash_out.save(lsm.output_fields, step_count, runtime)
+                crash_out.close()
+                print('>> Crash dump saved successfully.')
+            except Exception as dump_e:
+                print(f'>> Failed to save crash dump: {dump_e}')
+        print('UtahLSM simulation failed.')
+        raise SystemExit(1) from e
     except ValueError as e:
-        print(f"\nConfiguration error: {e}")
-        print("UtahLSM simulation failed.")
+        print(f'\nConfiguration error: {e}')
+        print('UtahLSM simulation failed.')
         raise SystemExit(1) from e
     except UtahLSMError as e:
-        print(f"\nAn error occurred: {e}")
-        print("Check namelist settings.")
-        print("UtahLSM simulation failed.")
+        print(f'\nAn error occurred: {e}')
+        print('Check namelist settings.')
+        print('UtahLSM simulation failed.')
         raise SystemExit(1) from e
     except FileNotFoundError as e:
-        print(f"\nFile not found: {e}")
-        print("UtahLSM simulation failed.")
+        print(f'\nFile not found: {e}')
+        print('UtahLSM simulation failed.')
         raise SystemExit(1) from e
     finally:
         # Ensure the output file is properly closed, even if an error occurred
@@ -128,8 +146,8 @@ def main() -> None:
     # Calculate and print the total runtime
     t2: float = time.time()
     tt: float = t2 - t1
-    print(f"Done! Completed in {tt:0.4f} seconds")
-    print("##############################################################")
+    print(f'Done! Completed in {tt:0.4f} seconds')
+    print('##############################################################')
 
 if __name__ == "__main__":
     main()
