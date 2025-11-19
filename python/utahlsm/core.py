@@ -540,52 +540,70 @@ class UtahLSM:
         r[0] = (CFp * state_field[0] + CF * state_field[1] +
                 CFm * state_field[2] - CBp * sfc_boundary)
 
-        # === Interior soil levels ===
-        for i in range(1, nz - 2):
-            Cp = dt * D_mid[i] / dz2
-            Cm = dt * D_mid[i + 1] / dz2
-
-            CBp = -theta_b * Cp
-            CBm = -theta_b * Cm
-            CB = 1.0 - CBp - CBm
-
-            CFp = theta_f * Cp
-            CFm = theta_f * Cm
-            CF = 1.0 - CFp - CFm
-
-            # Add conductivity terms if applicable
-            if K_lin is not None:
-                Cpk = dt * K_lin[i] / (2 * dz)
-                Cmk = dt * K_lin[i + 2] / (2 * dz)
-                CBpk = -theta_b * Cpk
-                CBmk = -theta_b * Cmk
-                CBp += CBpk
-                CBm -= CBmk
-                CFpk = theta_f * Cpk
-                CFmk = theta_f * Cmk
-                CFp += CFpk
-                CFm -= CFmk
-
-            e[i] = CBp
-            f[i] = CB
-            g[i] = CBm
-            r[i] = (CFp * state_field[i] + CF * state_field[i + 1] +
-                    CFm * state_field[i + 2])
+        # === Interior soil levels (Vectorized) ===
+        # Define slices to represent indices i, i+1, and i+2
+        # Original loop: for i in range(1, nz - 2)
+        # indices: 1, 2, ..., nz-3
+        idx     = slice(1, nz - 2)  # corresponds to i
+        idx_p1  = slice(2, nz - 1)  # corresponds to i+1
+        idx_p2  = slice(3, nz)      # corresponds to i+2
+        
+        # Compute diffusion coefficients for all interior points
+        # D_mid is size (nz-1), so we slice up to nz-2
+        Cp = dt * D_mid[idx] / dz2
+        Cm = dt * D_mid[idx_p1] / dz2
+        
+        # Backward (implicit) coefficients
+        CBp = -theta_b * Cp
+        CBm = -theta_b * Cm
+        CB  = 1.0 - CBp - CBm
+        
+        # Forward (explicit) coefficients
+        CFp = theta_f * Cp
+        CFm = theta_f * Cm
+        CF  = 1.0 - CFp - CFm
+        
+        # Add conductivity terms if applicable (moisture case)
+        if K_lin is not None:
+            # K_lin is size (nz)
+            Cpk = dt * K_lin[idx] / (2 * dz)
+            Cmk = dt * K_lin[idx_p2] / (2 * dz)
+            CBpk = -theta_b * Cpk
+            CBmk = -theta_b * Cmk
+            CBp += CBpk
+            CBm -= CBmk
+            CFpk = theta_f * Cpk
+            CFmk = theta_f * Cmk
+            CFp += CFpk
+            CFm -= CFmk
+        
+        # Assign coefficients to tridiagonal matrix arrays
+        e[idx] = CBp
+        f[idx] = CB
+        g[idx] = CBm
+        
+        # Compute the Right Hand Side (RHS) vector r
+        # state_field is size (nz)
+        r[idx] = (CFp * state_field[idx] + 
+                  CF  * state_field[idx_p1] +
+                  CFm * state_field[idx_p2])
 
         # === Bottom level (Neumann BC: zero gradient) ===
         j = nz - 2
         Cp = dt * D_mid[j] / dz2
         Cm = dt * D_mid[j] / dz2
-
+        
+        # Backward (implicit) coefficients
         CBp = -theta_b * Cp
         CBm = -theta_b * Cm
         CB = 1.0 - CBp - CBm
-
+        
+        # Forward (explicit) coefficients
         CFp = theta_f * Cp
         CFm = theta_f * Cm
         CF = 1.0 - CFp - CFm
 
-        # Add conductivity terms if applicable
+        # Add conductivity terms if applicable (moisture case)
         if K_lin is not None:
             Cpk = dt * K_lin[j] / (2 * dz)
             Cmk = dt * K_lin[j] / (2 * dz)
@@ -597,9 +615,13 @@ class UtahLSM:
             CFmk = theta_f * Cmk
             CFp += CFpk
             CFm -= CFmk
-
+        
+        # Assign coefficients to tridiagonal matrix arrays
         e[j] = CBp - CBm
         f[j] = CB + 2.0 * CBm
+        
+        # Compute the Right Hand Side (RHS) vector r
+        # state_field is size (nz)
         r[j] = ((CFp - CFm) * state_field[j] +
                 (CF + 2.0 * CFm) * state_field[j + 1])
 
