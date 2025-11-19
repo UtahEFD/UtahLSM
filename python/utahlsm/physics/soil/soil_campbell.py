@@ -25,8 +25,9 @@ from typing import Union
 import numpy as np
 from numpy.typing import NDArray
 
-from .soil import Soil
 from ...util.io import logging_helper
+from .soil import Soil
+
 
 class Campbell(Soil):
     """Implements the Campbell (1974) soil physics model.

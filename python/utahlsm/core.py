@@ -27,15 +27,14 @@ from typing import Callable, Optional
 
 import numpy as np
 
-from .data_models import (
-    AtmosphericState, SoilState, SolverState, SurfaceState
-)
+from .data_models import AtmosphericState, SoilState, SolverState, SurfaceState
 from .exceptions import NamelistError, UtahLSMError
 from .physics import Radiation, Soil, Surface
 from .physics.radiation.factory import get_radiation_model
 from .physics.soil.factory import get_soil_model
 from .physics.surface.factory import get_surface_model
-from .util import constants as c, solvers
+from .util import constants as c
+from .util import solvers
 from .util.io import Input, Output, logging_helper
 
 

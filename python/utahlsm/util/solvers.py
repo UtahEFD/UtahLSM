@@ -17,9 +17,11 @@ This module provides robust and efficient numerical solvers for common
 mathematical problems encountered in the land-surface model, such as
 solving systems of linear equations and finding roots of functions.
 """
-from typing import Callable, Tuple
+from typing import Callable
+
 import numpy as np
 from numpy.typing import NDArray
+
 from ..util.io import logging_helper
 
 logger = logging_helper.get_logger('UTIL: Solvers')
@@ -84,8 +86,8 @@ def tridiagonal(
 
     return u
 
-def root_brent(f: Callable[[float], float],a: float,b: float,
-    iter_max: int = 100,tol: float = 1e-6) -> Tuple[float, bool]:
+def root_brent(f: Callable[[float], float], a: float, b: float,
+    iter_max: int = 100, tol: float = 1e-6) -> tuple[float, bool]:
     """Finds the root of a function using Brent's method.
 
     This is a robust and fast root-finding algorithm that combines bisection,

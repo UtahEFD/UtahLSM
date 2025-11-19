@@ -24,8 +24,9 @@ from typing import Union
 import numpy as np
 from numpy.typing import NDArray
 
-from .soil import Soil
 from ...util.io import logging_helper
+from .soil import Soil
+
 
 class VanGenuchten(Soil):
     """Implements the van Genuchten (1980) soil physics model.
@@ -98,7 +99,25 @@ class VanGenuchten(Soil):
 
         Se = (soil_q-residual)/(porosity-residual)
         m = 1 / (1+b)
-        psi = psi_sat*( ( (Se**(-1/m))-1 )**(1-m) )
+
+        # The Van Genuchten equation involves (Se^(-1/m) - 1)^(1-m)
+        # At saturation (Se=1): (1 - 1)^(1-m) = 0^(1-m) → 0 (correct physically)
+        # At residual (Se=0): (inf - 1)^(1-m) → inf (correct physically)
+        # However, computing 0^(1-m) with float exponent causes RuntimeWarning
+        # We suppress the warning and handle edge cases explicitly
+        with np.errstate(divide='ignore', invalid='ignore'):
+            inner_term = (Se**(-1/m)) - 1
+            psi = psi_sat * (inner_term**(1-m))
+
+            # Handle edge cases that may produce inf/nan
+            if np.isscalar(psi):
+                if Se >= 0.9999:  # Essentially saturated, psi → 0
+                    psi = 0.0
+                elif not np.isfinite(psi):  # Handle any inf or nan
+                    psi = -np.inf if psi_sat < 0 else np.inf
+            else:
+                # For arrays: set saturated values to 0, keep others as computed
+                psi = np.where(Se >= 0.9999, 0.0, psi)
 
         return psi
 

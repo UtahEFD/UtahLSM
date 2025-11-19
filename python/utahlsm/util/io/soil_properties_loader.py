@@ -20,10 +20,11 @@ from custom files specified by file path.
 
 import json
 from pathlib import Path
-from typing import Dict
+
 import jsonschema
 
 from ...exceptions import NamelistError
+
 
 class SoilPropertiesLoader:
     """Loads and validates soil property datasets from JSON files.
@@ -42,7 +43,7 @@ class SoilPropertiesLoader:
     ]
 
     @staticmethod
-    def load(properties_spec: str) -> Dict[str, Dict[str, float]]:
+    def load(properties_spec: str) -> dict[str, dict[str, float]]:
         """Load soil properties from bundled dataset or custom file.
 
         Args:
@@ -70,7 +71,7 @@ class SoilPropertiesLoader:
         return SoilPropertiesLoader.BUNDLED_DATASETS.copy()
 
     @staticmethod
-    def _load_bundled(dataset_name: str) -> Dict[str, Dict[str, float]]:
+    def _load_bundled(dataset_name: str) -> dict[str, dict[str, float]]:
         """Load a bundled dataset by name.
 
         Args:
@@ -85,22 +86,22 @@ class SoilPropertiesLoader:
         if dataset_name not in SoilPropertiesLoader.BUNDLED_DATASETS:
             available = ', '.join(SoilPropertiesLoader.BUNDLED_DATASETS)
             raise NamelistError(
-                f"Soil property dataset '{dataset_name}' not found. "
-                f"Available bundled datasets: {available}"
+                f'Soil property dataset {dataset_name} not found. '
+                f'Available bundled datasets: {available}'
             )
 
         bundled_path = SoilPropertiesLoader._get_bundled_path(dataset_name)
 
         if not bundled_path.exists():
             raise NamelistError(
-                f"Bundled soil property file not found: {bundled_path}\n"
-                f"Expected location: utahlsm/data/soil/{dataset_name}.json"
+                f'Bundled soil property file not found: {bundled_path}\n'
+                f'Expected location: utahlsm/data/soil/{dataset_name}.json'
             )
 
         return SoilPropertiesLoader._load_from_file(str(bundled_path))
 
     @staticmethod
-    def _load_from_file(file_path: str) -> Dict[str, Dict[str, float]]:
+    def _load_from_file(file_path: str) -> dict[str, dict[str, float]]:
         """Load properties from a JSON file (bundled or custom).
 
         Args:
@@ -116,30 +117,30 @@ class SoilPropertiesLoader:
 
         if not path.exists():
             raise NamelistError(
-                f"Soil property file not found: {file_path}\n"
-                f"Resolved to: {path}"
+                f'Soil property file not found: {file_path}\n'
+                f'Resolved to: {path}'
             )
 
         if not path.is_file():
-            raise NamelistError(f"Path is not a file: {path}")
+            raise NamelistError(f'Path is not a file: {path}')
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
             raise NamelistError(
-                f"Invalid JSON in soil property file {path}: {e}"
+                f'Invalid JSON in soil property file {path}: {e}'
             ) from e
-        except IOError as e:
+        except OSError as e:
             raise NamelistError(
-                f"Error reading soil property file {path}: {e}"
+                f'Error reading soil property file {path}: {e}'
             ) from e
 
         SoilPropertiesLoader._validate(data, path)
         return data['soil_types']
 
     @staticmethod
-    def _validate(data: Dict, source: str = 'properties') -> None:
+    def _validate(data: dict, source: str = 'properties') -> None:
         """Validate loaded properties against schema.
 
         Args:
@@ -152,24 +153,24 @@ class SoilPropertiesLoader:
         schema_path = Path(__file__).parent / 'schema_soil_properties.json'
 
         try:
-            with open(schema_path, 'r', encoding='utf-8') as f:
+            with open(schema_path, encoding='utf-8') as f:
                 schema = json.load(f)
         except Exception as e:
             raise NamelistError(
-                f"Failed to load soil properties schema: {e}"
+                f'Failed to load soil properties schema: {e}'
             ) from e
 
         try:
             jsonschema.validate(instance=data, schema=schema)
         except jsonschema.ValidationError as e:
             raise NamelistError(
-                f"Soil properties validation failed for {source}:\n"
-                f"  Path: {list(e.path)}\n"
-                f"  Message: {e.message}"
+                f'Soil properties validation failed for {source}:\n'
+                f'  Path: {list(e.path)}\n'
+                f'  Message: {e.message}'
             ) from e
         except jsonschema.SchemaError as e:
             raise NamelistError(
-                f"Internal error: soil properties schema is invalid: {e}"
+                f'Internal error: soil properties schema is invalid: {e}'
             ) from e
 
     @staticmethod
@@ -180,7 +181,7 @@ class SoilPropertiesLoader:
         working from any current working directory or installation method.
 
         Args:
-            dataset_name: Name of bundled dataset (e.g., 'cosby-1984')
+            dataset_name: Name of bundled dataset (e.g., 'cosby')
 
         Returns:
             Path to the JSON file in utahlsm/data/soil/

@@ -23,12 +23,14 @@ LSM, and executes the main time-stepping loop.
 To run an offline simulation, provide the case name via the command line:
     $ python utahlsm_offline.py -c my_case_name
 """
-from typing import Optional
-from pathlib import Path
 import argparse
 import time
+from pathlib import Path
+from typing import Optional
+
 import utahlsm
 from utahlsm.exceptions import UtahLSMError
+
 
 def main() -> None:
     """Parses arguments, runs the simulation, and prints timing information.

@@ -26,7 +26,7 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
-from typing import List
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -159,7 +159,7 @@ class ForcingData:
     ntime: int
     tstep: float
     # A list of atmospheric states, one for each timestep
-    atmos: List[AtmosphericState]
+    atmos: list[AtmosphericState]
 
 # --- Configuration Data Models ---
 
@@ -305,4 +305,4 @@ class OutputConfig:
         fields: A list of strings specifying which variables to save.
     """
     save: bool
-    fields: List[str]
+    fields: list[str]

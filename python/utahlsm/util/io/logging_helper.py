@@ -18,10 +18,10 @@ start logging immediately upon import, buffering the messages in memory.
 Once the main configuration is loaded, `finalize_logging` is called to
 set up the final file and console handlers and flush all buffered messages.
 """
-from typing import Optional, Dict
-from pathlib import Path
 import logging
 import logging.handlers
+from pathlib import Path
+from typing import Optional
 
 _buffer_handler: Optional[logging.handlers.MemoryHandler] = None
 _initialized: bool = False
@@ -77,7 +77,7 @@ def finalize_logging(level_str: str = 'info') -> None:
     global _buffer_handler  # pylint: disable=global-statement
     root_logger = logging.getLogger()
 
-    log_levels: Dict[str, int] = {'info': logging.INFO, 'debug': logging.DEBUG}
+    log_levels: dict[str, int] = {'info': logging.INFO, 'debug': logging.DEBUG}
     log_level = log_levels.get(level_str.lower(), logging.INFO)
     log_format = logging.Formatter(
         '{asctime} [{levelname:^8s}] {name:.>10s}: {message}',

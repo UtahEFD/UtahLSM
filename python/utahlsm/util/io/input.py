@@ -21,7 +21,7 @@ access all setup information.
 """
 import json
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 import jsonschema
 import netCDF4 as nc
@@ -30,10 +30,21 @@ from numpy.typing import NDArray
 
 from utahlsm.util.io import logging_helper
 from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
+
 from ...data_models import (
-    GeneralConfig, NumericsConfig, IterationsConfig, TolerancesConfig,
-    TimeConfig, GridConfig, SurfaceConfig, SoilConfig, RadiationConfig,
-    OutputConfig, SoilState, ForcingData, AtmosphericState
+    AtmosphericState,
+    ForcingData,
+    GeneralConfig,
+    GridConfig,
+    IterationsConfig,
+    NumericsConfig,
+    OutputConfig,
+    RadiationConfig,
+    SoilConfig,
+    SoilState,
+    SurfaceConfig,
+    TimeConfig,
+    TolerancesConfig,
 )
 from ...exceptions import NamelistError
 
@@ -125,7 +136,7 @@ class Input:
 
         self._validate_physical_consistency()
 
-    def _load_and_validate_namelist(self, namelist_path: str) -> Dict:
+    def _load_and_validate_namelist(self, namelist_path: str) -> dict:
         """Loads and validates the JSON namelist against a schema.
 
         Args:
@@ -157,7 +168,7 @@ class Input:
             raise
 
     def _load_initial_conditions(
-            self, inputfile: str) -> Dict[str, NDArray]:
+            self, inputfile: str) -> dict[str, NDArray]:
         """Loads data from the NetCDF initialization file.
 
         Args:
@@ -206,7 +217,7 @@ class Input:
                 }
             self.logger.info('--- initial conditions loaded successfully')
             return init_dict
-        except (IOError, KeyError) as e:
+        except (OSError, KeyError) as e:
             self.logger.error('--- initial conditions error: %s', e)
             raise
 
@@ -292,7 +303,7 @@ class Input:
                                            atmos=atm_data)
                 self.logger.info(
                     '--- loaded %d timesteps of forcing data', ntime)
-        except (IOError, KeyError) as e:
+        except (OSError, KeyError) as e:
             self.logger.error('--- offline forcing error: %s', e)
             raise
 

@@ -17,12 +17,15 @@ This module provides an implementation of the `Surface` abstract base class
 using standard Monin-Obukhov Similarity Theory (MOST) functions to describe
 the stability and flux-profile relationships in the atmospheric surface layer.
 """
-import math
 import logging
+import math
+
 import numpy as np
-from .sfc import Surface
+
 from ...util import constants as c
 from ...util.io import logging_helper
+from .sfc import Surface
+
 
 class SurfaceMOST(Surface):
     """Implements surface layer physics using MOST.

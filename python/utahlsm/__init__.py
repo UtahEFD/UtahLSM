@@ -37,29 +37,39 @@ from .core import UtahLSM
 # Core data structures for atmospheric, surface, soil, and solver states
 #    as well as configuration settings from the namelist file
 from .data_models import (
-    AtmosphericState, SoilState, SurfaceState, SolverState, ForcingData,
-    GeneralConfig, NumericsConfig, TimeConfig, GridConfig, SurfaceConfig,
-    SoilConfig, RadiationConfig, OutputConfig
+    AtmosphericState,
+    ForcingData,
+    GeneralConfig,
+    GridConfig,
+    NumericsConfig,
+    OutputConfig,
+    RadiationConfig,
+    SoilConfig,
+    SoilState,
+    SolverState,
+    SurfaceConfig,
+    SurfaceState,
+    TimeConfig,
 )
 
 # Core I/O classes for handling model input and output
 from .util.io import Input, Output
 
 __all__ = [
-    'UtahLSM',
     'AtmosphericState',
-    'SoilState',
-    'SurfaceState',
-    'SolverState',
     'ForcingData',
     'GeneralConfig',
-    'NumericsConfig',
-    'TimeConfig',
     'GridConfig',
-    'SurfaceConfig',
-    'SoilConfig',
-    'RadiationConfig',
-    'OutputConfig',
     'Input',
+    'NumericsConfig',
     'Output',
+    'OutputConfig',
+    'RadiationConfig',
+    'SoilConfig',
+    'SoilState',
+    'SolverState',
+    'SurfaceConfig',
+    'SurfaceState',
+    'TimeConfig',
+    'UtahLSM',
 ]

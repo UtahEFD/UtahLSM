@@ -28,9 +28,9 @@ from typing import TypeVar, Union, overload
 import numpy as np
 from numpy.typing import NDArray
 
+from ...exceptions import NamelistError
 from ...util import constants as c
 from ...util.io import logging_helper
-from ...exceptions import NamelistError
 
 ST = TypeVar('ST', bound='Soil')
 logger = logging_helper.get_logger('SOIL')

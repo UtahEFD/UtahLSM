@@ -226,8 +226,6 @@ UtahLSM uses a **strategy pattern** for physics modules, allowing easy addition 
    - Implement `compute_net()` method
    - Register in `Radiation.get_model()` factory
 
-See `CLAUDE.md` in the python directory for detailed architecture documentation.
-
 #### Testing & Validation
 
 The model validates input through:

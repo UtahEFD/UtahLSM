@@ -19,7 +19,7 @@ file dimensions, variables, and attributes, providing a simple interface
 for saving the model's state at each time step.
 """
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import netCDF4 as nc
 
@@ -55,9 +55,9 @@ class Output:
         # self.outfile.source      = "Jeremy A. Gibbs"
         # self.outfile.history     = "Created " + time.ctime(time.time())
 
-        self.fields_time: Dict[str, Any] = {}
-        self.fields_static: Dict[str, Any] = {}
-        self.attributes: Dict[str, Dict[str, Any]] = {
+        self.fields_time: dict[str, Any] = {}
+        self.fields_static: dict[str, Any] = {}
+        self.attributes: dict[str, dict[str, Any]] = {
             'time': {
                 'dimension':('t',),
                 'long_name':'time',
@@ -110,7 +110,7 @@ class Output:
             },
         }
 
-    def set_dims(self, dims: Dict[str, int]) -> None:
+    def set_dims(self, dims: dict[str, int]) -> None:
         """Sets the dimensions in the NetCDF output file.
 
         Args:
@@ -123,7 +123,7 @@ class Output:
             else:
                 self.outfile.createDimension(dim, size)
 
-    def set_fields(self, fields: Dict[str, Any]) -> None:
+    def set_fields(self, fields: dict[str, Any]) -> None:
         """Creates the variables (fields) in the NetCDF output file.
 
         Args:
@@ -150,7 +150,7 @@ class Output:
             else:
                 self.fields_static[field] = ncvar
 
-    def save(self, fields: Dict[str, Any], tidx: int, time: float,
+    def save(self, fields: dict[str, Any], tidx: int, time: float,
              initial: bool = False) -> None:
         """Saves a snapshot of the model's state to the output file.
 

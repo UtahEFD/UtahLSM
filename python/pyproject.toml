@@ -1,0 +1,186 @@
+[build-system]
+# Specify how to build the package
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Basic project metadata
+name = "utahlsm"
+version = "0.1.0"
+description = "Utah Land-Surface Model (UtahLSM) - A fast-response land-surface model for simulating heat, moisture, and momentum exchange between land and atmosphere"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Jeremy A. Gibbs", email = "jeremy.gibbs@utah.edu"},
+    {name = "Rob Stoll", email = "rob.stoll@utah.edu"},
+    {name = "Eric Pardyjak", email = "pardyjak@utah.edu"},
+    {name = "Pete Willemsen", email = "willemsen@ucar.edu"},
+]
+keywords = ["land-surface-model", "weather", "climate", "simulation", "atmospheric"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Core dependencies required to run UtahLSM
+dependencies = [
+    "numpy>=1.20.0",
+    "netCDF4>=1.5.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+# Optional dependencies for analysis and documentation
+analysis = [
+    "matplotlib>=3.5",
+    "xarray>=2022.0",
+]
+
+docs = [
+    "sphinx>=5.0",
+    "sphinx-rtd-theme>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/UtahLSM"
+Repository = "https://github.com/yourusername/UtahLSM.git"
+Documentation = "https://utahlsm.readthedocs.io"
+"Bug Tracker" = "https://github.com/yourusername/UtahLSM/issues"
+
+# ============================================================================
+# Tool Configuration
+# ============================================================================
+
+[tool.setuptools]
+# Tell setuptools where to find the package
+packages = ["utahlsm"]
+package-dir = {"" = "."}
+
+[tool.setuptools.package-data]
+utahlsm = [
+    "py.typed",  # Mark as typed for mypy
+    "data/soil_properties/*.json",  # Include soil property data files
+]
+
+[tool.pytest.ini_options]
+# Test discovery
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Test paths
+testpaths = ["tests"]
+
+# Output options
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+]
+
+# Custom markers for organizing tests
+markers = [
+    "solver: Tests for numerical solvers (tridiagonal, root_brent)",
+    "soil: Tests for soil physics models",
+    "seb: Tests for surface energy budget solver",
+    "smb: Tests for surface moisture budget solver",
+    "datamodel: Tests for configuration and state dataclasses",
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+]
+
+[tool.ruff]
+# Code quality and linting configuration
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "RUF",  # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E741",   # ambiguous variable names (sometimes necessary in math)
+    "N",      # naming conventions (pep8-naming is often too strict for scientific code)
+    "RUF003", # Ambiguous character in comments (EN DASH vs HYPHEN)
+    "RUF012", # Mutable class attributes (false positives in dataclasses)
+    "RUF013", # Implicit Optional (can be overly strict)
+    "RUF059", # Unpacked but unused (sometimes intentional in patterns)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Imported but unused (needed for package exports)
+"tests/*" = ["F841", "E731", "RUF013"]  # Lambdas and unused vars common in tests
+"tests/conftest.py" = ["E731", "RUF013"]  # Lambda assignments in fixtures are acceptable, Optional defaults
+
+[tool.mypy]
+# Static type checking configuration
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Too strict for scientific code initially
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "netCDF4.*"
+ignore_missing_imports = true
+
+[tool.isort]
+# Import sorting configuration
+profile = "black"
+line_length = 88
+skip_gitignore = true
+known_first_party = ["utahlsm"]
+known_third_party = ["numpy", "netCDF4"]
+
+[tool.black]
+# Code formatter configuration (if using black)
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
