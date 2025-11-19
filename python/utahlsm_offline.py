@@ -105,7 +105,7 @@ def main() -> None:
             lsm.run()
 
             # Save the output for the current time step
-            lsm.save(step_count, runtime)
+            lsm.save(step_count+1, runtime)
     except ValueError as e:
         print(f"\nConfiguration error: {e}")
         print("UtahLSM simulation failed.")
