@@ -128,9 +128,11 @@ class UtahLSM:
         self.sfc_state.moisture = self.soil_state.moisture[0]
 
         # Solve surface energy and moisture budgets
-        self._solve_seb()
-        self._solve_smb()
-
+        #self._solve_seb()
+        #self._solve_smb()
+        self._solve_surface_coupling()
+        
+        
         # Solve diffusion equations for heat and moisture
         self._solve_diffusion_heat()
         self._solve_diffusion_mois()
@@ -228,50 +230,70 @@ class UtahLSM:
         # Calculate thermal conductivity for the entire soil column
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
         self.solver_state.K_mid = 0.5 * (K_all[0] + K_all[1])
-
-        # Establish an initial temperature bracket
-        temp_a = self.soil_state.temperature[0] - 1.0
-        temp_b = self.soil_state.temperature[0] + 1.0
-        seb_a  = self._compute_seb(temp_a)
-        seb_b  = self._compute_seb(temp_b)
-
-        # Expand the bracket if the root is not contained within it
-        ITER_MAX = self.input.numerics.iterations.seb_bracket
+        
+        current_T = self.sfc_state.temperature
+        
+        # Create a dynamic bracket around the current best guess
+        bracket_width = 1.0
+        temp_a = current_T - bracket_width
+        temp_b = current_T + bracket_width
+        
+        seb_a = self._compute_seb(temp_a)
+        seb_b = self._compute_seb(temp_b)
+        
+        # Robust bracket expansion
         iter_count = 0
-        while seb_a * seb_b > 0 and iter_count < ITER_MAX:
+        iter_max_bracket = self.input.numerics.iterations.seb_bracket
+        
+        while seb_a * seb_b > 0 and iter_count < iter_max_bracket:
+            # Expand in the direction of the smaller residual (likely closer to root)
+            step = 5.0 * (1.0 + iter_count * 0.5) # Accelerate expansion
             if abs(seb_a) < abs(seb_b):
-                temp_a -= 5.0
+                temp_a -= step
                 seb_a = self._compute_seb(temp_a)
             else:
-                temp_b += 5.0
+                temp_b += step
                 seb_b = self._compute_seb(temp_b)
             iter_count += 1
+        
+        if iter_count >= iter_max_bracket:
+             # Fallback or error handling
+             raise SolverError(f"SEB Bracket failed. Res: {seb_a:.2f}, {seb_b:.2f}")
+        
+        # Root finding
+        iter_max_root = self.input.numerics.iterations.seb_root
+        tol_root = self.input.numerics.tolerances.seb_root
+        
+        temp, converged = solvers.root_brent(
+            self._compute_seb, temp_a, temp_b, iter_max_root, tol_root
+        )
+        
+        if not converged:
+             self.logger.warning('SEB root-finder did not fully converge.')
+        
+        self.sfc_state.temperature = temp
+        
+        # Final flux update with the resolved Temperature and CURRENT moisture
+        self._compute_fluxes(self.sfc_state.temperature, 
+                             self.sfc_state.moisture)
 
-        if iter_count >= ITER_MAX:
-            self.logger.error(
-                'Failed to find a valid bracket for _solve_seb.')
-            raise SolverError(
-                f'Failed to find a valid bracket for surface energy '
-                f'balance after {ITER_MAX} iterations.'
-            )
-
-        # Find the root (surface temperature)
-        try:
-            ITER_MAX = self.input.numerics.iterations.seb_root
-            TOLERANCE = self.input.numerics.tolerances.seb_root
-            temp, converged = solvers.root_brent(
-                self._compute_seb, temp_a, temp_b, ITER_MAX, TOLERANCE)
-            if not converged:
-                self.logger.warning('SEB root-finder did not converge.')
-            self.sfc_state.temperature = temp
-            self._compute_fluxes(self.sfc_state.temperature,
-                                 self.sfc_state.moisture)
-            self.logger.debug(
-                'SEB converged to T_sfc = %.3f K',
-                self.sfc_state.temperature)
-        except Exception as e:
-            self.logger.error('Error during SEB root finding: %s', e)
-            raise
+        # # Find the root (surface temperature)
+        # try:
+        #     ITER_MAX = self.input.numerics.iterations.seb_root
+        #     TOLERANCE = self.input.numerics.tolerances.seb_root
+        #     temp, converged = solvers.root_brent(
+        #         self._compute_seb, temp_a, temp_b, ITER_MAX, TOLERANCE)
+        #     if not converged:
+        #         self.logger.warning('SEB root-finder did not converge.')
+        #     self.sfc_state.temperature = temp
+        #     self._compute_fluxes(self.sfc_state.temperature,
+        #                          self.sfc_state.moisture)
+        #     self.logger.debug(
+        #         'SEB converged to T_sfc = %.3f K',
+        #         self.sfc_state.temperature)
+        # except Exception as e:
+        #     self.logger.error('Error during SEB root finding: %s', e)
+        #     raise
 
     # Compute the surface energy budget
     def _compute_seb(self, sfc_T: float) -> float:
@@ -342,8 +364,7 @@ class UtahLSM:
             # New evaporation
             psi0 = psi1 + dz*((flux_sm/(RHO_W*K_mid))-1.0)
             psi0 = min(psi0, psi_sat)
-            self.sfc_state.moisture = self.soil.surface_water_content(
-                psi0)
+            self.sfc_state.moisture = self.soil.surface_water_content(psi0)
             gnd_q = self.soil.surface_mixing_ratio(
                 sfc_T, self.sfc_state.moisture, atm_p)
             E = rho_a*(gnd_q-atm_q)*ust*fh
@@ -352,7 +373,7 @@ class UtahLSM:
                 self.sfc_state.moisture, level=0)
             K_mid = 0.5*(K0+K1)  # K_mid is hydraulic conductivity at midpoint
 
-            if abs((E + flux_sm) / E) <= TOL:
+            if abs((E + flux_sm)) <= TOL:
                 break
 
     def _compute_fluxes(self, sfc_T: float, sfc_q: float) -> None:
@@ -437,20 +458,55 @@ class UtahLSM:
 
             # Check for convergence
             if abs(last_L - L) <= TOL:
-                self.sfc_state.turbulence.obukhov_length[0] = L
-                self.sfc_state.fluxes.sensible_heat[0] = (
-                    rho * CP * flux_wT)
-                self.sfc_state.fluxes.latent_heat[0] = (
-                    rho * LV * flux_wq)
                 converged = True
                 break
-
-        # Set final Obukhov length if loop completed without converging
+            
+        # Warn if it did not converge
         if not converged:
-            self.sfc_state.turbulence.obukhov_length[0] = L
             self.logger.warning(
                 'Obukhov length did not converge. Final value = %f', L)
-
+        
+        # set final values, even if not converged
+        self.sfc_state.turbulence.obukhov_length[0] = L
+        self.sfc_state.fluxes.sensible_heat[0] = (rho * CP * flux_wT)
+        self.sfc_state.fluxes.latent_heat[0] = (rho * LV * flux_wq)
+    
+    def _solve_surface_coupling(self) -> None:
+        """Iteratively solves the coupled SEB and SMB.
+        
+        This method performs a Picard iteration, alternating between solving
+        the Surface Energy Budget (SEB) for temperature and the Surface
+        Moisture Budget (SMB) for moisture until both state variables converge.
+        """
+        # Configuration for the coupling loop
+        max_outer_iter = self.input.numerics.iterations.coupling
+        tol_temp = self.input.numerics.tolerances.coupling_temp
+        tol_mois = self.input.numerics.tolerances.coupling_mois
+        
+        for i in range(max_outer_iter):
+            # Store previous states to check convergence
+            prev_T = self.sfc_state.temperature
+            prev_q = self.sfc_state.moisture
+        
+            # soil energy balance
+            self._solve_seb()
+        
+            # soil moisture balance
+            self._solve_smb()
+        
+            # 3. Check Convergence
+            diff_T = abs(self.sfc_state.temperature - prev_T)
+            diff_q = abs(self.sfc_state.moisture - prev_q)
+        
+            if diff_T < tol_temp and diff_q < tol_mois:
+                self.logger.debug(
+                    'Surface coupling converged in %d iterations.', i + 1)
+                return
+    
+        self.logger.warning(
+            'Surface coupling did not converge after %d iterations. '
+            'dT: %.4f, dq: %.4e', max_outer_iter, diff_T, diff_q)
+    
     def _solve_diffusion(
         self,
         state_field: np.ndarray,

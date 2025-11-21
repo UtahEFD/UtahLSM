@@ -225,9 +225,12 @@ namelist['numerics']['iterations']['sfc_flux'] = 100
 namelist['numerics']['iterations']['seb_bracket'] = 100
 namelist['numerics']['iterations']['seb_root'] = 100
 namelist['numerics']['iterations']['smb_flux'] = 100
+namelist['numerics']['iterations']['coupling'] = 10
 namelist['numerics']['tolerances']['sfc_flux'] = 1e-3
 namelist['numerics']['tolerances']['seb_root'] = 1e-6
 namelist['numerics']['tolerances']['smb_flux'] = 1e-3
+namelist['numerics']['tolerances']['coupling_temp'] = 1e-2
+namelist['numerics']['tolerances']['coupling_mois'] = 1e-5
 
 # time section
 namelist['time']['utc_start']  = float(t_utc[0])

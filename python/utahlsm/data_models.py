@@ -141,8 +141,10 @@ class SolverState:
     Attributes:
         conductivity_thermal_mid: Thermal conductivity at the midpoint between
             the top two soil layers [W/m/K].
+        obukhov_length: Obukhov length (L) [m].
     """
     conductivity_thermal_mid: float = 0.0
+    obukhov_length: float = 0.0
 
 @dataclass(frozen=True)
 class ForcingData:
@@ -184,11 +186,13 @@ class IterationsConfig:
         seb_bracket: iterations to find root brackets.
         seb_root: iterations to find seb root.
         smb_flux: iterations to solve soil moisture flux.
+        coupling: iterations to solve coupled system
     """
     sfc_flux: int
     seb_bracket: int
     seb_root: int
     smb_flux: int
+    coupling: int
 
 @dataclass(frozen=True)
 class TolerancesConfig:
@@ -201,10 +205,14 @@ class TolerancesConfig:
         sfc_flux: tolerance for Obukhov length.
         seb_root: tolerance for seb root.
         smb_flux: tolerance for soil moisture flux.
+        coupling_temp: tolerance for soil temperature in coupling.
+        coupling_mois: tolerance for soil moisture in coupling.
     """
     sfc_flux: float
     seb_root: float
     smb_flux: float
+    coupling_temp: float
+    coupling_mois: float
 
 @dataclass(frozen=True)
 class NumericsConfig:
