@@ -227,6 +227,9 @@ class UtahLSM:
         where the SEB function changes sign, then uses a robust root-finding
         algorithm (solvers.root_brent) to find the precise temperature.
         """
+        
+        self._L_anchor = self.sfc_state.turbulence.obukhov_length[0]
+        
         # Calculate thermal conductivity for the entire soil column
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
         self.solver_state.K_mid = 0.5 * (K_all[0] + K_all[1])
@@ -272,6 +275,7 @@ class UtahLSM:
              self.logger.warning('SEB root-finder did not fully converge.')
         
         self.sfc_state.temperature = temp
+        del self._L_anchor
         
         # Final flux update with the resolved Temperature and CURRENT moisture
         self._compute_fluxes(self.sfc_state.temperature, 
@@ -306,6 +310,7 @@ class UtahLSM:
         Returns:
             The residual of the surface energy budget [W/m^2].
         """
+        self.sfc_state.turbulence.obukhov_length[0] = self._L_anchor
         self._compute_fluxes(sfc_T, self.sfc_state.moisture)
         SEB = (self.atm_state.radiation_net
                - self.sfc_state.fluxes.ground_heat[0]
@@ -320,62 +325,108 @@ class UtahLSM:
         This function finds the soil moisture flux and surface evaporation.
         It then iteratively blends the two in time until convergence.
         """
-        # Local constants and variables
-        delta = 0.5
-
+        # 1. Define Brackets for Surface Potential (psi)
+        # Upper bound: Saturation (wettest possible)
+        psi_sat = self.soil.properties.psi_sat[0]
+        # Lower bound: Very dry (e.g., -1.0e5 m ~ -10,000 bars, or air dry)
+        # You might want to calculate this based on air humidity, but a fixed 
+        # large negative value usually works for bracketing.
+        psi_dry = -1.0e5 
+        
+        # 2. Check bounds to see if root exists
+        # This handles cases where the soil is supersaturated or completely dry
+        res_sat = self._compute_smb_residual(psi_sat)
+        res_dry = self._compute_smb_residual(psi_dry)
+        
+        # If signs are the same, we cannot bracket. 
+        # Usually means we are at a limit (fully saturated or fully dry).
+        if res_sat * res_dry > 0:
+            if abs(res_sat) < abs(res_dry):
+                self.sfc_state.moisture = self.soil.properties.theta_sat[0]
+            else:
+                # Set to residual moisture or dry limit
+                self.sfc_state.moisture = self.soil.water_content(np.array([psi_dry]))[0]
+            
+            # Log warning if relevant, but limits are common in LSMs
+            return
+        
+        # 3. Solve using Brent's Method
+        try:
+            ITER_MAX = self.input.numerics.iterations.smb_flux or 50
+            TOLERANCE = self.input.numerics.tolerances.smb_flux or 1e-5
+            
+            psi_sfc, converged = solvers.root_brent(
+                self._compute_smb_residual, 
+                psi_dry, 
+                psi_sat, 
+                ITER_MAX, 
+                TOLERANCE
+            )
+            
+            if not converged:
+                self.logger.warning('SMB root-finder did not converge.')
+                
+            # 4. Update State with Final Result
+            self.sfc_state.moisture = self.soil.surface_water_content(psi_sfc)
+            
+        except Exception as e:
+            self.logger.error('Error during SMB root finding: %s', e)
+            raise
+    
+    def _compute_smb_residual(self, psi_0: float) -> float:
+        """Computes the moisture budget residual for a test potential.
+        
+        Args:
+            psi_0: Surface matric potential [m] to test.
+            
+        Returns:
+            Residual = Flux_soil + Evaporation [kg m-2 s-1]
+            (Target is 0)
+        """
+        # Constants
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
-        TOL = self.input.numerics.tolerances.smb_flux
-        ITER_MAX = self.input.numerics.iterations.smb_flux
-
-        z_s = self.input.surface.z_s
-        z_t = self.input.surface.z_t
         dz = self.input.grid.z[0] - self.input.grid.z[1]
+        
+        # --- A. Calculate Soil Flux (Flux_sm) ---
+        # Get hydraulic conductivity at surface (K0) and layer 1 (K1)
+        # Note: K1 is fixed (subsurface), K0 varies with psi_0
+        theta_0 = self.soil.surface_water_content(psi_0)
+        K0 = self.soil.conductivity_moisture(np.array([theta_0]), level=0)[0]
+        
+        # We need K1 and psi1 from the subsurface (fixed during this solve)
+        theta_1 = self.soil_state.moisture[1]
+        K1 = self.soil.conductivity_moisture(np.array([theta_1]), level=1)[0]
+        psi_1 = self.soil.water_potential(np.array([theta_1]))[0]
+        
+        K_mid = 0.5 * (K0 + K1)
+        
+        # Darcy's Law: Flux = K * (d_psi/dz + 1)
+        # Assuming sign convention from your code:
+        flux_sm = RHO_W * K_mid * ((psi_0 - psi_1) / dz + 1.0)
 
-        atm_T = self.atm_state.temperature
+        # --- B. Calculate Evaporation (E) ---
+        # Get atmospheric drivers (assume fixed during SMB solve)
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
-        sfc_T = self.sfc_state.temperature
-        L = self.sfc_state.turbulence.obukhov_length[0]
+        rho_a = atm_p / (RD * self.atm_state.temperature)
+
+        # Aerodynamic resistance terms (fixed during SMB solve)
         ust = self.sfc_state.turbulence.friction_velocity[0]
-        rho_a = atm_p / (RD * atm_T)
-        fh = self.sfc.fh(z_s, z_t, L)
+        fh = self.sfc.fh(self.input.surface.z_s, self.input.surface.z_t, 
+                         self.sfc_state.turbulence.obukhov_length[0])
 
-        psi_sat = self.soil.properties.psi_sat[0]
-        psi_all = self.soil.water_potential(self.soil_state.moisture)
-        K_hydraulic = self.soil.conductivity_moisture(self.soil_state.moisture)
-        psi0 = psi_all[0]
-        psi1 = psi_all[1]
-        K0 = K_hydraulic[0]
-        K1 = K_hydraulic[1]
-        K_mid = 0.5 * (K0 + K1)
+        # Surface mixing ratio based on this psi_0 (via theta_0)
+        gnd_q = self.soil.surface_mixing_ratio(
+            self.sfc_state.temperature, theta_0, atm_p
+        )
 
-        # Soil moisture flux and evaporation
-        flux_sm  = RHO_W*K_mid*((psi0 - psi1)/dz + 1.0)
-        E = rho_a*self.sfc_state.fluxes.kinematic_moisture[0]
+        E = rho_a * (gnd_q - atm_q) * ust * fh
 
-        # Iteratively solve for moisture flux
-        for _ in range(0,ITER_MAX):
-
-            # New blended soil moisture flux
-            flux_sm_last = flux_sm
-            flux_sm = delta*flux_sm_last - (1.0-delta)*E
-
-            # New evaporation
-            psi0 = psi1 + dz*((flux_sm/(RHO_W*K_mid))-1.0)
-            psi0 = min(psi0, psi_sat)
-            self.sfc_state.moisture = self.soil.surface_water_content(psi0)
-            gnd_q = self.soil.surface_mixing_ratio(
-                sfc_T, self.sfc_state.moisture, atm_p)
-            E = rho_a*(gnd_q-atm_q)*ust*fh
-
-            K0 = self.soil.conductivity_moisture(
-                self.sfc_state.moisture, level=0)
-            K_mid = 0.5*(K0+K1)  # K_mid is hydraulic conductivity at midpoint
-
-            if abs((E + flux_sm)) <= TOL:
-                break
-
+        # --- C. Balance ---
+        # Your code implies equilibrium when flux_sm = -E
+        return flux_sm + E
+    
     def _compute_fluxes(self, sfc_T: float, sfc_q: float) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
 
@@ -506,6 +557,8 @@ class UtahLSM:
         self.logger.warning(
             'Surface coupling did not converge after %d iterations. '
             'dT: %.4f, dq: %.4e', max_outer_iter, diff_T, diff_q)
+        
+        self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
     
     def _solve_diffusion(
         self,
