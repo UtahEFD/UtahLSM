@@ -125,7 +125,7 @@ init.close()
 ###################################
 
 # end time is 9 hours, so 6*9 = 54
-tend = tidx + 55
+tend = tidx + 54
 
 # open MET data
 met = nc.MFDataset('observations/cesar_surface_meteo_lc1_t10_v1.0_200607.nc')
