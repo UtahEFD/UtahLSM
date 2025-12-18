@@ -229,7 +229,15 @@ class UtahLSM:
         """
         # Calculate thermal conductivity for the entire soil column
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
-        self.solver_state.K_mid = 0.5 * (K_all[0] + K_all[1])
+        self.solver_state.conductivity_thermal_mid = 0.5 * (K_all[0] + K_all[1])
+
+        # Keep the initial Obukhov length fixed during the SEB root-finding.
+        # This makes the SEB residual a deterministic function of temperature
+        # (Brent's method assumes this), while still allowing MOST iterations
+        # to converge within each residual evaluation.
+        initial_obukhov_length = float(
+            self.sfc_state.turbulence.obukhov_length[0]
+        )
         
         current_T = self.sfc_state.temperature
         
@@ -238,8 +246,8 @@ class UtahLSM:
         temp_a = current_T - bracket_width
         temp_b = current_T + bracket_width
         
-        seb_a = self._compute_seb(temp_a)
-        seb_b = self._compute_seb(temp_b)
+        seb_a = self._compute_seb(temp_a, initial_obukhov_length)
+        seb_b = self._compute_seb(temp_b, initial_obukhov_length)
         
         # Robust bracket expansion
         iter_count = 0
@@ -250,10 +258,10 @@ class UtahLSM:
             step = 5.0 * (1.0 + iter_count * 0.5) # Accelerate expansion
             if abs(seb_a) < abs(seb_b):
                 temp_a -= step
-                seb_a = self._compute_seb(temp_a)
+                seb_a = self._compute_seb(temp_a, initial_obukhov_length)
             else:
                 temp_b += step
-                seb_b = self._compute_seb(temp_b)
+                seb_b = self._compute_seb(temp_b, initial_obukhov_length)
             iter_count += 1
         
         if iter_count >= iter_max_bracket:
@@ -264,8 +272,11 @@ class UtahLSM:
         iter_max_root = self.input.numerics.iterations.seb_root
         tol_root = self.input.numerics.tolerances.seb_root
         
+        def seb_residual(temp: float) -> float:
+            return self._compute_seb(temp, initial_obukhov_length)
+
         temp, converged = solvers.root_brent(
-            self._compute_seb, temp_a, temp_b, iter_max_root, tol_root
+            seb_residual, temp_a, temp_b, iter_max_root, tol_root
         )
         
         if not converged:
@@ -296,7 +307,11 @@ class UtahLSM:
         #     raise
 
     # Compute the surface energy budget
-    def _compute_seb(self, sfc_T: float) -> float:
+    def _compute_seb(
+        self,
+        sfc_T: float,
+        initial_obukhov_length: float,
+    ) -> float:
         """Computes the surface energy budget residual for a given surface
             temperature.
 
@@ -306,13 +321,41 @@ class UtahLSM:
         Returns:
             The residual of the surface energy budget [W/m^2].
         """
-        self._compute_fluxes(sfc_T, self.sfc_state.moisture)
-        SEB = (self.atm_state.radiation_net
-               - self.sfc_state.fluxes.ground_heat[0]
-               - self.sfc_state.fluxes.sensible_heat[0]
-               - self.sfc_state.fluxes.latent_heat[0])
+        # The SEB residual is used by root-finding routines; it must be
+        # deterministic in its input argument. Since `_compute_fluxes` updates
+        # internal state (MOST iteration, flux storage), we compute the fluxes
+        # and then restore state so that repeated evaluations at the same
+        # temperature return the same residual.
+        saved_L = float(self.sfc_state.turbulence.obukhov_length[0])
+        saved_ust = float(self.sfc_state.turbulence.friction_velocity[0])
+        saved_fluxes = (
+            float(self.sfc_state.fluxes.ground_heat[0]),
+            float(self.sfc_state.fluxes.sensible_heat[0]),
+            float(self.sfc_state.fluxes.latent_heat[0]),
+            float(self.sfc_state.fluxes.kinematic_heat[0]),
+            float(self.sfc_state.fluxes.kinematic_moisture[0]),
+        )
 
-        return SEB
+        self.sfc_state.turbulence.obukhov_length[0] = initial_obukhov_length
+        self._compute_fluxes(sfc_T, self.sfc_state.moisture)
+        seb = (
+            self.atm_state.radiation_net
+            - self.sfc_state.fluxes.ground_heat[0]
+            - self.sfc_state.fluxes.sensible_heat[0]
+            - self.sfc_state.fluxes.latent_heat[0]
+        )
+
+        self.sfc_state.turbulence.obukhov_length[0] = saved_L
+        self.sfc_state.turbulence.friction_velocity[0] = saved_ust
+        (
+            self.sfc_state.fluxes.ground_heat[0],
+            self.sfc_state.fluxes.sensible_heat[0],
+            self.sfc_state.fluxes.latent_heat[0],
+            self.sfc_state.fluxes.kinematic_heat[0],
+            self.sfc_state.fluxes.kinematic_moisture[0],
+        ) = saved_fluxes
+
+        return float(seb)
 
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB).
@@ -420,7 +463,7 @@ class UtahLSM:
         gnd_q  = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
 
         # Compute ground heat flux
-        K_mid = self.solver_state.K_mid
+        K_mid = self.solver_state.conductivity_thermal_mid
         self.sfc_state.fluxes.ground_heat[0] = (
             K_mid * (sfc_T - self.soil_state.temperature[1]) / dz)
 
@@ -501,11 +544,15 @@ class UtahLSM:
             if diff_T < tol_temp and diff_q < tol_mois:
                 self.logger.debug(
                     'Surface coupling converged in %d iterations.', i + 1)
+                self._compute_fluxes(
+                    self.sfc_state.temperature, self.sfc_state.moisture
+                )
                 return
     
         self.logger.warning(
             'Surface coupling did not converge after %d iterations. '
             'dT: %.4f, dq: %.4e', max_outer_iter, diff_T, diff_q)
+        self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
     
     def _solve_diffusion(
         self,
