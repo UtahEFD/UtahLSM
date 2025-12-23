@@ -12,7 +12,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Jeremy A. Gibbs", email = "jeremy.gibbs@utah.edu"},
+    {name = "Jeremy A. Gibbs", email = "jeremy.gibbs@noaa.gov"},
     {name = "Rob Stoll", email = "rob.stoll@utah.edu"},
     {name = "Eric Pardyjak", email = "pardyjak@utah.edu"},
     {name = "Pete Willemsen", email = "willemsen@ucar.edu"},

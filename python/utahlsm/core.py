@@ -22,6 +22,7 @@ through the simulation in time.
 """
 
 import logging
+import math
 from dataclasses import replace
 from typing import Callable, Optional
 
@@ -92,7 +93,7 @@ class UtahLSM:
         self.logger.info('Updating atmospheric state')
 
         self.tstep = dt
-        self.atm_state = atm_state  # pylint: disable=attribute-defined-outside-init
+        self.atm_state = atm_state
 
         # Update surface state from the top soil layer
         sfc_T = self.soil_state.temperature[0]
@@ -123,15 +124,19 @@ class UtahLSM:
         """
         self.logger.info('Solving soil state')
 
+        if (getattr(self.input, "numerics", None) is not None
+            and getattr(self.input.numerics, "warm_start_turbulence", False)
+            and not getattr(self, "_did_warm_start_turbulence", False)
+        ):
+            self._warm_start_turbulence()
+            self._did_warm_start_turbulence = True
+
         # Set initial guesses for new surface temp and moisture
         self.sfc_state.temperature = self.soil_state.temperature[0]
         self.sfc_state.moisture = self.soil_state.moisture[0]
 
         # Solve surface energy and moisture budgets
-        #self._solve_seb()
-        #self._solve_smb()
         self._solve_surface_coupling()
-        
         
         # Solve diffusion equations for heat and moisture
         self._solve_diffusion_heat()
@@ -156,6 +161,7 @@ class UtahLSM:
         self.sfc_state: SurfaceState = SurfaceState()
         self.atm_state: AtmosphericState = AtmosphericState()
         self.solver_state: SolverState = SolverState()
+        self._did_warm_start_turbulence: bool = False
 
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
@@ -170,7 +176,7 @@ class UtahLSM:
                     self.input.surface.emissivity
                 )
             else:
-                self.rad: Radiation = None  # type: ignore
+                self.rad: Radiation = None
                 self.logger.info('Using radiation forcing data')
             self.soil: Soil = get_soil_model(
                 self.input.soil.model,
@@ -178,7 +184,7 @@ class UtahLSM:
                 self.input.soil_type_names,
                 self.input.soil_properties_name
             )
-            self.sfc: Surface = get_surface_model(self.input.surface.model)
+            self.sfc: Surface = get_surface_model(self.input.surface)
         except NamelistError as e:
             self.logger.error('Failed to initialize physics modules: %s.', e)
             raise
@@ -190,6 +196,49 @@ class UtahLSM:
             'z': self.input.grid.nz
         }
         self.output.set_dims(self.output_dims)
+
+        self.sfc_state.temperature = self.soil_state.temperature[0]
+        self.sfc_state.moisture = self.soil_state.moisture[0]
+
+        forcing0 = None
+        if getattr(self.input, "forcing", None) is not None:
+            atmos = getattr(self.input.forcing, "atmos", [])
+            forcing0 = atmos[0] if atmos else None
+
+        if forcing0 is not None and getattr(
+            self.input.numerics, "initialize_surface_temperature_from_seb",False
+        ):
+            saved_atm_state = self.atm_state
+            saved_tstep = getattr(self, "tstep", 0.0)
+            self.atm_state = forcing0
+            self.tstep = float(getattr(self.input.forcing, "tstep", 0.0))
+
+            self._solve_seb()
+            self.soil_state.temperature[0] = self.sfc_state.temperature
+
+            if hasattr(self.output, "outfile") and hasattr(
+                self.output.outfile, "setncattr"
+            ):
+                self.output.outfile.setncattr(
+                    "initial_surface_temperature",
+                    "initialized from SEB using forcing[0]",
+                )
+
+            self.atm_state = saved_atm_state
+            self.tstep = saved_tstep
+
+        if forcing0 is not None and getattr(
+            self.input.numerics, "warm_start_turbulence", False
+        ):
+            self._warm_start_turbulence()
+            self._did_warm_start_turbulence = True
+            if hasattr(self.output, "outfile") and hasattr(
+                self.output.outfile, "setncattr"
+            ):
+                self.output.outfile.setncattr(
+                    "initial_diagnostics",
+                    "warm_start_turbulence using forcing[0]",
+                )
 
         self.output_fields: dict = {
             'ust': self.sfc_state.turbulence.friction_velocity,
@@ -203,6 +252,32 @@ class UtahLSM:
         }
         self.output.set_fields(self.output_fields)
         self.output.save(self.output_fields, 0, 0, initial=True)
+
+    def _warm_start_turbulence(self) -> None:
+        """Warm-start MOST diagnostics using forcing[0] (offline mode only)."""
+        if getattr(self.input, "forcing", None) is None:
+            return
+        atmos = getattr(self.input.forcing, "atmos", [])
+        if not atmos:
+            return
+        if not hasattr(self, "_compute_fluxes"):
+            return
+
+        forcing0 = atmos[0]
+        saved_atm_state = self.atm_state
+        saved_tstep = getattr(self, "tstep", 0.0)
+
+        self.atm_state = forcing0
+        self.tstep = float(getattr(self.input.forcing, "tstep", 0.0))
+
+        sfc_T = self.soil_state.temperature[0]
+        sfc_q = self.soil_state.moisture[0]
+        self.sfc_state.temperature = sfc_T
+        self.sfc_state.moisture = sfc_q
+        self._compute_fluxes(sfc_T, sfc_q)
+
+        self.atm_state = saved_atm_state
+        self.tstep = saved_tstep
 
     @staticmethod
     def _is_leap_year(year: int) -> bool:
@@ -235,10 +310,7 @@ class UtahLSM:
         # This makes the SEB residual a deterministic function of temperature
         # (Brent's method assumes this), while still allowing MOST iterations
         # to converge within each residual evaluation.
-        initial_obukhov_length = float(
-            self.sfc_state.turbulence.obukhov_length[0]
-        )
-        
+        initial_obukhov_length = self.sfc_state.turbulence.obukhov_length[0]
         current_T = self.sfc_state.temperature
         
         # Create a dynamic bracket around the current best guess
@@ -288,30 +360,8 @@ class UtahLSM:
         self._compute_fluxes(self.sfc_state.temperature, 
                              self.sfc_state.moisture)
 
-        # # Find the root (surface temperature)
-        # try:
-        #     ITER_MAX = self.input.numerics.iterations.seb_root
-        #     TOLERANCE = self.input.numerics.tolerances.seb_root
-        #     temp, converged = solvers.root_brent(
-        #         self._compute_seb, temp_a, temp_b, ITER_MAX, TOLERANCE)
-        #     if not converged:
-        #         self.logger.warning('SEB root-finder did not converge.')
-        #     self.sfc_state.temperature = temp
-        #     self._compute_fluxes(self.sfc_state.temperature,
-        #                          self.sfc_state.moisture)
-        #     self.logger.debug(
-        #         'SEB converged to T_sfc = %.3f K',
-        #         self.sfc_state.temperature)
-        # except Exception as e:
-        #     self.logger.error('Error during SEB root finding: %s', e)
-        #     raise
-
     # Compute the surface energy budget
-    def _compute_seb(
-        self,
-        sfc_T: float,
-        initial_obukhov_length: float,
-    ) -> float:
+    def _compute_seb(self,sfc_T: float,initial_obukhov_length: float,) -> float:
         """Computes the surface energy budget residual for a given surface
             temperature.
 
@@ -364,7 +414,7 @@ class UtahLSM:
         It then iteratively blends the two in time until convergence.
         """
         # Local constants and variables
-        delta = 0.5
+        delta = self.input.numerics.coupling_relaxation
 
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
@@ -457,6 +507,9 @@ class UtahLSM:
         z_o = self.input.surface.z_o
         z_s = self.input.surface.z_s
         z_t = self.input.surface.z_t
+        zeta_max = self.input.surface.zeta_max
+        gustiness = self.input.surface.gustiness
+        gustiness_stable_only = self.input.surface.gustiness_stable_only
         dz = self.input.grid.z[0] - self.input.grid.z[1]
 
         # Compute surface-air specific humidity
@@ -476,7 +529,12 @@ class UtahLSM:
             fh = self.sfc.fh(z_s, z_t, L)
 
             # Friction velocity
-            self.sfc_state.turbulence.friction_velocity[0] = atm_ws*fm
+            wind_eff = atm_ws
+            if gustiness > 0.0:
+                if (not gustiness_stable_only) or (L >= 0.0):
+                    wind_eff = math.hypot(atm_ws, gustiness)
+
+            self.sfc_state.turbulence.friction_velocity[0] = wind_eff * fm
             ustar = self.sfc_state.turbulence.friction_velocity[0]
 
             # Kinematic fluxes
@@ -494,10 +552,10 @@ class UtahLSM:
                 L = 1e6 # Large positive for neutral
 
             # Bound L to prevent extreme instability/stability
-            if z_m/L > 5.0:
-                L = z_m/5.0
-            elif z_m/L < -5.0:
-                L = -z_m/5.0
+            if z_m / L > zeta_max:
+                L = z_m / zeta_max
+            elif z_m / L < -zeta_max:
+                L = -z_m / zeta_max
 
             # Check for convergence
             if abs(last_L - L) <= TOL:
@@ -554,14 +612,9 @@ class UtahLSM:
             'dT: %.4f, dq: %.4e', max_outer_iter, diff_T, diff_q)
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
     
-    def _solve_diffusion(
-        self,
-        state_field: np.ndarray,
-        get_diffusivity: Callable,
-        get_conductivity: Optional[Callable],
-        sfc_boundary: float,
-        field_name: str = 'field'
-    ) -> None:
+    def _solve_diffusion(self,state_field: np.ndarray,get_diffusivity: Callable,
+                         get_conductivity: Optional[Callable],
+                         sfc_boundary: float,field_name: str = 'field') -> None:
         """Solves a generic 1D diffusion equation using a theta scheme.
 
         This is a parameterized diffusion solver that handles both heat and

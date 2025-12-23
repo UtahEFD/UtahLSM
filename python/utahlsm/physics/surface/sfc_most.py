@@ -34,10 +34,32 @@ class SurfaceMOST(Surface):
     functions for momentum and heat based on the widely used Businger-Dyer
     relations.
     """
-    def __init__(self):
-        """Initializes the SurfaceMOST model."""
+    def __init__(self, *, psi_stable: str = "dyer-hicks"):
+        """Initializes the SurfaceMOST model.
+
+        Args:
+            psi_stable: Stable (z/L >= 0) integrated stability correction
+                function (ψ) to use for momentum and heat. Options:
+                - "dyer-hicks" (legacy linear form)
+                - "beljaars-holtslag"
+                - "cheng-brutsaert"
+        """
         self.logger: logging.Logger = logging_helper.get_logger("SFC")
-        self.logger.info("Using the MOST model")
+        psi_key = str(psi_stable).strip().lower()
+        if psi_key == "beljaars-holtslag-1991":
+            psi_key = "beljaars-holtslag"
+        if psi_key == "cheng-brutsaert-2005":
+            psi_key = "cheng-brutsaert"
+
+        valid = {"dyer-hicks", "beljaars-holtslag", "cheng-brutsaert"}
+        if psi_key not in valid:
+            raise ValueError(
+                f"Invalid psi_stable={psi_stable!r}. Valid options: "
+                + ", ".join(sorted(valid))
+            )
+        self.psi_stable = psi_key
+
+        self.logger.info("Using the MOST model (psi_stable=%s)", self.psi_stable)
         super().__init__()
 
     def _cap_obukhov_length(self, obukL: float, min_val: float = 0.1) -> float:
@@ -175,7 +197,27 @@ class SurfaceMOST(Surface):
         Returns:
             Integrated momentum stability function value [dimensionless].
         """
-        return -5.*zeta
+        zeta = max(float(zeta), 0.0)
+        if self.psi_stable == "dyer-hicks":
+            return -5.0 * zeta
+        if self.psi_stable == "beljaars-holtslag":
+            # Holtslag & de Bruin (1988) / Beljaars & Holtslag (1991)
+            a = 1.0
+            b = 2.0 / 3.0
+            c_ = 5.0
+            d = 0.35
+            return -(
+                a * zeta
+                + b * (zeta - (c_ / d)) * math.exp(-d * zeta)
+                + b * (c_ / d)
+            )
+        if self.psi_stable == "cheng-brutsaert":
+            # Cheng & Brutsaert (2005)
+            a = 6.1
+            b = 2.5
+            inner = zeta + (1.0 + zeta**b) ** (1.0 / b)
+            return -a * math.log(inner)
+        raise AssertionError("Unhandled psi_stable")  # pragma: no cover
 
     def psim_unstable(self, zeta: float) -> float:
         """Computes integrated momentum stability function for unstable conditions.
@@ -223,7 +265,25 @@ class SurfaceMOST(Surface):
         Returns:
             Integrated heat stability function value [dimensionless].
         """
-        return -5.*zeta
+        zeta = max(float(zeta), 0.0)
+        if self.psi_stable == "dyer-hicks":
+            return -5.0 * zeta
+        if self.psi_stable == "beljaars-holtslag":
+            a = 1.0
+            b = 2.0 / 3.0
+            c_ = 5.0
+            d = 0.35
+            return -(
+                a * zeta
+                + b * (zeta - (c_ / d)) * math.exp(-d * zeta)
+                + b * (c_ / d)
+            )
+        if self.psi_stable == "cheng-brutsaert":
+            a = 5.3
+            b = 1.1
+            inner = zeta + (1.0 + zeta**b) ** (1.0 / b)
+            return -a * math.log(inner)
+        raise AssertionError("Unhandled psi_stable")  # pragma: no cover
 
     def psih_unstable(self, zeta: float) -> float:
         """Computes integrated heat stability function for unstable conditions.

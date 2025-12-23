@@ -221,12 +221,21 @@ class NumericsConfig:
     Attributes:
         diffusion_back_weight: Backward weighting factor for the
             diffusion solver (0.5 for Crank-Nicolson).
+        warm_start_turbulence: If True, compute MOST diagnostics at time=0
+            using forcing[0] (offline mode).
+        initialize_surface_temperature_from_seb: If True, initialize the top
+            soil-layer temperature by solving SEB at time=0 using forcing[0].
+        coupling_relaxation: Relaxation factor (0–1) used in coupled
+            surface iterations.
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
     diffusion_back_weight: float
     iterations: IterationsConfig
     tolerances: TolerancesConfig
+    warm_start_turbulence: bool = False
+    initialize_surface_temperature_from_seb: bool = False
+    coupling_relaxation: float = 0.5
 
 @dataclass(frozen=True)
 class TimeConfig:
@@ -269,6 +278,10 @@ class SurfaceConfig:
         albedo: Surface albedo (dimensionless).
         emissivity: Surface emissivity (dimensionless).
         model: Integer ID for the surface layer model to use.
+        psi_stable: Stable (z/L>=0) MOST integrated stability correction (ψ).
+        zeta_max: Maximum |z/L| used to clamp Obukhov length for MOST.
+        gustiness: Additional wind-speed magnitude [m/s] added in quadrature.
+        gustiness_stable_only: Apply gustiness only when L>=0 if True.
     """
     z_o: float
     z_t: float
@@ -277,6 +290,10 @@ class SurfaceConfig:
     albedo: float
     emissivity: float
     model: int
+    psi_stable: str = "dyer-hicks"
+    zeta_max: float = 5.0
+    gustiness: float = 0.0
+    gustiness_stable_only: bool = True
 
 @dataclass(frozen=True)
 class SoilConfig:

@@ -221,6 +221,9 @@ namelist['general']['log_level'] = "info"
 
 # numerics section
 namelist['numerics']['diffusion_back_weight'] = float(0.5)
+namelist['numerics']['warm_start_turbulence'] = True
+namelist['numerics']['initialize_surface_temperature_from_seb'] = True
+namelist['numerics']['coupling_relaxation'] = float(0.5)
 namelist['numerics']['iterations']['sfc_flux'] = 100
 namelist['numerics']['iterations']['seb_bracket'] = 100
 namelist['numerics']['iterations']['seb_root'] = 100
@@ -233,7 +236,7 @@ namelist['numerics']['tolerances']['coupling_temp'] = 1e-2
 namelist['numerics']['tolerances']['coupling_mois'] = 1e-5
 
 # time section
-namelist['time']['utc_start']  = float(t_utc[0])
+namelist['time']['utc_start']  = int(round(t_utc[0]))
 namelist['time']['utc_year']  = 2006
 namelist['time']['julian_day'] = 183
 
@@ -250,6 +253,10 @@ namelist['surface']['z_s'] = float(2.0)
 namelist['surface']['albedo'] = float(0.33)
 namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model'] = 1
+namelist['surface']['psi_stable'] = "beljaars-holtslag"
+namelist['surface']['zeta_max'] = float(1.0)
+namelist['surface']['gustiness'] = float(2.0)
+namelist['surface']['gustiness_stable_only'] = True
 
 # soil section
 namelist['soil']['properties'] = "rawls-brakensiek"
