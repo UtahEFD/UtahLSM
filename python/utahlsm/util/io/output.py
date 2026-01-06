@@ -43,15 +43,19 @@ class Output:
         attributes: A dictionary defining the metadata (dimensions, units, etc.)
             for each possible output variable.
     """
-    def __init__(self, outfile: str) -> None:
+    def __init__(self, outfile: str, sync_interval: int = 100) -> None:
         """Initializes the Output class and creates the NetCDF file.
 
         Args:
             outfile: The path and name for the output NetCDF file.
+            sync_interval: Number of saves between disk syncs. Higher values
+                improve performance but risk data loss on crash. Defaults to 100.
         """
         self.logger: logging.Logger = logging_helper.get_logger('Output')
         self.logger.info('Saving output to %s', outfile)
         self.outfile: nc.Dataset = nc.Dataset(outfile, 'w')
+        self._sync_interval = sync_interval
+        self._save_count = 0
         # self.outfile.description = "UtahLSM output"
         # self.outfile.source      = "Jeremy A. Gibbs"
         # self.outfile.history     = "Created " + time.ctime(time.time())
@@ -200,8 +204,15 @@ class Output:
                 field_var[tidx, :] = _reshape_for_output(
                     fields[field], target_shape, field)
 
-        self.outfile.sync()
+        self._save_count += 1
+        if self._sync_interval > 0 and self._save_count % self._sync_interval == 0:
+            self.outfile.sync()
 
     def close(self) -> None:
-        """Closes the NetCDF output file."""
+        """Closes the NetCDF output file.
+
+        Performs a final sync to ensure all buffered data is written before
+        closing the file.
+        """
+        self.outfile.sync()
         self.outfile.close()

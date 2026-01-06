@@ -12,26 +12,30 @@ from utahlsm.data_models import AtmosphericState, SoilState, SurfaceState
 def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> UtahLSM:
     model = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
+    model.ncol = 1
     model.atm_state = AtmosphericState(
-        wind_speed=3.0,
-        temperature=290.0,
-        specific_humidity=0.0,
-        pressure=101000.0,
-        radiation_net=-50.0,
+        wind_speed=np.array([3.0]),
+        temperature=np.array([290.0]),
+        specific_humidity=np.array([0.0]),
+        pressure=np.array([101000.0]),
+        radiation_net=np.array([-50.0]),
     )
     model.soil_state = SoilState(
-        temperature=np.array([280.0, 285.0]),
-        moisture=np.array([0.25, 0.25]),
+        temperature=np.array([[280.0], [285.0]]),
+        moisture=np.array([[0.25], [0.25]]),
         type=np.array(["clay", "clay"], dtype=object),
     )
-    model.sfc_state = SurfaceState(temperature=280.0, moisture=0.25)
+    model.sfc_state = SurfaceState(
+        temperature=np.array([280.0]),
+        moisture=np.array([0.25]),
+    )
     model.sfc_state.turbulence.obukhov_length[0] = L0
 
-    model.soil = SimpleNamespace(surface_mixing_ratio=lambda _T, _q, _p: 0.0)
-    model.solver_state = SimpleNamespace(conductivity_thermal_mid=1.0)
+    model.soil = SimpleNamespace(surface_mixing_ratio=lambda _T, _q, _p: np.zeros_like(_T))
+    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
     model.sfc = SimpleNamespace(
-        fm=lambda _z1, _z0, _L: 0.1,
-        fh=lambda _z1, _z0h, _L: 0.1,
+        fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),
+        fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),
     )
     model.input = SimpleNamespace(
         surface=SimpleNamespace(

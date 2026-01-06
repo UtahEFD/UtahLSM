@@ -124,6 +124,10 @@ class SurfaceMOST(Surface):
         Returns:
             Momentum stability function value [dimensionless].
         """
+        # Clamp zeta <= 0 to ensure (1 - 16*zeta) > 0 for the power operation.
+        # When called from vectorized code, stable zeta values are masked out
+        # by np.where anyway.
+        zeta = np.minimum(zeta, 0.0)
         return (1.0 - (16.0 * zeta))**(-0.25)
 
     def phih(self, z: float, obukL: float):
@@ -171,6 +175,7 @@ class SurfaceMOST(Surface):
         Returns:
             Heat stability function value [dimensionless].
         """
+        zeta = np.minimum(zeta, 0.0)
         return (1.0 - (16.0 * zeta))**(-0.50)
 
     def psim(self, z: float, obukL: float):
@@ -212,10 +217,11 @@ class SurfaceMOST(Surface):
             b = 2.0 / 3.0
             c_ = 5.0
             d = 0.35
+            c_over_d = c_ / d  # Pre-compute to avoid repeated division
             return -(
                 a * zeta
-                + b * (zeta - (c_ / d)) * np.exp(-d * zeta)
-                + b * (c_ / d)
+                + b * (zeta - c_over_d) * np.exp(-d * zeta)
+                + b * c_over_d
             )
         if self.psi_stable == "cheng-brutsaert":
             # Cheng & Brutsaert (2005)
@@ -239,6 +245,7 @@ class SurfaceMOST(Surface):
             Integrated momentum stability function value [dimensionless].
         """
         PI = c.physical.PI
+        zeta = np.minimum(zeta, 0.0)
         x = (1.0 - (16.0 * zeta))**(0.25)
         return (
             2.0 * np.log((1.0 + x) / 2.0)
@@ -285,10 +292,11 @@ class SurfaceMOST(Surface):
             b = 2.0 / 3.0
             c_ = 5.0
             d = 0.35
+            c_over_d = c_ / d  # Pre-compute to avoid repeated division
             return -(
                 a * zeta
-                + b * (zeta - (c_ / d)) * np.exp(-d * zeta)
-                + b * (c_ / d)
+                + b * (zeta - c_over_d) * np.exp(-d * zeta)
+                + b * c_over_d
             )
         if self.psi_stable == "cheng-brutsaert":
             a = 5.3
@@ -310,6 +318,7 @@ class SurfaceMOST(Surface):
         Returns:
             Integrated heat stability function value [dimensionless].
         """
+        zeta = np.minimum(zeta, 0.0)
         x = (1.0 - (16.0 * zeta))**(0.50)
         return 2.0 * np.log((1.0 + x) / 2.0)
 

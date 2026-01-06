@@ -161,8 +161,10 @@ class VanGenuchten(Soil):
 
         Se = (soil_q-residual)/(porosity-residual)
         m = 1 / (1+b)
-        conductivity = (K_sat * np.sqrt(Se) *
-                        ((1 - (1 - (Se**(1/m)) )**m )**2))
+        # Cache Se**(1/m) to avoid repeated exponentiation
+        Se_pow_inv_m = Se**(1/m)
+        inner = 1 - (1 - Se_pow_inv_m)**m
+        conductivity = K_sat * np.sqrt(Se) * inner**2
 
         return conductivity
 
@@ -193,7 +195,10 @@ class VanGenuchten(Soil):
         soil_e = porosity-residual
         m = 1 / (1+b)
         A = (1-m)*K_sat*psi_sat / (m*soil_e)
-        C = Se**(0.5-(1/m))*( (1 - Se**(1/m))**(-m) + (1- Se**(1/m))**m - 2 )
-        diffusivity  = A*C
+        # Cache Se**(1/m) to avoid repeated exponentiation
+        Se_pow_inv_m = Se**(1/m)
+        one_minus_Se_pow = 1 - Se_pow_inv_m
+        C = Se**(0.5-(1/m)) * (one_minus_Se_pow**(-m) + one_minus_Se_pow**m - 2)
+        diffusivity = A*C
 
         return diffusivity

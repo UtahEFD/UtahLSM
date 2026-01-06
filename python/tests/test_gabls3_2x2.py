@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-import compare_gabls3_2x2 as cmp
+from tests import compare_gabls3_2x2 as cmp
 
 
 @pytest.mark.integration
@@ -40,7 +40,6 @@ def test_gabls3_2x2_matches_single(tmp_path: Path) -> None:
     results = cmp.compare_outputs(
         single_path=single_out,
         multi_path=multi_out,
-        col=(0, 0),
         rtol=0.0,
         atol=0.0,
     )

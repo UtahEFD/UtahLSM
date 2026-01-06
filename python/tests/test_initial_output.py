@@ -70,19 +70,29 @@ class _DummyOutput:
 def _make_model(*, warm_start: bool, has_forcing: bool) -> UtahLSM:
     """Create a minimal UtahLSM instance for `_setup_output()` tests."""
     model = UtahLSM.__new__(UtahLSM)
+    model.ncol = 1
     model.output = _DummyOutput()
-    model.sfc_state = SurfaceState()
+    model.sfc_state = SurfaceState(
+        temperature=np.array([290.0]),
+        moisture=np.array([0.25]),
+    )
     model.soil_state = SoilState(
-        temperature=np.array([290.0, 289.0]),
-        moisture=np.array([0.25, 0.25]),
+        temperature=np.array([[290.0], [289.0]]),
+        moisture=np.array([[0.25], [0.25]]),
         type=np.array(["clay", "clay"], dtype=object),
     )
-    model.atm_state = AtmosphericState()
-    model.solver_state = SimpleNamespace(conductivity_thermal_mid=1.0)
+    model.atm_state = AtmosphericState(
+        wind_speed=np.array([0.0]),
+        temperature=np.array([0.0]),
+        specific_humidity=np.array([0.0]),
+        pressure=np.array([0.0]),
+        radiation_net=np.array([0.0]),
+    )
+    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
     model._did_warm_start_turbulence = False
 
     model.input = _DummyNamelist(
-        grid=SimpleNamespace(nz=2, z=np.array([0.1, 0.2])),
+        grid=SimpleNamespace(nz=2, nx=1, ny=1, z=np.array([0.1, 0.2])),
         numerics=NumericsConfig(
             diffusion_back_weight=0.5,
             iterations=IterationsConfig(
@@ -172,7 +182,7 @@ def test_initial_output_can_initialize_surface_temperature_from_seb():
     )
 
     def fake_solve_seb() -> None:
-        model.sfc_state.temperature = 280.0
+        model.sfc_state.temperature[:] = 280.0
         model.sfc_state.turbulence.friction_velocity[0] = 0.2
         model.sfc_state.turbulence.obukhov_length[0] = 50.0
         model.sfc_state.fluxes.sensible_heat[0] = -10.0
@@ -183,7 +193,7 @@ def test_initial_output_can_initialize_surface_temperature_from_seb():
 
     model._setup_output()
 
-    assert model.soil_state.temperature[0] == 280.0
+    assert model.soil_state.temperature[0, 0] == 280.0
     assert model.output.saved_initial == {
         "ust": 0.2,
         "obl": 50.0,

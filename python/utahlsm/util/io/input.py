@@ -266,7 +266,7 @@ class Input:
                                 f"match namelist nz={nz}."
                             )
                         if ncol == 1:
-                            return data
+                            return data[:, None]
                         return np.repeat(data[:, None], ncol, axis=1)
                     if data.ndim == 2:
                         if data.shape == (nz, ncol):
@@ -420,7 +420,7 @@ class Input:
                                 f"match forcing ntime={ntime}."
                             )
                         if ncol == 1:
-                            return data
+                            return data[:, None]
                         return np.repeat(data[:, None], ncol, axis=1)
                     if data.ndim == 2:
                         if data.shape == (ntime, ncol):

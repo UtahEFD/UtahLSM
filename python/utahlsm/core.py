@@ -427,9 +427,8 @@ class UtahLSM:
     def _solve_seb(self) -> None:
         """Solves the Surface Energy Budget (SEB) to find surface temperature.
 
-        This function first establishes a valid temperature bracket [a, b]
-        where the SEB function changes sign, then uses a robust root-finding
-        algorithm (solvers.root_brent) to find the precise temperature.
+        Uses a vectorized Brent's method to solve all columns simultaneously.
+        This is significantly faster than column-by-column iteration.
         """
         # Calculate thermal conductivity for the entire soil column
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
@@ -439,112 +438,170 @@ class UtahLSM:
         iter_max_root = self.input.numerics.iterations.seb_root
         tol_root = self.input.numerics.tolerances.seb_root
 
-        for col in range(self.ncol):
-            # Keep the initial Obukhov length fixed during root-finding.
-            initial_obukhov_length = float(
-                self.sfc_state.turbulence.obukhov_length[col]
-            )
-            current_T = float(self.sfc_state.temperature[col])
+        # Keep the initial Obukhov length fixed during root-finding
+        initial_L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
 
-            # Create a dynamic bracket around the current best guess
-            bracket_width = 1.0
-            temp_a = current_T - bracket_width
-            temp_b = current_T + bracket_width
+        # Create vectorized brackets around current temperatures
+        current_T = self.sfc_state.temperature.copy()
+        bracket_width = 1.0
+        temp_a = current_T - bracket_width
+        temp_b = current_T + bracket_width
 
-            seb_a = self._compute_seb(temp_a, initial_obukhov_length, col)
-            seb_b = self._compute_seb(temp_b, initial_obukhov_length, col)
+        seb_a = self._compute_seb_vec(temp_a, initial_L)
+        seb_b = self._compute_seb_vec(temp_b, initial_L)
 
-            # Robust bracket expansion
-            iter_count = 0
-            while seb_a * seb_b > 0 and iter_count < iter_max_bracket:
-                # Expand in the direction of the smaller residual
-                step = 5.0 * (1.0 + iter_count * 0.5)
-                if abs(seb_a) < abs(seb_b):
-                    temp_a -= step
-                    seb_a = self._compute_seb(
-                        temp_a, initial_obukhov_length, col)
-                else:
-                    temp_b += step
-                    seb_b = self._compute_seb(
-                        temp_b, initial_obukhov_length, col)
-                iter_count += 1
+        # Vectorized bracket expansion
+        for _ in range(iter_max_bracket):
+            needs_expansion = seb_a * seb_b > 0
+            if not np.any(needs_expansion):
+                break
+            step = 5.0
+            # Expand in the direction with smaller residual magnitude
+            expand_left = needs_expansion & (np.abs(seb_a) < np.abs(seb_b))
+            expand_right = needs_expansion & ~expand_left
 
-            if iter_count >= iter_max_bracket:
+            temp_a = np.where(expand_left, temp_a - step, temp_a)
+            temp_b = np.where(expand_right, temp_b + step, temp_b)
+
+            # Only recompute SEB for columns that changed
+            if np.any(expand_left):
+                seb_a_new = self._compute_seb_vec(temp_a, initial_L)
+                seb_a = np.where(expand_left, seb_a_new, seb_a)
+            if np.any(expand_right):
+                seb_b_new = self._compute_seb_vec(temp_b, initial_L)
+                seb_b = np.where(expand_right, seb_b_new, seb_b)
+        else:
+            # Check if any brackets failed after all iterations
+            failed = seb_a * seb_b > 0
+            if np.any(failed):
+                bad_cols = np.where(failed)[0]
                 raise SolverError(
-                    f"SEB Bracket failed at col={col}. "
-                    f"Res: {seb_a:.2f}, {seb_b:.2f}"
+                    f"SEB Bracket failed at cols={bad_cols.tolist()}. "
+                    f"Residuals a: {seb_a[failed]}, b: {seb_b[failed]}"
                 )
 
-            def seb_residual(temp: float) -> float:
-                return self._compute_seb(temp, initial_obukhov_length, col)
+        # Vectorized Brent root-finding
+        def seb_func(T: np.ndarray) -> np.ndarray:
+            return self._compute_seb_vec(T, initial_L)
 
-            temp, converged = solvers.root_brent(
-                seb_residual, temp_a, temp_b, iter_max_root, tol_root
+        self.sfc_state.temperature, converged = solvers.root_brent_vec(
+            seb_func, temp_a, temp_b,
+            iter_max=iter_max_root, tol=tol_root
+        )
+
+        if not converged.all():
+            n_failed = int(np.sum(~converged))
+            self.logger.warning(
+                'SEB root-finding did not converge for %d of %d columns.',
+                n_failed, self.ncol
             )
 
-            if not converged:
-                self.logger.warning(
-                    'SEB root-finder did not fully converge (col=%d).', col)
+        # Final flux update with resolved temperatures (vectorized, once)
+        self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
 
-            self.sfc_state.temperature[col] = temp
+    def _compute_seb_vec(
+        self,
+        sfc_T: np.ndarray,
+        initial_L: np.ndarray
+    ) -> np.ndarray:
+        """Computes the SEB residual for all columns without mutating state.
 
-            # Final flux update with resolved temperature and current moisture
-            self._compute_fluxes(
-                self.sfc_state.temperature[col],
-                self.sfc_state.moisture[col],
-                column=col,
-            )
-
-    # Compute the surface energy budget
-    def _compute_seb(
-        self, sfc_T: float, initial_obukhov_length: float, column: int
-    ) -> float:
-        """Computes the surface energy budget residual for a given surface
-            temperature.
+        This is a pure function used during root-finding iterations.
 
         Args:
-            sfc_T: The surface temperature [K] to test.
+            sfc_T: Surface temperature array [K] (ncol,).
+            initial_L: Fixed Obukhov length array [m] (ncol,).
 
         Returns:
-            The residual of the surface energy budget [W/m^2].
+            Array of SEB residuals [W/m^2] (ncol,).
         """
-        # The SEB residual is used by root-finding routines; it must be
-        # deterministic in its input argument. Since `_compute_fluxes` updates
-        # internal state (MOST iteration, flux storage), we compute the fluxes
-        # and then restore state so that repeated evaluations at the same
-        # temperature return the same residual.
-        saved_L = float(self.sfc_state.turbulence.obukhov_length[column])
-        saved_ust = float(self.sfc_state.turbulence.friction_velocity[column])
-        saved_fluxes = (
-            float(self.sfc_state.fluxes.ground_heat[column]),
-            float(self.sfc_state.fluxes.sensible_heat[column]),
-            float(self.sfc_state.fluxes.latent_heat[column]),
-            float(self.sfc_state.fluxes.kinematic_heat[column]),
-            float(self.sfc_state.fluxes.kinematic_moisture[column]),
-        )
+        CP = c.thermodynamic.SPECIFIC_HEAT
+        LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
+        RD = c.thermodynamic.GAS_CONSTANT_DRY
+        VK = c.physical.VON_KARMAN
+        G = c.physical.GRAVITY
+        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
+        TOL = self.input.numerics.tolerances.sfc_flux
+        ITER_MAX = self.input.numerics.iterations.sfc_flux
 
-        self.sfc_state.turbulence.obukhov_length[column] = initial_obukhov_length
-        self._compute_fluxes(
-            sfc_T, self.sfc_state.moisture[column], column=column
-        )
+        sfc_T = np.asarray(sfc_T)
+        sfc_q = self.sfc_state.moisture
+        atm_T = self.atm_state.temperature
+        atm_p = self.atm_state.pressure
+        atm_q = self.atm_state.specific_humidity
+        atm_ws = self.atm_state.wind_speed
+        K_mid = self.solver_state.conductivity_thermal_mid
+        soil_T1 = self.soil_state.temperature[1]
+
+        z_m = self.input.surface.z_m
+        z_o = self.input.surface.z_o
+        z_s = self.input.surface.z_s
+        z_t = self.input.surface.z_t
+        zeta_max = self.input.surface.zeta_max
+        gustiness = self.input.surface.gustiness
+        gustiness_stable_only = self.input.surface.gustiness_stable_only
+        dz = self.input.grid.z[0] - self.input.grid.z[1]
+
+        ref_T = atm_T
+        rho = atm_p / (RD * atm_T)
+
+        # Surface-air specific humidity
+        gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+
+        # Ground heat flux
+        ground_heat = K_mid * (sfc_T - soil_T1) / dz
+
+        # Iterate for Obukhov length with fixed initial L
+        L = np.array(initial_L, copy=True)
+        converged = np.zeros_like(L, dtype=bool)
+
+        for _ in range(ITER_MAX):
+            fm = self.sfc.fm(z_m, z_o, L)
+            fh = self.sfc.fh(z_s, z_t, L)
+
+            wind_eff = atm_ws
+            if gustiness > 0.0:
+                gust = np.hypot(atm_ws, gustiness)
+                if gustiness_stable_only:
+                    wind_eff = np.where(L >= 0.0, gust, atm_ws)
+                else:
+                    wind_eff = gust
+
+            ustar = wind_eff * fm
+            flux_wT = (sfc_T - atm_T) * ustar * fh
+            flux_wq = (gnd_q - atm_q) * ustar * fh
+            flux_wTv = flux_wT + EVT * ref_T * flux_wq
+
+            L_new = np.where(
+                flux_wTv != 0.0,
+                -(ustar**3) * ref_T / (VK * G * flux_wTv),
+                1e6,
+            )
+
+            zeta = z_m / L_new
+            L_new = np.where(zeta > zeta_max, z_m / zeta_max, L_new)
+            L_new = np.where(zeta < -zeta_max, -z_m / zeta_max, L_new)
+
+            diff = np.abs(L_new - L)
+            converged |= diff <= TOL
+            L = np.where(converged, L, L_new)
+
+            if converged.all():
+                break
+
+        # Compute fluxes
+        sensible = rho * CP * flux_wT
+        latent = rho * LV * flux_wq
+
+        # SEB residual
         seb = (
-            self.atm_state.radiation_net[column]
-            - self.sfc_state.fluxes.ground_heat[column]
-            - self.sfc_state.fluxes.sensible_heat[column]
-            - self.sfc_state.fluxes.latent_heat[column]
+            self.atm_state.radiation_net
+            - ground_heat
+            - sensible
+            - latent
         )
 
-        self.sfc_state.turbulence.obukhov_length[column] = saved_L
-        self.sfc_state.turbulence.friction_velocity[column] = saved_ust
-        (
-            self.sfc_state.fluxes.ground_heat[column],
-            self.sfc_state.fluxes.sensible_heat[column],
-            self.sfc_state.fluxes.latent_heat[column],
-            self.sfc_state.fluxes.kinematic_heat[column],
-            self.sfc_state.fluxes.kinematic_moisture[column],
-        ) = saved_fluxes
-
-        return float(seb)
+        return seb
 
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB).
@@ -592,7 +649,7 @@ class UtahLSM:
 
             # New blended soil moisture flux
             flux_sm_last = flux_sm
-            flux_sm_new = delta * flux_sm_last - (1.0 - delta) * E
+            flux_sm_new = (1.0 - delta) * flux_sm_last - delta * E
 
             # New evaporation
             psi0_new = psi1 + dz * ((flux_sm_new / (RHO_W * K_mid)) - 1.0)
@@ -626,21 +683,17 @@ class UtahLSM:
             E = np.where(mask, E_new, E)
             K_mid = np.where(mask, K_mid_new, K_mid)
 
-    def _compute_fluxes(
-        self, sfc_T: float, sfc_q: float, column: Optional[int] = None
-    ) -> None:
+    def _compute_fluxes(self, sfc_T: np.ndarray, sfc_q: np.ndarray) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
 
         This is an iterative process to find the friction velocity (ustar)
         and Obukhov length (L) that are consistent with the calculated
-        sensible and latent heat fluxes.
+        sensible and latent heat fluxes. All columns are processed in parallel.
 
         Args:
-            sfc_T: Surface temperature [K].
-            sfc_q: Surface moisture [m^3/m^3].
-            column: Optional column index for single-column updates.
+            sfc_T: Surface temperature array [K] (ncol,).
+            sfc_q: Surface moisture array [m^3/m^3] (ncol,).
         """
-        # Local constants and variables
         VK = c.physical.VON_KARMAN
         G = c.physical.GRAVITY
         CP = c.thermodynamic.SPECIFIC_HEAT
@@ -650,26 +703,15 @@ class UtahLSM:
         TOL = self.input.numerics.tolerances.sfc_flux
         ITER_MAX = self.input.numerics.iterations.sfc_flux
 
-        if column is None:
-            sfc_T_vec = self._as_column_vector(sfc_T, "sfc_T")
-            sfc_q_vec = self._as_column_vector(sfc_q, "sfc_q")
-            atm_T = self.atm_state.temperature
-            atm_p = self.atm_state.pressure
-            atm_q = self.atm_state.specific_humidity
-            atm_ws = self.atm_state.wind_speed
-            L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
-            K_mid = self.solver_state.conductivity_thermal_mid
-            soil_T1 = self.soil_state.temperature[1]
-        else:
-            sfc_T_vec = np.array([sfc_T], dtype=float)
-            sfc_q_vec = np.array([sfc_q], dtype=float)
-            atm_T = np.array([self.atm_state.temperature[column]], dtype=float)
-            atm_p = np.array([self.atm_state.pressure[column]], dtype=float)
-            atm_q = np.array([self.atm_state.specific_humidity[column]], dtype=float)
-            atm_ws = np.array([self.atm_state.wind_speed[column]], dtype=float)
-            L = np.array([self.sfc_state.turbulence.obukhov_length[column]], copy=True)
-            K_mid = np.array([self.solver_state.conductivity_thermal_mid[column]])
-            soil_T1 = np.array([self.soil_state.temperature[1, column]])
+        sfc_T_vec = self._as_column_vector(sfc_T, "sfc_T")
+        sfc_q_vec = self._as_column_vector(sfc_q, "sfc_q")
+        atm_T = self.atm_state.temperature
+        atm_p = self.atm_state.pressure
+        atm_q = self.atm_state.specific_humidity
+        atm_ws = self.atm_state.wind_speed
+        L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
+        K_mid = self.solver_state.conductivity_thermal_mid
+        soil_T1 = self.soil_state.temperature[1]
 
         ref_T = atm_T
         rho = atm_p / (RD * atm_T)
@@ -695,12 +737,10 @@ class UtahLSM:
         flux_wq = np.zeros_like(L)
         ustar = np.zeros_like(L)
 
-        for _ in range(0, ITER_MAX):
-            # Stability functions
+        for _ in range(ITER_MAX):
             fm = self.sfc.fm(z_m, z_o, L)
             fh = self.sfc.fh(z_s, z_t, L)
 
-            # Friction velocity
             wind_eff = atm_ws
             if gustiness > 0.0:
                 gust = np.hypot(atm_ws, gustiness)
@@ -710,20 +750,16 @@ class UtahLSM:
                     wind_eff = gust
 
             ustar = wind_eff * fm
-
-            # Kinematic fluxes
             flux_wT = (sfc_T_vec - atm_T) * ustar * fh
             flux_wq = (gnd_q - atm_q) * ustar * fh
             flux_wTv = flux_wT + EVT * ref_T * flux_wq
 
-            # Obukhov length
             L_new = np.where(
                 flux_wTv != 0.0,
                 -(ustar**3) * ref_T / (VK * G * flux_wTv),
                 1e6,
             )
 
-            # Bound L to prevent extreme instability/stability
             zeta = z_m / L_new
             L_new = np.where(zeta > zeta_max, z_m / zeta_max, L_new)
             L_new = np.where(zeta < -zeta_max, -z_m / zeta_max, L_new)
@@ -741,54 +777,43 @@ class UtahLSM:
                 int(np.sum(~converged)),
             )
 
-        # set final values, even if not converged
         sensible = rho * CP * flux_wT
         latent = rho * LV * flux_wq
 
-        if column is None:
-            self.sfc_state.turbulence.obukhov_length[:] = L
-            self.sfc_state.turbulence.friction_velocity[:] = ustar
-            self.sfc_state.fluxes.ground_heat[:] = ground_heat
-            self.sfc_state.fluxes.kinematic_heat[:] = flux_wT
-            self.sfc_state.fluxes.kinematic_moisture[:] = flux_wq
-            self.sfc_state.fluxes.sensible_heat[:] = sensible
-            self.sfc_state.fluxes.latent_heat[:] = latent
-        else:
-            self.sfc_state.turbulence.obukhov_length[column] = L[0]
-            self.sfc_state.turbulence.friction_velocity[column] = ustar[0]
-            self.sfc_state.fluxes.ground_heat[column] = ground_heat[0]
-            self.sfc_state.fluxes.kinematic_heat[column] = flux_wT[0]
-            self.sfc_state.fluxes.kinematic_moisture[column] = flux_wq[0]
-            self.sfc_state.fluxes.sensible_heat[column] = sensible[0]
-            self.sfc_state.fluxes.latent_heat[column] = latent[0]
+        self.sfc_state.turbulence.obukhov_length[:] = L
+        self.sfc_state.turbulence.friction_velocity[:] = ustar
+        self.sfc_state.fluxes.ground_heat[:] = ground_heat
+        self.sfc_state.fluxes.kinematic_heat[:] = flux_wT
+        self.sfc_state.fluxes.kinematic_moisture[:] = flux_wq
+        self.sfc_state.fluxes.sensible_heat[:] = sensible
+        self.sfc_state.fluxes.latent_heat[:] = latent
 
     def _solve_surface_coupling(self) -> None:
         """Iteratively solves the coupled SEB and SMB.
-        
+
         This method performs a Picard iteration, alternating between solving
         the Surface Energy Budget (SEB) for temperature and the Surface
         Moisture Budget (SMB) for moisture until both state variables converge.
         """
-        # Configuration for the coupling loop
         max_outer_iter = self.input.numerics.iterations.coupling
         tol_temp = self.input.numerics.tolerances.coupling_temp
         tol_mois = self.input.numerics.tolerances.coupling_mois
-        
+
         for i in range(max_outer_iter):
             # Store previous states to check convergence
             prev_T = np.array(self.sfc_state.temperature, copy=True)
             prev_q = np.array(self.sfc_state.moisture, copy=True)
-        
-            # soil energy balance
+
+            # Solve SEB for temperature
             self._solve_seb()
-        
-            # soil moisture balance
+
+            # Solve SMB for moisture
             self._solve_smb()
-        
-            # 3. Check Convergence
+
+            # Check convergence
             diff_T = np.abs(self.sfc_state.temperature - prev_T)
             diff_q = np.abs(self.sfc_state.moisture - prev_q)
-        
+
             if np.all(diff_T < tol_temp) and np.all(diff_q < tol_mois):
                 self.logger.debug(
                     'Surface coupling converged in %d iterations.', i + 1)
@@ -796,7 +821,7 @@ class UtahLSM:
                     self.sfc_state.temperature, self.sfc_state.moisture
                 )
                 return
-    
+
         self.logger.warning(
             'Surface coupling did not converge after %d iterations. '
             'dT: %.4f, dq: %.4e', max_outer_iter,
