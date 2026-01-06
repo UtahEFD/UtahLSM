@@ -42,49 +42,111 @@ def tridiagonal(
     and super-diagonal (c).
 
     Args:
-        a: The sub-diagonal of the matrix (size n). a[0] is ignored.
-        b: The main diagonal of the matrix (size n).
-        c: The super-diagonal of the matrix (size n). c[n-1] is ignored.
-        r: The right-hand side vector (size n).
+        a: The sub-diagonal of the matrix (size n) or (n, ncol). a[0] is
+            ignored.
+        b: The main diagonal of the matrix (size n) or (n, ncol).
+        c: The super-diagonal of the matrix (size n) or (n, ncol). c[n-1] is
+            ignored.
+        r: The right-hand side vector (size n) or (n, ncol).
 
     Returns:
-        The solution vector u (size n).
+        The solution vector u (size n) or (n, ncol).
 
     Raises:
         ValueError: If an element on the main diagonal is effectively zero
             during factorization.
     """
-    n = len(b)
-    u = np.zeros(n)
-    gam = np.zeros(n)
+    r = np.asarray(r)
+    if r.ndim == 1:
+        n = len(b)
+        u = np.zeros(n)
+        gam = np.zeros(n)
 
-    if abs(b[0]) < _SOLVER_TOL:
-        logger.error(
-            'Error in solve_tridiagonal: b[0] = %f is effectively zero.',
-            b[0])
-        raise ValueError(
-            f'Main diagonal cannot have a zero on the first element '
-            f'(b[0] = {b[0]}).')
-
-    bet = b[0]
-    u[0] = r[0] / bet
-
-    for j in range(1, n):
-        gam[j] = c[j-1] / bet
-        bet = b[j] - a[j] * gam[j]
-        if abs(bet) < _SOLVER_TOL:
+        if abs(b[0]) < _SOLVER_TOL:
             logger.error(
-                'Error in solve_tridiagonal: effective zero on main '
-                'diagonal at index %d (bet = %f).', j, bet)
+                'Error in solve_tridiagonal: b[0] = %f is effectively zero.',
+                b[0])
             raise ValueError(
-                f'Effective zero on main diagonal at index {j} during '
-                f'factorization (bet = {bet}).')
-        u[j] = (r[j] - a[j] * u[j-1]) / bet
+                f'Main diagonal cannot have a zero on the first element '
+                f'(b[0] = {b[0]}).')
 
-    for j in range(n-2, -1, -1):
-        u[j] -= gam[j+1] * u[j+1]
+        bet = b[0]
+        u[0] = r[0] / bet
 
-    return u
+        for j in range(1, n):
+            gam[j] = c[j-1] / bet
+            bet = b[j] - a[j] * gam[j]
+            if abs(bet) < _SOLVER_TOL:
+                logger.error(
+                    'Error in solve_tridiagonal: effective zero on main '
+                    'diagonal at index %d (bet = %f).', j, bet)
+                raise ValueError(
+                    f'Effective zero on main diagonal at index {j} during '
+                    f'factorization (bet = {bet}).')
+            u[j] = (r[j] - a[j] * u[j-1]) / bet
+
+        for j in range(n-2, -1, -1):
+            u[j] -= gam[j+1] * u[j+1]
+
+        return u
+
+    if r.ndim == 2:
+        n, ncol = r.shape
+
+        def _broadcast(vec: NDArray[np.float64]) -> NDArray[np.float64]:
+            vec = np.asarray(vec)
+            if vec.ndim == 1:
+                if vec.shape[0] != n:
+                    raise ValueError(
+                        f'Tridiagonal coefficient has length {vec.shape[0]} '
+                        f'but expected {n}.')
+                return np.repeat(vec[:, None], ncol, axis=1)
+            if vec.ndim == 2:
+                if vec.shape != (n, ncol):
+                    raise ValueError(
+                        f'Tridiagonal coefficient has shape {vec.shape} but '
+                        f'expected {(n, ncol)}.')
+                return vec
+            raise ValueError(
+                f'Tridiagonal coefficient has unsupported dimensions: '
+                f'{vec.ndim}.')
+
+        a = _broadcast(a)
+        b = _broadcast(b)
+        c = _broadcast(c)
+
+        u = np.zeros_like(r)
+        gam = np.zeros_like(r)
+
+        bet = b[0].copy()
+        if np.any(np.abs(bet) < _SOLVER_TOL):
+            logger.error(
+                'Error in solve_tridiagonal: b[0] has entries effectively '
+                'zero.')
+            raise ValueError(
+                'Main diagonal cannot have a zero on the first element.')
+
+        u[0] = r[0] / bet
+
+        for j in range(1, n):
+            gam[j] = c[j-1] / bet
+            bet = b[j] - a[j] * gam[j]
+            if np.any(np.abs(bet) < _SOLVER_TOL):
+                logger.error(
+                    'Error in solve_tridiagonal: effective zero on main '
+                    'diagonal at index %d.', j)
+                raise ValueError(
+                    f'Effective zero on main diagonal at index {j} during '
+                    f'factorization.')
+            u[j] = (r[j] - a[j] * u[j-1]) / bet
+
+        for j in range(n-2, -1, -1):
+            u[j] -= gam[j+1] * u[j+1]
+
+        return u
+
+    raise ValueError(
+        f'Right-hand side has unsupported dimensions: {r.ndim}.')
 
 def root_brent(f: Callable[[float], float], a: float, b: float,
     iter_max: int = 100, tol: float = 1e-6) -> tuple[float, bool]:

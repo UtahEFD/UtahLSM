@@ -219,6 +219,27 @@ class TestTridiagonal:
 
         assert_allclose(x, r, rtol=1e-10)
 
+    def test_multi_column_system(self):
+        """Test tridiagonal solver with multiple RHS columns."""
+        n = 4
+        a = np.array([0.0, -1.0, -1.0, -1.0])
+        b = np.full(n, 4.0)
+        c = np.array([-1.0, -1.0, -1.0, 0.0])
+
+        r = np.stack(
+            [np.full(n, 5.0), np.array([1.0, 2.0, 3.0, 4.0])],
+            axis=1,
+        )
+
+        x = tridiagonal(a, b, c, r)
+
+        A = np.diag(b) + np.diag(a[1:], -1) + np.diag(c[:-1], 1)
+        expected = np.column_stack(
+            [np.linalg.solve(A, r[:, 0]), np.linalg.solve(A, r[:, 1])]
+        )
+
+        assert_allclose(x, expected, rtol=1e-10)
+
     def test_symmetric_system(self):
         """Test with symmetric tridiagonal matrix.
 

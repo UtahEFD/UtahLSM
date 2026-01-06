@@ -18,7 +18,6 @@ using standard Monin-Obukhov Similarity Theory (MOST) functions to describe
 the stability and flux-profile relationships in the atmospheric surface layer.
 """
 import logging
-import math
 
 import numpy as np
 
@@ -62,7 +61,7 @@ class SurfaceMOST(Surface):
         self.logger.info("Using the MOST model (psi_stable=%s)", self.psi_stable)
         super().__init__()
 
-    def _cap_obukhov_length(self, obukL: float, min_val: float = 0.1) -> float:
+    def _cap_obukhov_length(self, obukL: float, min_val: float = 0.1):
         """Caps and preserves sign of Obukhov length.
 
         Ensures |obukL| >= min_val while preserving the original sign.
@@ -76,10 +75,11 @@ class SurfaceMOST(Surface):
         Returns:
             Capped Obukhov length with original sign preserved.
         """
-        obukL_mag = max(abs(obukL), min_val)
-        return np.copysign(obukL_mag, obukL)
+        obukL_arr = np.asarray(obukL, dtype=float)
+        obukL_mag = np.maximum(np.abs(obukL_arr), min_val)
+        return np.copysign(obukL_mag, obukL_arr)
 
-    def phim(self, z: float, obukL: float) -> float:
+    def phim(self, z: float, obukL: float):
         """Computes the dimensionless stability function for momentum (phi_m).
 
         Args:
@@ -92,9 +92,11 @@ class SurfaceMOST(Surface):
         obukL_cap = self._cap_obukhov_length(obukL)
 
         zeta = z / obukL_cap
-        return self.phim_stable(zeta) if zeta >= 0 else self.phim_unstable(zeta)
+        stable = self.phim_stable(zeta)
+        unstable = self.phim_unstable(zeta)
+        return np.where(zeta >= 0, stable, unstable)
 
-    def phim_stable(self, zeta: float) -> float:
+    def phim_stable(self, zeta: float):
         """Computes momentum stability function for stable conditions.
 
         Computes phi_m using the standard Holtslag and De Bruin stability
@@ -107,9 +109,9 @@ class SurfaceMOST(Surface):
         Returns:
             Momentum stability function value [dimensionless].
         """
-        return 1. + 5.*zeta
+        return 1.0 + 5.0 * zeta
 
-    def phim_unstable(self, zeta: float) -> float:
+    def phim_unstable(self, zeta: float):
         """Computes momentum stability function for unstable conditions.
 
         Computes phi_m using the Beljaars and Holtslag stability function
@@ -122,9 +124,9 @@ class SurfaceMOST(Surface):
         Returns:
             Momentum stability function value [dimensionless].
         """
-        return (1.-(16.*zeta))**(-0.25)
+        return (1.0 - (16.0 * zeta))**(-0.25)
 
-    def phih(self,z: float, obukL: float) -> float:
+    def phih(self, z: float, obukL: float):
         """Computes the dimensionless stability function for heat (phi_h).
 
         Args:
@@ -137,9 +139,11 @@ class SurfaceMOST(Surface):
         obukL_cap = self._cap_obukhov_length(obukL)
 
         zeta = z / obukL_cap
-        return self.phih_stable(zeta) if zeta >= 0 else self.phih_unstable(zeta)
+        stable = self.phih_stable(zeta)
+        unstable = self.phih_unstable(zeta)
+        return np.where(zeta >= 0, stable, unstable)
 
-    def phih_stable(self, zeta: float) -> float:
+    def phih_stable(self, zeta: float):
         """Computes heat stability function for stable conditions.
 
         Computes phi_h using the standard Holtslag and De Bruin stability
@@ -152,9 +156,9 @@ class SurfaceMOST(Surface):
         Returns:
             Heat stability function value [dimensionless].
         """
-        return 1. + 5.*zeta
+        return 1.0 + 5.0 * zeta
 
-    def phih_unstable(self, zeta: float) -> float:
+    def phih_unstable(self, zeta: float):
         """Computes heat stability function for unstable conditions.
 
         Computes phi_h using the Beljaars and Holtslag stability function
@@ -167,9 +171,9 @@ class SurfaceMOST(Surface):
         Returns:
             Heat stability function value [dimensionless].
         """
-        return (1.-(16.*zeta))**(-0.50)
+        return (1.0 - (16.0 * zeta))**(-0.50)
 
-    def psim(self,z: float,obukL: float) -> float:
+    def psim(self, z: float, obukL: float):
         """Computes the integrated stability function for momentum (psi_m).
 
         Args:
@@ -182,9 +186,11 @@ class SurfaceMOST(Surface):
         obukL_cap = self._cap_obukhov_length(obukL)
 
         zeta = z / obukL_cap
-        return self.psim_stable(zeta) if zeta >= 0 else self.psim_unstable(zeta)
+        stable = self.psim_stable(zeta)
+        unstable = self.psim_unstable(zeta)
+        return np.where(zeta >= 0, stable, unstable)
 
-    def psim_stable(self, zeta: float) -> float:
+    def psim_stable(self, zeta: float):
         """Computes integrated momentum stability function for stable conditions.
 
         Computes psi_m (the height-integrated stability function for momentum)
@@ -197,7 +203,7 @@ class SurfaceMOST(Surface):
         Returns:
             Integrated momentum stability function value [dimensionless].
         """
-        zeta = max(float(zeta), 0.0)
+        zeta = np.maximum(zeta, 0.0)
         if self.psi_stable == "dyer-hicks":
             return -5.0 * zeta
         if self.psi_stable == "beljaars-holtslag":
@@ -208,7 +214,7 @@ class SurfaceMOST(Surface):
             d = 0.35
             return -(
                 a * zeta
-                + b * (zeta - (c_ / d)) * math.exp(-d * zeta)
+                + b * (zeta - (c_ / d)) * np.exp(-d * zeta)
                 + b * (c_ / d)
             )
         if self.psi_stable == "cheng-brutsaert":
@@ -216,10 +222,10 @@ class SurfaceMOST(Surface):
             a = 6.1
             b = 2.5
             inner = zeta + (1.0 + zeta**b) ** (1.0 / b)
-            return -a * math.log(inner)
+            return -a * np.log(inner)
         raise AssertionError("Unhandled psi_stable")  # pragma: no cover
 
-    def psim_unstable(self, zeta: float) -> float:
+    def psim_unstable(self, zeta: float):
         """Computes integrated momentum stability function for unstable conditions.
 
         Computes psi_m (the height-integrated stability function for momentum)
@@ -233,11 +239,15 @@ class SurfaceMOST(Surface):
             Integrated momentum stability function value [dimensionless].
         """
         PI = c.physical.PI
-        x = (1.-(16.*zeta))**(0.25)
-        return (2.*np.log((1.+x)/2.) + np.log((1.+x**2.)/2.) -
-                2.*math.atan2(1., self.phim_unstable(zeta)) + PI/2.)
+        x = (1.0 - (16.0 * zeta))**(0.25)
+        return (
+            2.0 * np.log((1.0 + x) / 2.0)
+            + np.log((1.0 + x**2.0) / 2.0)
+            - 2.0 * np.arctan2(1.0, self.phim_unstable(zeta))
+            + PI / 2.0
+        )
 
-    def psih(self,z: float,obukL: float) -> float:
+    def psih(self, z: float, obukL: float):
         """Computes the integrated stability function for heat (psi_h).
 
         Args:
@@ -250,9 +260,11 @@ class SurfaceMOST(Surface):
         obukL_cap = self._cap_obukhov_length(obukL)
 
         zeta = z / obukL_cap
-        return self.psih_stable(zeta) if zeta >= 0 else self.psih_unstable(zeta)
+        stable = self.psih_stable(zeta)
+        unstable = self.psih_unstable(zeta)
+        return np.where(zeta >= 0, stable, unstable)
 
-    def psih_stable(self, zeta: float) -> float:
+    def psih_stable(self, zeta: float):
         """Computes integrated heat stability function for stable conditions.
 
         Computes psi_h (the height-integrated stability function for heat)
@@ -265,7 +277,7 @@ class SurfaceMOST(Surface):
         Returns:
             Integrated heat stability function value [dimensionless].
         """
-        zeta = max(float(zeta), 0.0)
+        zeta = np.maximum(zeta, 0.0)
         if self.psi_stable == "dyer-hicks":
             return -5.0 * zeta
         if self.psi_stable == "beljaars-holtslag":
@@ -275,17 +287,17 @@ class SurfaceMOST(Surface):
             d = 0.35
             return -(
                 a * zeta
-                + b * (zeta - (c_ / d)) * math.exp(-d * zeta)
+                + b * (zeta - (c_ / d)) * np.exp(-d * zeta)
                 + b * (c_ / d)
             )
         if self.psi_stable == "cheng-brutsaert":
             a = 5.3
             b = 1.1
             inner = zeta + (1.0 + zeta**b) ** (1.0 / b)
-            return -a * math.log(inner)
+            return -a * np.log(inner)
         raise AssertionError("Unhandled psi_stable")  # pragma: no cover
 
-    def psih_unstable(self, zeta: float) -> float:
+    def psih_unstable(self, zeta: float):
         """Computes integrated heat stability function for unstable conditions.
 
         Computes psi_h (the height-integrated stability function for heat)
@@ -298,10 +310,10 @@ class SurfaceMOST(Surface):
         Returns:
             Integrated heat stability function value [dimensionless].
         """
-        x = (1.-(16.*zeta))**(0.50)
-        return 2.*np.log((1.+x)/2.)
+        x = (1.0 - (16.0 * zeta))**(0.50)
+        return 2.0 * np.log((1.0 + x) / 2.0)
 
-    def fm(self, z1: float, z0: float, obukL: float) -> float:
+    def fm(self, z1: float, z0: float, obukL: float):
         """Computes the log-law stability function for momentum.
 
         Args:
@@ -313,10 +325,11 @@ class SurfaceMOST(Surface):
             The stability-corrected log-law function value.
         """
         VK = c.physical.VON_KARMAN
-        fm = VK / (np.log(z1/z0) - self.psim(z1,obukL) + self.psim(z0,obukL))
-        return fm
+        return VK / (
+            np.log(z1 / z0) - self.psim(z1, obukL) + self.psim(z0, obukL)
+        )
 
-    def fh(self, z1: float, z0h: float, obukL: float) -> float:
+    def fh(self, z1: float, z0h: float, obukL: float):
         """Computes the log-law stability function for heat.
 
         Args:
@@ -328,5 +341,6 @@ class SurfaceMOST(Surface):
             The stability-corrected log-law function value.
         """
         VK = c.physical.VON_KARMAN
-        fh = VK / (np.log(z1/z0h) - self.psih(z1,obukL) + self.psih(z0h,obukL))
-        return fh
+        return VK / (
+            np.log(z1 / z0h) - self.psih(z1, obukL) + self.psih(z0h, obukL)
+        )

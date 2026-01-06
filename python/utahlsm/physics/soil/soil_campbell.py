@@ -90,9 +90,12 @@ class Campbell(Soil):
             psi_sat = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
         else:
-            b = self.properties.b
-            psi_sat = self.properties.psi_sat
-            porosity = self.properties.porosity
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            psi_sat = self._expand_profile_property(
+                self.properties.psi_sat, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
 
         psi = psi_sat*((soil_q/porosity)**(-b))
 
@@ -122,9 +125,12 @@ class Campbell(Soil):
             porosity = self.properties.porosity[level]
             K_sat = self.properties.K_sat[level]
         else:
-            b = self.properties.b
-            porosity = self.properties.porosity
-            K_sat = self.properties.K_sat
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            K_sat = self._expand_profile_property(
+                self.properties.K_sat, soil_q_arr)
         conductivity = K_sat * ((soil_q/porosity)**(2.*b+3.))
 
         return conductivity
@@ -145,10 +151,11 @@ class Campbell(Soil):
         """
         self._validate_moisture_bounds(soil_q)
 
-        b = self.properties.b
-        psi_sat  = self.properties.psi_sat
-        porosity = self.properties.porosity
-        K_sat = self.properties.K_sat
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
         diffusivity  = -b*K_sat*psi_sat*( (soil_q/porosity)**(b+2.) ) / porosity
 
         return diffusivity

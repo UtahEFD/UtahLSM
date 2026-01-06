@@ -91,10 +91,14 @@ class BrooksCorey(Soil):
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
         else:
-            b = self.properties.b
-            psi_sat = self.properties.psi_sat
-            porosity = self.properties.porosity
-            residual = self.properties.residual
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            psi_sat = self._expand_profile_property(
+                self.properties.psi_sat, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, soil_q_arr)
 
         Se = (soil_q-residual)/(porosity-residual)
         psi = psi_sat*( Se**(-b) )
@@ -126,10 +130,14 @@ class BrooksCorey(Soil):
             residual = self.properties.residual[level]
             K_sat = self.properties.K_sat[level]
         else:
-            b = self.properties.b
-            porosity = self.properties.porosity
-            residual = self.properties.residual
-            K_sat = self.properties.K_sat
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, soil_q_arr)
+            K_sat = self._expand_profile_property(
+                self.properties.K_sat, soil_q_arr)
 
         Se = (soil_q-residual)/(porosity-residual)
         conductivity = K_sat*( Se**(2.*b+3.) )
@@ -153,11 +161,13 @@ class BrooksCorey(Soil):
         """
         self._validate_moisture_bounds(soil_q)
 
-        b = self.properties.b
-        psi_sat = self.properties.psi_sat
-        porosity = self.properties.porosity
-        residual = self.properties.residual
-        K_sat = self.properties.K_sat
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        residual = self._expand_profile_property(
+            self.properties.residual, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
         Se = (soil_q-residual)/(porosity-residual)
         diffusivity = -b*K_sat*psi_sat*( Se**(b+2.) ) / (porosity-residual)
 

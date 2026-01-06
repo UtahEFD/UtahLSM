@@ -257,21 +257,46 @@ class Soil(ABC):
         else:
             porosity = self.properties.porosity
             if isinstance(soil_q, np.ndarray):
-                invalid_neg = np.where(soil_q < 0)[0]
-                if len(invalid_neg) > 0:
-                    self.logger.warning(
-                        'Layers %s have negative soil '
-                        'moisture: %s. '
-                        'Moisture must be >= 0.',
-                        invalid_neg.tolist(), soil_q[invalid_neg].tolist())
-                invalid_high = np.where(soil_q > porosity)[0]
-                if len(invalid_high) > 0:
-                    self.logger.warning(
-                        'Layers %s have soil '
-                        'moisture exceeding porosity: '
-                        '%s > %s.',
-                        invalid_high.tolist(), soil_q[invalid_high].tolist(),
-                        porosity[invalid_high].tolist())
+                if soil_q.ndim == 1:
+                    invalid_neg = np.where(soil_q < 0)[0]
+                    if len(invalid_neg) > 0:
+                        self.logger.warning(
+                            'Layers %s have negative soil '
+                            'moisture: %s. '
+                            'Moisture must be >= 0.',
+                            invalid_neg.tolist(),
+                            soil_q[invalid_neg].tolist())
+                    invalid_high = np.where(soil_q > porosity)[0]
+                    if len(invalid_high) > 0:
+                        self.logger.warning(
+                            'Layers %s have soil '
+                            'moisture exceeding porosity: '
+                            '%s > %s.',
+                            invalid_high.tolist(),
+                            soil_q[invalid_high].tolist(),
+                            porosity[invalid_high].tolist())
+                else:
+                    invalid_neg = soil_q < 0
+                    if np.any(invalid_neg):
+                        num_bad = int(np.sum(invalid_neg))
+                        self.logger.warning(
+                            'Found %d soil moisture values below 0. '
+                            'Moisture must be >= 0.', num_bad)
+                    porosity_2d = porosity[:, None]
+                    invalid_high = soil_q > porosity_2d
+                    if np.any(invalid_high):
+                        num_bad = int(np.sum(invalid_high))
+                        self.logger.warning(
+                            'Found %d soil moisture values exceeding '
+                            'porosity.', num_bad)
+
+    def _expand_profile_property(
+        self, prop: NDArray[np.float64], soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Broadcasts 1D soil properties across columns when needed."""
+        if soil_q.ndim == 2:
+            return prop[:, None]
+        return prop
 
     # --- Shared Methods ---
 
@@ -287,8 +312,9 @@ class Soil(ABC):
         CI_W = c.water.SPECIFIC_HEAT
         CP_A = c.thermodynamic.SPECIFIC_HEAT
 
-        porosity = self.properties.porosity
-        Ci = self.properties.ci
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        Ci = self._expand_profile_property(self.properties.ci, soil_q)
         Ks = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CP_A
 
         return Ks

@@ -22,7 +22,6 @@ through the simulation in time.
 """
 
 import logging
-import math
 from dataclasses import replace
 from typing import Callable, Optional
 
@@ -93,11 +92,11 @@ class UtahLSM:
         self.logger.info('Updating atmospheric state')
 
         self.tstep = dt
-        self.atm_state = atm_state
+        self._load_atm_state(atm_state)
 
         # Update surface state from the top soil layer
-        sfc_T = self.soil_state.temperature[0]
-        sfc_q = self.soil_state.moisture[0]
+        sfc_T = np.array(self.soil_state.temperature[0], copy=True)
+        sfc_q = np.array(self.soil_state.moisture[0], copy=True)
         sfc_r = self.soil.surface_mixing_ratio(
             sfc_T, sfc_q, self.atm_state.pressure)
         self.sfc_state.temperature = sfc_T
@@ -113,8 +112,12 @@ class UtahLSM:
                 self.input.time.utc_year) else 365)
             julian_day = ((self.input.time.julian_day
                 + days_passed - 1) % days_per_year) + 1
-            self.atm_state.radiation_net = self.rad.compute_net(
-                julian_day, current_utc, self.atm_state, self.sfc_state)
+            self.atm_state.radiation_net = self._as_column_vector(
+                self.rad.compute_net(
+                    julian_day, current_utc, self.atm_state, self.sfc_state
+                ),
+                "radiation_net",
+            )
 
     def run(self) -> None:
         """Runs the core model physics for a single time step.
@@ -132,8 +135,10 @@ class UtahLSM:
             self._did_warm_start_turbulence = True
 
         # Set initial guesses for new surface temp and moisture
-        self.sfc_state.temperature = self.soil_state.temperature[0]
-        self.sfc_state.moisture = self.soil_state.moisture[0]
+        self.sfc_state.temperature = np.array(
+            self.soil_state.temperature[0], copy=True)
+        self.sfc_state.moisture = np.array(
+            self.soil_state.moisture[0], copy=True)
 
         # Solve surface energy and moisture budgets
         self._solve_surface_coupling()
@@ -157,11 +162,126 @@ class UtahLSM:
     def _setup_states(self) -> None:
         """Initializes all state containers for the model."""
         self.logger.info('Setting up initial states')
+        nx = getattr(self.input.grid, "nx", 1)
+        ny = getattr(self.input.grid, "ny", 1)
+        self.ncol = nx * ny
         self.soil_state: SoilState = replace(self.input.initial)
+        self.soil_state.temperature = self._ensure_column_field(
+            self.soil_state.temperature, "soil temperature")
+        self.soil_state.moisture = self._ensure_column_field(
+            self.soil_state.moisture, "soil moisture")
+
         self.sfc_state: SurfaceState = SurfaceState()
+        self.sfc_state.temperature = np.zeros(self.ncol)
+        self.sfc_state.moisture = np.zeros(self.ncol)
+        self.sfc_state.specific_humidity = np.zeros(self.ncol)
+        self.sfc_state.fluxes.kinematic_heat = np.zeros(self.ncol)
+        self.sfc_state.fluxes.kinematic_moisture = np.zeros(self.ncol)
+        self.sfc_state.fluxes.sensible_heat = np.zeros(self.ncol)
+        self.sfc_state.fluxes.latent_heat = np.zeros(self.ncol)
+        self.sfc_state.fluxes.ground_heat = np.zeros(self.ncol)
+        self.sfc_state.turbulence.friction_velocity = np.zeros(self.ncol)
+        self.sfc_state.turbulence.obukhov_length = np.zeros(self.ncol)
+
         self.atm_state: AtmosphericState = AtmosphericState()
+        self.atm_state.wind_speed = np.zeros(self.ncol)
+        self.atm_state.temperature = np.zeros(self.ncol)
+        self.atm_state.specific_humidity = np.zeros(self.ncol)
+        self.atm_state.pressure = np.zeros(self.ncol)
+        self.atm_state.radiation_net = np.zeros(self.ncol)
+
         self.solver_state: SolverState = SolverState()
+        self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
         self._did_warm_start_turbulence: bool = False
+
+    def _ensure_column_field(
+        self, field: np.ndarray, name: str
+    ) -> np.ndarray:
+        """Ensures soil fields are shaped as (nz, ncol)."""
+        data = np.asarray(field, dtype=float)
+        nz = self.input.grid.nz
+        ny = getattr(self.input.grid, "ny", 1)
+        nx = getattr(self.input.grid, "nx", 1)
+        ncol = getattr(self, "ncol", ny * nx)
+
+        if data.ndim == 1:
+            if data.shape[0] != nz:
+                raise ValueError(
+                    f"{name} length {data.shape[0]} does not match nz={nz}."
+                )
+            return data[:, None] if ncol > 1 else data[:, None]
+        if data.ndim == 2:
+            if data.shape == (nz, ncol):
+                return data
+            if data.shape == (nz, 1):
+                return np.repeat(data, ncol, axis=1) if ncol > 1 else data
+            raise ValueError(
+                f"{name} shape {data.shape} does not match (nz, ncol)=({nz}, "
+                f"{ncol})."
+            )
+        if data.ndim == 3:
+            if data.shape == (nz, ny, nx):
+                return data.reshape(nz, ncol)
+            raise ValueError(
+                f"{name} shape {data.shape} does not match (nz, ny, nx)=({nz}, "
+                f"{ny}, {nx})."
+            )
+        raise ValueError(
+            f"{name} has unsupported dimensions: {data.ndim}."
+        )
+
+    def _as_column_vector(self, value: object, name: str) -> np.ndarray:
+        """Coerces scalars or (y, x) fields into (ncol,) arrays."""
+        data = np.asarray(value, dtype=float)
+        ny = getattr(self.input.grid, "ny", 1)
+        nx = getattr(self.input.grid, "nx", 1)
+        ncol = self.ncol
+
+        if data.ndim == 0:
+            return np.full(ncol, float(data))
+        if data.ndim == 1:
+            if data.size == ncol:
+                return data
+            if data.size == 1:
+                return np.full(ncol, float(data[0]))
+            raise ValueError(
+                f"{name} length {data.size} does not match ncol={ncol}."
+            )
+        if data.ndim == 2:
+            if data.shape == (ny, nx):
+                return data.reshape(ncol)
+            if data.shape == (1, 1):
+                return np.full(ncol, float(data[0, 0]))
+            raise ValueError(
+                f"{name} shape {data.shape} does not match (ny, nx)=({ny}, "
+                f"{nx})."
+            )
+        raise ValueError(
+            f"{name} has unsupported dimensions: {data.ndim}."
+        )
+
+    def _copy_atm_state(self) -> AtmosphericState:
+        """Returns a shallow copy of the current atmospheric state arrays."""
+        return AtmosphericState(
+            wind_speed=np.array(self.atm_state.wind_speed, copy=True),
+            temperature=np.array(self.atm_state.temperature, copy=True),
+            specific_humidity=np.array(self.atm_state.specific_humidity, copy=True),
+            pressure=np.array(self.atm_state.pressure, copy=True),
+            radiation_net=np.array(self.atm_state.radiation_net, copy=True),
+        )
+
+    def _load_atm_state(self, atm_state: AtmosphericState) -> None:
+        """Loads atmospheric state data into column vectors."""
+        self.atm_state.wind_speed = self._as_column_vector(
+            atm_state.wind_speed, "wind_speed")
+        self.atm_state.temperature = self._as_column_vector(
+            atm_state.temperature, "temperature")
+        self.atm_state.specific_humidity = self._as_column_vector(
+            atm_state.specific_humidity, "specific_humidity")
+        self.atm_state.pressure = self._as_column_vector(
+            atm_state.pressure, "pressure")
+        self.atm_state.radiation_net = self._as_column_vector(
+            atm_state.radiation_net, "radiation_net")
 
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
@@ -191,14 +311,23 @@ class UtahLSM:
 
     def _setup_output(self) -> None:
         """Sets up the output file dimensions and fields."""
+        nx = getattr(self.input.grid, "nx", 1)
+        ny = getattr(self.input.grid, "ny", 1)
         self.output_dims: dict = {
             't': 0,
             'z': self.input.grid.nz
         }
+        if nx > 1 or ny > 1:
+            self.output_dims.update({
+                'y': ny,
+                'x': nx
+            })
         self.output.set_dims(self.output_dims)
 
-        self.sfc_state.temperature = self.soil_state.temperature[0]
-        self.sfc_state.moisture = self.soil_state.moisture[0]
+        self.sfc_state.temperature = np.array(
+            self.soil_state.temperature[0], copy=True)
+        self.sfc_state.moisture = np.array(
+            self.soil_state.moisture[0], copy=True)
 
         forcing0 = None
         if getattr(self.input, "forcing", None) is not None:
@@ -208,9 +337,9 @@ class UtahLSM:
         if forcing0 is not None and getattr(
             self.input.numerics, "initialize_surface_temperature_from_seb",False
         ):
-            saved_atm_state = self.atm_state
+            saved_atm_state = self._copy_atm_state()
             saved_tstep = getattr(self, "tstep", 0.0)
-            self.atm_state = forcing0
+            self._load_atm_state(forcing0)
             self.tstep = float(getattr(self.input.forcing, "tstep", 0.0))
 
             self._solve_seb()
@@ -224,7 +353,7 @@ class UtahLSM:
                     "initialized from SEB using forcing[0]",
                 )
 
-            self.atm_state = saved_atm_state
+            self._load_atm_state(saved_atm_state)
             self.tstep = saved_tstep
 
         if forcing0 is not None and getattr(
@@ -264,19 +393,19 @@ class UtahLSM:
             return
 
         forcing0 = atmos[0]
-        saved_atm_state = self.atm_state
+        saved_atm_state = self._copy_atm_state()
         saved_tstep = getattr(self, "tstep", 0.0)
 
-        self.atm_state = forcing0
+        self._load_atm_state(forcing0)
         self.tstep = float(getattr(self.input.forcing, "tstep", 0.0))
 
-        sfc_T = self.soil_state.temperature[0]
-        sfc_q = self.soil_state.moisture[0]
+        sfc_T = np.array(self.soil_state.temperature[0], copy=True)
+        sfc_q = np.array(self.soil_state.moisture[0], copy=True)
         self.sfc_state.temperature = sfc_T
         self.sfc_state.moisture = sfc_q
         self._compute_fluxes(sfc_T, sfc_q)
 
-        self.atm_state = saved_atm_state
+        self._load_atm_state(saved_atm_state)
         self.tstep = saved_tstep
 
     @staticmethod
@@ -306,62 +435,70 @@ class UtahLSM:
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
         self.solver_state.conductivity_thermal_mid = 0.5 * (K_all[0] + K_all[1])
 
-        # Keep the initial Obukhov length fixed during the SEB root-finding.
-        # This makes the SEB residual a deterministic function of temperature
-        # (Brent's method assumes this), while still allowing MOST iterations
-        # to converge within each residual evaluation.
-        initial_obukhov_length = self.sfc_state.turbulence.obukhov_length[0]
-        current_T = self.sfc_state.temperature
-        
-        # Create a dynamic bracket around the current best guess
-        bracket_width = 1.0
-        temp_a = current_T - bracket_width
-        temp_b = current_T + bracket_width
-        
-        seb_a = self._compute_seb(temp_a, initial_obukhov_length)
-        seb_b = self._compute_seb(temp_b, initial_obukhov_length)
-        
-        # Robust bracket expansion
-        iter_count = 0
         iter_max_bracket = self.input.numerics.iterations.seb_bracket
-        
-        while seb_a * seb_b > 0 and iter_count < iter_max_bracket:
-            # Expand in the direction of the smaller residual (likely closer to root)
-            step = 5.0 * (1.0 + iter_count * 0.5) # Accelerate expansion
-            if abs(seb_a) < abs(seb_b):
-                temp_a -= step
-                seb_a = self._compute_seb(temp_a, initial_obukhov_length)
-            else:
-                temp_b += step
-                seb_b = self._compute_seb(temp_b, initial_obukhov_length)
-            iter_count += 1
-        
-        if iter_count >= iter_max_bracket:
-             # Fallback or error handling
-             raise SolverError(f"SEB Bracket failed. Res: {seb_a:.2f}, {seb_b:.2f}")
-        
-        # Root finding
         iter_max_root = self.input.numerics.iterations.seb_root
         tol_root = self.input.numerics.tolerances.seb_root
-        
-        def seb_residual(temp: float) -> float:
-            return self._compute_seb(temp, initial_obukhov_length)
 
-        temp, converged = solvers.root_brent(
-            seb_residual, temp_a, temp_b, iter_max_root, tol_root
-        )
-        
-        if not converged:
-             self.logger.warning('SEB root-finder did not fully converge.')
-        
-        self.sfc_state.temperature = temp
-        
-        # Final flux update with the resolved Temperature and CURRENT moisture
-        self._compute_fluxes(self.sfc_state.temperature, 
-                             self.sfc_state.moisture)
+        for col in range(self.ncol):
+            # Keep the initial Obukhov length fixed during root-finding.
+            initial_obukhov_length = float(
+                self.sfc_state.turbulence.obukhov_length[col]
+            )
+            current_T = float(self.sfc_state.temperature[col])
+
+            # Create a dynamic bracket around the current best guess
+            bracket_width = 1.0
+            temp_a = current_T - bracket_width
+            temp_b = current_T + bracket_width
+
+            seb_a = self._compute_seb(temp_a, initial_obukhov_length, col)
+            seb_b = self._compute_seb(temp_b, initial_obukhov_length, col)
+
+            # Robust bracket expansion
+            iter_count = 0
+            while seb_a * seb_b > 0 and iter_count < iter_max_bracket:
+                # Expand in the direction of the smaller residual
+                step = 5.0 * (1.0 + iter_count * 0.5)
+                if abs(seb_a) < abs(seb_b):
+                    temp_a -= step
+                    seb_a = self._compute_seb(
+                        temp_a, initial_obukhov_length, col)
+                else:
+                    temp_b += step
+                    seb_b = self._compute_seb(
+                        temp_b, initial_obukhov_length, col)
+                iter_count += 1
+
+            if iter_count >= iter_max_bracket:
+                raise SolverError(
+                    f"SEB Bracket failed at col={col}. "
+                    f"Res: {seb_a:.2f}, {seb_b:.2f}"
+                )
+
+            def seb_residual(temp: float) -> float:
+                return self._compute_seb(temp, initial_obukhov_length, col)
+
+            temp, converged = solvers.root_brent(
+                seb_residual, temp_a, temp_b, iter_max_root, tol_root
+            )
+
+            if not converged:
+                self.logger.warning(
+                    'SEB root-finder did not fully converge (col=%d).', col)
+
+            self.sfc_state.temperature[col] = temp
+
+            # Final flux update with resolved temperature and current moisture
+            self._compute_fluxes(
+                self.sfc_state.temperature[col],
+                self.sfc_state.moisture[col],
+                column=col,
+            )
 
     # Compute the surface energy budget
-    def _compute_seb(self,sfc_T: float,initial_obukhov_length: float,) -> float:
+    def _compute_seb(
+        self, sfc_T: float, initial_obukhov_length: float, column: int
+    ) -> float:
         """Computes the surface energy budget residual for a given surface
             temperature.
 
@@ -376,33 +513,35 @@ class UtahLSM:
         # internal state (MOST iteration, flux storage), we compute the fluxes
         # and then restore state so that repeated evaluations at the same
         # temperature return the same residual.
-        saved_L = float(self.sfc_state.turbulence.obukhov_length[0])
-        saved_ust = float(self.sfc_state.turbulence.friction_velocity[0])
+        saved_L = float(self.sfc_state.turbulence.obukhov_length[column])
+        saved_ust = float(self.sfc_state.turbulence.friction_velocity[column])
         saved_fluxes = (
-            float(self.sfc_state.fluxes.ground_heat[0]),
-            float(self.sfc_state.fluxes.sensible_heat[0]),
-            float(self.sfc_state.fluxes.latent_heat[0]),
-            float(self.sfc_state.fluxes.kinematic_heat[0]),
-            float(self.sfc_state.fluxes.kinematic_moisture[0]),
+            float(self.sfc_state.fluxes.ground_heat[column]),
+            float(self.sfc_state.fluxes.sensible_heat[column]),
+            float(self.sfc_state.fluxes.latent_heat[column]),
+            float(self.sfc_state.fluxes.kinematic_heat[column]),
+            float(self.sfc_state.fluxes.kinematic_moisture[column]),
         )
 
-        self.sfc_state.turbulence.obukhov_length[0] = initial_obukhov_length
-        self._compute_fluxes(sfc_T, self.sfc_state.moisture)
+        self.sfc_state.turbulence.obukhov_length[column] = initial_obukhov_length
+        self._compute_fluxes(
+            sfc_T, self.sfc_state.moisture[column], column=column
+        )
         seb = (
-            self.atm_state.radiation_net
-            - self.sfc_state.fluxes.ground_heat[0]
-            - self.sfc_state.fluxes.sensible_heat[0]
-            - self.sfc_state.fluxes.latent_heat[0]
+            self.atm_state.radiation_net[column]
+            - self.sfc_state.fluxes.ground_heat[column]
+            - self.sfc_state.fluxes.sensible_heat[column]
+            - self.sfc_state.fluxes.latent_heat[column]
         )
 
-        self.sfc_state.turbulence.obukhov_length[0] = saved_L
-        self.sfc_state.turbulence.friction_velocity[0] = saved_ust
+        self.sfc_state.turbulence.obukhov_length[column] = saved_L
+        self.sfc_state.turbulence.friction_velocity[column] = saved_ust
         (
-            self.sfc_state.fluxes.ground_heat[0],
-            self.sfc_state.fluxes.sensible_heat[0],
-            self.sfc_state.fluxes.latent_heat[0],
-            self.sfc_state.fluxes.kinematic_heat[0],
-            self.sfc_state.fluxes.kinematic_moisture[0],
+            self.sfc_state.fluxes.ground_heat[column],
+            self.sfc_state.fluxes.sensible_heat[column],
+            self.sfc_state.fluxes.latent_heat[column],
+            self.sfc_state.fluxes.kinematic_heat[column],
+            self.sfc_state.fluxes.kinematic_moisture[column],
         ) = saved_fluxes
 
         return float(seb)
@@ -429,8 +568,8 @@ class UtahLSM:
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
         sfc_T = self.sfc_state.temperature
-        L = self.sfc_state.turbulence.obukhov_length[0]
-        ust = self.sfc_state.turbulence.friction_velocity[0]
+        L = self.sfc_state.turbulence.obukhov_length
+        ust = self.sfc_state.turbulence.friction_velocity
         rho_a = atm_p / (RD * atm_T)
         fh = self.sfc.fh(z_s, z_t, L)
 
@@ -444,32 +583,52 @@ class UtahLSM:
         K_mid = 0.5 * (K0 + K1)
 
         # Soil moisture flux and evaporation
-        flux_sm  = RHO_W*K_mid*((psi0 - psi1)/dz + 1.0)
-        E = rho_a*self.sfc_state.fluxes.kinematic_moisture[0]
+        flux_sm = RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
+        E = rho_a * self.sfc_state.fluxes.kinematic_moisture
 
         # Iteratively solve for moisture flux
-        for _ in range(0,ITER_MAX):
+        converged = np.zeros(self.ncol, dtype=bool)
+        for _ in range(0, ITER_MAX):
 
             # New blended soil moisture flux
             flux_sm_last = flux_sm
-            flux_sm = delta*flux_sm_last - (1.0-delta)*E
+            flux_sm_new = delta * flux_sm_last - (1.0 - delta) * E
 
             # New evaporation
-            psi0 = psi1 + dz*((flux_sm/(RHO_W*K_mid))-1.0)
-            psi0 = min(psi0, psi_sat)
-            self.sfc_state.moisture = self.soil.surface_water_content(psi0)
+            psi0_new = psi1 + dz * ((flux_sm_new / (RHO_W * K_mid)) - 1.0)
+            psi0_new = np.minimum(psi0_new, psi_sat)
+            sfc_moisture_new = self.soil.surface_water_content(psi0_new)
             gnd_q = self.soil.surface_mixing_ratio(
-                sfc_T, self.sfc_state.moisture, atm_p)
-            E = rho_a*(gnd_q-atm_q)*ust*fh
+                sfc_T, sfc_moisture_new, atm_p)
+            E_new = rho_a * (gnd_q - atm_q) * ust * fh
 
-            K0 = self.soil.conductivity_moisture(
-                self.sfc_state.moisture, level=0)
-            K_mid = 0.5*(K0+K1)  # K_mid is hydraulic conductivity at midpoint
+            K0_new = self.soil.conductivity_moisture(
+                sfc_moisture_new, level=0)
+            K_mid_new = 0.5 * (K0_new + K1)
 
-            if abs((E + flux_sm)) <= TOL:
+            err = np.abs(E_new + flux_sm_new)
+            newly_converged = err <= TOL
+            converged |= newly_converged
+
+            if converged.all():
+                flux_sm = flux_sm_new
+                psi0 = psi0_new
+                self.sfc_state.moisture = sfc_moisture_new
+                E = E_new
+                K_mid = K_mid_new
                 break
 
-    def _compute_fluxes(self, sfc_T: float, sfc_q: float) -> None:
+            mask = ~converged
+            flux_sm = np.where(mask, flux_sm_new, flux_sm)
+            psi0 = np.where(mask, psi0_new, psi0)
+            self.sfc_state.moisture = np.where(
+                mask, sfc_moisture_new, self.sfc_state.moisture)
+            E = np.where(mask, E_new, E)
+            K_mid = np.where(mask, K_mid_new, K_mid)
+
+    def _compute_fluxes(
+        self, sfc_T: float, sfc_q: float, column: Optional[int] = None
+    ) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
 
         This is an iterative process to find the friction velocity (ustar)
@@ -479,14 +638,9 @@ class UtahLSM:
         Args:
             sfc_T: Surface temperature [K].
             sfc_q: Surface moisture [m^3/m^3].
-
-        Raises:
-            Exception: If the flux computation encounters an unrecoverable error
-                in the Monin-Obukhov iteration process.
+            column: Optional column index for single-column updates.
         """
         # Local constants and variables
-        converged = False
-
         VK = c.physical.VON_KARMAN
         G = c.physical.GRAVITY
         CP = c.thermodynamic.SPECIFIC_HEAT
@@ -496,10 +650,27 @@ class UtahLSM:
         TOL = self.input.numerics.tolerances.sfc_flux
         ITER_MAX = self.input.numerics.iterations.sfc_flux
 
-        atm_T = self.atm_state.temperature
-        atm_p = self.atm_state.pressure
-        atm_q = self.atm_state.specific_humidity
-        atm_ws = self.atm_state.wind_speed
+        if column is None:
+            sfc_T_vec = self._as_column_vector(sfc_T, "sfc_T")
+            sfc_q_vec = self._as_column_vector(sfc_q, "sfc_q")
+            atm_T = self.atm_state.temperature
+            atm_p = self.atm_state.pressure
+            atm_q = self.atm_state.specific_humidity
+            atm_ws = self.atm_state.wind_speed
+            L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
+            K_mid = self.solver_state.conductivity_thermal_mid
+            soil_T1 = self.soil_state.temperature[1]
+        else:
+            sfc_T_vec = np.array([sfc_T], dtype=float)
+            sfc_q_vec = np.array([sfc_q], dtype=float)
+            atm_T = np.array([self.atm_state.temperature[column]], dtype=float)
+            atm_p = np.array([self.atm_state.pressure[column]], dtype=float)
+            atm_q = np.array([self.atm_state.specific_humidity[column]], dtype=float)
+            atm_ws = np.array([self.atm_state.wind_speed[column]], dtype=float)
+            L = np.array([self.sfc_state.turbulence.obukhov_length[column]], copy=True)
+            K_mid = np.array([self.solver_state.conductivity_thermal_mid[column]])
+            soil_T1 = np.array([self.soil_state.temperature[1, column]])
+
         ref_T = atm_T
         rho = atm_p / (RD * atm_T)
 
@@ -513,17 +684,18 @@ class UtahLSM:
         dz = self.input.grid.z[0] - self.input.grid.z[1]
 
         # Compute surface-air specific humidity
-        gnd_q  = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+        gnd_q = self.soil.surface_mixing_ratio(sfc_T_vec, sfc_q_vec, atm_p)
 
         # Compute ground heat flux
-        K_mid = self.solver_state.conductivity_thermal_mid
-        self.sfc_state.fluxes.ground_heat[0] = (
-            K_mid * (sfc_T - self.soil_state.temperature[1]) / dz)
+        ground_heat = K_mid * (sfc_T_vec - soil_T1) / dz
 
         # Iteratively solve for fluxes and stability
-        L = self.sfc_state.turbulence.obukhov_length[0]
-        for _ in range(0,ITER_MAX):
+        converged = np.zeros_like(L, dtype=bool)
+        flux_wT = np.zeros_like(L)
+        flux_wq = np.zeros_like(L)
+        ustar = np.zeros_like(L)
 
+        for _ in range(0, ITER_MAX):
             # Stability functions
             fm = self.sfc.fm(z_m, z_o, L)
             fh = self.sfc.fh(z_s, z_t, L)
@@ -531,47 +703,65 @@ class UtahLSM:
             # Friction velocity
             wind_eff = atm_ws
             if gustiness > 0.0:
-                if (not gustiness_stable_only) or (L >= 0.0):
-                    wind_eff = math.hypot(atm_ws, gustiness)
+                gust = np.hypot(atm_ws, gustiness)
+                if gustiness_stable_only:
+                    wind_eff = np.where(L >= 0.0, gust, atm_ws)
+                else:
+                    wind_eff = gust
 
-            self.sfc_state.turbulence.friction_velocity[0] = wind_eff * fm
-            ustar = self.sfc_state.turbulence.friction_velocity[0]
+            ustar = wind_eff * fm
 
             # Kinematic fluxes
-            flux_wT = (sfc_T-atm_T)*ustar*fh
-            flux_wq = (gnd_q-atm_q)*ustar*fh
-            self.sfc_state.fluxes.kinematic_heat[0] = flux_wT
-            self.sfc_state.fluxes.kinematic_moisture[0] = flux_wq
-            flux_wTv = flux_wT + EVT*ref_T*flux_wq
+            flux_wT = (sfc_T_vec - atm_T) * ustar * fh
+            flux_wq = (gnd_q - atm_q) * ustar * fh
+            flux_wTv = flux_wT + EVT * ref_T * flux_wq
 
             # Obukhov length
-            last_L = L
-            if flux_wTv != 0:
-                L = -(ustar**3) * ref_T / (VK * G * flux_wTv)
-            else:
-                L = 1e6 # Large positive for neutral
+            L_new = np.where(
+                flux_wTv != 0.0,
+                -(ustar**3) * ref_T / (VK * G * flux_wTv),
+                1e6,
+            )
 
             # Bound L to prevent extreme instability/stability
-            if z_m / L > zeta_max:
-                L = z_m / zeta_max
-            elif z_m / L < -zeta_max:
-                L = -z_m / zeta_max
+            zeta = z_m / L_new
+            L_new = np.where(zeta > zeta_max, z_m / zeta_max, L_new)
+            L_new = np.where(zeta < -zeta_max, -z_m / zeta_max, L_new)
 
-            # Check for convergence
-            if abs(last_L - L) <= TOL:
-                converged = True
+            diff = np.abs(L_new - L)
+            converged |= diff <= TOL
+            L = np.where(converged, L, L_new)
+
+            if converged.all():
                 break
-            
-        # Warn if it did not converge
-        if not converged:
+
+        if not converged.all():
             self.logger.warning(
-                'Obukhov length did not converge. Final value = %f', L)
-        
+                'Obukhov length did not converge for %d columns.',
+                int(np.sum(~converged)),
+            )
+
         # set final values, even if not converged
-        self.sfc_state.turbulence.obukhov_length[0] = L
-        self.sfc_state.fluxes.sensible_heat[0] = (rho * CP * flux_wT)
-        self.sfc_state.fluxes.latent_heat[0] = (rho * LV * flux_wq)
-    
+        sensible = rho * CP * flux_wT
+        latent = rho * LV * flux_wq
+
+        if column is None:
+            self.sfc_state.turbulence.obukhov_length[:] = L
+            self.sfc_state.turbulence.friction_velocity[:] = ustar
+            self.sfc_state.fluxes.ground_heat[:] = ground_heat
+            self.sfc_state.fluxes.kinematic_heat[:] = flux_wT
+            self.sfc_state.fluxes.kinematic_moisture[:] = flux_wq
+            self.sfc_state.fluxes.sensible_heat[:] = sensible
+            self.sfc_state.fluxes.latent_heat[:] = latent
+        else:
+            self.sfc_state.turbulence.obukhov_length[column] = L[0]
+            self.sfc_state.turbulence.friction_velocity[column] = ustar[0]
+            self.sfc_state.fluxes.ground_heat[column] = ground_heat[0]
+            self.sfc_state.fluxes.kinematic_heat[column] = flux_wT[0]
+            self.sfc_state.fluxes.kinematic_moisture[column] = flux_wq[0]
+            self.sfc_state.fluxes.sensible_heat[column] = sensible[0]
+            self.sfc_state.fluxes.latent_heat[column] = latent[0]
+
     def _solve_surface_coupling(self) -> None:
         """Iteratively solves the coupled SEB and SMB.
         
@@ -586,8 +776,8 @@ class UtahLSM:
         
         for i in range(max_outer_iter):
             # Store previous states to check convergence
-            prev_T = self.sfc_state.temperature
-            prev_q = self.sfc_state.moisture
+            prev_T = np.array(self.sfc_state.temperature, copy=True)
+            prev_q = np.array(self.sfc_state.moisture, copy=True)
         
             # soil energy balance
             self._solve_seb()
@@ -596,10 +786,10 @@ class UtahLSM:
             self._solve_smb()
         
             # 3. Check Convergence
-            diff_T = abs(self.sfc_state.temperature - prev_T)
-            diff_q = abs(self.sfc_state.moisture - prev_q)
+            diff_T = np.abs(self.sfc_state.temperature - prev_T)
+            diff_q = np.abs(self.sfc_state.moisture - prev_q)
         
-            if diff_T < tol_temp and diff_q < tol_mois:
+            if np.all(diff_T < tol_temp) and np.all(diff_q < tol_mois):
                 self.logger.debug(
                     'Surface coupling converged in %d iterations.', i + 1)
                 self._compute_fluxes(
@@ -609,7 +799,8 @@ class UtahLSM:
     
         self.logger.warning(
             'Surface coupling did not converge after %d iterations. '
-            'dT: %.4f, dq: %.4e', max_outer_iter, diff_T, diff_q)
+            'dT: %.4f, dq: %.4e', max_outer_iter,
+            float(np.max(diff_T)), float(np.max(diff_q)))
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
     
     def _solve_diffusion(self,state_field: np.ndarray,get_diffusivity: Callable,
@@ -651,7 +842,23 @@ class UtahLSM:
         dz = self.input.grid.z[0] - self.input.grid.z[1]
         dz2 = dz**2
         dt = self.tstep
-        e, f, g, r = [np.zeros(nz - 1) for _ in range(4)]
+        field = np.asarray(state_field, dtype=float)
+        if field.ndim == 1:
+            field = field[:, None]
+        if field.ndim != 2 or field.shape[0] != nz:
+            raise ValueError(
+                f"{field_name} has unexpected shape {field.shape}."
+            )
+        ncol = field.shape[1]
+        sfc_boundary_vec = self._as_column_vector(
+            sfc_boundary, f"{field_name} boundary")
+        if sfc_boundary_vec.size != ncol:
+            raise ValueError(
+                f"{field_name} boundary size {sfc_boundary_vec.size} does not "
+                f"match ncol={ncol}."
+            )
+
+        e, f, g, r = [np.zeros((nz - 1, ncol)) for _ in range(4)]
 
         # Compute diffusivity using soil moisture (always, for both heat
         # and moisture)
@@ -661,9 +868,9 @@ class UtahLSM:
         # Compute conductivity terms if provided (moisture case)
         K_lin = None
         if get_conductivity is not None:
-            K_hydraulic = get_conductivity(state_field)
+            K_hydraulic = get_conductivity(field)
             # Avoid division by zero in dry conditions
-            K_lin = np.where(state_field > 1e-9, K_hydraulic / state_field, 0.0)
+            K_lin = np.where(field > 1e-9, K_hydraulic / field, 0.0)
 
         # === First soil level below surface (i=0) ===
         Cp = dt * D_mid[0] / dz2
@@ -694,8 +901,8 @@ class UtahLSM:
 
         f[0] = CB
         g[0] = CBm
-        r[0] = (CFp * state_field[0] + CF * state_field[1] +
-                CFm * state_field[2] - CBp * sfc_boundary)
+        r[0] = (CFp * field[0] + CF * field[1] +
+                CFm * field[2] - CBp * sfc_boundary_vec)
 
         # === Interior soil levels (Vectorized) ===
         # Define slices to represent indices i, i+1, and i+2
@@ -741,9 +948,9 @@ class UtahLSM:
 
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
-        r[idx] = (CFp * state_field[idx] +
-                  CF  * state_field[idx_p1] +
-                  CFm * state_field[idx_p2])
+        r[idx] = (CFp * field[idx] +
+                  CF  * field[idx_p1] +
+                  CFm * field[idx_p2])
 
         # === Bottom level (Neumann BC: zero gradient) ===
         j = nz - 2
@@ -779,12 +986,17 @@ class UtahLSM:
 
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
-        r[j] = ((CFp - CFm) * state_field[j] +
-                (CF + 2.0 * CFm) * state_field[j + 1])
+        r[j] = ((CFp - CFm) * field[j] +
+                (CF + 2.0 * CFm) * field[j + 1])
 
         # Solve and update
-        state_field[0] = sfc_boundary
-        state_field[1:] = solvers.tridiagonal(e, f, g, r)
+        field[0] = sfc_boundary_vec
+        field[1:] = solvers.tridiagonal(e, f, g, r)
+
+        if state_field.ndim == 1:
+            state_field[:] = field[:, 0]
+        else:
+            state_field[:] = field
 
     def _solve_diffusion_heat(self) -> None:
         """Solves the soil heat diffusion equation using a theta scheme."""

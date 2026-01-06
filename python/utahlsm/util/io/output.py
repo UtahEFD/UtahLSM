@@ -22,6 +22,7 @@ import logging
 from typing import Any
 
 import netCDF4 as nc
+import numpy as np
 
 from . import logging_helper
 
@@ -117,6 +118,14 @@ class Output:
             dims: A dictionary mapping dimension names to their sizes. A size
                 of 0 indicates an unlimited dimension.
         """
+        has_xy = ('x' in dims and 'y' in dims
+                  and (dims['x'] > 1 or dims['y'] > 1))
+        if has_xy:
+            self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
+            self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
+            for field in ('ust', 'obl', 'shf', 'lhf', 'ghf'):
+                self.attributes[field]['dimension'] = ('t', 'y', 'x')
+
         for dim, size in dims.items():
             if size == 0:
                 self.outfile.createDimension(dim)
@@ -161,9 +170,23 @@ class Output:
             initial: A boolean flag indicating if this is the initial save,
                 in which case only static fields are written. Defaults to False.
         """
+        def _reshape_for_output(data: Any, target_shape: tuple[int, ...],
+                                field_name: str) -> np.ndarray:
+            arr = np.asarray(data)
+            if arr.shape == target_shape:
+                return arr
+            if arr.size == int(np.prod(target_shape)):
+                return arr.reshape(target_shape)
+            raise ValueError(
+                f"Field {field_name} has shape {arr.shape}, which cannot be "
+                f"reshaped to {target_shape} for output."
+            )
+
         if initial:
             for field, static_field in self.fields_static.items():
-                static_field[:] = fields[field]
+                target_shape = static_field.shape
+                static_field[:] = _reshape_for_output(
+                    fields[field], target_shape, field)
 
         for field, field_var in self.fields_time.items():
             dim = self.attributes[field]['dimension']
@@ -173,7 +196,9 @@ class Output:
                 else:
                     field_var[tidx] = fields[field]
             else:
-                field_var[tidx, :] = fields[field]
+                target_shape = field_var.shape[1:]
+                field_var[tidx, :] = _reshape_for_output(
+                    fields[field], target_shape, field)
 
         self.outfile.sync()
 

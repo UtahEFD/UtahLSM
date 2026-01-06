@@ -26,6 +26,7 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
+from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -41,17 +42,17 @@ class AtmosphericState:
     conditions driving the land-surface model.
 
     Attributes:
-        wind_speed: Wind speed [m/s].
-        temperature: Air temperature [K].
-        specific_humidity: Specific humidity [kg/kg].
-        pressure: Atmospheric pressure [Pa].
-        radiation_net: Net radiation [W/m^2].
+        wind_speed: Wind speed [m/s] (scalar or per-column array).
+        temperature: Air temperature [K] (scalar or per-column array).
+        specific_humidity: Specific humidity [kg/kg] (scalar or per-column array).
+        pressure: Atmospheric pressure [Pa] (scalar or per-column array).
+        radiation_net: Net radiation [W/m^2] (scalar or per-column array).
     """
-    wind_speed: float = 0.0
-    temperature: float = 0.0
-    specific_humidity: float = 0.0
-    pressure: float = 0.0
-    radiation_net: float = 0.0
+    wind_speed: Union[float, NDArray[np.float64]] = 0.0
+    temperature: Union[float, NDArray[np.float64]] = 0.0
+    specific_humidity: Union[float, NDArray[np.float64]] = 0.0
+    pressure: Union[float, NDArray[np.float64]] = 0.0
+    radiation_net: Union[float, NDArray[np.float64]] = 0.0
 
 @dataclass
 class SoilState:
@@ -61,8 +62,8 @@ class SoilState:
     within the soil, which evolves over time by the model's diffusion solvers.
 
     Attributes:
-        temperature: Soil temperature profile [K].
-        moisture: Soil moisture profile [m^3/m^3].
+        temperature: Soil temperature profile [K] (nz or nz-by-ncol).
+        moisture: Soil moisture profile [m^3/m^3] (nz or nz-by-ncol).
         type: Soil type name for each layer (string, e.g., 'clay', 'sand',
             'b11'). Names are lowercase and must match keys in the loaded
             soil properties dataset.
@@ -117,16 +118,17 @@ class SurfaceState:
     between the soil, the surface, and the atmosphere.
 
     Attributes:
-        temperature: Surface temperature [K].
-        moisture: Surface moisture content [kg/kg].
-        specific_humidity: Surface-air specific humidity [kg/kg].
+        temperature: Surface temperature [K] (scalar or per-column array).
+        moisture: Surface moisture content [kg/kg] (scalar or per-column array).
+        specific_humidity: Surface-air specific humidity [kg/kg]
+            (scalar or per-column array).
         fluxes: A dataclass containing all surface fluxes.
         turbulence: A dataclass containing turbulence scales.
 
     """
-    temperature: float = 0.0
-    moisture: float = 0.0
-    specific_humidity: float = 0.0
+    temperature: Union[float, NDArray[np.float64]] = 0.0
+    moisture: Union[float, NDArray[np.float64]] = 0.0
+    specific_humidity: Union[float, NDArray[np.float64]] = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
 
@@ -143,8 +145,8 @@ class SolverState:
             the top two soil layers [W/m/K].
         obukhov_length: Obukhov length (L) [m].
     """
-    conductivity_thermal_mid: float = 0.0
-    obukhov_length: float = 0.0
+    conductivity_thermal_mid: Union[float, NDArray[np.float64]] = 0.0
+    obukhov_length: Union[float, NDArray[np.float64]] = 0.0
 
 @dataclass(frozen=True)
 class ForcingData:

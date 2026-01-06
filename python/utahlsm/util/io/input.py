@@ -97,7 +97,10 @@ class Input:
         logging_helper.finalize_logging(log_level)
 
         self.logger.info('Reading %s', inputfile)
-        init_data = self._load_initial_conditions(inputfile)
+        nx = namelist_data['grid']['nx']
+        ny = namelist_data['grid']['ny']
+        nz = namelist_data['grid']['nz']
+        init_data = self._load_initial_conditions(inputfile, nx, ny, nz)
 
         # Load soil properties before creating configs
         self.logger.info('Loading soil properties')
@@ -125,11 +128,12 @@ class Input:
         rad_data = namelist_data['radiation']
         self.radiation: RadiationConfig = RadiationConfig(**rad_data)
         self.output: OutputConfig = OutputConfig(**namelist_data['output'])
-        self.grid: GridConfig = GridConfig(nx=namelist_data['grid']['nx'],
-                                           ny=namelist_data['grid']['ny'],
-                                           nz=namelist_data['grid']['nz'],
-                                           z=init_data['z']
-                                           )
+        self.grid: GridConfig = GridConfig(
+            nx=nx,
+            ny=ny,
+            nz=nz,
+            z=init_data['z']
+        )
         self.initial: SoilState = SoilState(
             temperature=init_data['temperature'],
             moisture=init_data['moisture'],
@@ -175,7 +179,8 @@ class Input:
             raise
 
     def _load_initial_conditions(
-            self, inputfile: str) -> dict[str, NDArray]:
+            self, inputfile: str, nx: int, ny: int,
+            nz: int) -> dict[str, NDArray]:
         """Loads data from the NetCDF initialization file.
 
         Args:
@@ -199,28 +204,136 @@ class Input:
                 soil_q_var = inifile.variables['soil_q'][:]
                 soil_type_var = inifile.variables['soil_type'][:]
 
-                # soil_type_var should be a string array with soil type names
-                # Handle various string representations: Unicode, byte strings, or object arrays
-                if soil_type_var.dtype.kind in ('U', 'S', 'O'):  # Unicode, byte string, or object
-                    try:
-                        soil_type_names = np.array(
-                            [str(s) for s in soil_type_var], dtype=object
-                        )
-                    except (TypeError, ValueError) as e:
-                        raise ValueError(
-                            f"Failed to convert soil_type variable to strings: {e}"
-                        ) from e
-                else:
+                ncol = nx * ny
+
+                def _decode_soil_type(array: NDArray) -> NDArray:
+                    if array.dtype.kind == 'S':
+                        return np.char.decode(array, 'utf-8').astype(object)
+                    if array.dtype.kind in ('U', 'O'):
+                        return np.asarray(array, dtype=object).astype(str)
                     raise ValueError(
                         f"soil_type variable must contain strings, "
-                        f"got dtype {soil_type_var.dtype}"
+                        f"got dtype {array.dtype}"
+                    )
+
+                def _ensure_z_1d(soil_z: NDArray) -> NDArray[np.float64]:
+                    z = (-1) * soil_z.astype('float')
+                    if z.ndim == 1:
+                        if z.shape[0] != nz:
+                            raise ValueError(
+                                f"soil_z length {z.shape[0]} does not match "
+                                f"namelist nz={nz}."
+                            )
+                        return z
+                    if z.ndim == 2:
+                        if z.shape == (nz, ncol):
+                            ref = z[:, 0]
+                            if not np.allclose(z, ref[:, None]):
+                                raise ValueError(
+                                    "soil_z varies across columns; "
+                                    "horizontal variation is not supported."
+                                )
+                            return ref
+                        raise ValueError(
+                            f"soil_z shape {z.shape} must be (nz, ncol) or "
+                            f"(nz,) when using flattened columns."
+                        )
+                    if z.ndim == 3:
+                        if z.shape != (nz, ny, nx):
+                            raise ValueError(
+                                f"soil_z shape {z.shape} does not match "
+                                f"(nz, ny, nx)=({nz}, {ny}, {nx})."
+                            )
+                        ref = z[:, 0, 0]
+                        if not np.allclose(z, ref[:, None, None]):
+                            raise ValueError(
+                                "soil_z varies across columns; "
+                                "horizontal variation is not supported."
+                            )
+                        return ref
+                    raise ValueError(
+                        f"soil_z has unsupported dimensions: {z.ndim}."
+                    )
+
+                def _reshape_soil_field(
+                    field: NDArray, name: str
+                ) -> NDArray[np.float64]:
+                    data = field.astype('float')
+                    if data.ndim == 1:
+                        if data.shape[0] != nz:
+                            raise ValueError(
+                                f"{name} length {data.shape[0]} does not "
+                                f"match namelist nz={nz}."
+                            )
+                        if ncol == 1:
+                            return data
+                        return np.repeat(data[:, None], ncol, axis=1)
+                    if data.ndim == 2:
+                        if data.shape == (nz, ncol):
+                            return data
+                        if data.shape == (nz, 1) and ncol > 1:
+                            return np.repeat(data, ncol, axis=1)
+                        raise ValueError(
+                            f"{name} shape {data.shape} must be (nz, ncol) "
+                            f"or (nz,) for single-column runs."
+                        )
+                    if data.ndim == 3:
+                        if data.shape != (nz, ny, nx):
+                            raise ValueError(
+                                f"{name} shape {data.shape} does not match "
+                                f"(nz, ny, nx)=({nz}, {ny}, {nx})."
+                            )
+                        return data.reshape(nz, ncol)
+                    raise ValueError(
+                        f"{name} has unsupported dimensions: {data.ndim}."
+                    )
+
+                def _reshape_soil_type(
+                    field: NDArray, name: str
+                ) -> NDArray:
+                    data = _decode_soil_type(field)
+                    if data.ndim == 1:
+                        if data.shape[0] != nz:
+                            raise ValueError(
+                                f"{name} length {data.shape[0]} does not "
+                                f"match namelist nz={nz}."
+                            )
+                        return data
+                    if data.ndim == 2:
+                        if data.shape != (nz, ncol):
+                            raise ValueError(
+                                f"{name} shape {data.shape} must be "
+                                f"(nz, ncol) when using flattened columns."
+                            )
+                        ref = data[:, 0]
+                        if not np.all(data == ref[:, None]):
+                            raise ValueError(
+                                "soil_type varies across columns; "
+                                "horizontal variation is not supported."
+                            )
+                        return ref
+                    if data.ndim == 3:
+                        if data.shape != (nz, ny, nx):
+                            raise ValueError(
+                                f"{name} shape {data.shape} does not match "
+                                f"(nz, ny, nx)=({nz}, {ny}, {nx})."
+                            )
+                        ref = data[:, 0, 0]
+                        if not np.all(data == ref[:, None, None]):
+                            raise ValueError(
+                                "soil_type varies across columns; "
+                                "horizontal variation is not supported."
+                            )
+                        return ref
+                    raise ValueError(
+                        f"{name} has unsupported dimensions: {data.ndim}."
                     )
 
                 init_dict = {
-                    'z': (-1) * soil_z_var.astype('float'),
-                    'temperature': soil_T_var.astype('float'),
-                    'moisture': soil_q_var.astype('float'),
-                    'type': soil_type_names
+                    'z': _ensure_z_1d(soil_z_var),
+                    'temperature': _reshape_soil_field(soil_T_var, "soil_T"),
+                    'moisture': _reshape_soil_field(soil_q_var, "soil_q"),
+                    'type': _reshape_soil_type(soil_type_var, "soil_type"),
                 }
             self.logger.info('--- initial conditions loaded successfully')
             return init_dict
@@ -288,11 +401,52 @@ class Input:
                 metfile.set_auto_mask(False)
                 ntime = len(metfile.dimensions['t'])
                 tstep = metfile.variables['tstep'][0].astype('float')
-                atm_U = metfile.variables['atm_U'][:].astype('float')
-                atm_T = metfile.variables['atm_T'][:].astype('float')
-                atm_q = metfile.variables['atm_q'][:].astype('float')
-                atm_p = metfile.variables['atm_p'][:].astype('float')
-                r_net = metfile.variables['R_net'][:].astype('float')
+                atm_U = metfile.variables['atm_U'][:]
+                atm_T = metfile.variables['atm_T'][:]
+                atm_q = metfile.variables['atm_q'][:]
+                atm_p = metfile.variables['atm_p'][:]
+                r_net = metfile.variables['R_net'][:]
+
+                ncol = self.grid.nx * self.grid.ny
+                ny = self.grid.ny
+                nx = self.grid.nx
+
+                def _reshape_forcing(field: NDArray, name: str) -> NDArray:
+                    data = field.astype('float')
+                    if data.ndim == 1:
+                        if data.shape[0] != ntime:
+                            raise ValueError(
+                                f"{name} length {data.shape[0]} does not "
+                                f"match forcing ntime={ntime}."
+                            )
+                        if ncol == 1:
+                            return data
+                        return np.repeat(data[:, None], ncol, axis=1)
+                    if data.ndim == 2:
+                        if data.shape == (ntime, ncol):
+                            return data
+                        if data.shape == (ntime, 1) and ncol > 1:
+                            return np.repeat(data, ncol, axis=1)
+                        raise ValueError(
+                            f"{name} shape {data.shape} must be (ntime, ncol) "
+                            f"or (ntime,) for single-column runs."
+                        )
+                    if data.ndim == 3:
+                        if data.shape != (ntime, ny, nx):
+                            raise ValueError(
+                                f"{name} shape {data.shape} does not match "
+                                f"(ntime, ny, nx)=({ntime}, {ny}, {nx})."
+                            )
+                        return data.reshape(ntime, ncol)
+                    raise ValueError(
+                        f"{name} has unsupported dimensions: {data.ndim}."
+                    )
+
+                atm_U = _reshape_forcing(atm_U, "atm_U")
+                atm_T = _reshape_forcing(atm_T, "atm_T")
+                atm_q = _reshape_forcing(atm_q, "atm_q")
+                atm_p = _reshape_forcing(atm_p, "atm_p")
+                r_net = _reshape_forcing(r_net, "R_net")
 
                 # Validate and correct forcing data
                 self._validate_forcing_data(atm_U, atm_T, atm_q, atm_p,
@@ -350,11 +504,10 @@ class Input:
         # Check temperature
         T_bad = (atm_T < T_min) | (atm_T > T_max)
         if np.any(T_bad):
-            num_bad = np.sum(T_bad)
+            num_bad = int(np.sum(T_bad))
             self.logger.warning(
-                'Found %d timesteps with out-of-range temperature '
-                '(expected %f-%f K). Values: %s', num_bad, T_min, T_max,
-                atm_T[T_bad])
+                'Found %d forcing entries with out-of-range temperature '
+                '(expected %f-%f K).', num_bad, T_min, T_max)
             issues_found = True
             # Clamp to valid range
             atm_T[T_bad] = np.clip(atm_T[T_bad], T_min, T_max)
@@ -362,11 +515,10 @@ class Input:
         # Check pressure
         p_bad = (atm_p < p_min) | (atm_p > p_max)
         if np.any(p_bad):
-            num_bad = np.sum(p_bad)
+            num_bad = int(np.sum(p_bad))
             self.logger.warning(
-                'Found %d timesteps with out-of-range pressure '
-                '(expected %f-%f Pa). Values: %s', num_bad, p_min, p_max,
-                atm_p[p_bad])
+                'Found %d forcing entries with out-of-range pressure '
+                '(expected %f-%f Pa).', num_bad, p_min, p_max)
             issues_found = True
             # Clamp to valid range
             atm_p[p_bad] = np.clip(atm_p[p_bad], p_min, p_max)
@@ -374,11 +526,10 @@ class Input:
         # Check specific humidity
         q_bad = (atm_q < q_min) | (atm_q > q_max)
         if np.any(q_bad):
-            num_bad = np.sum(q_bad)
+            num_bad = int(np.sum(q_bad))
             self.logger.warning(
-                'Found %d timesteps with out-of-range humidity '
-                '(expected %f-%f kg/kg). Values: %s', num_bad, q_min, q_max,
-                atm_q[q_bad])
+                'Found %d forcing entries with out-of-range humidity '
+                '(expected %f-%f kg/kg).', num_bad, q_min, q_max)
             issues_found = True
             # Clamp to valid range (especially fix negative values)
             atm_q[q_bad] = np.clip(atm_q[q_bad], q_min, q_max)
@@ -386,11 +537,10 @@ class Input:
         # Check wind speed
         U_bad = (atm_U <= U_min) | (atm_U > U_max)
         if np.any(U_bad):
-            num_bad = np.sum(U_bad)
+            num_bad = int(np.sum(U_bad))
             self.logger.warning(
-                'Found %d timesteps with out-of-range wind speed '
-                '(expected %f-%f m/s). Values: %s', num_bad, U_min, U_max,
-                atm_U[U_bad])
+                'Found %d forcing entries with out-of-range wind speed '
+                '(expected %f-%f m/s).', num_bad, U_min, U_max)
             issues_found = True
             # Fix zero/negative and excessive wind speeds
             atm_U[atm_U <= U_min] = U_min
@@ -399,11 +549,10 @@ class Input:
         # Check net radiation
         R_bad = (r_net < R_min) | (r_net > R_max)
         if np.any(R_bad):
-            num_bad = np.sum(R_bad)
+            num_bad = int(np.sum(R_bad))
             self.logger.warning(
-                'Found %d timesteps with suspicious radiation '
-                '(expected %f-%f W/m²). Values: %s', num_bad, R_min, R_max,
-                r_net[R_bad])
+                'Found %d forcing entries with suspicious radiation '
+                '(expected %f-%f W/m²).', num_bad, R_min, R_max)
             issues_found = True
             # Clamp to physically reasonable range
             r_net[R_bad] = np.clip(r_net[R_bad], R_min, R_max)
@@ -439,17 +588,45 @@ class Input:
                 f"z_s={self.surface.z_s} must be > "
                 f"z_t={self.surface.z_t}.")
 
-        if len(self.initial.temperature) != self.grid.nz:
-            raise ValueError(
-                f"Namelist nlevs={self.grid.nz} does not match "
-                f"init file soil_T length of "
-                f"{len(self.initial.temperature)}.")
+        ncol = self.grid.nx * self.grid.ny
+        soil_temp = np.asarray(self.initial.temperature)
+        soil_mois = np.asarray(self.initial.moisture)
 
-        if len(self.initial.moisture) != self.grid.nz:
+        if soil_temp.ndim == 1:
+            if soil_temp.shape[0] != self.grid.nz:
+                raise ValueError(
+                    f"Namelist nlevs={self.grid.nz} does not match "
+                    f"init file soil_T length of {soil_temp.shape[0]}."
+                )
+        elif soil_temp.ndim == 2:
+            if soil_temp.shape != (self.grid.nz, ncol):
+                raise ValueError(
+                    f"init file soil_T shape {soil_temp.shape} does not "
+                    f"match (nz, ncol)=({self.grid.nz}, {ncol})."
+                )
+        else:
             raise ValueError(
-                f"Namelist nlevs={self.grid.nz} does not match "
-                f"init file soil_q length of "
-                f"{len(self.initial.moisture)}.")
+                f"init file soil_T has unsupported dimensions: "
+                f"{soil_temp.ndim}."
+            )
+
+        if soil_mois.ndim == 1:
+            if soil_mois.shape[0] != self.grid.nz:
+                raise ValueError(
+                    f"Namelist nlevs={self.grid.nz} does not match "
+                    f"init file soil_q length of {soil_mois.shape[0]}."
+                )
+        elif soil_mois.ndim == 2:
+            if soil_mois.shape != (self.grid.nz, ncol):
+                raise ValueError(
+                    f"init file soil_q shape {soil_mois.shape} does not "
+                    f"match (nz, ncol)=({self.grid.nz}, {ncol})."
+                )
+        else:
+            raise ValueError(
+                f"init file soil_q has unsupported dimensions: "
+                f"{soil_mois.ndim}."
+            )
 
         if len(self.initial.type) != self.grid.nz:
             raise ValueError(
@@ -460,11 +637,16 @@ class Input:
         # Moisture must be >= 0 and <= porosity (will be validated
         # against residual later). Issues warnings instead of errors to
         # allow running with imperfect data
-        for i, (moisture, soil_type_name) in enumerate(
-                zip(self.initial.moisture, self.soil_type_names)):
-            if moisture < 0:
-                self.logger.warning('Layer %d: soil moisture %f is negative. '
-                                   'Moisture must be >= 0.', i, moisture)
+        moisture_by_layer = soil_mois
+        if moisture_by_layer.ndim == 1:
+            moisture_by_layer = moisture_by_layer[:, None]
+
+        for i, soil_type_name in enumerate(self.soil_type_names):
+            layer_moisture = moisture_by_layer[i]
+            if np.any(layer_moisture < 0):
+                self.logger.warning(
+                    'Layer %d: soil moisture has negative values. '
+                    'Moisture must be >= 0.', i)
             # Get porosity for this soil type to validate upper bound
             soil_type_lower = soil_type_name.lower()
             if soil_type_lower not in self.soil_properties:
@@ -473,9 +655,9 @@ class Input:
                     i, soil_type_name)
             else:
                 porosity = self.soil_properties[soil_type_lower]['porosity']
-                if moisture > porosity:
+                if np.any(layer_moisture > porosity):
                     self.logger.warning(
-                        'Layer %d: soil moisture %f exceeds porosity %f.',
-                        i, moisture, porosity)
+                        'Layer %d: soil moisture exceeds porosity %f.',
+                        i, porosity)
 
         self.logger.info('Physical consistency checks passed')
