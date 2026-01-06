@@ -610,7 +610,7 @@ class UtahLSM:
         It then iteratively blends the two in time until convergence.
         """
         # Local constants and variables
-        delta = self.input.numerics.coupling_relaxation
+        delta = 0.5#self.input.numerics.coupling_relaxation
 
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY

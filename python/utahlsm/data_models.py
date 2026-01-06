@@ -227,8 +227,6 @@ class NumericsConfig:
             using forcing[0] (offline mode).
         initialize_surface_temperature_from_seb: If True, initialize the top
             soil-layer temperature by solving SEB at time=0 using forcing[0].
-        coupling_relaxation: Relaxation factor (0–1) used in coupled
-            surface iterations.
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
@@ -237,7 +235,6 @@ class NumericsConfig:
     tolerances: TolerancesConfig
     warm_start_turbulence: bool = False
     initialize_surface_temperature_from_seb: bool = False
-    coupling_relaxation: float = 0.5
 
 @dataclass(frozen=True)
 class TimeConfig:

@@ -17,7 +17,6 @@
                 "diffusion_back_weight": { "type": "number",  "minimum": 0, "maximum": 1},
                 "warm_start_turbulence": { "type": "boolean" },
                 "initialize_surface_temperature_from_seb": { "type": "boolean" },
-                "coupling_relaxation": { "type": "number", "minimum": 0, "maximum": 1 },
                 "iterations": {
                     "type": "object",
                     "properties": {

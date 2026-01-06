@@ -223,7 +223,6 @@ namelist['general']['log_level'] = "info"
 namelist['numerics']['diffusion_back_weight'] = float(0.5)
 namelist['numerics']['warm_start_turbulence'] = True
 namelist['numerics']['initialize_surface_temperature_from_seb'] = True
-namelist['numerics']['coupling_relaxation'] = float(0.5)
 namelist['numerics']['iterations']['sfc_flux'] = 100
 namelist['numerics']['iterations']['seb_bracket'] = 100
 namelist['numerics']['iterations']['seb_root'] = 100
