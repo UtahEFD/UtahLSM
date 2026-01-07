@@ -21,7 +21,6 @@ def _make_minimal_model(
     coupling_iterations: int = 3,
     tol_temp: float = 1e-6,
     tol_mois: float = 1e-12,
-    coupling_relaxation: float = 1.0,
 ) -> UtahLSM:
     """Create a minimal UtahLSM instance for unit-testing private methods."""
     model = UtahLSM.__new__(UtahLSM)
@@ -43,7 +42,6 @@ def _make_minimal_model(
                 coupling_temp=tol_temp,
                 coupling_mois=tol_mois,
             ),
-            coupling_relaxation=coupling_relaxation,
         )
     )
     model.sfc_state = SurfaceState(temperature=300.0, moisture=0.2)

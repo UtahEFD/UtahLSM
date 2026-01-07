@@ -142,7 +142,7 @@ class UtahLSM:
 
         # Solve surface energy and moisture budgets
         self._solve_surface_coupling()
-        
+
         # Solve diffusion equations for heat and moisture
         self._solve_diffusion_heat()
         self._solve_diffusion_mois()
@@ -209,7 +209,7 @@ class UtahLSM:
                 raise ValueError(
                     f"{name} length {data.shape[0]} does not match nz={nz}."
                 )
-            return data[:, None] if ncol > 1 else data[:, None]
+            return data[:, None]
         if data.ndim == 2:
             if data.shape == (nz, ncol):
                 return data
@@ -827,7 +827,7 @@ class UtahLSM:
             'dT: %.4f, dq: %.4e', max_outer_iter,
             float(np.max(diff_T)), float(np.max(diff_q)))
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
-    
+
     def _solve_diffusion(self,state_field: np.ndarray,get_diffusivity: Callable,
                          get_conductivity: Optional[Callable],
                          sfc_boundary: float,field_name: str = 'field') -> None:

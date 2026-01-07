@@ -13,8 +13,8 @@
 #
 """Factory for creating surface model instances."""
 
-from ...exceptions import NamelistError
 from ...data_models import SurfaceConfig
+from ...exceptions import NamelistError
 from ...util.io import logging_helper
 from .sfc import Surface
 from .sfc_most import SurfaceMOST
