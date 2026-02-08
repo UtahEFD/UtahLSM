@@ -126,6 +126,8 @@ class UtahLSM:
         updating the soil profiles via diffusion solvers.
         """
         self.logger.info('Solving soil state')
+        if hasattr(self, 'soil'):
+            self.soil._validate_moisture_bounds(self.soil_state.moisture)
 
         if (getattr(self.input, "numerics", None) is not None
             and getattr(self.input.numerics, "warm_start_turbulence", False)
@@ -499,21 +501,29 @@ class UtahLSM:
         # Final flux update with resolved temperatures (vectorized, once)
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
 
-    def _compute_seb_vec(
+    def _solve_most(
         self,
         sfc_T: np.ndarray,
-        initial_L: np.ndarray
-    ) -> np.ndarray:
-        """Computes the SEB residual for all columns without mutating state.
+        sfc_q: np.ndarray,
+        L_init: np.ndarray,
+        max_iter: int,
+    ) -> tuple:
+        """Computes surface fluxes via Monin-Obukhov Similarity Theory.
 
-        This is a pure function used during root-finding iterations.
+        This is the shared MOST solver used by both the SEB residual
+        computation and the final flux update. All columns are processed
+        in parallel.
 
         Args:
             sfc_T: Surface temperature array [K] (ncol,).
-            initial_L: Fixed Obukhov length array [m] (ncol,).
+            sfc_q: Surface moisture array [m^3/m^3] (ncol,).
+            L_init: Initial Obukhov length array [m] (ncol,).
+            max_iter: Maximum number of MOST iterations. Use 1 for a
+                single-pass evaluation with fixed L.
 
         Returns:
-            Array of SEB residuals [W/m^2] (ncol,).
+            Tuple of (ustar, flux_wT, flux_wq, ground_heat, L,
+                      sensible, latent, converged).
         """
         CP = c.thermodynamic.SPECIFIC_HEAT
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
@@ -522,10 +532,7 @@ class UtahLSM:
         G = c.physical.GRAVITY
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         TOL = self.input.numerics.tolerances.sfc_flux
-        ITER_MAX = self.input.numerics.iterations.sfc_flux
 
-        sfc_T = np.asarray(sfc_T)
-        sfc_q = self.sfc_state.moisture
         atm_T = self.atm_state.temperature
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
@@ -545,17 +552,16 @@ class UtahLSM:
         ref_T = atm_T
         rho = atm_p / (RD * atm_T)
 
-        # Surface-air specific humidity
         gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
-
-        # Ground heat flux
         ground_heat = K_mid * (sfc_T - soil_T1) / dz
 
-        # Iterate for Obukhov length with fixed initial L
-        L = np.array(initial_L, copy=True)
+        L = np.array(L_init, copy=True)
         converged = np.zeros_like(L, dtype=bool)
+        ustar = np.zeros_like(L)
+        flux_wT = np.zeros_like(L)
+        flux_wq = np.zeros_like(L)
 
-        for _ in range(ITER_MAX):
+        for _ in range(max_iter):
             fm = self.sfc.fm(z_m, z_o, L)
             fh = self.sfc.fh(z_s, z_t, L)
 
@@ -589,19 +595,37 @@ class UtahLSM:
             if converged.all():
                 break
 
-        # Compute fluxes
         sensible = rho * CP * flux_wT
         latent = rho * LV * flux_wq
 
-        # SEB residual
-        seb = (
-            self.atm_state.radiation_net
-            - ground_heat
-            - sensible
-            - latent
+        return ustar, flux_wT, flux_wq, ground_heat, L, sensible, latent, converged
+
+    def _compute_seb_vec(
+        self,
+        sfc_T: np.ndarray,
+        initial_L: np.ndarray
+    ) -> np.ndarray:
+        """Computes the SEB residual for all columns without mutating state.
+
+        Uses a single-pass MOST evaluation with fixed Obukhov length for
+        efficiency during root-finding iterations. The final consistent L
+        is resolved by _compute_fluxes after the root is found.
+
+        Args:
+            sfc_T: Surface temperature array [K] (ncol,).
+            initial_L: Fixed Obukhov length array [m] (ncol,).
+
+        Returns:
+            Array of SEB residuals [W/m^2] (ncol,).
+        """
+        sfc_T = np.asarray(sfc_T)
+        sfc_q = self.sfc_state.moisture
+
+        _, _, _, ground_heat, _, sensible, latent, _ = self._solve_most(
+            sfc_T, sfc_q, initial_L, max_iter=1
         )
 
-        return seb
+        return self.atm_state.radiation_net - ground_heat - sensible - latent
 
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB).
@@ -610,7 +634,7 @@ class UtahLSM:
         It then iteratively blends the two in time until convergence.
         """
         # Local constants and variables
-        delta = 0.5#self.input.numerics.coupling_relaxation
+        delta = 0.5
 
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
@@ -694,91 +718,21 @@ class UtahLSM:
             sfc_T: Surface temperature array [K] (ncol,).
             sfc_q: Surface moisture array [m^3/m^3] (ncol,).
         """
-        VK = c.physical.VON_KARMAN
-        G = c.physical.GRAVITY
-        CP = c.thermodynamic.SPECIFIC_HEAT
-        RD = c.thermodynamic.GAS_CONSTANT_DRY
-        LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
-        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
-        TOL = self.input.numerics.tolerances.sfc_flux
         ITER_MAX = self.input.numerics.iterations.sfc_flux
 
         sfc_T_vec = self._as_column_vector(sfc_T, "sfc_T")
         sfc_q_vec = self._as_column_vector(sfc_q, "sfc_q")
-        atm_T = self.atm_state.temperature
-        atm_p = self.atm_state.pressure
-        atm_q = self.atm_state.specific_humidity
-        atm_ws = self.atm_state.wind_speed
-        L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
-        K_mid = self.solver_state.conductivity_thermal_mid
-        soil_T1 = self.soil_state.temperature[1]
+        L_init = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
 
-        ref_T = atm_T
-        rho = atm_p / (RD * atm_T)
-
-        z_m = self.input.surface.z_m
-        z_o = self.input.surface.z_o
-        z_s = self.input.surface.z_s
-        z_t = self.input.surface.z_t
-        zeta_max = self.input.surface.zeta_max
-        gustiness = self.input.surface.gustiness
-        gustiness_stable_only = self.input.surface.gustiness_stable_only
-        dz = self.input.grid.z[0] - self.input.grid.z[1]
-
-        # Compute surface-air specific humidity
-        gnd_q = self.soil.surface_mixing_ratio(sfc_T_vec, sfc_q_vec, atm_p)
-
-        # Compute ground heat flux
-        ground_heat = K_mid * (sfc_T_vec - soil_T1) / dz
-
-        # Iteratively solve for fluxes and stability
-        converged = np.zeros_like(L, dtype=bool)
-        flux_wT = np.zeros_like(L)
-        flux_wq = np.zeros_like(L)
-        ustar = np.zeros_like(L)
-
-        for _ in range(ITER_MAX):
-            fm = self.sfc.fm(z_m, z_o, L)
-            fh = self.sfc.fh(z_s, z_t, L)
-
-            wind_eff = atm_ws
-            if gustiness > 0.0:
-                gust = np.hypot(atm_ws, gustiness)
-                if gustiness_stable_only:
-                    wind_eff = np.where(L >= 0.0, gust, atm_ws)
-                else:
-                    wind_eff = gust
-
-            ustar = wind_eff * fm
-            flux_wT = (sfc_T_vec - atm_T) * ustar * fh
-            flux_wq = (gnd_q - atm_q) * ustar * fh
-            flux_wTv = flux_wT + EVT * ref_T * flux_wq
-
-            L_new = np.where(
-                flux_wTv != 0.0,
-                -(ustar**3) * ref_T / (VK * G * flux_wTv),
-                1e6,
-            )
-
-            zeta = z_m / L_new
-            L_new = np.where(zeta > zeta_max, z_m / zeta_max, L_new)
-            L_new = np.where(zeta < -zeta_max, -z_m / zeta_max, L_new)
-
-            diff = np.abs(L_new - L)
-            converged |= diff <= TOL
-            L = np.where(converged, L, L_new)
-
-            if converged.all():
-                break
+        ustar, flux_wT, flux_wq, ground_heat, L, sensible, latent, converged = (
+            self._solve_most(sfc_T_vec, sfc_q_vec, L_init, max_iter=ITER_MAX)
+        )
 
         if not converged.all():
             self.logger.warning(
                 'Obukhov length did not converge for %d columns.',
                 int(np.sum(~converged)),
             )
-
-        sensible = rho * CP * flux_wT
-        latent = rho * LV * flux_wq
 
         self.sfc_state.turbulence.obukhov_length[:] = L
         self.sfc_state.turbulence.friction_velocity[:] = ustar

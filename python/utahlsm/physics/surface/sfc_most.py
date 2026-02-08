@@ -250,7 +250,7 @@ class SurfaceMOST(Surface):
         return (
             2.0 * np.log((1.0 + x) / 2.0)
             + np.log((1.0 + x**2.0) / 2.0)
-            - 2.0 * np.arctan2(1.0, self.phim_unstable(zeta))
+            - 2.0 * np.arctan(x)
             + PI / 2.0
         )
 

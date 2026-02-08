@@ -24,6 +24,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
+import numpy as np
+
 from ...data_models import AtmosphericState, SurfaceState
 from ...util.io import logging_helper
 
@@ -55,8 +57,9 @@ class Radiation(ABC):
             emissivity: The surface emissivity (dimensionless).
         """
         self.logger: logging.Logger = logging_helper.get_logger('RAD')
-        self.latitude: float = latitude
-        self.longitude: float = longitude
+        # Store as radians for internal trig usage.
+        self.latitude: float = float(np.deg2rad(latitude))
+        self.longitude: float = float(np.deg2rad(longitude))
         self.albedo: float = albedo
         self.emissivity: float = emissivity
 

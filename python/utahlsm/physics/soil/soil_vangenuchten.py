@@ -84,8 +84,6 @@ class VanGenuchten(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             psi_sat = self.properties.psi_sat[level]
@@ -142,8 +140,6 @@ class VanGenuchten(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             porosity = self.properties.porosity[level]
@@ -182,8 +178,6 @@ class VanGenuchten(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q)
-
         b = self._expand_profile_property(self.properties.b, soil_q)
         psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
         porosity = self._expand_profile_property(

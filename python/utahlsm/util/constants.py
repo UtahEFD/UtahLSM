@@ -19,6 +19,8 @@ namespaces to provide a clean, organized interface.
 """
 from types import SimpleNamespace
 
+import numpy as np
+
 # Thermodynamic constants
 thermodynamic = SimpleNamespace(
     GAS_CONSTANT_DRY=287.0,  # Gas constant for dry air [J/kg-K]
@@ -42,7 +44,7 @@ numerical = SimpleNamespace(
 physical = SimpleNamespace(
     VON_KARMAN=0.41,  # Von Karman constant []
     GRAVITY=9.81,  # Gravitational acceleration [m/s^2]
-    PI=3.14159265358979,  # Pi
+    PI=np.pi,  # Pi
 )
 
 # Water properties

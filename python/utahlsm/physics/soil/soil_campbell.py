@@ -62,7 +62,10 @@ class Campbell(Soil):
         b = self.properties.b[0]
         psi_sat = self.properties.psi_sat[0]
         porosity = self.properties.porosity[0]
+        # Guard against psi_sfc == 0 (saturated soil); return porosity
+        psi_sfc = np.where(psi_sfc == 0, np.nan, psi_sfc)
         soil_q = porosity*(np.abs(psi_sat/psi_sfc)**(1./b))
+        soil_q = np.where(np.isnan(psi_sfc), porosity, soil_q)
 
         return soil_q
 
@@ -83,8 +86,6 @@ class Campbell(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             psi_sat = self.properties.psi_sat[level]
@@ -118,8 +119,6 @@ class Campbell(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             porosity = self.properties.porosity[level]
@@ -149,8 +148,6 @@ class Campbell(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q)
-
         b = self._expand_profile_property(self.properties.b, soil_q)
         psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
         porosity = self._expand_profile_property(

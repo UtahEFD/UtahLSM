@@ -21,6 +21,7 @@ access all setup information.
 """
 import json
 import logging
+from pathlib import Path
 from typing import Optional
 
 import jsonschema
@@ -161,7 +162,7 @@ class Input:
             jsonschema.ValidationError: If the namelist does not match
                 the schema.
         """
-        schema_path = 'utahlsm/util/io/schema_namelist.json'
+        schema_path = str(Path(__file__).parent / 'schema_namelist.json')
 
         try:
             with open(schema_path, encoding='utf-8') as f:

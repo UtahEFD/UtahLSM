@@ -100,11 +100,12 @@ class RadBasic(Radiation):
                          np.cos(self.latitude)*np.cos(declination) *
                          np.cos((2*PI*time_utc/(24.0*3600.0))-
                                 self.longitude))
-        if sin_elevation > 0:
-            transmissivity = 0.6 + 0.2*sin_elevation
-            sw_in = SC * transmissivity * sin_elevation
-        else:
-            sw_in = 0
+        transmissivity = 0.6 + 0.2*sin_elevation
+        sw_in = np.where(
+            sin_elevation > 0,
+            SC * transmissivity * sin_elevation,
+            0.0
+        )
         return sw_in
 
     def _shortwave_out(self, sw_in: float) -> float:
@@ -133,7 +134,7 @@ class RadBasic(Radiation):
         """
         # local constants
         EPSILON = c.thermodynamic.EPSILON
-        SB = c.physical.STEFAN_BOLTZMANN
+        SB = c.radiation.STEFAN_BOLTZMANN
 
         # local references to atmospheric and surface state
         pa: float = atm_state.pressure
@@ -156,7 +157,7 @@ class RadBasic(Radiation):
             The outgoing longwave radiation in W/m^2.
         """
         # local constants
-        SB: float = c.physical.STEFAN_BOLTZMANN
+        SB: float = c.radiation.STEFAN_BOLTZMANN
 
         # local references to surface state
         Ts: float = sfc_state.temperature
