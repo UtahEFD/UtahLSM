@@ -134,6 +134,26 @@ class Campbell(Soil):
 
         return conductivity
 
+    def conductivity_gradient(
+        self, soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Computes the linearized dK/dθ for the Campbell model.
+
+        For Campbell (θ_r = 0): K'_lin = K_sat/φ · (θ/φ)^(2b+2) = K(θ)/θ.
+
+        Args:
+            soil_q: Soil moisture content for all layers [m^3/m^3].
+
+        Returns:
+            Linearized dK/dθ for all layers [m/s].
+        """
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        gradient = K_sat / porosity * (soil_q / porosity) ** (2.0 * b + 2.0)
+        return gradient
+
     def diffusivity_moisture(
         self, soil_q: NDArray[np.float64]
     ) -> NDArray[np.float64]:

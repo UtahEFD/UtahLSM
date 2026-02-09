@@ -55,7 +55,7 @@ def test_zeta_max_changes_obukhov_length_clamp():
             gustiness=0.0,
             gustiness_stable_only=True,
         ),
-        grid=SimpleNamespace(z=np.array([0.0, 0.05]), nz=2),
+        grid=SimpleNamespace(z=np.array([0.0, 0.05]), nz=2, nx=1, ny=1),
         numerics=SimpleNamespace(
             tolerances=SimpleNamespace(sfc_flux=0.0),
             iterations=SimpleNamespace(sfc_flux=1),

@@ -129,8 +129,7 @@ class UtahLSM:
         if hasattr(self, 'soil'):
             self.soil._validate_moisture_bounds(self.soil_state.moisture)
 
-        if (getattr(self.input, "numerics", None) is not None
-            and getattr(self.input.numerics, "warm_start_turbulence", False)
+        if (self.input.numerics.warm_start_turbulence
             and not getattr(self, "_did_warm_start_turbulence", False)
         ):
             self._warm_start_turbulence()
@@ -164,8 +163,8 @@ class UtahLSM:
     def _setup_states(self) -> None:
         """Initializes all state containers for the model."""
         self.logger.info('Setting up initial states')
-        nx = getattr(self.input.grid, "nx", 1)
-        ny = getattr(self.input.grid, "ny", 1)
+        nx = self.input.grid.nx
+        ny = self.input.grid.ny
         self.ncol = nx * ny
         self.soil_state: SoilState = replace(self.input.initial)
         self.soil_state.temperature = self._ensure_column_field(
@@ -202,9 +201,9 @@ class UtahLSM:
         """Ensures soil fields are shaped as (nz, ncol)."""
         data = np.asarray(field, dtype=float)
         nz = self.input.grid.nz
-        ny = getattr(self.input.grid, "ny", 1)
-        nx = getattr(self.input.grid, "nx", 1)
-        ncol = getattr(self, "ncol", ny * nx)
+        ny = self.input.grid.ny
+        nx = self.input.grid.nx
+        ncol = self.ncol
 
         if data.ndim == 1:
             if data.shape[0] != nz:
@@ -235,8 +234,8 @@ class UtahLSM:
     def _as_column_vector(self, value: object, name: str) -> np.ndarray:
         """Coerces scalars or (y, x) fields into (ncol,) arrays."""
         data = np.asarray(value, dtype=float)
-        ny = getattr(self.input.grid, "ny", 1)
-        nx = getattr(self.input.grid, "nx", 1)
+        ny = self.input.grid.ny
+        nx = self.input.grid.nx
         ncol = self.ncol
 
         if data.ndim == 0:
@@ -313,8 +312,8 @@ class UtahLSM:
 
     def _setup_output(self) -> None:
         """Sets up the output file dimensions and fields."""
-        nx = getattr(self.input.grid, "nx", 1)
-        ny = getattr(self.input.grid, "ny", 1)
+        nx = self.input.grid.nx
+        ny = self.input.grid.ny
         self.output_dims: dict = {
             't': 0,
             'z': self.input.grid.nz
@@ -332,17 +331,17 @@ class UtahLSM:
             self.soil_state.moisture[0], copy=True)
 
         forcing0 = None
-        if getattr(self.input, "forcing", None) is not None:
-            atmos = getattr(self.input.forcing, "atmos", [])
+        if self.input.forcing is not None:
+            atmos = self.input.forcing.atmos
             forcing0 = atmos[0] if atmos else None
 
-        if forcing0 is not None and getattr(
-            self.input.numerics, "initialize_surface_temperature_from_seb",False
+        if forcing0 is not None and (
+            self.input.numerics.initialize_surface_temperature_from_seb
         ):
             saved_atm_state = self._copy_atm_state()
             saved_tstep = getattr(self, "tstep", 0.0)
             self._load_atm_state(forcing0)
-            self.tstep = float(getattr(self.input.forcing, "tstep", 0.0))
+            self.tstep = float(self.input.forcing.tstep)
 
             self._solve_seb()
             self.soil_state.temperature[0] = self.sfc_state.temperature
@@ -358,9 +357,7 @@ class UtahLSM:
             self._load_atm_state(saved_atm_state)
             self.tstep = saved_tstep
 
-        if forcing0 is not None and getattr(
-            self.input.numerics, "warm_start_turbulence", False
-        ):
+        if forcing0 is not None and self.input.numerics.warm_start_turbulence:
             self._warm_start_turbulence()
             self._did_warm_start_turbulence = True
             if hasattr(self.output, "outfile") and hasattr(
@@ -386,20 +383,17 @@ class UtahLSM:
 
     def _warm_start_turbulence(self) -> None:
         """Warm-start MOST diagnostics using forcing[0] (offline mode only)."""
-        if getattr(self.input, "forcing", None) is None:
+        if self.input.forcing is None:
             return
-        atmos = getattr(self.input.forcing, "atmos", [])
+        atmos = self.input.forcing.atmos
         if not atmos:
             return
-        if not hasattr(self, "_compute_fluxes"):
-            return
-
         forcing0 = atmos[0]
         saved_atm_state = self._copy_atm_state()
         saved_tstep = getattr(self, "tstep", 0.0)
 
         self._load_atm_state(forcing0)
-        self.tstep = float(getattr(self.input.forcing, "tstep", 0.0))
+        self.tstep = float(self.input.forcing.tstep)
 
         sfc_T = np.array(self.soil_state.temperature[0], copy=True)
         sfc_q = np.array(self.soil_state.moisture[0], copy=True)
@@ -467,11 +461,13 @@ class UtahLSM:
 
             # Only recompute SEB for columns that changed
             if np.any(expand_left):
-                seb_a_new = self._compute_seb_vec(temp_a, initial_L)
-                seb_a = np.where(expand_left, seb_a_new, seb_a)
+                idx = np.where(expand_left)[0]
+                seb_a[idx] = self._compute_seb_vec(
+                    temp_a[idx], initial_L[idx], cols=idx)
             if np.any(expand_right):
-                seb_b_new = self._compute_seb_vec(temp_b, initial_L)
-                seb_b = np.where(expand_right, seb_b_new, seb_b)
+                idx = np.where(expand_right)[0]
+                seb_b[idx] = self._compute_seb_vec(
+                    temp_b[idx], initial_L[idx], cols=idx)
         else:
             # Check if any brackets failed after all iterations
             failed = seb_a * seb_b > 0
@@ -507,6 +503,7 @@ class UtahLSM:
         sfc_q: np.ndarray,
         L_init: np.ndarray,
         max_iter: int,
+        cols: Optional[np.ndarray] = None,
     ) -> tuple:
         """Computes surface fluxes via Monin-Obukhov Similarity Theory.
 
@@ -515,11 +512,15 @@ class UtahLSM:
         in parallel.
 
         Args:
-            sfc_T: Surface temperature array [K] (ncol,).
-            sfc_q: Surface moisture array [m^3/m^3] (ncol,).
-            L_init: Initial Obukhov length array [m] (ncol,).
+            sfc_T: Surface temperature array [K] (ncol,) or (len(cols),).
+            sfc_q: Surface moisture array [m^3/m^3], same shape as sfc_T.
+            L_init: Initial Obukhov length array [m], same shape as sfc_T.
             max_iter: Maximum number of MOST iterations. Use 1 for a
                 single-pass evaluation with fixed L.
+            cols: Optional array of column indices to evaluate. When
+                provided, only those columns are read from the model
+                state arrays. sfc_T, sfc_q, and L_init must already be
+                sliced to match len(cols).
 
         Returns:
             Tuple of (ustar, flux_wT, flux_wq, ground_heat, L,
@@ -533,12 +534,20 @@ class UtahLSM:
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         TOL = self.input.numerics.tolerances.sfc_flux
 
-        atm_T = self.atm_state.temperature
-        atm_p = self.atm_state.pressure
-        atm_q = self.atm_state.specific_humidity
-        atm_ws = self.atm_state.wind_speed
-        K_mid = self.solver_state.conductivity_thermal_mid
-        soil_T1 = self.soil_state.temperature[1]
+        if cols is not None:
+            atm_T = self.atm_state.temperature[cols]
+            atm_p = self.atm_state.pressure[cols]
+            atm_q = self.atm_state.specific_humidity[cols]
+            atm_ws = self.atm_state.wind_speed[cols]
+            K_mid = self.solver_state.conductivity_thermal_mid[cols]
+            soil_T1 = self.soil_state.temperature[1, cols]
+        else:
+            atm_T = self.atm_state.temperature
+            atm_p = self.atm_state.pressure
+            atm_q = self.atm_state.specific_humidity
+            atm_ws = self.atm_state.wind_speed
+            K_mid = self.solver_state.conductivity_thermal_mid
+            soil_T1 = self.soil_state.temperature[1]
 
         z_m = self.input.surface.z_m
         z_o = self.input.surface.z_o
@@ -603,29 +612,37 @@ class UtahLSM:
     def _compute_seb_vec(
         self,
         sfc_T: np.ndarray,
-        initial_L: np.ndarray
+        initial_L: np.ndarray,
+        cols: Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """Computes the SEB residual for all columns without mutating state.
+        """Computes the SEB residual without mutating state.
 
         Uses a single-pass MOST evaluation with fixed Obukhov length for
         efficiency during root-finding iterations. The final consistent L
         is resolved by _compute_fluxes after the root is found.
 
         Args:
-            sfc_T: Surface temperature array [K] (ncol,).
-            initial_L: Fixed Obukhov length array [m] (ncol,).
+            sfc_T: Surface temperature array [K] (ncol,) or (len(cols),).
+            initial_L: Fixed Obukhov length array [m], same shape as sfc_T.
+            cols: Optional array of column indices to evaluate. When
+                provided, only those columns are computed.
 
         Returns:
-            Array of SEB residuals [W/m^2] (ncol,).
+            Array of SEB residuals [W/m^2].
         """
         sfc_T = np.asarray(sfc_T)
-        sfc_q = self.sfc_state.moisture
+        if cols is not None:
+            sfc_q = self.sfc_state.moisture[cols]
+            rad_net = self.atm_state.radiation_net[cols]
+        else:
+            sfc_q = self.sfc_state.moisture
+            rad_net = self.atm_state.radiation_net
 
         _, _, _, ground_heat, _, sensible, latent, _ = self._solve_most(
-            sfc_T, sfc_q, initial_L, max_iter=1
+            sfc_T, sfc_q, initial_L, max_iter=1, cols=cols
         )
 
-        return self.atm_state.radiation_net - ground_heat - sensible - latent
+        return rad_net - ground_heat - sensible - latent
 
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB).
@@ -847,9 +864,7 @@ class UtahLSM:
         # Compute conductivity terms if provided (moisture case)
         K_lin = None
         if get_conductivity is not None:
-            K_hydraulic = get_conductivity(field)
-            # Avoid division by zero in dry conditions
-            K_lin = np.where(field > 1e-9, K_hydraulic / field, 0.0)
+            K_lin = get_conductivity(field)
 
         # === First soil level below surface (i=0) ===
         Cp = dt * D_mid[0] / dz2
@@ -992,7 +1007,7 @@ class UtahLSM:
         self._solve_diffusion(
             state_field=self.soil_state.moisture,
             get_diffusivity=self.soil.diffusivity_moisture,
-            get_conductivity=self.soil.conductivity_moisture,
+            get_conductivity=self.soil.conductivity_gradient,
             sfc_boundary=self.sfc_state.moisture,
             field_name='moisture'
         )

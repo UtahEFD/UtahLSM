@@ -212,6 +212,26 @@ class Soil(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def conductivity_gradient(
+        self, soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Computes the linearized hydraulic conductivity gradient dK/dθ.
+
+        Returns the secant linearization K(Se)/Se/(φ-θ_r) appropriate for
+        each soil model, used in the gravity drainage term of the moisture
+        diffusion solver.
+
+        Args:
+            soil_q: Soil moisture content profile [m^3/m^3]. Array with
+                one element per soil layer.
+
+        Returns:
+            Linearized dK/dθ profile [m/s]. Array with one element per
+            soil layer.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def surface_water_content(self, psi_sfc: float) -> float:
         """Computes surface soil moisture from water potential.
 
@@ -309,7 +329,7 @@ class Soil(ABC):
         Returns:
             The volumetric heat capacity for each layer [J/m^3-K].
         """
-        CI_W = c.water.SPECIFIC_HEAT
+        CI_W = c.water.VOLUMETRIC_HEAT_CAPACITY
         CP_A = c.thermodynamic.SPECIFIC_HEAT
 
         porosity = self._expand_profile_property(
@@ -319,8 +339,12 @@ class Soil(ABC):
 
         return Ks
 
-    def surface_mixing_ratio(self, sfc_T: float, sfc_q: float,
-                             atm_p: float) -> float:
+    def surface_mixing_ratio(
+        self,
+        sfc_T: Union[float, NDArray[np.float64]],
+        sfc_q: Union[float, NDArray[np.float64]],
+        atm_p: Union[float, NDArray[np.float64]]
+    ) -> Union[float, NDArray[np.float64]]:
         """Computes the specific humidity at the soil surface.
 
         Args:

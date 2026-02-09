@@ -47,7 +47,7 @@ def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> Ut
             gustiness=gustiness,
             gustiness_stable_only=stable_only,
         ),
-        grid=SimpleNamespace(z=np.array([0.0, 0.05]), nz=2),
+        grid=SimpleNamespace(z=np.array([0.0, 0.05]), nz=2, nx=1, ny=1),
         numerics=SimpleNamespace(
             tolerances=SimpleNamespace(sfc_flux=0.0),
             iterations=SimpleNamespace(sfc_flux=1),

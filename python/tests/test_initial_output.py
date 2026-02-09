@@ -109,7 +109,8 @@ def _make_model(*, warm_start: bool, has_forcing: bool) -> UtahLSM:
             initialize_surface_temperature_from_seb=False,
         ),
         forcing=(
-            SimpleNamespace(atmos=[AtmosphericState(wind_speed=5.0)])
+            SimpleNamespace(
+                atmos=[AtmosphericState(wind_speed=5.0)], tstep=600.0)
             if has_forcing
             else None
         ),

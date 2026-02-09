@@ -208,6 +208,12 @@ class Output:
         if self._sync_interval > 0 and self._save_count % self._sync_interval == 0:
             self.outfile.sync()
 
+    def __enter__(self) -> 'Output':
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()
+
     def close(self) -> None:
         """Closes the NetCDF output file.
 

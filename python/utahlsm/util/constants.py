@@ -50,7 +50,7 @@ physical = SimpleNamespace(
 # Water properties
 water = SimpleNamespace(
     DENSITY=1000.0,  # Density of water [kg/m^3]
-    SPECIFIC_HEAT=4.184e6,  # Volumetric heat capacity of water [J/m^3-K]
+    VOLUMETRIC_HEAT_CAPACITY=4.184e6,  # Volumetric heat capacity of water [J/m^3-K]
 )
 
 # Air properties

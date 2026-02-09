@@ -143,6 +143,31 @@ class BrooksCorey(Soil):
 
         return conductivity
 
+    def conductivity_gradient(
+        self, soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Computes the linearized dK/dθ for the Brooks-Corey model.
+
+        K'_lin = K_sat · Se^(2b+2) / (φ - θ_r), the secant linearization
+        using effective saturation.
+
+        Args:
+            soil_q: Soil moisture content for all layers [m^3/m^3].
+
+        Returns:
+            Linearized dK/dθ for all layers [m/s].
+        """
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        residual = self._expand_profile_property(
+            self.properties.residual, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        soil_e = porosity - residual
+        Se = (soil_q - residual) / soil_e
+        gradient = K_sat * Se ** (2.0 * b + 2.0) / soil_e
+        return gradient
+
     def diffusivity_moisture(
         self, soil_q: NDArray[np.float64]
     ) -> NDArray[np.float64]:
