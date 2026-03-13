@@ -100,11 +100,12 @@ class RadBasic(Radiation):
                          np.cos(self.latitude)*np.cos(declination) *
                          np.cos((2*PI*time_utc/(24.0*3600.0))-
                                 self.longitude))
-        if sin_elevation > 0:
-            transmissivity = 0.6 + 0.2*sin_elevation
-            sw_in = SC * transmissivity * sin_elevation
-        else:
-            sw_in = 0
+        transmissivity = 0.6 + 0.2*sin_elevation
+        sw_in = np.where(
+            sin_elevation > 0,
+            SC * transmissivity * sin_elevation,
+            0.0
+        )
         return sw_in
 
     def _shortwave_out(self, sw_in: float) -> float:
@@ -133,18 +134,18 @@ class RadBasic(Radiation):
         """
         # local constants
         EPSILON = c.thermodynamic.EPSILON
-        SB = c.physical.STEFAN_BOLTZMANN
+        SB = c.radiation.STEFAN_BOLTZMANN
 
-        # local references to atmospheric and surface state
+        # local references to atmospheric state
         pa: float = atm_state.pressure
         qa: float = atm_state.specific_humidity
-        Ts: float = sfc_state.temperature
+        Ta: float = atm_state.temperature
 
-        # vapor pressure and effective emissivity
+        # vapor pressure and effective emissivity (Brutsaert 1975)
         vapor_pressure: float = (pa * qa) / (EPSILON + qa)
-        emissivity_eff: float = 1.24 * (vapor_pressure / Ts) ** (1 / 7.0)
+        emissivity_eff: float = 1.24 * (vapor_pressure / Ta) ** (1 / 7.0)
 
-        return emissivity_eff * SB * (Ts ** 4)
+        return emissivity_eff * SB * (Ta ** 4)
 
     def _longwave_out(self, sfc_state: SurfaceState) -> float:
         """Computes upward longwave radiation using the Stefan-Boltzmann law.
@@ -156,7 +157,7 @@ class RadBasic(Radiation):
             The outgoing longwave radiation in W/m^2.
         """
         # local constants
-        SB: float = c.physical.STEFAN_BOLTZMANN
+        SB: float = c.radiation.STEFAN_BOLTZMANN
 
         # local references to surface state
         Ts: float = sfc_state.temperature

@@ -63,7 +63,7 @@ sm_ob = np.array([sm_05,sm_05,sm_15,sm_30,sm_45,sm_60,sm_73])
 z_obm = np.array([0.0,0.05,0.15,0.30,0.45,0.60,0.725])
 
 # interpolate soil moisture and temperature to regular grid
-z_int = np.arange(0,0.51,0.01)
+z_int = np.arange(0,0.51,0.05)
 nsoil = len(z_int)
 st_oi = np.interp(z_int,z_obs,st_ob)
 sm_oi = np.interp(z_int,z_obm,sm_ob)
@@ -86,7 +86,7 @@ sm_oi = np.interp(z_int,z_obm,sm_ob)
 # O12
 # O16
 
-stype = np.array(['clay']*20+['peat']*31)
+stype = np.array(['clay']*7+['peat']*4)
 
 # initialization file
 init = nc.Dataset('lsm_init.nc','w')
@@ -221,13 +221,11 @@ namelist['general']['log_level'] = "info"
 
 # numerics section
 namelist['numerics']['diffusion_back_weight'] = float(0.5)
-namelist['numerics']['warm_start_turbulence'] = True
-namelist['numerics']['initialize_surface_temperature_from_seb'] = True
 namelist['numerics']['iterations']['sfc_flux'] = 100
 namelist['numerics']['iterations']['seb_bracket'] = 100
 namelist['numerics']['iterations']['seb_root'] = 100
 namelist['numerics']['iterations']['smb_flux'] = 100
-namelist['numerics']['iterations']['coupling'] = 20
+namelist['numerics']['iterations']['coupling'] = 10
 namelist['numerics']['tolerances']['sfc_flux'] = 1e-3
 namelist['numerics']['tolerances']['seb_root'] = 1e-6
 namelist['numerics']['tolerances']['smb_flux'] = 1e-3
@@ -235,7 +233,7 @@ namelist['numerics']['tolerances']['coupling_temp'] = 1e-2
 namelist['numerics']['tolerances']['coupling_mois'] = 1e-5
 
 # time section
-namelist['time']['utc_start']  = int(round(t_utc[0]))
+namelist['time']['utc_start']  = float(t_utc[0])
 namelist['time']['utc_year']  = 2006
 namelist['time']['julian_day'] = 183
 
@@ -252,14 +250,10 @@ namelist['surface']['z_s'] = float(2.0)
 namelist['surface']['albedo'] = float(0.33)
 namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model'] = 1
-namelist['surface']['psi_stable'] = "beljaars-holtslag"
-namelist['surface']['zeta_max'] = float(1.0)
-namelist['surface']['gustiness'] = float(2.0)
-namelist['surface']['gustiness_stable_only'] = True
 
 # soil section
-namelist['soil']['properties'] = "clapp-hornberger"
-namelist['soil']['model'] = 1
+namelist['soil']['properties'] = "rawls-brakensiek"
+namelist['soil']['model'] = 2
 
 # radiation section
 namelist['radiation']['model'] = 0

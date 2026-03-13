@@ -13,6 +13,7 @@
 #
 """Factory for creating surface model instances."""
 
+from ...data_models import SurfaceConfig
 from ...exceptions import NamelistError
 from ...util.io import logging_helper
 from .sfc import Surface
@@ -21,11 +22,11 @@ from .sfc_most import SurfaceMOST
 logger = logging_helper.get_logger('SFC')
 
 
-def get_surface_model(key: int) -> Surface:
+def get_surface_model(surface: SurfaceConfig) -> Surface:
     """Factory function to select and instantiate a surface layer model.
 
     Args:
-        key: An integer identifying the surface layer model to use.
+        surface: Surface layer configuration.
 
     Returns:
         An instance of a concrete `Surface` subclass.
@@ -39,9 +40,11 @@ def get_surface_model(key: int) -> Surface:
     }
 
     try:
-        return sfc_models[key]()
+        if surface.model == 1:
+            return SurfaceMOST(psi_stable=surface.psi_stable)
+        return sfc_models[surface.model]()
     except KeyError as e:
-        error_msg = f'{key} is an invalid surface model.'
+        error_msg = f'{surface.model} is an invalid surface model.'
         logger.error('x' * 62)
         logger.error('Namelist Error: %s', error_msg)
         logger.error('Valid options are:')

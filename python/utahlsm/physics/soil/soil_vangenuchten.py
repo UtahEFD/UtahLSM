@@ -84,18 +84,20 @@ class VanGenuchten(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             psi_sat = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
         else:
-            b = self.properties.b
-            psi_sat = self.properties.psi_sat
-            porosity = self.properties.porosity
-            residual = self.properties.residual
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            psi_sat = self._expand_profile_property(
+                self.properties.psi_sat, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, soil_q_arr)
 
         Se = (soil_q-residual)/(porosity-residual)
         m = 1 / (1+b)
@@ -138,25 +140,60 @@ class VanGenuchten(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
             K_sat = self.properties.K_sat[level]
         else:
-            b = self.properties.b
-            porosity = self.properties.porosity
-            residual = self.properties.residual
-            K_sat = self.properties.K_sat
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, soil_q_arr)
+            K_sat = self._expand_profile_property(
+                self.properties.K_sat, soil_q_arr)
 
         Se = (soil_q-residual)/(porosity-residual)
         m = 1 / (1+b)
-        conductivity = (K_sat * np.sqrt(Se) *
-                        ((1 - (1 - (Se**(1/m)) )**m )**2))
+        # Cache Se**(1/m) to avoid repeated exponentiation
+        Se_pow_inv_m = Se**(1/m)
+        inner = 1 - (1 - Se_pow_inv_m)**m
+        conductivity = K_sat * np.sqrt(Se) * inner**2
 
         return conductivity
+
+    def conductivity_gradient(
+        self, soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Computes the linearized dK/dθ for the Van Genuchten model.
+
+        K'_lin = K(Se) / Se / (φ - θ_r), the secant from Se=0 converted
+        to θ-space. Clamped to 0 where Se ≈ 0 to avoid divergence.
+
+        Args:
+            soil_q: Soil moisture content for all layers [m^3/m^3].
+
+        Returns:
+            Linearized dK/dθ for all layers [m/s].
+        """
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        residual = self._expand_profile_property(
+            self.properties.residual, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        soil_e = porosity - residual
+        Se = (soil_q - residual) / soil_e
+        m = 1.0 / (1.0 + b)
+        Se_pow = Se ** (1.0 / m)
+        inner = 1.0 - (1.0 - Se_pow) ** m
+        # K(Se)/Se = K_sat * Se^(-0.5) * inner^2; diverges as Se -> 0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            gradient = K_sat * inner ** 2 / (np.sqrt(Se) * soil_e)
+        gradient = np.where(Se > 1e-10, gradient, 0.0)
+        return gradient
 
     def diffusivity_moisture(
         self, soil_q: NDArray[np.float64]
@@ -172,18 +209,21 @@ class VanGenuchten(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q)
-
-        b = self.properties.b
-        psi_sat = self.properties.psi_sat
-        porosity = self.properties.porosity
-        residual = self.properties.residual
-        K_sat = self.properties.K_sat
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        residual = self._expand_profile_property(
+            self.properties.residual, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
         Se = (soil_q-residual)/(porosity-residual)
         soil_e = porosity-residual
         m = 1 / (1+b)
         A = (1-m)*K_sat*psi_sat / (m*soil_e)
-        C = Se**(0.5-(1/m))*( (1 - Se**(1/m))**(-m) + (1- Se**(1/m))**m - 2 )
-        diffusivity  = A*C
+        # Cache Se**(1/m) to avoid repeated exponentiation
+        Se_pow_inv_m = Se**(1/m)
+        one_minus_Se_pow = 1 - Se_pow_inv_m
+        C = Se**(0.5-(1/m)) * (one_minus_Se_pow**(-m) + one_minus_Se_pow**m - 2)
+        diffusivity = A*C
 
         return diffusivity

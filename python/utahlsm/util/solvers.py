@@ -41,49 +41,90 @@ def tridiagonal(
     tridiagonal matrix defined by its sub-diagonal (a), main diagonal (b),
     and super-diagonal (c).
 
+    Handles both 1D (single column) and 2D (multi-column) inputs via a
+    unified code path. 1D inputs are internally promoted to 2D with ncol=1
+    and the result is squeezed back before returning.
+
     Args:
-        a: The sub-diagonal of the matrix (size n). a[0] is ignored.
-        b: The main diagonal of the matrix (size n).
-        c: The super-diagonal of the matrix (size n). c[n-1] is ignored.
-        r: The right-hand side vector (size n).
+        a: The sub-diagonal of the matrix (size n) or (n, ncol). a[0] is
+            ignored.
+        b: The main diagonal of the matrix (size n) or (n, ncol).
+        c: The super-diagonal of the matrix (size n) or (n, ncol). c[n-1] is
+            ignored.
+        r: The right-hand side vector (size n) or (n, ncol).
 
     Returns:
-        The solution vector u (size n).
+        The solution vector u (size n) or (n, ncol).
 
     Raises:
         ValueError: If an element on the main diagonal is effectively zero
             during factorization.
     """
-    n = len(b)
-    u = np.zeros(n)
-    gam = np.zeros(n)
+    r = np.asarray(r, dtype=np.float64)
 
-    if abs(b[0]) < _SOLVER_TOL:
-        logger.error(
-            'Error in solve_tridiagonal: b[0] = %f is effectively zero.',
-            b[0])
+    # Promote 1D to 2D so a single code path handles both cases
+    squeeze = False
+    if r.ndim == 1:
+        r = r[:, None]
+        squeeze = True
+    elif r.ndim != 2:
         raise ValueError(
-            f'Main diagonal cannot have a zero on the first element '
-            f'(b[0] = {b[0]}).')
+            f'Right-hand side has unsupported dimensions: {r.ndim}.')
 
-    bet = b[0]
+    n, ncol = r.shape
+
+    def _broadcast(vec: NDArray[np.float64]) -> NDArray[np.float64]:
+        vec = np.asarray(vec, dtype=np.float64)
+        if vec.ndim == 1:
+            if vec.shape[0] != n:
+                raise ValueError(
+                    f'Tridiagonal coefficient has length {vec.shape[0]} '
+                    f'but expected {n}.')
+            return vec[:, None]
+        if vec.ndim == 2:
+            if vec.shape != (n, ncol):
+                raise ValueError(
+                    f'Tridiagonal coefficient has shape {vec.shape} but '
+                    f'expected {(n, ncol)}.')
+            return vec
+        raise ValueError(
+            f'Tridiagonal coefficient has unsupported dimensions: '
+            f'{vec.ndim}.')
+
+    a = _broadcast(a)
+    b = _broadcast(b)
+    c = _broadcast(c)
+
+    u = np.zeros_like(r)
+    gam = np.zeros_like(r)
+
+    bet = b[0].copy()
+    if np.any(np.abs(bet) < _SOLVER_TOL):
+        logger.error(
+            'Error in solve_tridiagonal: b[0] has entries effectively '
+            'zero.')
+        raise ValueError(
+            'Main diagonal cannot have a zero on the first element.')
+
     u[0] = r[0] / bet
 
     for j in range(1, n):
         gam[j] = c[j-1] / bet
         bet = b[j] - a[j] * gam[j]
-        if abs(bet) < _SOLVER_TOL:
+        if np.any(np.abs(bet) < _SOLVER_TOL):
             logger.error(
                 'Error in solve_tridiagonal: effective zero on main '
-                'diagonal at index %d (bet = %f).', j, bet)
+                'diagonal at index %d.', j)
             raise ValueError(
                 f'Effective zero on main diagonal at index {j} during '
-                f'factorization (bet = {bet}).')
+                f'factorization.')
         u[j] = (r[j] - a[j] * u[j-1]) / bet
 
     for j in range(n-2, -1, -1):
         u[j] -= gam[j+1] * u[j+1]
 
+    if squeeze:
+        return u[:, 0]
     return u
 
 def root_brent(f: Callable[[float], float], a: float, b: float,
@@ -184,3 +225,147 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
             return b, True
 
     return b, False
+
+
+def root_brent_vec(
+    f: Callable[[NDArray[np.float64]], NDArray[np.float64]],
+    a: NDArray[np.float64],
+    b: NDArray[np.float64],
+    iter_max: int = 100,
+    tol: float = 1e-6
+) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
+    """Vectorized Brent's method for finding roots of multiple functions.
+
+    This function efficiently solves f(x) = 0 for multiple independent problems
+    simultaneously using array operations. It uses Brent's method which combines
+    bisection, secant, and inverse quadratic interpolation.
+
+    Based on the vectorization approach from https://github.com/adonath/array-brentq
+
+    Args:
+        f: A vectorized function that takes an array of x values and returns
+            an array of function values f(x).
+        a: Array of lower bracket bounds (size n).
+        b: Array of upper bracket bounds (size n).
+        iter_max: Maximum number of iterations. Defaults to 100.
+        tol: Desired tolerance for convergence. Defaults to 1e-6.
+
+    Returns:
+        A tuple containing:
+            - Array of approximate roots (size n).
+            - Boolean array indicating convergence for each root.
+
+    Note:
+        All problems are iterated together until all converge or iter_max is
+        reached. This is efficient when problems have similar convergence rates.
+    """
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+
+    # Handle scalar case
+    if a.ndim == 0:
+        a = np.atleast_1d(a)
+        b = np.atleast_1d(b)
+        scalar_input = True
+    else:
+        scalar_input = False
+
+    n = len(a)
+
+    fa = f(a)
+    fb = f(b)
+
+    # Check bracketing
+    if np.any(fa * fb > 0):
+        logger.warning(
+            'Root not bracketed for %d of %d problems.',
+            int(np.sum(fa * fb > 0)), n
+        )
+
+    # Ensure b has the smaller function value (best guess)
+    swap = np.abs(fa) < np.abs(fb)
+    a, b = np.where(swap, b, a), np.where(swap, a, b)
+    fa, fb = np.where(swap, fb, fa), np.where(swap, fa, fb)
+
+    c = a.copy()
+    fc = fa.copy()
+    d = a.copy()
+
+    mflag = np.ones(n, dtype=bool)
+    converged = np.abs(b - a) < tol
+
+    for _ in range(iter_max):
+        if converged.all():
+            break
+
+        # Inverse quadratic interpolation conditions
+        use_iqi = (
+            (np.abs(fa) > tol) & (np.abs(fb) > tol) & (np.abs(fc) > tol)
+            & (fa != fc) & (fb != fc) & ~converged
+        )
+
+        # Inverse quadratic interpolation
+        # Protect denominators to avoid division by zero (np.where evaluates both branches)
+        denom1 = (fa - fb) * (fa - fc)
+        denom2 = (fb - fa) * (fb - fc)
+        denom3 = (fc - fa) * (fc - fb)
+        denom1 = np.where(np.abs(denom1) < _SOLVER_TOL, _SOLVER_TOL, denom1)
+        denom2 = np.where(np.abs(denom2) < _SOLVER_TOL, _SOLVER_TOL, denom2)
+        denom3 = np.where(np.abs(denom3) < _SOLVER_TOL, _SOLVER_TOL, denom3)
+
+        s_iqi = np.where(
+            use_iqi,
+            (a * fb * fc / denom1 + b * fa * fc / denom2 + c * fa * fb / denom3),
+            0.0
+        )
+
+        # Secant method (fallback)
+        denom = fb - fa
+        denom = np.where(np.abs(denom) < _SOLVER_TOL, _SOLVER_TOL, denom)
+        s_sec = b - fb * (b - a) / denom
+
+        s = np.where(use_iqi, s_iqi, s_sec)
+
+        # Conditions for falling back to bisection
+        bound_lo = (3 * a + b) / 4.0
+        bound_hi = b
+        # Ensure bound_lo < bound_hi for the comparison
+        bound_lo, bound_hi = np.minimum(bound_lo, bound_hi), np.maximum(bound_lo, bound_hi)
+
+        cond1 = (s < bound_lo) | (s > bound_hi)
+        cond2 = mflag & (np.abs(s - b) >= np.abs(b - c) / 2.0)
+        cond3 = ~mflag & (np.abs(s - b) >= np.abs(c - d) / 2.0)
+        cond4 = mflag & (np.abs(b - c) < tol)
+        cond5 = ~mflag & (np.abs(c - d) < tol)
+
+        use_bisect = cond1 | cond2 | cond3 | cond4 | cond5
+        s = np.where(use_bisect & ~converged, (a + b) / 2.0, s)
+        mflag = np.where(~converged, use_bisect, mflag)
+
+        # Evaluate function at new point
+        fs = f(s)
+
+        # Update history
+        d = np.where(~converged, c, d)
+        c = np.where(~converged, b, c)
+        fc = np.where(~converged, fb, fc)
+
+        # Update bracket
+        update_a = (fa * fs < 0) & ~converged
+        b = np.where(update_a, s, b)
+        fb = np.where(update_a, fs, fb)
+        a = np.where(~update_a & ~converged, s, a)
+        fa = np.where(~update_a & ~converged, fs, fa)
+
+        # Ensure b is the best guess
+        swap = (np.abs(fa) < np.abs(fb)) & ~converged
+        a, b = np.where(swap, b, a), np.where(swap, a, b)
+        fa, fb = np.where(swap, fb, fa), np.where(swap, fa, fb)
+
+        # Check convergence
+        converged |= np.abs(b - a) < tol
+
+    result = b
+    if scalar_input:
+        return result[0], converged[0]
+    return result, converged

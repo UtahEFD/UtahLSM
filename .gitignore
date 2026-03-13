@@ -14,3 +14,5 @@ lsm*.nc
 cases/*/*.json
 CLAUDE.md
 .pylintrc
+*.log
+*.out

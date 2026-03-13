@@ -26,6 +26,7 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
+from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -41,17 +42,17 @@ class AtmosphericState:
     conditions driving the land-surface model.
 
     Attributes:
-        wind_speed: Wind speed [m/s].
-        temperature: Air temperature [K].
-        specific_humidity: Specific humidity [kg/kg].
-        pressure: Atmospheric pressure [Pa].
-        radiation_net: Net radiation [W/m^2].
+        wind_speed: Wind speed [m/s] (scalar or per-column array).
+        temperature: Air temperature [K] (scalar or per-column array).
+        specific_humidity: Specific humidity [kg/kg] (scalar or per-column array).
+        pressure: Atmospheric pressure [Pa] (scalar or per-column array).
+        radiation_net: Net radiation [W/m^2] (scalar or per-column array).
     """
-    wind_speed: float = 0.0
-    temperature: float = 0.0
-    specific_humidity: float = 0.0
-    pressure: float = 0.0
-    radiation_net: float = 0.0
+    wind_speed: Union[float, NDArray[np.float64]] = 0.0
+    temperature: Union[float, NDArray[np.float64]] = 0.0
+    specific_humidity: Union[float, NDArray[np.float64]] = 0.0
+    pressure: Union[float, NDArray[np.float64]] = 0.0
+    radiation_net: Union[float, NDArray[np.float64]] = 0.0
 
 @dataclass
 class SoilState:
@@ -61,8 +62,8 @@ class SoilState:
     within the soil, which evolves over time by the model's diffusion solvers.
 
     Attributes:
-        temperature: Soil temperature profile [K].
-        moisture: Soil moisture profile [m^3/m^3].
+        temperature: Soil temperature profile [K] (nz or nz-by-ncol).
+        moisture: Soil moisture profile [m^3/m^3] (nz or nz-by-ncol).
         type: Soil type name for each layer (string, e.g., 'clay', 'sand',
             'b11'). Names are lowercase and must match keys in the loaded
             soil properties dataset.
@@ -117,16 +118,17 @@ class SurfaceState:
     between the soil, the surface, and the atmosphere.
 
     Attributes:
-        temperature: Surface temperature [K].
-        moisture: Surface moisture content [kg/kg].
-        specific_humidity: Surface-air specific humidity [kg/kg].
+        temperature: Surface temperature [K] (scalar or per-column array).
+        moisture: Surface moisture content [kg/kg] (scalar or per-column array).
+        specific_humidity: Surface-air specific humidity [kg/kg]
+            (scalar or per-column array).
         fluxes: A dataclass containing all surface fluxes.
         turbulence: A dataclass containing turbulence scales.
 
     """
-    temperature: float = 0.0
-    moisture: float = 0.0
-    specific_humidity: float = 0.0
+    temperature: Union[float, NDArray[np.float64]] = 0.0
+    moisture: Union[float, NDArray[np.float64]] = 0.0
+    specific_humidity: Union[float, NDArray[np.float64]] = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
 
@@ -141,10 +143,8 @@ class SolverState:
     Attributes:
         conductivity_thermal_mid: Thermal conductivity at the midpoint between
             the top two soil layers [W/m/K].
-        obukhov_length: Obukhov length (L) [m].
     """
-    conductivity_thermal_mid: float = 0.0
-    obukhov_length: float = 0.0
+    conductivity_thermal_mid: Union[float, NDArray[np.float64]] = 0.0
 
 @dataclass(frozen=True)
 class ForcingData:
@@ -204,7 +204,7 @@ class TolerancesConfig:
     Attributes:
         sfc_flux: tolerance for Obukhov length.
         seb_root: tolerance for seb root.
-        smb_flux: tolerance for soil moisture flux.
+        smb_flux: tolerance for SMB root-finding on surface moisture [m3/m3].
         coupling_temp: tolerance for soil temperature in coupling.
         coupling_mois: tolerance for soil moisture in coupling.
     """
@@ -221,12 +221,22 @@ class NumericsConfig:
     Attributes:
         diffusion_back_weight: Backward weighting factor for the
             diffusion solver (0.5 for Crank-Nicolson).
+        warm_start_turbulence: If True, compute MOST diagnostics at time=0
+            using forcing[0] (offline mode).
+        initialize_surface_temperature_from_seb: If True, initialize the top
+            soil-layer temperature by solving SEB at time=0 using forcing[0].
+        coupling_relaxation: Under-relaxation factor for SEB-SMB Picard
+            iteration (0 < alpha <= 1). Smaller values damp oscillations
+            more aggressively but require more iterations.
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
     diffusion_back_weight: float
     iterations: IterationsConfig
     tolerances: TolerancesConfig
+    warm_start_turbulence: bool = False
+    initialize_surface_temperature_from_seb: bool = False
+    coupling_relaxation: float = 0.3
 
 @dataclass(frozen=True)
 class TimeConfig:
@@ -269,6 +279,10 @@ class SurfaceConfig:
         albedo: Surface albedo (dimensionless).
         emissivity: Surface emissivity (dimensionless).
         model: Integer ID for the surface layer model to use.
+        psi_stable: Stable (z/L>=0) MOST integrated stability correction (ψ).
+        zeta_max: Maximum |z/L| used to clamp Obukhov length for MOST.
+        gustiness: Additional wind-speed magnitude [m/s] added in quadrature.
+        gustiness_stable_only: Apply gustiness only when L>=0 if True.
     """
     z_o: float
     z_t: float
@@ -277,6 +291,10 @@ class SurfaceConfig:
     albedo: float
     emissivity: float
     model: int
+    psi_stable: str = "dyer-hicks"
+    zeta_max: float = 5.0
+    gustiness: float = 0.0
+    gustiness_stable_only: bool = True
 
 @dataclass(frozen=True)
 class SoilConfig:

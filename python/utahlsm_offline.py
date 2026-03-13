@@ -82,6 +82,8 @@ def main() -> None:
     print('##############################################################')
 
     output_lsm: Optional[utahlsm.Output] = None
+    lsm: Optional[utahlsm.UtahLSM] = None
+    step_count: int = 0
     try:
         # Create input and output objects
         input_lsm: utahlsm.Input = utahlsm.Input(
@@ -91,7 +93,7 @@ def main() -> None:
         output_lsm = utahlsm.Output(outf)
 
         # Create the main LSM object
-        lsm: utahlsm.UtahLSM = utahlsm.UtahLSM(input_lsm, output_lsm)
+        lsm = utahlsm.UtahLSM(input_lsm, output_lsm)
 
         # --- Main Time-Stepping Loop ---
         runtime: float = 0

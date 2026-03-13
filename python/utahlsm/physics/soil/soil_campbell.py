@@ -62,7 +62,10 @@ class Campbell(Soil):
         b = self.properties.b[0]
         psi_sat = self.properties.psi_sat[0]
         porosity = self.properties.porosity[0]
+        # Guard against psi_sfc == 0 (saturated soil); return porosity
+        psi_sfc = np.where(psi_sfc == 0, np.nan, psi_sfc)
         soil_q = porosity*(np.abs(psi_sat/psi_sfc)**(1./b))
+        soil_q = np.where(np.isnan(psi_sfc), porosity, soil_q)
 
         return soil_q
 
@@ -83,18 +86,20 @@ class Campbell(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             psi_sat = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
         else:
-            b = self.properties.b
-            psi_sat = self.properties.psi_sat
-            porosity = self.properties.porosity
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            psi_sat = self._expand_profile_property(
+                self.properties.psi_sat, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
 
-        psi = psi_sat*((soil_q/porosity)**(-b))
+        ratio = np.maximum(soil_q/porosity, 1e-12)
+        psi = psi_sat*(ratio**(-b))
 
         return psi
 
@@ -115,19 +120,40 @@ class Campbell(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             porosity = self.properties.porosity[level]
             K_sat = self.properties.K_sat[level]
         else:
-            b = self.properties.b
-            porosity = self.properties.porosity
-            K_sat = self.properties.K_sat
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            K_sat = self._expand_profile_property(
+                self.properties.K_sat, soil_q_arr)
         conductivity = K_sat * ((soil_q/porosity)**(2.*b+3.))
 
         return conductivity
+
+    def conductivity_gradient(
+        self, soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Computes the linearized dK/dθ for the Campbell model.
+
+        For Campbell (θ_r = 0): K'_lin = K_sat/φ · (θ/φ)^(2b+2) = K(θ)/θ.
+
+        Args:
+            soil_q: Soil moisture content for all layers [m^3/m^3].
+
+        Returns:
+            Linearized dK/dθ for all layers [m/s].
+        """
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        gradient = K_sat / porosity * (soil_q / porosity) ** (2.0 * b + 2.0)
+        return gradient
 
     def diffusivity_moisture(
         self, soil_q: NDArray[np.float64]
@@ -143,12 +169,11 @@ class Campbell(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q)
-
-        b = self.properties.b
-        psi_sat  = self.properties.psi_sat
-        porosity = self.properties.porosity
-        K_sat = self.properties.K_sat
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
         diffusivity  = -b*K_sat*psi_sat*( (soil_q/porosity)**(b+2.) ) / porosity
 
         return diffusivity

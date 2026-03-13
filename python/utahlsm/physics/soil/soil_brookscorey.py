@@ -62,7 +62,10 @@ class BrooksCorey(Soil):
         porosity = self.properties.porosity[0]
         residual = self.properties.residual[0]
         soil_e = porosity-residual
+        # Guard against psi_sfc == 0 (saturated soil); return porosity
+        psi_sfc = np.where(psi_sfc == 0, np.nan, psi_sfc)
         soil_q = residual+soil_e*( (psi_sat/psi_sfc)**(1./b) )
+        soil_q = np.where(np.isnan(psi_sfc), porosity, soil_q)
 
         return soil_q
 
@@ -83,20 +86,22 @@ class BrooksCorey(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             psi_sat = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
         else:
-            b = self.properties.b
-            psi_sat = self.properties.psi_sat
-            porosity = self.properties.porosity
-            residual = self.properties.residual
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            psi_sat = self._expand_profile_property(
+                self.properties.psi_sat, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, soil_q_arr)
 
-        Se = (soil_q-residual)/(porosity-residual)
+        Se = np.maximum((soil_q-residual)/(porosity-residual), 1e-12)
         psi = psi_sat*( Se**(-b) )
 
         return psi
@@ -118,23 +123,50 @@ class BrooksCorey(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q, level)
-
         if level is not None:
             b = self.properties.b[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
             K_sat = self.properties.K_sat[level]
         else:
-            b = self.properties.b
-            porosity = self.properties.porosity
-            residual = self.properties.residual
-            K_sat = self.properties.K_sat
+            soil_q_arr = np.asarray(soil_q)
+            b = self._expand_profile_property(self.properties.b, soil_q_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, soil_q_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, soil_q_arr)
+            K_sat = self._expand_profile_property(
+                self.properties.K_sat, soil_q_arr)
 
         Se = (soil_q-residual)/(porosity-residual)
         conductivity = K_sat*( Se**(2.*b+3.) )
 
         return conductivity
+
+    def conductivity_gradient(
+        self, soil_q: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Computes the linearized dK/dθ for the Brooks-Corey model.
+
+        K'_lin = K_sat · Se^(2b+2) / (φ - θ_r), the secant linearization
+        using effective saturation.
+
+        Args:
+            soil_q: Soil moisture content for all layers [m^3/m^3].
+
+        Returns:
+            Linearized dK/dθ for all layers [m/s].
+        """
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        residual = self._expand_profile_property(
+            self.properties.residual, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        soil_e = porosity - residual
+        Se = (soil_q - residual) / soil_e
+        gradient = K_sat * Se ** (2.0 * b + 2.0) / soil_e
+        return gradient
 
     def diffusivity_moisture(
         self, soil_q: NDArray[np.float64]
@@ -151,13 +183,13 @@ class BrooksCorey(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        self._validate_moisture_bounds(soil_q)
-
-        b = self.properties.b
-        psi_sat = self.properties.psi_sat
-        porosity = self.properties.porosity
-        residual = self.properties.residual
-        K_sat = self.properties.K_sat
+        b = self._expand_profile_property(self.properties.b, soil_q)
+        psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
+        porosity = self._expand_profile_property(
+            self.properties.porosity, soil_q)
+        residual = self._expand_profile_property(
+            self.properties.residual, soil_q)
+        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
         Se = (soil_q-residual)/(porosity-residual)
         diffusivity = -b*K_sat*psi_sat*( Se**(b+2.) ) / (porosity-residual)
 
