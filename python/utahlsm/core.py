@@ -489,20 +489,6 @@ class UtahLSM:
             seb_func, temp_a, temp_b,
             iter_max=iter_max_root, tol=tol_root
         )
-<<<<<<< HEAD
-        
-        if not converged:
-             self.logger.warning('SEB root-finder did not fully converge.')
-        
-        self.sfc_state.temperature = temp
-        del self._L_anchor
-        
-        # Final flux update with the resolved Temperature and CURRENT moisture
-        self._compute_fluxes(self.sfc_state.temperature, 
-                             self.sfc_state.moisture)
-=======
->>>>>>> vector
-
         if not converged.all():
             n_failed = int(np.sum(~converged))
             self.logger.warning(
