@@ -29,8 +29,8 @@ import netCDF4 as nc
 import numpy as np
 from numpy.typing import NDArray
 
-from utahlsm.util.io import logging_helper
-from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
+from . import logging_helper
+from .soil_properties_loader import SoilPropertiesLoader
 
 from ...data_models import (
     AtmosphericState,
@@ -118,6 +118,8 @@ class Input:
                 numerics_data.get('warm_start_turbulence', False)),
             initialize_surface_temperature_from_seb=bool(
                 numerics_data.get('initialize_surface_temperature_from_seb', False)),
+            coupling_relaxation=float(
+                numerics_data.get('coupling_relaxation', 0.3)),
             iterations=IterationsConfig(**iterations_data),
             tolerances=TolerancesConfig(**tolerances_data)
         )

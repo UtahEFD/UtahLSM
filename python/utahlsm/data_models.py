@@ -143,10 +143,8 @@ class SolverState:
     Attributes:
         conductivity_thermal_mid: Thermal conductivity at the midpoint between
             the top two soil layers [W/m/K].
-        obukhov_length: Obukhov length (L) [m].
     """
     conductivity_thermal_mid: Union[float, NDArray[np.float64]] = 0.0
-    obukhov_length: Union[float, NDArray[np.float64]] = 0.0
 
 @dataclass(frozen=True)
 class ForcingData:
@@ -206,7 +204,7 @@ class TolerancesConfig:
     Attributes:
         sfc_flux: tolerance for Obukhov length.
         seb_root: tolerance for seb root.
-        smb_flux: tolerance for soil moisture flux.
+        smb_flux: tolerance for SMB root-finding on surface moisture [m3/m3].
         coupling_temp: tolerance for soil temperature in coupling.
         coupling_mois: tolerance for soil moisture in coupling.
     """
@@ -227,6 +225,9 @@ class NumericsConfig:
             using forcing[0] (offline mode).
         initialize_surface_temperature_from_seb: If True, initialize the top
             soil-layer temperature by solving SEB at time=0 using forcing[0].
+        coupling_relaxation: Under-relaxation factor for SEB-SMB Picard
+            iteration (0 < alpha <= 1). Smaller values damp oscillations
+            more aggressively but require more iterations.
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
@@ -235,6 +236,7 @@ class NumericsConfig:
     tolerances: TolerancesConfig
     warm_start_turbulence: bool = False
     initialize_surface_temperature_from_seb: bool = False
+    coupling_relaxation: float = 0.3
 
 @dataclass(frozen=True)
 class TimeConfig:

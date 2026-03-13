@@ -98,7 +98,8 @@ class Campbell(Soil):
             porosity = self._expand_profile_property(
                 self.properties.porosity, soil_q_arr)
 
-        psi = psi_sat*((soil_q/porosity)**(-b))
+        ratio = np.maximum(soil_q/porosity, 1e-12)
+        psi = psi_sat*(ratio**(-b))
 
         return psi
 

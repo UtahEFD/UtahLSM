@@ -330,12 +330,12 @@ class Soil(ABC):
             The volumetric heat capacity for each layer [J/m^3-K].
         """
         CI_W = c.water.VOLUMETRIC_HEAT_CAPACITY
-        CP_A = c.thermodynamic.SPECIFIC_HEAT
+        CI_A = c.air.DENSITY_REF * c.thermodynamic.SPECIFIC_HEAT
 
         porosity = self._expand_profile_property(
             self.properties.porosity, soil_q)
         Ci = self._expand_profile_property(self.properties.ci, soil_q)
-        Ks = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CP_A
+        Ks = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CI_A
 
         return Ks
 

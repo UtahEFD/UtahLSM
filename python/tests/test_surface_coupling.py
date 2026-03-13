@@ -150,7 +150,10 @@ def test_surface_coupling_recomputes_fluxes_on_convergence():
     model._solve_surface_coupling()
 
     assert calls, "Expected coupled solver to recompute fluxes on exit."
-    assert calls[-1] == (301.0, 0.1)
+    # SMB sets moisture to 0.1, but under-relaxation (alpha=0.3) blends it:
+    # q = 0.2 + 0.3 * (0.1 - 0.2) = 0.17
+    assert calls[-1][0] == 301.0
+    assert abs(calls[-1][1] - 0.17) < 1e-12
 
 
 def test_surface_coupling_recomputes_fluxes_on_nonconvergence():

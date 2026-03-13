@@ -182,7 +182,7 @@ class UtahLSM:
         self.sfc_state.fluxes.latent_heat = np.zeros(self.ncol)
         self.sfc_state.fluxes.ground_heat = np.zeros(self.ncol)
         self.sfc_state.turbulence.friction_velocity = np.zeros(self.ncol)
-        self.sfc_state.turbulence.obukhov_length = np.zeros(self.ncol)
+        self.sfc_state.turbulence.obukhov_length = np.full(self.ncol, 1e6)
 
         self.atm_state: AtmosphericState = AtmosphericState()
         self.atm_state.wind_speed = np.zeros(self.ncol)
@@ -647,82 +647,53 @@ class UtahLSM:
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB).
 
-        This function finds the soil moisture flux and surface evaporation.
-        It then iteratively blends the two in time until convergence.
-        """
-        # Local constants and variables
-        delta = 0.5
+        Computes the equilibrium surface moisture by balancing the
+        evaporative demand against the Darcy flux from the subsurface.
+        From the balance E + flux_sm = 0:
 
+            ψ_sfc = ψ_1 + Δz (-E / (ρ_w K_mid) - 1)
+
+        The resulting water potential is inverted to recover θ_sfc.
+        This is a single Picard step; the outer coupling loop in
+        _solve_surface_coupling provides the iteration.
+        """
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
-        TOL = self.input.numerics.tolerances.smb_flux
-        ITER_MAX = self.input.numerics.iterations.smb_flux
 
         z_s = self.input.surface.z_s
         z_t = self.input.surface.z_t
         dz = self.input.grid.z[0] - self.input.grid.z[1]
 
-        atm_T = self.atm_state.temperature
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
         sfc_T = self.sfc_state.temperature
+        sfc_q = self.sfc_state.moisture
         L = self.sfc_state.turbulence.obukhov_length
         ust = self.sfc_state.turbulence.friction_velocity
-        rho_a = atm_p / (RD * atm_T)
+        rho_a = atm_p / (RD * self.atm_state.temperature)
         fh = self.sfc.fh(z_s, z_t, L)
 
-        psi_sat = self.soil.properties.psi_sat[0]
-        psi_all = self.soil.water_potential(self.soil_state.moisture)
-        K_hydraulic = self.soil.conductivity_moisture(self.soil_state.moisture)
-        psi0 = psi_all[0]
-        psi1 = psi_all[1]
-        K0 = K_hydraulic[0]
-        K1 = K_hydraulic[1]
-        K_mid = 0.5 * (K0 + K1)
+        residual_q = self.soil.properties.residual[0]
+        porosity = self.soil.properties.porosity[0]
 
-        # Soil moisture flux and evaporation
-        flux_sm = RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
-        E = rho_a * self.sfc_state.fluxes.kinematic_moisture
+        # Subsurface properties (fixed during SMB solve)
+        psi1 = self.soil.water_potential(self.soil_state.moisture)[1]
+        K1 = self.soil.conductivity_moisture(self.soil_state.moisture)[1]
 
-        # Iteratively solve for moisture flux
-        converged = np.zeros(self.ncol, dtype=bool)
-        for _ in range(0, ITER_MAX):
+        # Current surface hydraulic conductivity
+        K0 = self.soil.conductivity_moisture(sfc_q, level=0)
+        K_mid = np.maximum(0.5 * (K0 + K1), 1e-14)
 
-            # New blended soil moisture flux
-            flux_sm_last = flux_sm
-            flux_sm_new = (1.0 - delta) * flux_sm_last - delta * E
+        # Evaporation at current surface conditions
+        gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+        E = rho_a * (gnd_q - atm_q) * ust * fh
 
-            # New evaporation
-            psi0_new = psi1 + dz * ((flux_sm_new / (RHO_W * K_mid)) - 1.0)
-            psi0_new = np.minimum(psi0_new, psi_sat)
-            sfc_moisture_new = self.soil.surface_water_content(psi0_new)
-            gnd_q = self.soil.surface_mixing_ratio(
-                sfc_T, sfc_moisture_new, atm_p)
-            E_new = rho_a * (gnd_q - atm_q) * ust * fh
+        # Invert flux balance for surface water potential
+        psi_sfc = psi1 + dz * (-E / (RHO_W * K_mid) - 1.0)
 
-            K0_new = self.soil.conductivity_moisture(
-                sfc_moisture_new, level=0)
-            K_mid_new = 0.5 * (K0_new + K1)
-
-            err = np.abs(E_new + flux_sm_new)
-            newly_converged = err <= TOL
-            converged |= newly_converged
-
-            if converged.all():
-                flux_sm = flux_sm_new
-                psi0 = psi0_new
-                self.sfc_state.moisture = sfc_moisture_new
-                E = E_new
-                K_mid = K_mid_new
-                break
-
-            mask = ~converged
-            flux_sm = np.where(mask, flux_sm_new, flux_sm)
-            psi0 = np.where(mask, psi0_new, psi0)
-            self.sfc_state.moisture = np.where(
-                mask, sfc_moisture_new, self.sfc_state.moisture)
-            E = np.where(mask, E_new, E)
-            K_mid = np.where(mask, K_mid_new, K_mid)
+        # Recover surface moisture and clamp to physical bounds
+        theta_sfc = self.soil.surface_water_content(psi_sfc)
+        self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)
 
     def _compute_fluxes(self, sfc_T: np.ndarray, sfc_q: np.ndarray) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
@@ -762,13 +733,22 @@ class UtahLSM:
     def _solve_surface_coupling(self) -> None:
         """Iteratively solves the coupled SEB and SMB.
 
-        This method performs a Picard iteration, alternating between solving
-        the Surface Energy Budget (SEB) for temperature and the Surface
-        Moisture Budget (SMB) for moisture until both state variables converge.
+        This method performs an under-relaxed Picard iteration, alternating
+        between solving the Surface Energy Budget (SEB) for temperature and
+        the Surface Moisture Budget (SMB) for moisture until both state
+        variables converge.
+
+        The SMB moisture update is under-relaxed to damp oscillations that
+        arise when the hydraulic conductivity is very small (dry soils).
+        In that regime the Darcy inversion inside the SMB is ill-conditioned,
+        causing the raw moisture update to swing between saturation and
+        residual on successive iterations. Under-relaxation keeps the
+        iterate within the basin of convergence.
         """
         max_outer_iter = self.input.numerics.iterations.coupling
         tol_temp = self.input.numerics.tolerances.coupling_temp
         tol_mois = self.input.numerics.tolerances.coupling_mois
+        alpha = self.input.numerics.coupling_relaxation
 
         for i in range(max_outer_iter):
             # Store previous states to check convergence
@@ -780,6 +760,11 @@ class UtahLSM:
 
             # Solve SMB for moisture
             self._solve_smb()
+
+            # Under-relax the moisture update to damp oscillations
+            self.sfc_state.moisture = (
+                prev_q + alpha * (self.sfc_state.moisture - prev_q)
+            )
 
             # Check convergence
             diff_T = np.abs(self.sfc_state.temperature - prev_T)

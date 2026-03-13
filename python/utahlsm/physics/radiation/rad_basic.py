@@ -136,16 +136,16 @@ class RadBasic(Radiation):
         EPSILON = c.thermodynamic.EPSILON
         SB = c.radiation.STEFAN_BOLTZMANN
 
-        # local references to atmospheric and surface state
+        # local references to atmospheric state
         pa: float = atm_state.pressure
         qa: float = atm_state.specific_humidity
-        Ts: float = sfc_state.temperature
+        Ta: float = atm_state.temperature
 
-        # vapor pressure and effective emissivity
+        # vapor pressure and effective emissivity (Brutsaert 1975)
         vapor_pressure: float = (pa * qa) / (EPSILON + qa)
-        emissivity_eff: float = 1.24 * (vapor_pressure / Ts) ** (1 / 7.0)
+        emissivity_eff: float = 1.24 * (vapor_pressure / Ta) ** (1 / 7.0)
 
-        return emissivity_eff * SB * (Ts ** 4)
+        return emissivity_eff * SB * (Ta ** 4)
 
     def _longwave_out(self, sfc_state: SurfaceState) -> float:
         """Computes upward longwave radiation using the Stefan-Boltzmann law.

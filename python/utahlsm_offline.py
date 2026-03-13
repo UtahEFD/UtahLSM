@@ -83,6 +83,7 @@ def main() -> None:
 
     output_lsm: Optional[utahlsm.Output] = None
     lsm: Optional[utahlsm.UtahLSM] = None
+    step_count: int = 0
     try:
         # Create input and output objects
         input_lsm: utahlsm.Input = utahlsm.Input(

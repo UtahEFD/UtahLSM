@@ -101,7 +101,7 @@ class BrooksCorey(Soil):
             residual = self._expand_profile_property(
                 self.properties.residual, soil_q_arr)
 
-        Se = (soil_q-residual)/(porosity-residual)
+        Se = np.maximum((soil_q-residual)/(porosity-residual), 1e-12)
         psi = psi_sat*( Se**(-b) )
 
         return psi

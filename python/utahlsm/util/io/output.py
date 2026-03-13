@@ -218,7 +218,8 @@ class Output:
         """Closes the NetCDF output file.
 
         Performs a final sync to ensure all buffered data is written before
-        closing the file.
+        closing the file. Safe to call multiple times.
         """
-        self.outfile.sync()
-        self.outfile.close()
+        if self.outfile.isopen():
+            self.outfile.sync()
+            self.outfile.close()
