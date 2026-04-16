@@ -31,6 +31,7 @@ from numpy.typing import NDArray
 from ...exceptions import NamelistError
 from ...util import constants as c
 from ...util.io import logging_helper
+from .. import thermo
 
 ST = TypeVar('ST', bound='Soil')
 logger = logging_helper.get_logger('SOIL')
@@ -125,6 +126,53 @@ class Soil(ABC):
         self.properties = SoilProperties(
             **{name: np.array(values) for name, values in prop_lists.items()}
         )
+
+        # Derived per-layer quantities from the retention curve.
+        # Field capacity and wilting point correspond to standard matric
+        # potentials (-3.3 m ≈ -33 kPa and -150 m ≈ -1500 kPa) inverted
+        # through the soil model's own ψ(θ) relation — they therefore stay
+        # consistent with the dataset's retention parameters and with
+        # whichever soil model is active.
+        self.theta_fc: NDArray[np.float64] = self._theta_at_potential(
+            c.soil.PSI_FIELD_CAPACITY
+        )
+        self.theta_wilt: NDArray[np.float64] = self._theta_at_potential(
+            c.soil.PSI_WILTING_POINT
+        )
+
+    def _theta_at_potential(
+        self, psi_target: float
+    ) -> NDArray[np.float64]:
+        """Returns soil moisture at a specified matric potential per layer.
+
+        Inverts ψ(θ) for each soil layer via bisection on the interval
+        [residual, porosity]. Called once at init to populate θ_fc and
+        θ_wilt; not performance-critical.
+
+        Args:
+            psi_target: Target matric potential [m] (negative).
+
+        Returns:
+            Per-layer soil moisture [m^3/m^3] of shape (nz,) that yields
+            ψ(θ) ≈ psi_target in each layer's retention curve.
+        """
+        nz = self.properties.b.size
+        out = np.empty(nz)
+        for i in range(nz):
+            lo = self.properties.residual[i] + 1e-6
+            hi = self.properties.porosity[i] - 1e-6
+            for _ in range(80):
+                mid = 0.5 * (lo + hi)
+                psi_mid = float(self.water_potential(mid, level=i))
+                # ψ is monotonically increasing in θ (less negative as θ↑)
+                if psi_mid < psi_target:
+                    lo = mid
+                else:
+                    hi = mid
+                if hi - lo < 1e-8:
+                    break
+            out[i] = 0.5 * (lo + hi)
+        return out
 
     #--- Abstract Methods ---
 
@@ -360,13 +408,9 @@ class Soil(ABC):
 
         psi = self.water_potential(sfc_q, level=0)
         h = np.exp(G*psi/(RV*sfc_T))
-        es = c.thermodynamic.ES_REF * np.exp(
-            c.thermodynamic.TETENS_A * (sfc_T-c.air.TEMPERATURE_REF) /
-            (sfc_T-c.thermodynamic.TETENS_B))
-        hum_sat = c.thermodynamic.EPSILON*(es/(atm_p-0.378*es))
-        hum_spec = h*hum_sat
+        hum_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
 
-        return hum_spec
+        return h * hum_sat
 
     def conductivity_thermal(
             self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:

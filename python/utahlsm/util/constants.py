@@ -73,4 +73,6 @@ soil = SimpleNamespace(
     CONDUCTIVITY_COEFF=418.46, # Empirical coefficient [W/m-K]
     CONDUCTIVITY_EXP=2.7, # Exponential parameter
     CONDUCTIVITY_MIN=0.172, # Minimum conductivity [W/m-K]
+    PSI_FIELD_CAPACITY=-3.3, # Matric potential at field capacity [m head]
+    PSI_WILTING_POINT=-150.0, # Matric potential at permanent wilting [m head]
 )

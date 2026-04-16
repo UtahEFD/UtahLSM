@@ -27,9 +27,17 @@ from typing import Callable, Optional
 
 import numpy as np
 
-from .data_models import AtmosphericState, SoilState, SolverState, SurfaceState
+from .data_models import (
+    AtmosphericState,
+    CanopyState,
+    SoilState,
+    SolverState,
+    SurfaceState,
+)
 from .exceptions import NamelistError, SolverError
-from .physics import Radiation, Soil, Surface
+from .physics import Canopy, Radiation, Soil, Surface
+from .physics import thermo
+from .physics.canopy.factory import get_canopy_model
 from .physics.radiation.factory import get_radiation_model
 from .physics.soil.factory import get_soil_model
 from .physics.surface.factory import get_surface_model
@@ -55,6 +63,8 @@ class UtahLSM:
         rad: The selected radiation model instance.
         soil: The selected soil model instance.
         sfc: The selected surface layer model instance.
+        canopy: The selected canopy model instance, or None in bare-soil mode.
+        canopy_state: Canopy / vegetation diagnostics updated each step.
         tstep: The current model time step [s].
         logger: A logger instance for this class.
         output_dims: A dictionary of dimensions for the output file.
@@ -195,6 +205,21 @@ class UtahLSM:
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
         self._did_warm_start_turbulence: bool = False
 
+        # Canopy defaults to bare-soil until _setup_physics instantiates
+        # a concrete model from the namelist. Stubbing it here keeps
+        # partial-initialization test paths that skip _setup_physics safe.
+        self.canopy: Optional[Canopy] = None
+        nz = self.input.grid.nz
+        self.canopy_state: CanopyState = CanopyState(
+            resistance=np.full(self.ncol, np.inf),
+            theta_root=np.zeros(self.ncol),
+            transpiration=np.zeros(self.ncol),
+            evap_soil=np.zeros(self.ncol),
+            latent_veg=np.zeros(self.ncol),
+            latent_soil=np.zeros(self.ncol),
+            root_uptake=np.zeros((nz, self.ncol)),
+        )
+
     def _ensure_column_field(
         self, field: np.ndarray, name: str
     ) -> np.ndarray:
@@ -306,6 +331,9 @@ class UtahLSM:
                 self.input.soil_properties_name
             )
             self.sfc: Surface = get_surface_model(self.input.surface)
+            self.canopy: Optional[Canopy] = get_canopy_model(
+                self.input.canopy, self.input.grid.z, self.ncol
+            )
         except NamelistError as e:
             self.logger.error('Failed to initialize physics modules: %s.', e)
             raise
@@ -343,6 +371,7 @@ class UtahLSM:
             self._load_atm_state(forcing0)
             self.tstep = float(self.input.forcing.tstep)
 
+            self._refresh_canopy_diagnostics()
             self._solve_seb()
             self.soil_state.temperature[0] = self.sfc_state.temperature
 
@@ -378,6 +407,13 @@ class UtahLSM:
             'soil_T': self.soil_state.temperature,
             'soil_q': self.soil_state.moisture,
         }
+        if getattr(self, 'canopy', None) is not None:
+            self.output_fields.update({
+                'r_s': self.canopy_state.resistance,
+                'theta_root': self.canopy_state.theta_root,
+                'lhf_soil': self.canopy_state.latent_soil,
+                'lhf_veg': self.canopy_state.latent_veg,
+            })
         self.output.set_fields(self.output_fields)
         self.output.save(self.output_fields, 0, 0, initial=True)
 
@@ -399,6 +435,7 @@ class UtahLSM:
         sfc_q = np.array(self.soil_state.moisture[0], copy=True)
         self.sfc_state.temperature = sfc_T
         self.sfc_state.moisture = sfc_q
+        self._refresh_canopy_diagnostics()
         self._compute_fluxes(sfc_T, sfc_q)
 
         self._load_atm_state(saved_atm_state)
@@ -420,15 +457,137 @@ class UtahLSM:
         """
         return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
 
+    def _refresh_canopy_diagnostics(self) -> None:
+        """Refreshes r_s and θ_root from the current outer-iteration state.
+
+        Called once per outer SEB/SMB coupling pass so that subsequent SEB
+        root-finds and SMB Brent solves see a fixed stomatal resistance
+        (per the fast-response design axiom — no per-Brent-evaluation
+        re-evaluation of f1–f4).
+        """
+        canopy = getattr(self, 'canopy', None)
+        if canopy is None:
+            return
+        theta_wilt = self.soil.theta_wilt
+        theta_fc = self.soil.theta_fc
+        r_s = canopy.compute_resistance(
+            self.atm_state, self.sfc_state, self.soil_state,
+            theta_wilt, theta_fc,
+        )
+        self.canopy_state.resistance[:] = r_s
+        self.canopy_state.theta_root[:] = canopy.root_zone_mean(
+            self.soil_state.moisture
+        )
+
+    def _partition_flux_wq(
+        self,
+        sfc_T: np.ndarray,
+        gnd_q: np.ndarray,
+        atm_q: np.ndarray,
+        atm_p: np.ndarray,
+        ustar: np.ndarray,
+        fh: np.ndarray,
+        cols: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """Kinematic moisture flux with optional canopy partition.
+
+        Bare-soil mode: single-source form
+        ``flux_wq = (gnd_q - atm_q) · u* · f_h``.
+
+        Canopy-active mode: two-source (Noilhan-Planton) combining bare-
+        soil evaporation through the aerodynamic resistance with
+        transpiration through ``r_a + r_s``. Both sources use the same
+        surface temperature (big-leaf, single-T axiom).
+        """
+        canopy = getattr(self, 'canopy', None)
+        if canopy is None:
+            return (gnd_q - atm_q) * ustar * fh
+
+        if cols is not None:
+            f_veg = canopy.veg_fraction[cols]
+            r_s = self.canopy_state.resistance[cols]
+        else:
+            f_veg = canopy.veg_fraction
+            r_s = self.canopy_state.resistance
+
+        q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
+        u_fh = ustar * fh
+        e_soil = (1.0 - f_veg) * (gnd_q - atm_q) * u_fh
+        # 1/(ra + rs) normalized: flux = f_veg·(q_sat - q_a)·u_fh/(1 + u_fh·r_s)
+        denom = 1.0 + u_fh * r_s
+        t_veg = f_veg * (q_sat - atm_q) * u_fh / denom
+        return e_soil + t_veg
+
+    def _finalize_canopy_partition(self) -> None:
+        """Splits the converged total LH into soil and canopy components.
+
+        Also records per-layer root uptake rate [m^3/m^3/s] used as a
+        sink term in the moisture diffusion RHS. Layer 0's root fraction
+        is folded into layer 1 so the surface BC is unaffected by
+        transpiration (the SMB already balances the top layer).
+        """
+        LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
+        RHO_W = c.water.DENSITY
+        RD = c.thermodynamic.GAS_CONSTANT_DRY
+
+        canopy = getattr(self, 'canopy', None)
+        if canopy is None:
+            if hasattr(self, 'canopy_state'):
+                self.canopy_state.evap_soil[:] = 0.0
+                self.canopy_state.transpiration[:] = 0.0
+                self.canopy_state.latent_soil[:] = (
+                    self.sfc_state.fluxes.latent_heat)
+                self.canopy_state.latent_veg[:] = 0.0
+                self.canopy_state.root_uptake[:] = 0.0
+            return
+
+        atm_p = self.atm_state.pressure
+        atm_q = self.atm_state.specific_humidity
+        atm_T = self.atm_state.temperature
+        sfc_T = self.sfc_state.temperature
+        sfc_q = self.sfc_state.moisture
+        rho_a = atm_p / (RD * atm_T)
+
+        ust = self.sfc_state.turbulence.friction_velocity
+        fh = self.sfc.fh(
+            self.input.surface.z_s, self.input.surface.z_t,
+            self.sfc_state.turbulence.obukhov_length,
+        )
+        gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+        q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
+        f_veg = canopy.veg_fraction
+        r_s = self.canopy_state.resistance
+        u_fh = ust * fh
+
+        E_soil_kin = (1.0 - f_veg) * (gnd_q - atm_q) * u_fh
+        T_veg_kin = f_veg * (q_sat - atm_q) * u_fh / (1.0 + u_fh * r_s)
+
+        E_soil_mass = rho_a * E_soil_kin          # [kg/m^2/s]
+        T_veg_mass = rho_a * T_veg_kin            # [kg/m^2/s]
+
+        self.canopy_state.evap_soil[:] = E_soil_mass
+        self.canopy_state.transpiration[:] = T_veg_mass
+        self.canopy_state.latent_soil[:] = LV * E_soil_mass
+        self.canopy_state.latent_veg[:] = LV * T_veg_mass
+
+        # Per-layer uptake rate [m^3/m^3/s] folded into layers 1..nz-1.
+        nz = self.input.grid.nz
+        root_frac = canopy.root_fraction.copy()  # (nz, ncol)
+        if nz > 1:
+            root_frac[1] += root_frac[0]
+            root_frac[0] = 0.0
+        dz = self.input.grid.z[0] - self.input.grid.z[1]
+        # T_veg_mass broadcast over layers times root fraction / (rho_w dz).
+        self.canopy_state.root_uptake[:] = (
+            root_frac * T_veg_mass[None, :] / (RHO_W * dz)
+        )
+
     def _solve_seb(self) -> None:
         """Solves the Surface Energy Budget (SEB) to find surface temperature.
 
         Uses a vectorized Brent's method to solve all columns simultaneously.
         This is significantly faster than column-by-column iteration.
         """
-        
-        self._L_anchor = self.sfc_state.turbulence.obukhov_length[0]
-        
         # Calculate thermal conductivity for the entire soil column
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
         self.solver_state.conductivity_thermal_mid = 0.5 * (K_all[0] + K_all[1])
@@ -586,7 +745,9 @@ class UtahLSM:
 
             ustar = wind_eff * fm
             flux_wT = (sfc_T - atm_T) * ustar * fh
-            flux_wq = (gnd_q - atm_q) * ustar * fh
+            flux_wq = self._partition_flux_wq(
+                sfc_T, gnd_q, atm_q, atm_p, ustar, fh, cols=cols
+            )
             flux_wTv = flux_wT + EVT * ref_T * flux_wq
 
             L_new = np.where(
@@ -647,17 +808,21 @@ class UtahLSM:
         return rad_net - ground_heat - sensible - latent
 
     def _solve_smb(self) -> None:
-        """Solves the Surface Moisture Budget (SMB).
+        """Solves the Surface Moisture Budget (SMB) for surface moisture.
 
-        Computes the equilibrium surface moisture by balancing the
-        evaporative demand against the Darcy flux from the subsurface.
-        From the balance E + flux_sm = 0:
+        Finds θ_sfc that balances the evaporative demand against the
+        Darcy flux from the subsurface via bracketed Brent root-finding
+        on θ_sfc ∈ [θ_residual, θ_porosity]. The residual is
 
-            ψ_sfc = ψ_1 + Δz (-E / (ρ_w K_mid) - 1)
+            R(θ_sfc) = E(θ_sfc, T_sfc)
+                       + ρ_w K_mid (θ_sfc) [ (ψ(θ_sfc) - ψ_1) / Δz + 1 ]
 
-        The resulting water potential is inverted to recover θ_sfc.
-        This is a single Picard step; the outer coupling loop in
-        _solve_surface_coupling provides the iteration.
+        At θ_sfc = θ_residual: K → 0, ψ → -∞, gnd_q → 0, so
+        R ≈ -ρ_a atm_q u* f_h ≤ 0.
+        At θ_sfc = θ_porosity: K → K_sat, ψ → 0, gnd_q is saturated, so
+        R > 0. The monotonic sign change guarantees a bracketed root,
+        which Brent's method finds robustly — including the dry-soil
+        regime where the previous ψ-inversion approach was ill-conditioned.
         """
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
@@ -669,32 +834,56 @@ class UtahLSM:
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
         sfc_T = self.sfc_state.temperature
-        sfc_q = self.sfc_state.moisture
         L = self.sfc_state.turbulence.obukhov_length
         ust = self.sfc_state.turbulence.friction_velocity
         rho_a = atm_p / (RD * self.atm_state.temperature)
         fh = self.sfc.fh(z_s, z_t, L)
 
-        residual_q = self.soil.properties.residual[0]
-        porosity = self.soil.properties.porosity[0]
+        residual_q = float(self.soil.properties.residual[0])
+        porosity = float(self.soil.properties.porosity[0])
 
         # Subsurface properties (fixed during SMB solve)
         psi1 = self.soil.water_potential(self.soil_state.moisture)[1]
         K1 = self.soil.conductivity_moisture(self.soil_state.moisture)[1]
 
-        # Current surface hydraulic conductivity
-        K0 = self.soil.conductivity_moisture(sfc_q, level=0)
-        K_mid = np.maximum(0.5 * (K0 + K1), 1e-14)
+        canopy = getattr(self, 'canopy', None)
+        if canopy is not None:
+            f_veg = canopy.veg_fraction
+        else:
+            f_veg = np.zeros_like(sfc_T)
 
-        # Evaporation at current surface conditions
-        gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
-        E = rho_a * (gnd_q - atm_q) * ust * fh
+        def smb_residual(theta: np.ndarray) -> np.ndarray:
+            theta_c = np.clip(theta, residual_q, porosity)
+            psi0 = self.soil.water_potential(theta_c, level=0)
+            K0 = self.soil.conductivity_moisture(theta_c, level=0)
+            K_mid = np.maximum(0.5 * (K0 + K1), 1e-14)
+            gnd_q = self.soil.surface_mixing_ratio(sfc_T, theta_c, atm_p)
+            # SMB is a bare-soil top-layer balance; transpiration is
+            # removed from the root-zone moisture budget (diffusion RHS),
+            # not the surface flux residual.
+            E_soil = (1.0 - f_veg) * rho_a * (gnd_q - atm_q) * ust * fh
+            return E_soil + RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
 
-        # Invert flux balance for surface water potential
-        psi_sfc = psi1 + dz * (-E / (RHO_W * K_mid) - 1.0)
+        # Shrink the bracket slightly off the physical bounds to keep
+        # ψ(θ) and K(θ) finite and well-defined at the endpoints.
+        eps = 1e-6
+        span = porosity - residual_q
+        a = np.full_like(sfc_T, residual_q + eps * span)
+        b = np.full_like(sfc_T, porosity - eps * span)
 
-        # Recover surface moisture and clamp to physical bounds
-        theta_sfc = self.soil.surface_water_content(psi_sfc)
+        iter_max = self.input.numerics.iterations.smb_flux
+        tol = self.input.numerics.tolerances.smb_flux
+
+        theta_sfc, converged = solvers.root_brent_vec(
+            smb_residual, a, b, iter_max=iter_max, tol=tol
+        )
+
+        if not converged.all():
+            self.logger.warning(
+                'SMB root-finding did not converge for %d of %d columns.',
+                int(np.sum(~converged)), self.ncol,
+            )
+
         self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)
 
     def _compute_fluxes(self, sfc_T: np.ndarray, sfc_q: np.ndarray) -> None:
@@ -735,40 +924,28 @@ class UtahLSM:
     def _solve_surface_coupling(self) -> None:
         """Iteratively solves the coupled SEB and SMB.
 
-        This method performs an under-relaxed Picard iteration, alternating
-        between solving the Surface Energy Budget (SEB) for temperature and
-        the Surface Moisture Budget (SMB) for moisture until both state
-        variables converge.
-
-        The SMB moisture update is under-relaxed to damp oscillations that
-        arise when the hydraulic conductivity is very small (dry soils).
-        In that regime the Darcy inversion inside the SMB is ill-conditioned,
-        causing the raw moisture update to swing between saturation and
-        residual on successive iterations. Under-relaxation keeps the
-        iterate within the basin of convergence.
+        Performs a Picard iteration, alternating between solving the
+        Surface Energy Budget (SEB) for temperature and the Surface
+        Moisture Budget (SMB) for moisture. Each inner solve is a robust
+        bracketed Brent root-find, so no under-relaxation is needed to
+        damp oscillations — convergence typically occurs in a few outer
+        iterations.
         """
         max_outer_iter = self.input.numerics.iterations.coupling
         tol_temp = self.input.numerics.tolerances.coupling_temp
         tol_mois = self.input.numerics.tolerances.coupling_mois
-        alpha = self.input.numerics.coupling_relaxation
 
         for i in range(max_outer_iter):
-            # Store previous states to check convergence
             prev_T = np.array(self.sfc_state.temperature, copy=True)
             prev_q = np.array(self.sfc_state.moisture, copy=True)
 
-            # Solve SEB for temperature
-            self._solve_seb()
+            # Refresh r_s and θ_root once per outer iteration so SEB/SMB
+            # inner solves see a fixed stomatal resistance.
+            self._refresh_canopy_diagnostics()
 
-            # Solve SMB for moisture
+            self._solve_seb()
             self._solve_smb()
 
-            # Under-relax the moisture update to damp oscillations
-            self.sfc_state.moisture = (
-                prev_q + alpha * (self.sfc_state.moisture - prev_q)
-            )
-
-            # Check convergence
             diff_T = np.abs(self.sfc_state.temperature - prev_T)
             diff_q = np.abs(self.sfc_state.moisture - prev_q)
 
@@ -778,6 +955,7 @@ class UtahLSM:
                 self._compute_fluxes(
                     self.sfc_state.temperature, self.sfc_state.moisture
                 )
+                self._finalize_canopy_partition()
                 return
 
         self.logger.warning(
@@ -785,10 +963,12 @@ class UtahLSM:
             'dT: %.4f, dq: %.4e', max_outer_iter,
             float(np.max(diff_T)), float(np.max(diff_q)))
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
+        self._finalize_canopy_partition()
 
     def _solve_diffusion(self,state_field: np.ndarray,get_diffusivity: Callable,
                          get_conductivity: Optional[Callable],
-                         sfc_boundary: float,field_name: str = 'field') -> None:
+                         sfc_boundary: float,field_name: str = 'field',
+                         source_term: Optional[np.ndarray] = None) -> None:
         """Solves a generic 1D diffusion equation using a theta scheme.
 
         This is a parameterized diffusion solver that handles both heat and
@@ -806,6 +986,10 @@ class UtahLSM:
                 [Optional[Callable[[NDArray[np.float64]], NDArray[np.float64]]]].
             sfc_boundary: Surface boundary value for Dirichlet BC [float].
             field_name: Name of the field for logging/documentation [str].
+            source_term: Optional per-layer source (or sink, if negative)
+                with units of the state field per second, shape
+                (nz, ncol). Applied as ``dt · source`` to the RHS of the
+                tridiagonal system for layers 1..nz-1.
 
         Physics:
             - Diffusivity always depends on soil moisture (not the state
@@ -970,6 +1154,20 @@ class UtahLSM:
         r[j] = ((CFp - CFm) * field[j] +
                 (CF + 2.0 * CFm) * field[j + 1])
 
+        # Apply optional per-layer source (e.g. root-uptake sink) for
+        # layers 1..nz-1. source_term has shape (nz, ncol); r is
+        # (nz-1, ncol), indexed so r[j] ↔ layer (j+1).
+        if source_term is not None:
+            src = np.asarray(source_term, dtype=float)
+            if src.ndim == 1:
+                src = src[:, None]
+            if src.shape != (nz, ncol):
+                raise ValueError(
+                    f"source_term shape {src.shape} does not match "
+                    f"(nz, ncol)=({nz}, {ncol})."
+                )
+            r += dt * src[1:]
+
         # Solve and update
         field[0] = sfc_boundary_vec
         field[1:] = solvers.tridiagonal(e, f, g, r)
@@ -990,11 +1188,21 @@ class UtahLSM:
         )
 
     def _solve_diffusion_mois(self) -> None:
-        """Solves the soil moisture diffusion equation using a theta scheme."""
+        """Solves the soil moisture diffusion equation using a theta scheme.
+
+        When a canopy is active, the per-layer root extraction rate (a
+        volumetric sink in [m^3/m^3/s]) is injected into the RHS so
+        transpiration removes water distributively from the root zone
+        rather than from the bare-soil top-layer balance.
+        """
+        source = None
+        if getattr(self, 'canopy', None) is not None:
+            source = -self.canopy_state.root_uptake
         self._solve_diffusion(
             state_field=self.soil_state.moisture,
             get_diffusivity=self.soil.diffusivity_moisture,
             get_conductivity=self.soil.conductivity_gradient,
             sfc_boundary=self.sfc_state.moisture,
-            field_name='moisture'
+            field_name='moisture',
+            source_term=source,
         )

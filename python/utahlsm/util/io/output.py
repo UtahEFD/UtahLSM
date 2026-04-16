@@ -113,6 +113,26 @@ class Output:
                 'long_name':'ground heat flux',
                 'units':'W m-2'
             },
+            'r_s': {
+                'dimension':('t',),
+                'long_name':'bulk stomatal resistance',
+                'units':'s m-1'
+            },
+            'theta_root': {
+                'dimension':('t',),
+                'long_name':'root-zone mean soil moisture',
+                'units':'m3 m-3'
+            },
+            'lhf_soil': {
+                'dimension':('t',),
+                'long_name':'latent heat flux from bare soil',
+                'units':'W m-2'
+            },
+            'lhf_veg': {
+                'dimension':('t',),
+                'long_name':'latent heat flux from canopy transpiration',
+                'units':'W m-2'
+            },
         }
 
     def set_dims(self, dims: dict[str, int]) -> None:
@@ -127,7 +147,8 @@ class Output:
         if has_xy:
             self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
             self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
-            for field in ('ust', 'obl', 'shf', 'lhf', 'ghf'):
+            for field in ('ust', 'obl', 'shf', 'lhf', 'ghf',
+                          'r_s', 'theta_root', 'lhf_soil', 'lhf_veg'):
                 self.attributes[field]['dimension'] = ('t', 'y', 'x')
 
         for dim, size in dims.items():

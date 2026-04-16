@@ -23,8 +23,9 @@ By importing the base classes here, they are made directly accessible under
 the `utahlsm.physics` namespace.
 """
 
+from .canopy import Canopy
 from .radiation import Radiation
 from .soil import Soil
 from .surface import Surface
 
-__all__ = ['Radiation', 'Soil', 'Surface']
+__all__ = ['Canopy', 'Radiation', 'Soil', 'Surface']

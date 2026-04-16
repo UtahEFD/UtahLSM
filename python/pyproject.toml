@@ -102,6 +102,7 @@ markers = [
     "soil: Tests for soil physics models",
     "seb: Tests for surface energy budget solver",
     "smb: Tests for surface moisture budget solver",
+    "canopy: Tests for canopy / vegetation physics",
     "datamodel: Tests for configuration and state dataclasses",
     "unit: Unit tests",
     "integration: Integration tests",

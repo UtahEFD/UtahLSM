@@ -34,6 +34,7 @@ from .soil_properties_loader import SoilPropertiesLoader
 
 from ...data_models import (
     AtmosphericState,
+    CanopyConfig,
     ForcingData,
     GeneralConfig,
     GridConfig,
@@ -65,6 +66,7 @@ class Input:
         surface: Dataclass with surface-related parameters.
         soil: Dataclass with soil model configuration.
         radiation: Dataclass with radiation model configuration.
+        canopy: Dataclass with canopy / vegetation model configuration.
         output: Dataclass with output file configuration.
         grid: Dataclass with grid and spatial discretization parameters.
         initial: Dataclass holding the initial soil state.
@@ -118,8 +120,6 @@ class Input:
                 numerics_data.get('warm_start_turbulence', False)),
             initialize_surface_temperature_from_seb=bool(
                 numerics_data.get('initialize_surface_temperature_from_seb', False)),
-            coupling_relaxation=float(
-                numerics_data.get('coupling_relaxation', 0.3)),
             iterations=IterationsConfig(**iterations_data),
             tolerances=TolerancesConfig(**tolerances_data)
         )
@@ -129,6 +129,8 @@ class Input:
         rad_data = namelist_data['radiation']
         self.radiation: RadiationConfig = RadiationConfig(**rad_data)
         self.output: OutputConfig = OutputConfig(**namelist_data['output'])
+        self.canopy: CanopyConfig = CanopyConfig(
+            **namelist_data.get('canopy', {}))
         self.grid: GridConfig = GridConfig(
             nx=nx,
             ny=ny,

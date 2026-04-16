@@ -17,7 +17,6 @@
                 "diffusion_back_weight": { "type": "number",  "minimum": 0, "maximum": 1},
                 "warm_start_turbulence": { "type": "boolean" },
                 "initialize_surface_temperature_from_seb": { "type": "boolean" },
-                "coupling_relaxation": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
                 "iterations": {
                     "type": "object",
                     "properties": {
@@ -95,6 +94,23 @@
                 "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
             },
             "required": ["model", "latitude", "longitude"]
+        },
+        "canopy": {
+            "type": "object",
+            "properties": {
+                "model": { "type": "string", "enum": ["none", "jarvis"] },
+                "lai": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "veg_fraction": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "rooting_depth": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "beta": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "rs_min": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "rs_max": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "rg_half": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "vpd_coef": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "t_opt": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
+                "t_coef": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] }
+            },
+            "required": ["model"]
         },
         "output": {
             "type": "object",

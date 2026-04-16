@@ -137,6 +137,9 @@ output/
 cases/*/output/
 lsm_*.nc
 .claude/
+*png
+scripts/
+
 
 # Temporary files
 *.tmp

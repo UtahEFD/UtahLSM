@@ -26,7 +26,7 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -133,6 +133,40 @@ class SurfaceState:
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
 
 @dataclass
+class CanopyState:
+    """Holds canopy / vegetation diagnostics for a single time step.
+
+    All per-column quantities carry shape ``(ncol,)``; per-layer-per-
+    column quantities carry shape ``(nz, ncol)``.
+
+    Attributes:
+        resistance: Bulk stomatal + cuticular resistance r_s [s/m].
+        theta_root: Root-zone-weighted soil moisture [m^3/m^3].
+        transpiration: Canopy transpiration flux [kg/m^2/s].
+        evap_soil: Bare-soil evaporation flux [kg/m^2/s]. Sum with
+            ``transpiration`` matches the previous total E.
+        latent_veg: Latent heat flux contribution from canopy [W/m^2].
+        latent_soil: Latent heat flux contribution from bare soil [W/m^2].
+        root_uptake: Per-layer root extraction rate [m^3 water /
+            m^3 soil / s], shape (nz, ncol). Negative sign in the
+            moisture budget (sink from soil to canopy).
+    """
+    resistance: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    theta_root: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    transpiration: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    evap_soil: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    latent_veg: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    latent_soil: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    root_uptake: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros((1, 1)))
+
+@dataclass
 class SolverState:
     """Holds intermediate variables used by the numerical solvers.
 
@@ -225,9 +259,6 @@ class NumericsConfig:
             using forcing[0] (offline mode).
         initialize_surface_temperature_from_seb: If True, initialize the top
             soil-layer temperature by solving SEB at time=0 using forcing[0].
-        coupling_relaxation: Under-relaxation factor for SEB-SMB Picard
-            iteration (0 < alpha <= 1). Smaller values damp oscillations
-            more aggressively but require more iterations.
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
@@ -236,7 +267,6 @@ class NumericsConfig:
     tolerances: TolerancesConfig
     warm_start_turbulence: bool = False
     initialize_surface_temperature_from_seb: bool = False
-    coupling_relaxation: float = 0.3
 
 @dataclass(frozen=True)
 class TimeConfig:
@@ -321,6 +351,41 @@ class RadiationConfig:
     model: int
     latitude: float
     longitude: float
+
+@dataclass(frozen=True)
+class CanopyConfig:
+    """Canopy / vegetation model configuration.
+
+    Scalar parameters broadcast to every column when parsed; sequence
+    parameters must have length ``ncol`` and retain their per-column
+    values. ``model == 'none'`` skips canopy physics entirely
+    (bare-soil fallback).
+
+    Attributes:
+        model: Canopy model selector ('none' or 'jarvis').
+        lai: Leaf area index [m^2/m^2].
+        veg_fraction: Vegetated surface fraction in [0, 1].
+        rooting_depth: Depth over which roots integrate to unity [m].
+        beta: Jackson-1996 root distribution parameter (dimensionless).
+        rs_min: Minimum bulk stomatal resistance [s/m].
+        rs_max: Maximum (cuticular) resistance [s/m].
+        rg_half: Half-saturation net radiation for f1(R) [W/m^2]
+            (Jarvis).
+        vpd_coef: VPD sensitivity for f2(VPD) [1/Pa] (Jarvis).
+        t_opt: Optimum air temperature for f3(T) [K] (Jarvis).
+        t_coef: Width of f3(T) parabola [1/K^2] (Jarvis).
+    """
+    model: str = 'none'
+    lai: Any = 0.0
+    veg_fraction: Any = 0.0
+    rooting_depth: Any = 0.0
+    beta: Any = 0.965
+    rs_min: Any = 40.0
+    rs_max: Any = 5000.0
+    rg_half: Any = 100.0
+    vpd_coef: Any = 1.0e-4
+    t_opt: Any = 298.0
+    t_coef: Any = 1.6e-3
 
 @dataclass(frozen=True)
 class OutputConfig:
