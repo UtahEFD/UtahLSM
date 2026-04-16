@@ -203,6 +203,11 @@ class UtahLSM:
 
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
+        nz_diff = self.input.grid.nz - 1
+        self.solver_state.diffusion_e = np.zeros((nz_diff, self.ncol))
+        self.solver_state.diffusion_f = np.zeros((nz_diff, self.ncol))
+        self.solver_state.diffusion_g = np.zeros((nz_diff, self.ncol))
+        self.solver_state.diffusion_r = np.zeros((nz_diff, self.ncol))
         self._did_warm_start_turbulence: bool = False
 
         # Canopy defaults to bare-soil until _setup_physics instantiates
@@ -1025,7 +1030,20 @@ class UtahLSM:
                 f"match ncol={ncol}."
             )
 
-        e, f, g, r = [np.zeros((nz - 1, ncol)) for _ in range(4)]
+        e = self.solver_state.diffusion_e
+        f = self.solver_state.diffusion_f
+        g = self.solver_state.diffusion_g
+        r = self.solver_state.diffusion_r
+        if e.shape != (nz - 1, ncol):
+            e = self.solver_state.diffusion_e = np.zeros((nz - 1, ncol))
+            f = self.solver_state.diffusion_f = np.zeros((nz - 1, ncol))
+            g = self.solver_state.diffusion_g = np.zeros((nz - 1, ncol))
+            r = self.solver_state.diffusion_r = np.zeros((nz - 1, ncol))
+        else:
+            e.fill(0.0)
+            f.fill(0.0)
+            g.fill(0.0)
+            r.fill(0.0)
 
         # Compute diffusivity using soil moisture (always, for both heat
         # and moisture)

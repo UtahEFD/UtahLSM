@@ -576,10 +576,10 @@ class Input:
             ValueError: If a physical consistency check fails.
         """
         # Grid size validation
-        if self.grid.nz < 2:
+        if self.grid.nz < 3:
             raise ValueError(
-                f"Grid must have at least 2 soil layers for diffusion "
-                f"solvers, got nz={self.grid.nz}.")
+                f"Grid must have at least 3 soil layers for diffusion "
+                f"solvers (3-point stencil), got nz={self.grid.nz}.")
 
         if self.surface.z_m <= self.surface.z_o:
             raise ValueError(

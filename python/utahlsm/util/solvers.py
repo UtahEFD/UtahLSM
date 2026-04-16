@@ -309,9 +309,15 @@ def root_brent_vec(
         denom1 = (fa - fb) * (fa - fc)
         denom2 = (fb - fa) * (fb - fc)
         denom3 = (fc - fa) * (fc - fb)
-        denom1 = np.where(np.abs(denom1) < _SOLVER_TOL, _SOLVER_TOL, denom1)
-        denom2 = np.where(np.abs(denom2) < _SOLVER_TOL, _SOLVER_TOL, denom2)
-        denom3 = np.where(np.abs(denom3) < _SOLVER_TOL, _SOLVER_TOL, denom3)
+        denom1 = np.where(
+            np.abs(denom1) < _SOLVER_TOL,
+            np.copysign(_SOLVER_TOL, denom1), denom1)
+        denom2 = np.where(
+            np.abs(denom2) < _SOLVER_TOL,
+            np.copysign(_SOLVER_TOL, denom2), denom2)
+        denom3 = np.where(
+            np.abs(denom3) < _SOLVER_TOL,
+            np.copysign(_SOLVER_TOL, denom3), denom3)
 
         s_iqi = np.where(
             use_iqi,
@@ -321,7 +327,9 @@ def root_brent_vec(
 
         # Secant method (fallback)
         denom = fb - fa
-        denom = np.where(np.abs(denom) < _SOLVER_TOL, _SOLVER_TOL, denom)
+        denom = np.where(
+            np.abs(denom) < _SOLVER_TOL,
+            np.copysign(_SOLVER_TOL, denom), denom)
         s_sec = b - fb * (b - a) / denom
 
         s = np.where(use_iqi, s_iqi, s_sec)

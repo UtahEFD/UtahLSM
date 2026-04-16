@@ -177,8 +177,22 @@ class SolverState:
     Attributes:
         conductivity_thermal_mid: Thermal conductivity at the midpoint between
             the top two soil layers [W/m/K].
+        diffusion_e: Sub-diagonal buffer for the tridiagonal diffusion solver,
+            shape (nz - 1, ncol). Pre-allocated once to avoid per-timestep
+            heap churn; reused by both heat and moisture diffusion.
+        diffusion_f: Main-diagonal buffer, shape (nz - 1, ncol).
+        diffusion_g: Super-diagonal buffer, shape (nz - 1, ncol).
+        diffusion_r: Right-hand-side buffer, shape (nz - 1, ncol).
     """
     conductivity_thermal_mid: Union[float, NDArray[np.float64]] = 0.0
+    diffusion_e: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(0))
+    diffusion_f: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(0))
+    diffusion_g: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(0))
+    diffusion_r: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(0))
 
 @dataclass(frozen=True)
 class ForcingData:
