@@ -81,7 +81,7 @@ class CanopyJarvis(Canopy):
     ) -> NDArray[np.float64]:
         f1 = self._f_radiation(atm_state.radiation_net)
         f2 = self._f_vpd(atm_state)
-        f3 = self._f_temperature(atm_state.temperature)
+        f3 = self._f_temperature(sfc_state.temperature)
         f4 = self._f_moisture(soil_state.moisture, theta_wilt, theta_fc)
 
         F = np.clip(f1 * f2 * f3 * f4, 1e-6, 1.0)
@@ -129,10 +129,16 @@ class CanopyJarvis(Canopy):
         return 1.0 / (1.0 + self.vpd_coef * vpd)
 
     def _f_temperature(
-        self, atm_T: NDArray[np.float64]
+        self, leaf_T: NDArray[np.float64]
     ) -> NDArray[np.float64]:
-        """f3(T) — leaf temperature stress (parabolic about t_opt)."""
-        stress = 1.0 - self.t_coef * (self.t_opt - atm_T) ** 2
+        """f3(T) — leaf temperature stress (parabolic about t_opt).
+
+        In this big-leaf formulation the surface temperature doubles as
+        the leaf temperature, so the caller passes ``sfc_state.temperature``
+        rather than the atmospheric forcing. This preserves stress signal
+        during high-insolation/low-wind conditions where T_leaf ≫ T_air.
+        """
+        stress = 1.0 - self.t_coef * (self.t_opt - leaf_T) ** 2
         return np.clip(stress, 0.0, 1.0)
 
     def _f_moisture(

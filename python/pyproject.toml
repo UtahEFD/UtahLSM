@@ -125,6 +125,7 @@ select = [
     "B",    # flake8-bugbear
     "C4",   # flake8-comprehensions
     "RUF",  # ruff-specific rules
+    "D",    # pydocstyle (Google convention; types live in PEP 484 hints, not docstrings)
 ]
 ignore = [
     "E501",   # line too long (handled by formatter)
@@ -134,12 +135,20 @@ ignore = [
     "RUF012", # Mutable class attributes (false positives in dataclasses)
     "RUF013", # Implicit Optional (can be overly strict)
     "RUF059", # Unpacked but unused (sometimes intentional in patterns)
+    "D203",   # 1 blank line before class docstring (conflicts with D211)
+    "D213",   # Multi-line summary on second line (conflicts with D212)
 ]
 
+[tool.ruff.lint.pydocstyle]
+# Use Google docstring convention. Types are documented via PEP 484 hints, so
+# Args entries should be `name: description` (no parenthesized type).
+convention = "google"
+
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # Imported but unused (needed for package exports)
-"tests/*" = ["F841", "E731", "RUF013"]  # Lambdas and unused vars common in tests
-"tests/conftest.py" = ["E731", "RUF013"]  # Lambda assignments in fixtures are acceptable, Optional defaults
+"__init__.py" = ["F401", "D104"]  # Package exports; package docstring not required
+"tests/*" = ["F841", "E731", "RUF013", "D"]  # Lambdas/unused vars common in tests; skip docstring rules
+"tests/conftest.py" = ["E731", "RUF013", "D"]  # Lambda assignments in fixtures are acceptable, Optional defaults
+"utahlsm_offline.py" = ["D100"]  # Script entry point
 
 [tool.mypy]
 # Static type checking configuration

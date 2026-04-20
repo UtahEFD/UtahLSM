@@ -48,7 +48,7 @@ class Surface(ABC):
     #--- Abstract methods ---
     @abstractmethod
     def fm(self, z1: float, z0: float,
-           obukL: Union[float, NDArray[np.float64]]
+           obukhov_l: Union[float, NDArray[np.float64]]
     ) -> Union[float, NDArray[np.float64]]:
         """Computes the stability function for momentum.
 
@@ -58,7 +58,7 @@ class Surface(ABC):
         Args:
             z1: Upper height [m].
             z0: Lower height (roughness length) [m].
-            obukL: Obukhov length [m].
+            obukhov_l: Obukhov length [m].
 
         Returns:
             The dimensionless stability correction factor for momentum.
@@ -67,7 +67,7 @@ class Surface(ABC):
 
     @abstractmethod
     def fh(self, z1: float, z0h: float,
-           obukL: Union[float, NDArray[np.float64]]
+           obukhov_l: Union[float, NDArray[np.float64]]
     ) -> Union[float, NDArray[np.float64]]:
         """Computes the stability function for heat.
 
@@ -77,7 +77,7 @@ class Surface(ABC):
         Args:
             z1: Upper height [m].
             z0h: Lower height (thermal roughness length) [m].
-            obukL: Obukhov length [m].
+            obukhov_l: Obukhov length [m].
 
         Returns:
             The dimensionless stability correction factor for heat and scalars.

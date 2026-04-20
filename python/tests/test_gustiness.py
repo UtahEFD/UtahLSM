@@ -31,7 +31,7 @@ def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> Ut
     )
     model.sfc_state.turbulence.obukhov_length[0] = L0
 
-    model.soil = SimpleNamespace(surface_mixing_ratio=lambda _T, _q, _p: np.zeros_like(_T))
+    model.soil = SimpleNamespace(surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T))
     model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
     model.sfc = SimpleNamespace(
         fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),

@@ -34,7 +34,7 @@ def test_zeta_max_changes_obukhov_length_clamp():
 
     # Provide minimal soil/surface functions used by _compute_fluxes.
     model.soil = SimpleNamespace(
-        surface_mixing_ratio=lambda _T, _q, _p: np.zeros_like(_T),
+        surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T),
     )
     model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
     model.sfc = SimpleNamespace(

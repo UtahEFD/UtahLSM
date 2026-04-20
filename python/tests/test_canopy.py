@@ -197,14 +197,14 @@ class TestJarvisStressFunctions:
         assert f_high[0] > 0.9
 
     def test_f_temperature_optimum(self, jarvis_single):
-        atm_T = np.array([298.0])  # exactly t_opt
-        f = jarvis_single._f_temperature(atm_T)
+        leaf_T = np.array([298.0])  # exactly t_opt
+        f = jarvis_single._f_temperature(leaf_T)
         assert np.isclose(f, 1.0)
 
     def test_f_temperature_cold_clip(self, jarvis_single):
         # 50K below optimum drives the parabola negative → clipped to 0.
-        atm_T = np.array([248.0])
-        f = jarvis_single._f_temperature(atm_T)
+        leaf_T = np.array([248.0])
+        f = jarvis_single._f_temperature(leaf_T)
         assert f[0] == 0.0
 
     def test_f_vpd_saturated_air(self, jarvis_single):
@@ -266,7 +266,7 @@ class TestComputeResistance:
             pressure=np.array([101325.0]),
             radiation_net=np.array([500.0]),
         )
-        sfc = SurfaceState()
+        sfc = SurfaceState(temperature=np.array([298.0]))
         soil = SoilState(
             temperature=np.full(nz, 293.15),
             moisture=np.full(nz, 0.25),
@@ -292,7 +292,7 @@ class TestComputeResistance:
         # High radiation, optimal temp, saturated air, wet soil.
         from utahlsm.physics import thermo
         atm.radiation_net = np.array([5_000.0])  # saturates f1
-        atm.temperature = np.array([298.0])      # f3 = 1
+        sfc.temperature = np.array([298.0])      # f3 = 1 (leaf ≡ sfc)
         q_sat = thermo.saturation_specific_humidity(
             atm.temperature, atm.pressure)
         atm.specific_humidity = q_sat  # f2 = 1

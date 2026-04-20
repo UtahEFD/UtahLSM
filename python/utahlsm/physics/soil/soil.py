@@ -387,17 +387,17 @@ class Soil(ABC):
 
         return Ks
 
-    def surface_mixing_ratio(
+    def surface_specific_humidity(
         self,
         sfc_T: Union[float, NDArray[np.float64]],
-        sfc_q: Union[float, NDArray[np.float64]],
+        sfc_theta: Union[float, NDArray[np.float64]],
         atm_p: Union[float, NDArray[np.float64]]
     ) -> Union[float, NDArray[np.float64]]:
         """Computes the specific humidity at the soil surface.
 
         Args:
             sfc_T: The surface temperature [K].
-            sfc_q: The surface soil moisture content [m^3/m^3].
+            sfc_theta: The surface volumetric soil moisture [m^3/m^3].
             atm_p: The atmospheric pressure [Pa].
 
         Returns:
@@ -406,11 +406,11 @@ class Soil(ABC):
         G  = c.physical.GRAVITY
         RV = c.thermodynamic.GAS_CONSTANT_VAPOR
 
-        psi = self.water_potential(sfc_q, level=0)
+        psi = self.water_potential(sfc_theta, level=0)
         h = np.exp(G*psi/(RV*sfc_T))
-        hum_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
+        q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
 
-        return h * hum_sat
+        return h * q_sat
 
     def conductivity_thermal(
             self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:

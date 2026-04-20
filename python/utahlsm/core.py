@@ -106,12 +106,12 @@ class UtahLSM:
 
         # Update surface state from the top soil layer
         sfc_T = np.array(self.soil_state.temperature[0], copy=True)
-        sfc_q = np.array(self.soil_state.moisture[0], copy=True)
-        sfc_r = self.soil.surface_mixing_ratio(
-            sfc_T, sfc_q, self.atm_state.pressure)
+        sfc_theta = np.array(self.soil_state.moisture[0], copy=True)
+        sfc_q = self.soil.surface_specific_humidity(
+            sfc_T, sfc_theta, self.atm_state.pressure)
         self.sfc_state.temperature = sfc_T
-        self.sfc_state.moisture = sfc_q
-        self.sfc_state.specific_humidity = sfc_r
+        self.sfc_state.moisture = sfc_theta
+        self.sfc_state.specific_humidity = sfc_q
 
         # Run radiation model if configured
         if self.input.radiation.model:
@@ -534,6 +534,7 @@ class UtahLSM:
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
+        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
 
         canopy = getattr(self, 'canopy', None)
         if canopy is None:
@@ -551,14 +552,14 @@ class UtahLSM:
         atm_T = self.atm_state.temperature
         sfc_T = self.sfc_state.temperature
         sfc_q = self.sfc_state.moisture
-        rho_a = atm_p / (RD * atm_T)
+        rho_a = atm_p / (RD * atm_T * (1.0 + EVT * atm_q))
 
         ust = self.sfc_state.turbulence.friction_velocity
         fh = self.sfc.fh(
             self.input.surface.z_s, self.input.surface.z_t,
             self.sfc_state.turbulence.obukhov_length,
         )
-        gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+        gnd_q = self.soil.surface_specific_humidity(sfc_T, sfc_q, atm_p)
         q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
         f_veg = canopy.veg_fraction
         r_s = self.canopy_state.resistance
@@ -593,9 +594,15 @@ class UtahLSM:
         Uses a vectorized Brent's method to solve all columns simultaneously.
         This is significantly faster than column-by-column iteration.
         """
-        # Calculate thermal conductivity for the entire soil column
+        # Calculate thermal conductivity for the entire soil column.
+        # Harmonic mean treats the two half-layers as series resistors,
+        # which is the physically consistent effective conductivity for
+        # 1D Fourier conduction between layer centers.
         K_all = self.soil.conductivity_thermal(self.soil_state.moisture)
-        self.solver_state.conductivity_thermal_mid = 0.5 * (K_all[0] + K_all[1])
+        K0, K1 = K_all[0], K_all[1]
+        self.solver_state.conductivity_thermal_mid = np.where(
+            (K0 + K1) > 0.0, 2.0 * K0 * K1 / (K0 + K1), 0.0
+        )
 
         iter_max_bracket = self.input.numerics.iterations.seb_bracket
         iter_max_root = self.input.numerics.iterations.seb_root
@@ -725,9 +732,12 @@ class UtahLSM:
         dz = self.input.grid.z[0] - self.input.grid.z[1]
 
         ref_T = atm_T
-        rho = atm_p / (RD * atm_T)
+        # Moist-air density uses virtual temperature (Tv = T(1 + 0.608 q)).
+        # Tv > T for humid air, so dry-T gives ~0.5–1% high LE in practice.
+        Tv = atm_T * (1.0 + EVT * atm_q)
+        rho = atm_p / (RD * Tv)
 
-        gnd_q = self.soil.surface_mixing_ratio(sfc_T, sfc_q, atm_p)
+        gnd_q = self.soil.surface_specific_humidity(sfc_T, sfc_q, atm_p)
         ground_heat = K_mid * (sfc_T - soil_T1) / dz
 
         L = np.array(L_init, copy=True)
@@ -831,6 +841,7 @@ class UtahLSM:
         """
         RHO_W = c.water.DENSITY
         RD = c.thermodynamic.GAS_CONSTANT_DRY
+        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
 
         z_s = self.input.surface.z_s
         z_t = self.input.surface.z_t
@@ -841,7 +852,8 @@ class UtahLSM:
         sfc_T = self.sfc_state.temperature
         L = self.sfc_state.turbulence.obukhov_length
         ust = self.sfc_state.turbulence.friction_velocity
-        rho_a = atm_p / (RD * self.atm_state.temperature)
+        Tv = self.atm_state.temperature * (1.0 + EVT * atm_q)
+        rho_a = atm_p / (RD * Tv)
         fh = self.sfc.fh(z_s, z_t, L)
 
         residual_q = float(self.soil.properties.residual[0])
@@ -861,8 +873,11 @@ class UtahLSM:
             theta_c = np.clip(theta, residual_q, porosity)
             psi0 = self.soil.water_potential(theta_c, level=0)
             K0 = self.soil.conductivity_moisture(theta_c, level=0)
-            K_mid = np.maximum(0.5 * (K0 + K1), 1e-14)
-            gnd_q = self.soil.surface_mixing_ratio(sfc_T, theta_c, atm_p)
+            # Geometric mean: K_h spans many orders of magnitude with
+            # moisture, so arithmetic/harmonic means are dominated by the
+            # wetter node. Geometric is the standard LSM pragmatic choice.
+            K_mid = np.maximum(np.sqrt(K0 * K1), 1e-14)
+            gnd_q = self.soil.surface_specific_humidity(sfc_T, theta_c, atm_p)
             # SMB is a bare-soil top-layer balance; transpiration is
             # removed from the root-zone moisture budget (diffusion RHS),
             # not the surface flux residual.
@@ -973,7 +988,8 @@ class UtahLSM:
     def _solve_diffusion(self,state_field: np.ndarray,get_diffusivity: Callable,
                          get_conductivity: Optional[Callable],
                          sfc_boundary: float,field_name: str = 'field',
-                         source_term: Optional[np.ndarray] = None) -> None:
+                         source_term: Optional[np.ndarray] = None,
+                         avg_diffusivity: str = 'arithmetic') -> None:
         """Solves a generic 1D diffusion equation using a theta scheme.
 
         This is a parameterized diffusion solver that handles both heat and
@@ -1046,9 +1062,16 @@ class UtahLSM:
             r.fill(0.0)
 
         # Compute diffusivity using soil moisture (always, for both heat
-        # and moisture)
+        # and moisture). Moisture diffusivity D_θ spans orders of
+        # magnitude with θ, so arithmetic face-averaging is dominated by
+        # the wetter node; geometric mean (Haverkamp & Vauclin, 1979) is
+        # the standard choice there. Thermal diffusivity α varies far
+        # less, so arithmetic is fine.
         D = get_diffusivity(self.soil_state.moisture)
-        D_mid = 0.5 * (D[:-1] + D[1:])
+        if avg_diffusivity == 'geometric':
+            D_mid = np.sqrt(np.maximum(D[:-1] * D[1:], 0.0))
+        else:
+            D_mid = 0.5 * (D[:-1] + D[1:])
 
         # Compute conductivity terms if provided (moisture case)
         K_lin = None
@@ -1223,4 +1246,5 @@ class UtahLSM:
             sfc_boundary=self.sfc_state.moisture,
             field_name='moisture',
             source_term=source,
+            avg_diffusivity='geometric',
         )

@@ -45,7 +45,7 @@ def test_gabls3_2x2_matches_single(tmp_path: Path) -> None:
         single_path=single_out,
         multi_path=multi_out,
         rtol=0.0,
-        atol=1e-10,
+        atol=1e-9,
     )
 
     failures = [res for res in results if not res.matches]

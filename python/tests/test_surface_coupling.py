@@ -82,7 +82,7 @@ def test_compute_seb_vec_is_deterministic_and_pure():
     model.sfc_state.turbulence.friction_velocity[0] = 8.0
 
     model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
-    model.soil = SimpleNamespace(surface_mixing_ratio=lambda _T, _q, _p: np.zeros_like(_T))
+    model.soil = SimpleNamespace(surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T))
     model.sfc = SimpleNamespace(
         fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),
         fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),
