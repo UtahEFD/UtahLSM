@@ -19,6 +19,7 @@ from custom files specified by file path.
 """
 
 import json
+from importlib import resources
 from pathlib import Path
 
 import jsonschema
@@ -92,13 +93,14 @@ class SoilPropertiesLoader:
 
         bundled_path = SoilPropertiesLoader._get_bundled_path(dataset_name)
 
-        if not bundled_path.exists():
+        if not bundled_path.is_file():
             raise NamelistError(
                 f'Bundled soil property file not found: {bundled_path}\n'
                 f'Expected location: utahlsm/data/soil/{dataset_name}.json'
             )
 
-        return SoilPropertiesLoader._load_from_file(str(bundled_path))
+        return SoilPropertiesLoader._load_from_resource(
+            bundled_path, f'utahlsm/data/soil/{dataset_name}.json')
 
     @staticmethod
     def _load_from_file(file_path: str) -> dict[str, dict[str, float]]:
@@ -140,6 +142,37 @@ class SoilPropertiesLoader:
         return data['soil_types']
 
     @staticmethod
+    def _load_from_resource(resource, source: str) -> dict[str, dict[str, float]]:
+        """Load packaged JSON resources from the installed utahlsm package.
+
+        Args:
+            resource: Packaged resource object returned by
+                ``importlib.resources.files(...).joinpath(...)``.
+            source: Resource description used in error messages.
+
+        Returns:
+            Dictionary mapping soil type names to property dicts.
+
+        Raises:
+            NamelistError: If the resource cannot be read, is invalid JSON, or
+                fails schema validation.
+        """
+        try:
+            with resource.open('r', encoding='utf-8') as f:
+                data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise NamelistError(
+                f'Invalid JSON in soil property resource {source}: {e}'
+            ) from e
+        except OSError as e:
+            raise NamelistError(
+                f'Error reading soil property resource {source}: {e}'
+            ) from e
+
+        SoilPropertiesLoader._validate(data, source)
+        return data['soil_types']
+
+    @staticmethod
     def _validate(data: dict, source: str = 'properties') -> None:
         """Validate loaded properties against schema.
 
@@ -150,10 +183,10 @@ class SoilPropertiesLoader:
         Raises:
             NamelistError: If data fails schema validation.
         """
-        schema_path = Path(__file__).parent / 'schema_soil_properties.json'
-
         try:
-            with open(schema_path, encoding='utf-8') as f:
+            schema_resource = resources.files(__package__).joinpath(
+                'schema_soil_properties.json')
+            with schema_resource.open('r', encoding='utf-8') as f:
                 schema = json.load(f)
         except Exception as e:
             raise NamelistError(
@@ -174,26 +207,17 @@ class SoilPropertiesLoader:
             ) from e
 
     @staticmethod
-    def _get_bundled_path(dataset_name: str) -> Path:
-        """Get the path to a bundled dataset file.
-
-        Uses Path(__file__).resolve() to find bundled data directory,
-        working from any current working directory or installation method.
+    def _get_bundled_path(dataset_name: str):
+        """Get the packaged resource for a bundled dataset file.
 
         Args:
             dataset_name: Name of bundled dataset (e.g., 'cosby')
 
         Returns:
-            Path to the JSON file in utahlsm/data/soil/
+            Traversable resource for the JSON file in utahlsm/data/soil/
         """
-        # Path(__file__) = /path/to/utahlsm/util/io/soil_properties_loader.py
-        # parents[0] = utahlsm/util/io
-        # parents[1] = utahlsm/util
-        # parents[2] = utahlsm
-        loader_path = Path(__file__).resolve()
-        utahlsm_root = loader_path.parents[2]
-        data_path = utahlsm_root / 'data' / 'soil' / f'{dataset_name}.json'
-        return data_path
+        return resources.files('utahlsm').joinpath(
+            'data', 'soil', f'{dataset_name}.json')
 
 
 def _is_file_path(spec: str) -> bool:

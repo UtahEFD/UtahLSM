@@ -21,7 +21,7 @@ access all setup information.
 """
 import json
 import logging
-from pathlib import Path
+from importlib import resources
 from typing import Optional
 
 import jsonschema
@@ -165,10 +165,10 @@ class Input:
             jsonschema.ValidationError: If the namelist does not match
                 the schema.
         """
-        schema_path = str(Path(__file__).parent / 'schema_namelist.json')
-
         try:
-            with open(schema_path, encoding='utf-8') as f:
+            schema_resource = resources.files(__package__).joinpath(
+                'schema_namelist.json')
+            with schema_resource.open('r', encoding='utf-8') as f:
                 schema = json.load(f)
             with open(namelist_path, encoding='utf-8') as f:
                 namelist_data = json.load(f)

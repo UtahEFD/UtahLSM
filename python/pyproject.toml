@@ -70,13 +70,18 @@ Documentation = "https://utahlsm.readthedocs.io"
 
 [tool.setuptools]
 # Tell setuptools where to find the package
-packages = ["utahlsm"]
 package-dir = {"" = "."}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["utahlsm*"]
 
 [tool.setuptools.package-data]
 utahlsm = [
-    "py.typed",  # Mark as typed for mypy
-    "data/soil_properties/*.json",  # Include soil property data files
+    "py.typed",
+    "data/soil/*.json",
+    "util/io/*.json",
 ]
 
 [tool.pytest.ini_options]
