@@ -54,15 +54,17 @@ analysis = [
 ]
 
 docs = [
-    "sphinx>=5.0",
-    "sphinx-rtd-theme>=1.0",
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "mkdocs-mermaid2-plugin>=1.1",
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/UtahLSM"
-Repository = "https://github.com/yourusername/UtahLSM.git"
-Documentation = "https://utahlsm.readthedocs.io"
-"Bug Tracker" = "https://github.com/yourusername/UtahLSM/issues"
+Homepage = "https://github.com/UtahEFD/UtahLSM"
+Repository = "https://github.com/UtahEFD/UtahLSM.git"
+Documentation = "https://utahefd.github.io/UtahLSM/"
+"Bug Tracker" = "https://github.com/UtahEFD/UtahLSM/issues"
 
 # ============================================================================
 # Tool Configuration
