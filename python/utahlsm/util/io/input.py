@@ -149,6 +149,24 @@ class Input:
 
         self._validate_physical_consistency()
 
+    @staticmethod
+    def _validate_uniform_soil_z(z: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Validates that the soil grid uses uniform vertical spacing."""
+        z_arr = np.asarray(z, dtype=float)
+        if z_arr.ndim != 1:
+            raise ValueError(
+                f"soil_z must be one-dimensional after loading, got {z_arr.ndim}D."
+            )
+        if z_arr.size <= 1:
+            return z_arr
+        dz = np.diff(z_arr)
+        if not np.allclose(dz, dz[0], rtol=1e-10, atol=1e-12):
+            raise ValueError(
+                "soil_z must have uniform spacing; non-uniform vertical grids "
+                "are not supported by the current solver."
+            )
+        return z_arr
+
     def _load_and_validate_namelist(self, namelist_path: str) -> dict:
         """Loads and validates the JSON namelist against a schema.
 
@@ -229,7 +247,7 @@ class Input:
                                 f"soil_z length {z.shape[0]} does not match "
                                 f"namelist nz={nz}."
                             )
-                        return z
+                        return self._validate_uniform_soil_z(z)
                     if z.ndim == 2:
                         if z.shape == (nz, ncol):
                             ref = z[:, 0]
@@ -238,7 +256,7 @@ class Input:
                                     "soil_z varies across columns; "
                                     "horizontal variation is not supported."
                                 )
-                            return ref
+                            return self._validate_uniform_soil_z(ref)
                         raise ValueError(
                             f"soil_z shape {z.shape} must be (nz, ncol) or "
                             f"(nz,) when using flattened columns."
@@ -255,7 +273,7 @@ class Input:
                                 "soil_z varies across columns; "
                                 "horizontal variation is not supported."
                             )
-                        return ref
+                        return self._validate_uniform_soil_z(ref)
                     raise ValueError(
                         f"soil_z has unsupported dimensions: {z.ndim}."
                     )
@@ -578,6 +596,8 @@ class Input:
             raise ValueError(
                 f"z_s={self.surface.z_s} must be > "
                 f"z_t={self.surface.z_t}.")
+
+        self._validate_uniform_soil_z(self.grid.z)
 
         ncol = self.grid.nx * self.grid.ny
         soil_temp = np.asarray(self.initial.temperature)

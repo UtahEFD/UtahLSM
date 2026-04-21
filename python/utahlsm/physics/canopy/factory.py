@@ -63,6 +63,39 @@ def get_canopy_model(
             f"1 or ncol={ncol}."
         )
 
+    def validate_col(
+        name: str,
+        values: NDArray[np.float64],
+        *,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+        min_inclusive: bool = True,
+        max_inclusive: bool = True,
+    ) -> None:
+        arr = np.asarray(values, dtype=float)
+        if not np.all(np.isfinite(arr)):
+            raise NamelistError(
+                f"Canopy parameter '{name}' must contain only finite values."
+            )
+        if min_value is not None:
+            bad = arr < min_value if min_inclusive else arr <= min_value
+            if np.any(bad):
+                op = '>=' if min_inclusive else '>'
+                bad_value = float(np.min(arr[bad]))
+                raise NamelistError(
+                    f"Canopy parameter '{name}' must be {op} {min_value}; "
+                    f"got {bad_value}."
+                )
+        if max_value is not None:
+            bad = arr > max_value if max_inclusive else arr >= max_value
+            if np.any(bad):
+                op = '<=' if max_inclusive else '<'
+                bad_value = float(np.max(arr[bad]))
+                raise NamelistError(
+                    f"Canopy parameter '{name}' must be {op} {max_value}; "
+                    f"got {bad_value}."
+                )
+
     common = {
         'lai': as_col('lai', config.lai),
         'veg_fraction': as_col('veg_fraction', config.veg_fraction),
@@ -72,13 +105,40 @@ def get_canopy_model(
         'rs_max': as_col('rs_max', config.rs_max),
         'z': z,
     }
+    validate_col('lai', common['lai'], min_value=0.0)
+    validate_col(
+        'veg_fraction', common['veg_fraction'], min_value=0.0, max_value=1.0
+    )
+    validate_col('rooting_depth', common['rooting_depth'], min_value=0.0)
+    validate_col(
+        'beta',
+        common['beta'],
+        min_value=0.0,
+        max_value=1.0,
+        min_inclusive=False,
+        max_inclusive=False,
+    )
+    validate_col('rs_min', common['rs_min'], min_value=0.0, min_inclusive=False)
+    validate_col('rs_max', common['rs_max'], min_value=0.0, min_inclusive=False)
+    if np.any(common['rs_max'] < common['rs_min']):
+        raise NamelistError(
+            "Canopy parameter 'rs_max' must be >= 'rs_min' in every column."
+        )
 
     if config.model == 'jarvis':
+        rg_half = as_col('rg_half', config.rg_half)
+        vpd_coef = as_col('vpd_coef', config.vpd_coef)
+        t_opt = as_col('t_opt', config.t_opt)
+        t_coef = as_col('t_coef', config.t_coef)
+        validate_col('rg_half', rg_half, min_value=0.0, min_inclusive=False)
+        validate_col('vpd_coef', vpd_coef, min_value=0.0)
+        validate_col('t_opt', t_opt, min_value=0.0, min_inclusive=False)
+        validate_col('t_coef', t_coef, min_value=0.0)
         return CanopyJarvis(
-            rg_half=as_col('rg_half', config.rg_half),
-            vpd_coef=as_col('vpd_coef', config.vpd_coef),
-            t_opt=as_col('t_opt', config.t_opt),
-            t_coef=as_col('t_coef', config.t_coef),
+            rg_half=rg_half,
+            vpd_coef=vpd_coef,
+            t_opt=t_opt,
+            t_coef=t_coef,
             **common,
         )
 

@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 
 import jsonschema
+import netCDF4 as nc
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -138,3 +139,39 @@ def test_load_and_validate_namelist_requires_general_and_numerics(
 
     with pytest.raises(jsonschema.ValidationError):
         input_obj._load_and_validate_namelist(str(namelist_path))
+
+
+def test_load_and_validate_namelist_rejects_invalid_canopy_bounds(
+        tmp_path: Path) -> None:
+    """Rejects canopy parameters that violate physical bounds."""
+    namelist = _base_namelist()
+    namelist["canopy"] = {
+        "model": "jarvis",
+        "veg_fraction": 1.1,
+    }
+    namelist_path = tmp_path / "lsm_namelist.json"
+    namelist_path.write_text(json.dumps(namelist), encoding="utf-8")
+
+    input_obj = _make_input()
+
+    with pytest.raises(jsonschema.ValidationError, match="maximum of 1"):
+        input_obj._load_and_validate_namelist(str(namelist_path))
+
+
+def test_load_initial_conditions_rejects_nonuniform_soil_z(
+        tmp_path: Path) -> None:
+    """Rejects init files whose soil_z spacing is not uniform."""
+    init_path = tmp_path / "lsm_init.nc"
+    with nc.Dataset(init_path, "w") as ds:
+        ds.createDimension("z", 3)
+        ds.createVariable("soil_z", "f8", ("z",))[:] = [0.0, 0.05, 0.15]
+        ds.createVariable("soil_T", "f8", ("z",))[:] = [290.0, 289.0, 288.0]
+        ds.createVariable("soil_q", "f8", ("z",))[:] = [0.25, 0.25, 0.25]
+        ds.createVariable("soil_type", str, ("z",))[:] = np.asarray(
+            ["clay", "clay", "clay"], dtype=object
+        )
+
+    input_obj = _make_input()
+
+    with pytest.raises(ValueError, match="uniform spacing"):
+        input_obj._load_initial_conditions(str(init_path), nx=1, ny=1, nz=3)

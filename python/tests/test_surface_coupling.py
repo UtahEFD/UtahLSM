@@ -155,6 +155,38 @@ def test_surface_coupling_recomputes_fluxes_on_convergence():
     assert abs(calls[-1][1] - 0.1) < 1e-12
 
 
+def test_surface_coupling_refreshes_canopy_diagnostics_on_convergence():
+    """Final canopy diagnostics should reflect the converged state."""
+    model = _make_minimal_model(coupling_iterations=5, tol_mois=1e-3)
+
+    refreshes: list[tuple[float, float]] = []
+
+    def fake_refresh() -> None:
+        refreshes.append((
+            float(np.asarray(model.sfc_state.temperature)),
+            float(np.asarray(model.sfc_state.moisture)),
+        ))
+
+    state = {"iter": 0}
+
+    def fake_solve_seb() -> None:
+        model.sfc_state.temperature = 301.0
+
+    def fake_solve_smb() -> None:
+        model.sfc_state.moisture = 0.1 if state["iter"] == 0 else 0.1005
+        state["iter"] += 1
+
+    model._refresh_canopy_diagnostics = fake_refresh  # type: ignore[attr-defined]
+    model._compute_fluxes = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
+    model._solve_seb = fake_solve_seb  # type: ignore[attr-defined]
+    model._solve_smb = fake_solve_smb  # type: ignore[attr-defined]
+
+    model._solve_surface_coupling()
+
+    assert len(refreshes) == 3
+    assert refreshes[-1] == (301.0, 0.1005)
+
+
 def test_surface_coupling_recomputes_fluxes_on_nonconvergence():
     """Recomputes fluxes even when the coupling loop hits its iteration cap."""
     model = _make_minimal_model(coupling_iterations=2, tol_temp=0.0, tol_mois=0.0)
@@ -178,3 +210,32 @@ def test_surface_coupling_recomputes_fluxes_on_nonconvergence():
     model._solve_surface_coupling()
 
     assert calls, "Expected coupled solver to recompute fluxes on exit."
+
+
+def test_surface_coupling_refreshes_canopy_diagnostics_on_nonconvergence():
+    """Final canopy diagnostics should refresh even on iteration-cap exit."""
+    model = _make_minimal_model(coupling_iterations=2, tol_temp=0.0, tol_mois=0.0)
+
+    refreshes: list[tuple[float, float]] = []
+
+    def fake_refresh() -> None:
+        refreshes.append((
+            float(np.asarray(model.sfc_state.temperature)),
+            float(np.asarray(model.sfc_state.moisture)),
+        ))
+
+    def fake_solve_seb() -> None:
+        model.sfc_state.temperature += 1.0
+
+    def fake_solve_smb() -> None:
+        model.sfc_state.moisture -= 0.01
+
+    model._refresh_canopy_diagnostics = fake_refresh  # type: ignore[attr-defined]
+    model._compute_fluxes = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
+    model._solve_seb = fake_solve_seb  # type: ignore[attr-defined]
+    model._solve_smb = fake_solve_smb  # type: ignore[attr-defined]
+
+    model._solve_surface_coupling()
+
+    assert len(refreshes) == 3
+    assert refreshes[-1] == (302.0, 0.18)

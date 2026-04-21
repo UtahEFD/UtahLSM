@@ -32,12 +32,12 @@ def test_gabls3_2x2_matches_single(tmp_path: Path) -> None:
     # Absolute tolerance is set well below any physically meaningful
     # signal; it just absorbs the ULP-level FP reordering between the
     # scalar-like (ncol=1) and broadcast (ncol=4) code paths in the
-    # canopy partition arithmetic.
+    # canopy partition arithmetic and final canopy-diagnostics refresh.
     results = cmp.compare_outputs(
         single_path=single_out,
         multi_path=multi_out,
         rtol=0.0,
-        atol=1e-9,
+        atol=5e-9,
     )
 
     failures = [res for res in results if not res.matches]

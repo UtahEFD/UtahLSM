@@ -1022,6 +1022,11 @@ class UtahLSM:
             if np.all(diff_T < tol_temp) and np.all(diff_q < tol_mois):
                 self.logger.debug(
                     'Surface coupling converged in %d iterations.', i + 1)
+                # Refresh once more so canopy diagnostics and the
+                # transpiration partition reflect the final converged
+                # surface state, not the state from the start of the
+                # last Picard iteration.
+                self._refresh_canopy_diagnostics()
                 self._compute_fluxes(
                     self.sfc_state.temperature, self.sfc_state.moisture
                 )
@@ -1032,6 +1037,7 @@ class UtahLSM:
             'Surface coupling did not converge after %d iterations. '
             'dT: %.4f, dq: %.4e', max_outer_iter,
             float(np.max(diff_T)), float(np.max(diff_q)))
+        self._refresh_canopy_diagnostics()
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
         self._finalize_canopy_partition()
 

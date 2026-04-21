@@ -108,16 +108,16 @@
             "type": "object",
             "properties": {
                 "model": { "type": "string", "enum": ["none", "jarvis"] },
-                "lai": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "veg_fraction": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "rooting_depth": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "beta": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "rs_min": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "rs_max": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "rg_half": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "vpd_coef": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "t_opt": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
-                "t_coef": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] }
+                "lai": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
+                "veg_fraction": { "oneOf": [{"type": "number", "minimum": 0, "maximum": 1}, {"type": "array", "items": {"type": "number", "minimum": 0, "maximum": 1}}] },
+                "rooting_depth": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
+                "beta": { "oneOf": [{"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1}, {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1}}] },
+                "rs_min": { "oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}}] },
+                "rs_max": { "oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}}] },
+                "rg_half": { "oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}}] },
+                "vpd_coef": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
+                "t_opt": { "oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}}] },
+                "t_coef": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] }
             },
             "required": ["model"],
             "additionalProperties": false

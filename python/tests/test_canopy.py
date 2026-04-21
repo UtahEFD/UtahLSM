@@ -368,6 +368,34 @@ class TestFactory:
         with pytest.raises(NamelistError):
             get_canopy_model(cfg, z_layers, ncol=3)
 
+    @pytest.mark.parametrize(
+        ('overrides', 'match'),
+        [
+            ({'lai': -1.0}, 'lai'),
+            ({'veg_fraction': 1.1}, 'veg_fraction'),
+            ({'rooting_depth': -0.1}, 'rooting_depth'),
+            ({'beta': 1.0}, 'beta'),
+            ({'rs_min': 0.0}, 'rs_min'),
+            ({'rs_min': 50.0, 'rs_max': 40.0}, 'rs_max'),
+            ({'rg_half': 0.0}, 'rg_half'),
+            ({'vpd_coef': -1.0e-4}, 'vpd_coef'),
+            ({'t_coef': -1.0e-3}, 't_coef'),
+        ],
+    )
+    def test_invalid_parameters_raise(
+        self, z_layers, overrides, match
+    ):
+        cfg_kwargs = {
+            'model': 'jarvis',
+            'lai': 3.0,
+            'veg_fraction': 0.9,
+            'rooting_depth': 0.4,
+        }
+        cfg_kwargs.update(overrides)
+        cfg = CanopyConfig(**cfg_kwargs)
+        with pytest.raises(NamelistError, match=match):
+            get_canopy_model(cfg, z_layers, ncol=1)
+
 
 # ---------------------------------------------------------------------------
 # Canopy base-class is abstract
