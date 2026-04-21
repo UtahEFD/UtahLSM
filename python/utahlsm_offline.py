@@ -41,7 +41,6 @@ def main() -> None:
         FileNotFoundError: If required input files (namelist, init file) cannot
             be found.
     """
-
     # Start a timer for the simulation
     t1: float = time.time()
 
@@ -90,7 +89,7 @@ def main() -> None:
             namelist, initfile, offlinefile)
         if not outf:
             outf = f'lsm_{case}_py.nc'
-        output_lsm = utahlsm.Output(outf)
+        output_lsm = utahlsm.Output(outf, enabled=input_lsm.output.save)
 
         # Create the main LSM object
         lsm = utahlsm.UtahLSM(input_lsm, output_lsm)
@@ -119,8 +118,9 @@ def main() -> None:
                 # Create a specialized output object for the crash dump
                 crash_out = utahlsm.Output(crash_file)
                 crash_out.set_dims(lsm.output_dims)
-                crash_out.set_fields(lsm.output_fields)
-                crash_out.save(lsm.output_fields, step_count, runtime)
+                fields = getattr(lsm, 'full_output_fields', lsm.output_fields)
+                crash_out.set_fields(fields)
+                crash_out.save(fields, step_count, runtime)
                 crash_out.close()
                 print('>> Crash dump saved successfully.')
             except Exception as dump_e:

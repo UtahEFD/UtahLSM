@@ -35,8 +35,7 @@ from .data_models import (
     SurfaceState,
 )
 from .exceptions import NamelistError, SolverError
-from .physics import Canopy, Radiation, Soil, Surface
-from .physics import thermo
+from .physics import Canopy, Radiation, Soil, Surface, thermo
 from .physics.canopy.factory import get_canopy_model
 from .physics.radiation.factory import get_radiation_model
 from .physics.soil.factory import get_soil_model
@@ -68,7 +67,9 @@ class UtahLSM:
         tstep: The current model time step [s].
         logger: A logger instance for this class.
         output_dims: A dictionary of dimensions for the output file.
-        output_fields: A dictionary of fields to be written to the output file.
+        full_output_fields: A dictionary of all available output fields for the
+            current model configuration.
+        output_fields: A dictionary of fields selected for normal output.
     """
     def __init__(self, input_lsm: Input, output_lsm: Output) -> None:
         """Initializes the UtahLSM model.
@@ -90,8 +91,7 @@ class UtahLSM:
 
     def update(self, dt: float, runtime: float,
                atm_state: AtmosphericState) -> None:
-        """Updates the model with new atmospheric forcing data for the
-        current step.
+        """Updates the model with new atmospheric forcing data.
 
         Args:
             dt: The time step duration [s].
@@ -166,7 +166,7 @@ class UtahLSM:
             runtime: The total elapsed simulation time [s].
         """
         self.logger.info('Saving data to file\n-------------------')
-        self.output.save(self.output_fields,step_count,runtime)
+        self.output.save(self.output_fields, step_count, runtime)
 
     # --- Internal Methods ---
 
@@ -402,7 +402,7 @@ class UtahLSM:
                     "warm_start_turbulence using forcing[0]",
                 )
 
-        self.output_fields: dict = {
+        self.full_output_fields = {
             'ust': self.sfc_state.turbulence.friction_velocity,
             'obl': self.sfc_state.turbulence.obukhov_length,
             'shf': self.sfc_state.fluxes.sensible_heat,
@@ -413,14 +413,64 @@ class UtahLSM:
             'soil_q': self.soil_state.moisture,
         }
         if getattr(self, 'canopy', None) is not None:
-            self.output_fields.update({
+            self.full_output_fields.update({
                 'r_s': self.canopy_state.resistance,
                 'theta_root': self.canopy_state.theta_root,
                 'lhf_soil': self.canopy_state.latent_soil,
                 'lhf_veg': self.canopy_state.latent_veg,
             })
+        self.output_fields = self._select_output_fields(self.full_output_fields)
         self.output.set_fields(self.output_fields)
         self.output.save(self.output_fields, 0, 0, initial=True)
+
+    def _select_output_fields(
+            self, available_fields: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+        """Selects the configured subset of output fields for this run.
+
+        Args:
+            available_fields: All fields available from the current model
+                configuration.
+
+        Returns:
+            The subset of fields to write during normal output.
+
+        Raises:
+            ValueError: If the requested field list mixes ``all`` with explicit
+                names, contains unknown fields, or requests fields that are not
+                available in the current configuration.
+        """
+        if not self.input.output.save:
+            return {}
+
+        requested = list(self.input.output.fields)
+        if 'all' in requested:
+            if len(requested) != 1:
+                raise ValueError(
+                    "output.fields must be ['all'] or an explicit field list."
+                )
+            return dict(available_fields)
+
+        supported_fields = Output.supported_fields()
+        unknown_fields = [
+            field for field in requested if field not in supported_fields
+        ]
+        if unknown_fields:
+            raise ValueError(
+                f'Unknown output field(s) requested: {unknown_fields}. '
+                f'Supported fields: {sorted(supported_fields)}.'
+            )
+
+        unavailable_fields = [
+            field for field in requested if field not in available_fields
+        ]
+        if unavailable_fields:
+            raise ValueError(
+                f'Output field(s) not available for this configuration: '
+                f'{unavailable_fields}. Available fields: '
+                f'{sorted(available_fields)}.'
+            )
+
+        return {field: available_fields[field] for field in requested}
 
     def _warm_start_turbulence(self) -> None:
         """Warm-start MOST diagnostics using forcing[0] (offline mode only)."""
@@ -467,8 +517,8 @@ class UtahLSM:
 
         Called once per outer SEB/SMB coupling pass so that subsequent SEB
         root-finds and SMB Brent solves see a fixed stomatal resistance
-        (per the fast-response design axiom — no per-Brent-evaluation
-        re-evaluation of f1–f4).
+        (per the fast-response design axiom - no per-Brent-evaluation
+        re-evaluation of f1-f4).
         """
         canopy = getattr(self, 'canopy', None)
         if canopy is None:
@@ -830,13 +880,13 @@ class UtahLSM:
         on θ_sfc ∈ [θ_residual, θ_porosity]. The residual is
 
             R(θ_sfc) = E(θ_sfc, T_sfc)
-                       + ρ_w K_mid (θ_sfc) [ (ψ(θ_sfc) - ψ_1) / Δz + 1 ]
+                       + rho_w K_mid (θ_sfc) [ (ψ(θ_sfc) - ψ_1) / Δz + 1 ]
 
         At θ_sfc = θ_residual: K → 0, ψ → -∞, gnd_q → 0, so
-        R ≈ -ρ_a atm_q u* f_h ≤ 0.
+        R ≈ -rho_a atm_q u* f_h ≤ 0.
         At θ_sfc = θ_porosity: K → K_sat, ψ → 0, gnd_q is saturated, so
         R > 0. The monotonic sign change guarantees a bracketed root,
-        which Brent's method finds robustly — including the dry-soil
+        which Brent's method finds robustly - including the dry-soil
         regime where the previous ψ-inversion approach was ill-conditioned.
         """
         RHO_W = c.water.DENSITY
@@ -1011,6 +1061,9 @@ class UtahLSM:
                 with units of the state field per second, shape
                 (nz, ncol). Applied as ``dt · source`` to the RHS of the
                 tridiagonal system for layers 1..nz-1.
+            avg_diffusivity: Averaging rule for interface diffusivity. Use
+                ``"arithmetic"`` for simple means or ``"geometric"`` for
+                multiplicative averaging.
 
         Physics:
             - Diffusivity always depends on soil moisture (not the state

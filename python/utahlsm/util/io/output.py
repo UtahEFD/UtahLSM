@@ -36,6 +36,7 @@ class Output:
     Attributes:
         logger: A logger for this class.
         outfile: A `netCDF4.Dataset` object representing the output file.
+        enabled: Whether NetCDF output is enabled for this run.
         fields_time: A dictionary mapping time-varying field names to their
             NetCDF variable objects.
         fields_static: A dictionary mapping static field names to their
@@ -43,17 +44,102 @@ class Output:
         attributes: A dictionary defining the metadata (dimensions, units, etc.)
             for each possible output variable.
     """
-    def __init__(self, outfile: str, sync_interval: int = 100) -> None:
+    FIELD_ATTRIBUTES: dict[str, dict[str, Any]] = {
+        'time': {
+            'dimension': ('t',),
+            'long_name': 'time',
+            'units': 's'
+        },
+        'soil_z': {
+            'dimension': ('z',),
+            'long_name': 'z-distance',
+            'units': 'm'
+        },
+        'soil_type': {
+            'dimension': ('z',),
+            'long_name': 'soil type',
+            'units': ''
+        },
+        'soil_T': {
+            'dimension': ('t', 'z',),
+            'long_name': 'soil temperature',
+            'units': 'K'
+        },
+        'soil_q': {
+            'dimension': ('t', 'z',),
+            'long_name': 'soil moisture',
+            'units': 'm3 m-3'
+        },
+        'ust': {
+            'dimension': ('t',),
+            'long_name': 'friction velocity',
+            'units': 'm s-1'
+        },
+        'obl': {
+            'dimension': ('t',),
+            'long_name': 'Obukhov length',
+            'units': 'm'
+        },
+        'shf': {
+            'dimension': ('t',),
+            'long_name': 'sensible heat flux',
+            'units': 'W m-2'
+        },
+        'lhf': {
+            'dimension': ('t',),
+            'long_name': 'latent heat flux',
+            'units': 'W m-2'
+        },
+        'ghf': {
+            'dimension': ('t',),
+            'long_name': 'ground heat flux',
+            'units': 'W m-2'
+        },
+        'r_s': {
+            'dimension': ('t',),
+            'long_name': 'bulk stomatal resistance',
+            'units': 's m-1'
+        },
+        'theta_root': {
+            'dimension': ('t',),
+            'long_name': 'root-zone mean soil moisture',
+            'units': 'm3 m-3'
+        },
+        'lhf_soil': {
+            'dimension': ('t',),
+            'long_name': 'latent heat flux from bare soil',
+            'units': 'W m-2'
+        },
+        'lhf_veg': {
+            'dimension': ('t',),
+            'long_name': 'latent heat flux from canopy transpiration',
+            'units': 'W m-2'
+        },
+    }
+
+    def __init__(
+        self,
+        outfile: str,
+        sync_interval: int = 100,
+        enabled: bool = True,
+    ) -> None:
         """Initializes the Output class and creates the NetCDF file.
 
         Args:
             outfile: The path and name for the output NetCDF file.
             sync_interval: Number of saves between disk syncs. Higher values
                 improve performance but risk data loss on crash. Defaults to 100.
+            enabled: Whether to create and write the NetCDF file. Defaults to
+                True.
         """
         self.logger: logging.Logger = logging_helper.get_logger('Output')
-        self.logger.info('Saving output to %s', outfile)
-        self.outfile: nc.Dataset = nc.Dataset(outfile, 'w')
+        self.enabled: bool = enabled
+        if self.enabled:
+            self.logger.info('Saving output to %s', outfile)
+            self.outfile: nc.Dataset | None = nc.Dataset(outfile, 'w')
+        else:
+            self.logger.info('Output disabled; not creating %s', outfile)
+            self.outfile = None
         self._sync_interval = sync_interval
         self._save_count = 0
         # self.outfile.description = "UtahLSM output"
@@ -63,77 +149,13 @@ class Output:
         self.fields_time: dict[str, Any] = {}
         self.fields_static: dict[str, Any] = {}
         self.attributes: dict[str, dict[str, Any]] = {
-            'time': {
-                'dimension':('t',),
-                'long_name':'time',
-                'units':'s'
-            },
-            'soil_z': {
-                'dimension':('z',),
-                'long_name':'z-distance',
-                'units':'m'
-            },
-            'soil_type': {
-                'dimension':('z',),
-                'long_name':'soil type',
-                'units':''
-            },
-            'soil_T': {
-                'dimension':('t','z',),
-                'long_name':'soil temperature',
-                'units':'K'
-            },
-            'soil_q': {
-                'dimension':('t','z',),
-                'long_name':'soil moisture',
-                'units':'m3 m-3'
-            },
-            'ust': {
-                'dimension':('t',),
-                'long_name':'friction velocity',
-                'units':'m s-1'
-            },
-            'obl': {
-                'dimension':('t',),
-                'long_name':'Obukhov length',
-                'units':'m'
-            },
-            'shf': {
-                'dimension':('t',),
-                'long_name':'sensible heat flux',
-                'units':'W m-2'
-            },
-            'lhf': {
-                'dimension':('t',),
-                'long_name':'latent heat flux',
-                'units':'W m-2'
-            },
-            'ghf': {
-                'dimension':('t',),
-                'long_name':'ground heat flux',
-                'units':'W m-2'
-            },
-            'r_s': {
-                'dimension':('t',),
-                'long_name':'bulk stomatal resistance',
-                'units':'s m-1'
-            },
-            'theta_root': {
-                'dimension':('t',),
-                'long_name':'root-zone mean soil moisture',
-                'units':'m3 m-3'
-            },
-            'lhf_soil': {
-                'dimension':('t',),
-                'long_name':'latent heat flux from bare soil',
-                'units':'W m-2'
-            },
-            'lhf_veg': {
-                'dimension':('t',),
-                'long_name':'latent heat flux from canopy transpiration',
-                'units':'W m-2'
-            },
+            name: attrs.copy() for name, attrs in self.FIELD_ATTRIBUTES.items()
         }
+
+    @classmethod
+    def supported_fields(cls) -> set[str]:
+        """Returns the field names that may be requested in the namelist."""
+        return set(cls.FIELD_ATTRIBUTES) - {'time'}
 
     def set_dims(self, dims: dict[str, int]) -> None:
         """Sets the dimensions in the NetCDF output file.
@@ -142,6 +164,9 @@ class Output:
             dims: A dictionary mapping dimension names to their sizes. A size
                 of 0 indicates an unlimited dimension.
         """
+        if not self.enabled or self.outfile is None:
+            return
+
         has_xy = ('x' in dims and 'y' in dims
                   and (dims['x'] > 1 or dims['y'] > 1))
         if has_xy:
@@ -163,6 +188,9 @@ class Output:
         Args:
             fields: A dictionary of fields to be created in the output file.
         """
+        if not self.enabled or self.outfile is None:
+            return
+
         dims = self.attributes['time']['dimension']
         name = self.attributes['time']['long_name']
         units = self.attributes['time']['units']
@@ -195,6 +223,9 @@ class Output:
             initial: A boolean flag indicating if this is the initial save,
                 in which case only static fields are written. Defaults to False.
         """
+        if not self.enabled or self.outfile is None:
+            return
+
         def _reshape_for_output(data: Any, target_shape: tuple[int, ...],
                                 field_name: str) -> np.ndarray:
             arr = np.asarray(data)
@@ -230,9 +261,11 @@ class Output:
             self.outfile.sync()
 
     def __enter__(self) -> 'Output':
+        """Returns the output handler for context-managed use."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Closes the output handler when exiting a context manager."""
         self.close()
 
     def close(self) -> None:
@@ -241,6 +274,6 @@ class Output:
         Performs a final sync to ensure all buffered data is written before
         closing the file. Safe to call multiple times.
         """
-        if self.outfile.isopen():
+        if self.outfile is not None and self.outfile.isopen():
             self.outfile.sync()
             self.outfile.close()

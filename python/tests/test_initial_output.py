@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -12,10 +13,12 @@ from utahlsm.data_models import (
     AtmosphericState,
     IterationsConfig,
     NumericsConfig,
+    OutputConfig,
     SoilState,
     SurfaceState,
     TolerancesConfig,
 )
+from utahlsm.util.io.output import Output
 
 
 @dataclass
@@ -24,6 +27,7 @@ class _DummyNamelist:
 
     grid: SimpleNamespace
     numerics: NumericsConfig
+    output: OutputConfig
     forcing: SimpleNamespace | None = None
 
 
@@ -42,13 +46,14 @@ class _DummyOutput:
 
     def __init__(self) -> None:
         self.saved_initial: dict[str, np.ndarray | float] | None = None
+        self.configured_fields: list[str] = []
         self.outfile = _DummyNetcdf()
 
     def set_dims(self, _dims: dict[str, int]) -> None:
         return
 
-    def set_fields(self, _fields: dict[str, object]) -> None:
-        return
+    def set_fields(self, fields: dict[str, object]) -> None:
+        self.configured_fields = list(fields)
 
     def save(
         self,
@@ -58,16 +63,21 @@ class _DummyOutput:
         initial: bool = False,
     ) -> None:
         if initial:
+            scalar_fields = ("ust", "obl", "shf", "lhf", "ghf")
             self.saved_initial = {
-                "ust": float(np.asarray(fields["ust"])[0]),
-                "obl": float(np.asarray(fields["obl"])[0]),
-                "shf": float(np.asarray(fields["shf"])[0]),
-                "lhf": float(np.asarray(fields["lhf"])[0]),
-                "ghf": float(np.asarray(fields["ghf"])[0]),
+                name: float(np.asarray(fields[name])[0])
+                for name in scalar_fields
+                if name in fields
             }
 
 
-def _make_model(*, warm_start: bool, has_forcing: bool) -> UtahLSM:
+def _make_model(
+    *,
+    warm_start: bool,
+    has_forcing: bool,
+    output_save: bool = True,
+    output_fields: list[str] | None = None,
+) -> UtahLSM:
     """Create a minimal UtahLSM instance for `_setup_output()` tests."""
     model = UtahLSM.__new__(UtahLSM)
     model.ncol = 1
@@ -108,6 +118,10 @@ def _make_model(*, warm_start: bool, has_forcing: bool) -> UtahLSM:
             warm_start_turbulence=warm_start,
             initialize_surface_temperature_from_seb=False,
         ),
+        output=OutputConfig(
+            save=output_save,
+            fields=output_fields or ["all"],
+        ),
         forcing=(
             SimpleNamespace(
                 atmos=[AtmosphericState(wind_speed=5.0)], tstep=600.0)
@@ -131,6 +145,9 @@ def test_initial_output_defaults_to_zeros():
     """Keeps the initial output snapshot at zeros by default."""
     model = _make_model(warm_start=False, has_forcing=True)
     model._setup_output()
+    assert model.output.configured_fields == [
+        "ust", "obl", "shf", "lhf", "ghf", "soil_z", "soil_T", "soil_q"
+    ]
     assert model.output.saved_initial == {
         "ust": 0.0,
         "obl": 0.0,
@@ -206,3 +223,58 @@ def test_initial_output_can_initialize_surface_temperature_from_seb():
         model.output.outfile.attrs.get("initial_surface_temperature")
         == "initialized from SEB using forcing[0]"
     )
+
+
+def test_setup_output_filters_requested_fields() -> None:
+    """Writes only the explicitly requested output fields."""
+    model = _make_model(
+        warm_start=False,
+        has_forcing=True,
+        output_fields=["soil_z", "ust", "soil_T"],
+    )
+
+    model._setup_output()
+
+    assert list(model.output_fields) == ["soil_z", "ust", "soil_T"]
+    assert model.output.configured_fields == ["soil_z", "ust", "soil_T"]
+    assert model.output.saved_initial == {"ust": 0.0}
+
+
+def test_setup_output_skips_normal_fields_when_save_disabled() -> None:
+    """Disables normal output when the namelist turns saving off."""
+    model = _make_model(
+        warm_start=False,
+        has_forcing=True,
+        output_save=False,
+    )
+
+    model._setup_output()
+
+    assert model.output_fields == {}
+    assert model.output.configured_fields == []
+    assert model.output.saved_initial == {}
+
+
+def test_setup_output_rejects_unknown_requested_field() -> None:
+    """Raises when `output.fields` contains an unknown variable name."""
+    model = _make_model(
+        warm_start=False,
+        has_forcing=True,
+        output_fields=["bogus_field"],
+    )
+
+    with np.testing.assert_raises_regex(ValueError, "Unknown output field"):
+        model._setup_output()
+
+
+def test_disabled_output_does_not_create_netcdf_file(tmp_path: Path) -> None:
+    """Leaves no NetCDF file behind when output is disabled."""
+    outfile = tmp_path / "disabled.nc"
+    output = Output(str(outfile), enabled=False)
+
+    output.set_dims({"t": 0, "z": 1})
+    output.set_fields({"soil_z": np.array([0.1])})
+    output.save({"soil_z": np.array([0.1])}, 0, 0.0, initial=True)
+    output.close()
+
+    assert not outfile.exists()
