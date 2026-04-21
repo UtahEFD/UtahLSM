@@ -9,7 +9,8 @@
             "properties": {
                 "log_level": { "type": "string", "enum": ["info", "debug"] }
             },
-            "required": ["log_level"]
+            "required": ["log_level"],
+            "additionalProperties": false
         },
         "numerics": {
             "type": "object",
@@ -26,7 +27,8 @@
                         "smb_flux": { "type": "integer", "minimum": 1 },
                         "coupling": { "type": "integer", "minimum": 1 }
                     },
-                    "required": ["sfc_flux", "seb_bracket", "seb_root", "smb_flux", "coupling"]
+                    "required": ["sfc_flux", "seb_bracket", "seb_root", "smb_flux", "coupling"],
+                    "additionalProperties": false
                 },
                 "tolerances": {
                     "type": "object",
@@ -37,10 +39,12 @@
                         "coupling_temp": { "type": "number" },
                         "coupling_mois": { "type": "number" }
                     },
-                    "required": ["sfc_flux", "seb_root", "smb_flux", "coupling_temp", "coupling_mois"]
+                    "required": ["sfc_flux", "seb_root", "smb_flux", "coupling_temp", "coupling_mois"],
+                    "additionalProperties": false
                 }
             },
-            "required": ["diffusion_back_weight", "iterations", "tolerances"]
+            "required": ["diffusion_back_weight", "iterations", "tolerances"],
+            "additionalProperties": false
         },
         "time": {
             "type": "object",
@@ -49,7 +53,8 @@
                 "utc_year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
                 "julian_day": { "type": "integer", "minimum": 1, "maximum": 366 }
             },
-            "required": ["utc_start", "utc_year", "julian_day"]
+            "required": ["utc_start", "utc_year", "julian_day"],
+            "additionalProperties": false
         },
         "grid": {
             "type": "object",
@@ -58,7 +63,8 @@
                 "ny": { "type": "integer", "minimum": 1 },
                 "nz": { "type": "integer", "minimum": 1 }
             },
-            "required": ["nx", "ny", "nz"]
+            "required": ["nx", "ny", "nz"],
+            "additionalProperties": false
         },
         "surface": {
             "type": "object",
@@ -76,7 +82,8 @@
                 "gustiness_stable_only": { "type": "boolean" }
                 
             },
-            "required": ["z_o", "z_t", "z_m", "z_s", "albedo", "emissivity", "model"]
+            "required": ["z_o", "z_t", "z_m", "z_s", "albedo", "emissivity", "model"],
+            "additionalProperties": false
         },
         "soil": {
             "type": "object",
@@ -84,7 +91,8 @@
                 "properties": { "type": "string", "minLength": 1 },
                 "model": { "type": "integer", "enum": [1, 2, 3] }
             },
-            "required": ["properties", "model"]
+            "required": ["properties", "model"],
+            "additionalProperties": false
         },
         "radiation": {
             "type": "object",
@@ -93,7 +101,8 @@
                 "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
                 "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
             },
-            "required": ["model", "latitude", "longitude"]
+            "required": ["model", "latitude", "longitude"],
+            "additionalProperties": false
         },
         "canopy": {
             "type": "object",
@@ -110,7 +119,8 @@
                 "t_opt": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] },
                 "t_coef": { "oneOf": [{"type": "number"}, {"type": "array", "items": {"type": "number"}}] }
             },
-            "required": ["model"]
+            "required": ["model"],
+            "additionalProperties": false
         },
         "output": {
             "type": "object",
@@ -122,8 +132,19 @@
                     "minItems": 1
                 }
             },
-            "required": ["save", "fields"]
+            "required": ["save", "fields"],
+            "additionalProperties": false
         }
     },
-    "required": ["time", "grid", "surface", "soil", "radiation", "output"]
+    "required": [
+        "general",
+        "numerics",
+        "time",
+        "grid",
+        "surface",
+        "soil",
+        "radiation",
+        "output"
+    ],
+    "additionalProperties": false
 }

@@ -29,9 +29,6 @@ import netCDF4 as nc
 import numpy as np
 from numpy.typing import NDArray
 
-from . import logging_helper
-from .soil_properties_loader import SoilPropertiesLoader
-
 from ...data_models import (
     AtmosphericState,
     CanopyConfig,
@@ -49,6 +46,8 @@ from ...data_models import (
     TolerancesConfig,
 )
 from ...exceptions import NamelistError
+from . import logging_helper
+from .soil_properties_loader import SoilPropertiesLoader
 
 
 class Input:
@@ -188,6 +187,9 @@ class Input:
 
         Args:
             inputfile: The path to the NetCDF initial conditions file.
+            nx: Number of grid columns in the x direction.
+            ny: Number of grid columns in the y direction.
+            nz: Number of soil layers expected in the input file.
 
         Returns:
             A dictionary of NumPy arrays for soil depth, temperature,
@@ -451,7 +453,7 @@ class Input:
                 atm_p = _reshape_forcing(atm_p, "atm_p")
                 r_net = _reshape_forcing(r_net, "R_net")
 
-                # Validate and correct forcing data
+                # Validate forcing data and clip only minor boundary excursions.
                 self._validate_forcing_data(atm_U, atm_T, atm_q, atm_p,
                                             r_net, ntime)
 
@@ -474,12 +476,12 @@ class Input:
     def _validate_forcing_data(self, atm_U: NDArray, atm_T: NDArray,
                                atm_q: NDArray, atm_p: NDArray,
                                r_net: NDArray, _ntime: int) -> None:
-        """Validates and corrects atmospheric forcing data for physical
-        consistency.
+        """Validates atmospheric forcing data for physical consistency.
 
-        Checks that forcing variables are within reasonable physical ranges
-        and corrects minor issues. Raises errors for impossible values. Provides
-        informative warnings for values at the edges of valid ranges.
+        Slight excursions beyond the supported forcing bounds are clipped to
+        preserve robustness against boundary-value artifacts. Larger
+        violations raise an error so invalid experiments do not continue with
+        silently modified forcing.
 
         Args:
             atm_U: Wind speed array with one value per time step [m/s].
@@ -491,78 +493,64 @@ class Input:
                 API compatibility with other validation functions).
 
         Raises:
-            ValueError: If forcing data contains impossible or physically
-                unrealistic values that cannot be corrected.
+            ValueError: If forcing data contains values outside the supported
+                bounds by more than the configured clipping tolerance.
         """
-        # Physical bounds for atmospheric variables
-        # Reasonable atmospheric temperature range [K]
-        T_min, T_max = 200.0, 350.0
-        p_min, p_max = 50000.0, 110000.0  # Pressure range [Pa]
-        q_min, q_max = 0.0, 0.05  # Specific humidity range [kg/kg]
-        U_min, U_max = 1e-4, 50.0  # Wind speed range [m/s]
-        R_min, R_max = -100.0, 1200.0  # Net radiation range [W/m²]
+        def _clip_or_raise(
+                data: NDArray, *, name: str, lower: float, upper: float,
+                lower_tol: float, upper_tol: float, units: str) -> bool:
+            below = data < lower
+            above = data > upper
+            out_of_range = below | above
+            if not np.any(out_of_range):
+                return False
+
+            small_below = below & ((lower - data) <= lower_tol)
+            small_above = above & ((data - upper) <= upper_tol)
+            small_excursions = small_below | small_above
+            hard_failures = out_of_range & ~small_excursions
+
+            if np.any(hard_failures):
+                bad_values = data[hard_failures]
+                sample_indices = np.flatnonzero(hard_failures)[:5].tolist()
+                raise ValueError(
+                    f'Offline forcing {name} contains {bad_values.size} '
+                    f'entries outside [{lower:.6g}, {upper:.6g}] {units} by '
+                    f'more than the allowed tolerance '
+                    f'(-{lower_tol:.6g}/+{upper_tol:.6g} {units}). '
+                    f'Observed range {bad_values.min():.6g} to '
+                    f'{bad_values.max():.6g} {units}; sample flat indices '
+                    f'{sample_indices}.'
+                )
+
+            num_clipped = int(np.count_nonzero(small_excursions))
+            self.logger.warning(
+                'Clipping %d forcing entries for %s to [%f, %f] %s.',
+                num_clipped, name, lower, upper, units)
+            data[small_excursions] = np.clip(
+                data[small_excursions], lower, upper)
+            return True
 
         issues_found = False
-
-        # Check temperature
-        T_bad = (atm_T < T_min) | (atm_T > T_max)
-        if np.any(T_bad):
-            num_bad = int(np.sum(T_bad))
-            self.logger.warning(
-                'Found %d forcing entries with out-of-range temperature '
-                '(expected %f-%f K).', num_bad, T_min, T_max)
-            issues_found = True
-            # Clamp to valid range
-            atm_T[T_bad] = np.clip(atm_T[T_bad], T_min, T_max)
-
-        # Check pressure
-        p_bad = (atm_p < p_min) | (atm_p > p_max)
-        if np.any(p_bad):
-            num_bad = int(np.sum(p_bad))
-            self.logger.warning(
-                'Found %d forcing entries with out-of-range pressure '
-                '(expected %f-%f Pa).', num_bad, p_min, p_max)
-            issues_found = True
-            # Clamp to valid range
-            atm_p[p_bad] = np.clip(atm_p[p_bad], p_min, p_max)
-
-        # Check specific humidity
-        q_bad = (atm_q < q_min) | (atm_q > q_max)
-        if np.any(q_bad):
-            num_bad = int(np.sum(q_bad))
-            self.logger.warning(
-                'Found %d forcing entries with out-of-range humidity '
-                '(expected %f-%f kg/kg).', num_bad, q_min, q_max)
-            issues_found = True
-            # Clamp to valid range (especially fix negative values)
-            atm_q[q_bad] = np.clip(atm_q[q_bad], q_min, q_max)
-
-        # Check wind speed
-        U_bad = (atm_U <= U_min) | (atm_U > U_max)
-        if np.any(U_bad):
-            num_bad = int(np.sum(U_bad))
-            self.logger.warning(
-                'Found %d forcing entries with out-of-range wind speed '
-                '(expected %f-%f m/s).', num_bad, U_min, U_max)
-            issues_found = True
-            # Fix zero/negative and excessive wind speeds
-            atm_U[atm_U <= U_min] = U_min
-            atm_U[atm_U > U_max] = U_max
-
-        # Check net radiation
-        R_bad = (r_net < R_min) | (r_net > R_max)
-        if np.any(R_bad):
-            num_bad = int(np.sum(R_bad))
-            self.logger.warning(
-                'Found %d forcing entries with suspicious radiation '
-                '(expected %f-%f W/m²).', num_bad, R_min, R_max)
-            issues_found = True
-            # Clamp to physically reasonable range
-            r_net[R_bad] = np.clip(r_net[R_bad], R_min, R_max)
+        issues_found |= _clip_or_raise(
+            atm_T, name='temperature', lower=200.0, upper=350.0,
+            lower_tol=0.5, upper_tol=0.5, units='K')
+        issues_found |= _clip_or_raise(
+            atm_p, name='pressure', lower=50000.0, upper=110000.0,
+            lower_tol=100.0, upper_tol=100.0, units='Pa')
+        issues_found |= _clip_or_raise(
+            atm_q, name='humidity', lower=0.0, upper=0.05,
+            lower_tol=1e-4, upper_tol=5e-4, units='kg/kg')
+        issues_found |= _clip_or_raise(
+            atm_U, name='wind speed', lower=1e-4, upper=50.0,
+            lower_tol=1e-4, upper_tol=0.5, units='m/s')
+        issues_found |= _clip_or_raise(
+            r_net, name='net radiation', lower=-100.0, upper=1200.0,
+            lower_tol=25.0, upper_tol=25.0, units='W/m^2')
 
         if issues_found:
             self.logger.info(
-                'Forcing data validation: Issues found and corrected. '
+                'Forcing data validation: clipped minor boundary excursions. '
                 'Please review input data quality.')
         else:
             self.logger.info(
