@@ -32,7 +32,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from utahlsm.util.solvers import root_brent, tridiagonal
+from utahlsm.util.solvers import root_brent, root_brent_vec, tridiagonal
 
 # ============================================================================
 # Tests for tridiagonal() - Thomas Algorithm
@@ -509,3 +509,35 @@ class TestRootBrent:
 
         assert converged
         assert_allclose(root, np.sqrt(5), rtol=1e-6)
+
+
+@pytest.mark.solver
+class TestRootBrentVec:
+    """Test suite for the vectorized Brent root finder."""
+
+    def test_multiple_independent_roots(self):
+        """Solve several independent bracketed roots in one vector call."""
+        roots = np.array([1.5, -0.75, 3.25])
+        a = roots - 1.0
+        b = roots + 1.0
+
+        def f(x):
+            return x - roots
+
+        root, converged = root_brent_vec(f, a, b, tol=1e-8)
+
+        assert np.all(converged)
+        assert_allclose(root, roots, rtol=1e-6, atol=1e-8)
+        assert_allclose(f(root), 0.0, atol=1e-8)
+
+    def test_unbracketed_root_error(self):
+        """Raise immediately when any entry is not properly bracketed."""
+        roots = np.array([1.5, 2.0, -0.75])
+        a = np.array([0.0, 2.0, -1.75])
+        b = np.array([3.0, 3.0, 0.25])
+
+        def f(x):
+            return x - roots
+
+        with pytest.raises(ValueError, match="Root not bracketed"):
+            root_brent_vec(f, a, b, tol=1e-8)

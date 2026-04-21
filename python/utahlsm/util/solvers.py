@@ -255,6 +255,10 @@ def root_brent_vec(
             - Array of approximate roots (size n).
             - Boolean array indicating convergence for each root.
 
+    Raises:
+        ValueError: If any root is not bracketed; i.e., if ``f(a) * f(b) >= 0``
+            for one or more entries.
+
     Note:
         All problems are iterated together until all converge or iter_max is
         reached. This is efficient when problems have similar convergence rates.
@@ -276,10 +280,13 @@ def root_brent_vec(
     fb = f(b)
 
     # Check bracketing
-    if np.any(fa * fb > 0):
-        logger.warning(
-            'Root not bracketed for %d of %d problems.',
-            int(np.sum(fa * fb > 0)), n
+    invalid = fa * fb >= 0
+    if np.any(invalid):
+        invalid_idx = np.where(invalid)[0]
+        raise ValueError(
+            'Root not bracketed in solve_root_brent_vec for '
+            f'{invalid_idx.size} of {n} problems at indices '
+            f'{invalid_idx.tolist()}.'
         )
 
     # Ensure b has the smaller function value (best guess)
