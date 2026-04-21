@@ -122,8 +122,9 @@ class RadBasic(Radiation):
     def _longwave_in(
         self, atm_state: AtmosphericState, sfc_state: SurfaceState
     ) -> float:
-        """Computes clear-sky downwelling longwave radiation via Brutsaert
-        (1975).
+        """Computes clear-sky downwelling longwave radiation.
+
+        Uses the Brutsaert (1975) emissivity relation.
 
         Args:
             atm_state: The current state of the atmosphere.

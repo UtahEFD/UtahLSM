@@ -85,6 +85,8 @@ utahlsm = [
 ]
 
 [tool.pytest.ini_options]
+minversion = "6.0"
+
 # Test discovery
 python_files = ["test_*.py"]
 python_classes = ["Test*"]

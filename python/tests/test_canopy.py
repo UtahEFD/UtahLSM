@@ -39,7 +39,6 @@ from utahlsm.physics.canopy.canopy import Canopy
 from utahlsm.physics.canopy.canopy_jarvis import CanopyJarvis
 from utahlsm.physics.canopy.factory import get_canopy_model
 
-
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
@@ -56,19 +55,19 @@ def z_layers():
 def canopy_params_single(z_layers):
     """Per-column parameters for a single-column grassland canopy."""
     ncol = 1
-    return dict(
-        lai=np.full(ncol, 3.0),
-        veg_fraction=np.full(ncol, 0.95),
-        rooting_depth=np.full(ncol, 0.4),
-        beta=np.full(ncol, 0.965),
-        rs_min=np.full(ncol, 40.0),
-        rs_max=np.full(ncol, 5000.0),
-        rg_half=np.full(ncol, 100.0),
-        vpd_coef=np.full(ncol, 1.0e-4),
-        t_opt=np.full(ncol, 298.0),
-        t_coef=np.full(ncol, 1.6e-3),
-        z=z_layers,
-    )
+    return {
+        "lai": np.full(ncol, 3.0),
+        "veg_fraction": np.full(ncol, 0.95),
+        "rooting_depth": np.full(ncol, 0.4),
+        "beta": np.full(ncol, 0.965),
+        "rs_min": np.full(ncol, 40.0),
+        "rs_max": np.full(ncol, 5000.0),
+        "rg_half": np.full(ncol, 100.0),
+        "vpd_coef": np.full(ncol, 1.0e-4),
+        "t_opt": np.full(ncol, 298.0),
+        "t_coef": np.full(ncol, 1.6e-3),
+        "z": z_layers,
+    }
 
 
 @pytest.fixture
@@ -79,19 +78,19 @@ def jarvis_single(canopy_params_single):
 @pytest.fixture
 def canopy_params_3col(z_layers):
     ncol = 3
-    return dict(
-        lai=np.array([1.0, 3.0, 5.0]),
-        veg_fraction=np.array([0.2, 0.6, 1.0]),
-        rooting_depth=np.array([0.3, 0.5, 1.0]),
-        beta=np.full(ncol, 0.965),
-        rs_min=np.full(ncol, 40.0),
-        rs_max=np.full(ncol, 5000.0),
-        rg_half=np.full(ncol, 100.0),
-        vpd_coef=np.full(ncol, 1.0e-4),
-        t_opt=np.full(ncol, 298.0),
-        t_coef=np.full(ncol, 1.6e-3),
-        z=z_layers,
-    )
+    return {
+        "lai": np.array([1.0, 3.0, 5.0]),
+        "veg_fraction": np.array([0.2, 0.6, 1.0]),
+        "rooting_depth": np.array([0.3, 0.5, 1.0]),
+        "beta": np.full(ncol, 0.965),
+        "rs_min": np.full(ncol, 40.0),
+        "rs_max": np.full(ncol, 5000.0),
+        "rg_half": np.full(ncol, 100.0),
+        "vpd_coef": np.full(ncol, 1.0e-4),
+        "t_opt": np.full(ncol, 298.0),
+        "t_coef": np.full(ncol, 1.6e-3),
+        "z": z_layers,
+    }
 
 
 @pytest.fixture

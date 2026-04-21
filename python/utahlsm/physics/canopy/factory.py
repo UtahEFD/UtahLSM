@@ -63,15 +63,15 @@ def get_canopy_model(
             f"1 or ncol={ncol}."
         )
 
-    common = dict(
-        lai=as_col('lai', config.lai),
-        veg_fraction=as_col('veg_fraction', config.veg_fraction),
-        rooting_depth=as_col('rooting_depth', config.rooting_depth),
-        beta=as_col('beta', config.beta),
-        rs_min=as_col('rs_min', config.rs_min),
-        rs_max=as_col('rs_max', config.rs_max),
-        z=z,
-    )
+    common = {
+        'lai': as_col('lai', config.lai),
+        'veg_fraction': as_col('veg_fraction', config.veg_fraction),
+        'rooting_depth': as_col('rooting_depth', config.rooting_depth),
+        'beta': as_col('beta', config.beta),
+        'rs_min': as_col('rs_min', config.rs_min),
+        'rs_max': as_col('rs_max', config.rs_max),
+        'z': z,
+    }
 
     if config.model == 'jarvis':
         return CanopyJarvis(

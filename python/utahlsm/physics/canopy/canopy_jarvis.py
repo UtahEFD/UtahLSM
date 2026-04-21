@@ -56,6 +56,21 @@ class CanopyJarvis(Canopy):
         t_coef: NDArray[np.float64],
         z: NDArray[np.float64],
     ) -> None:
+        """Initializes the Jarvis canopy model parameters.
+
+        Args:
+            lai: Leaf area index for each column.
+            veg_fraction: Vegetated fraction for each column.
+            rooting_depth: Rooting depth for each column [m].
+            beta: Jackson-1996 root distribution parameter for each column.
+            rs_min: Minimum stomatal resistance for each column [s/m].
+            rs_max: Maximum stomatal resistance for each column [s/m].
+            rg_half: Half-saturation radiation parameter for each column [W/m^2].
+            vpd_coef: Vapor-pressure-deficit sensitivity for each column [1/Pa].
+            t_opt: Optimum leaf temperature for each column [K].
+            t_coef: Temperature response curvature for each column [1/K^2].
+            z: Soil node depths [m], shape (nz,).
+        """
         super().__init__(
             lai=lai,
             veg_fraction=veg_fraction,
@@ -79,6 +94,18 @@ class CanopyJarvis(Canopy):
         theta_wilt: NDArray[np.float64],
         theta_fc: NDArray[np.float64],
     ) -> NDArray[np.float64]:
+        """Computes bulk stomatal resistance from Jarvis stress factors.
+
+        Args:
+            atm_state: Current atmospheric state.
+            sfc_state: Current surface state.
+            soil_state: Current soil state.
+            theta_wilt: Soil wilting-point moisture profile.
+            theta_fc: Soil field-capacity moisture profile.
+
+        Returns:
+            Bulk stomatal resistance for each column [s/m].
+        """
         f1 = self._f_radiation(atm_state.radiation_net)
         f2 = self._f_vpd(atm_state)
         f3 = self._f_temperature(sfc_state.temperature)

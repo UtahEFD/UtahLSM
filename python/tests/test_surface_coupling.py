@@ -7,10 +7,14 @@ fluxes consistent with the final converged surface state.
 import logging
 from types import SimpleNamespace
 
+import numpy as np
+
 from utahlsm.core import UtahLSM
 from utahlsm.data_models import (
+    AtmosphericState,
     IterationsConfig,
     NumericsConfig,
+    SoilState,
     SurfaceState,
     TolerancesConfig,
 )
@@ -50,9 +54,6 @@ def _make_minimal_model(
 
 def test_compute_seb_vec_is_deterministic_and_pure():
     """SEB residual evaluation should be deterministic and not mutate state."""
-    import numpy as np
-    from utahlsm.data_models import AtmosphericState, SoilState
-
     model = _make_minimal_model()
     model.ncol = 1
 
