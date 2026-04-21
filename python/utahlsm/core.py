@@ -1248,3 +1248,45 @@ class UtahLSM:
             source_term=source,
             avg_diffusivity='geometric',
         )
+        self._enforce_soil_moisture_bounds()
+
+    def _enforce_soil_moisture_bounds(self) -> None:
+        """Clips tiny moisture overshoots and raises on material violations."""
+        moisture = np.asarray(self.soil_state.moisture, dtype=float)
+        residual = self.soil._expand_profile_property(
+            self.soil.properties.residual, moisture
+        )
+        porosity = self.soil._expand_profile_property(
+            self.soil.properties.porosity, moisture
+        )
+        tol = max(float(self.input.numerics.tolerances.smb_flux), 1e-8)
+
+        below_hard = moisture < (residual - tol)
+        above_hard = moisture > (porosity + tol)
+        hard_mask = below_hard | above_hard
+        if np.any(hard_mask):
+            min_delta = float(np.min(moisture - residual))
+            max_delta = float(np.max(moisture - porosity))
+            bad_idx = np.argwhere(hard_mask)
+            examples = ", ".join(
+                f"{tuple(int(i) for i in idx)}={float(moisture[tuple(idx)]):.6f}"
+                for idx in bad_idx[:5]
+            )
+            raise SolverError(
+                'Soil moisture left physical bounds after moisture diffusion: '
+                f'{int(np.sum(hard_mask))} cells outside [residual, porosity] '
+                f'by more than tol={tol:.1e}. '
+                f'Min(theta-residual)={min_delta:.3e}, '
+                f'Max(theta-porosity)={max_delta:.3e}. '
+                f'Examples: {examples}'
+            )
+
+        clip_mask = (moisture < residual) | (moisture > porosity)
+        if np.any(clip_mask):
+            self.logger.warning(
+                'Clipping %d soil moisture values to [residual, porosity] '
+                'after moisture diffusion (tol=%.1e).',
+                int(np.sum(clip_mask)),
+                tol,
+            )
+            np.clip(moisture, residual, porosity, out=moisture)
