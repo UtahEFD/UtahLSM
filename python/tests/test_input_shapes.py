@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import utahlsm
+from tests.gabls3_case_factory import write_2x2_case
 
 
 @pytest.mark.integration
@@ -39,14 +40,17 @@ def test_input_shapes_single_column() -> None:
 
 
 @pytest.mark.integration
-def test_input_shapes_multi_column() -> None:
-    """Multi-column inputs should load with flattened column dimensions."""
+def test_input_shapes_multi_column(tmp_path: Path) -> None:
+    """Generated multi-column inputs should load with flattened columns."""
     repo_root = Path(__file__).resolve().parents[1]
     cases_root = (repo_root / ".." / "cases").resolve()
-    case = cases_root / "gabls3_2x2"
+    case_single = cases_root / "gabls3"
 
-    if not case.exists():
-        pytest.skip("GABLS3 2x2 case files not available.")
+    if not case_single.exists():
+        pytest.skip("GABLS3 case files not available.")
+
+    case = tmp_path / "gabls3_2x2_generated"
+    write_2x2_case(case_single, case)
 
     input_lsm = utahlsm.Input(
         str(case / "lsm_namelist.json"),

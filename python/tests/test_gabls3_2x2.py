@@ -1,41 +1,33 @@
-"""Integration test for GABLS3 2x2 regression."""
+"""Integration test for temporary 2x2 GABLS3 regression coverage."""
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 from tests import compare_gabls3_2x2 as cmp
+from tests.gabls3_case_factory import run_case, write_2x2_case
 
 
 @pytest.mark.integration
 @pytest.mark.slow
 def test_gabls3_2x2_matches_single(tmp_path: Path) -> None:
-    """Ensures each 2x2 column matches the single-column GABLS3 output."""
+    """Ensures the vectorized 2x2 path matches a tiled single-column case."""
     repo_root = Path(__file__).resolve().parents[1]
     cases_root = (repo_root / ".." / "cases").resolve()
     case_single = cases_root / "gabls3"
-    case_multi = cases_root / "gabls3_2x2"
 
-    if not case_single.exists() or not case_multi.exists():
+    if not case_single.exists():
         pytest.skip("GABLS3 case files not available.")
 
+    case_multi = tmp_path / "gabls3_2x2_generated"
     single_out = tmp_path / "lsm_gabls3_py.nc"
     multi_out = tmp_path / "lsm_gabls3_2x2_py.nc"
 
-    subprocess.run(
-        [sys.executable, "utahlsm_offline.py", "-c", "gabls3", "-o", str(single_out)],
-        cwd=repo_root,
-        check=True,
-    )
-    subprocess.run(
-        [sys.executable, "utahlsm_offline.py", "-c", "gabls3_2x2", "-o", str(multi_out)],
-        cwd=repo_root,
-        check=True,
-    )
+    write_2x2_case(case_single, case_multi)
+    run_case(case_single, single_out)
+    run_case(case_multi, multi_out)
 
     # Absolute tolerance is set well below any physically meaningful
     # signal; it just absorbs the ULP-level FP reordering between the
