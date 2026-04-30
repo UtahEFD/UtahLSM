@@ -118,7 +118,14 @@ class SurfaceState:
     between the soil, the surface, and the atmosphere.
 
     Attributes:
-        temperature: Surface temperature [K] (scalar or per-column array).
+        temperature: Radiative skin temperature [K] (scalar or per-column
+            array). This is the temperature that closes the SEB and
+            drives radiative emission and turbulent fluxes.
+        soil_top_temperature: Temperature at the top of the mineral soil
+            column [K]. Equal to ``temperature`` when there is no
+            in-canopy thermal resistance; otherwise lower (cooler) by
+            ``G * r_canopy_thermal``. Used as the Dirichlet BC for the
+            heat-diffusion solver.
         moisture: Surface moisture content [kg/kg] (scalar or per-column array).
         specific_humidity: Surface-air specific humidity [kg/kg]
             (scalar or per-column array).
@@ -127,6 +134,7 @@ class SurfaceState:
 
     """
     temperature: Union[float, NDArray[np.float64]] = 0.0
+    soil_top_temperature: Union[float, NDArray[np.float64]] = 0.0
     moisture: Union[float, NDArray[np.float64]] = 0.0
     specific_humidity: Union[float, NDArray[np.float64]] = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
@@ -179,7 +187,7 @@ class SolverState:
             the top two soil layers [W/m/K].
         diffusion_e: Sub-diagonal buffer for the tridiagonal diffusion solver,
             shape (nz - 1, ncol). Pre-allocated once to avoid per-timestep
-            heap churn; reused by both heat and moisture diffusion.
+            heap churn; reused by both heat and moisture linear solves.
         diffusion_f: Main-diagonal buffer, shape (nz - 1, ncol).
         diffusion_g: Super-diagonal buffer, shape (nz - 1, ncol).
         diffusion_r: Right-hand-side buffer, shape (nz - 1, ncol).
@@ -233,13 +241,16 @@ class IterationsConfig:
         sfc_flux: iterations to solve Obukhov length.
         seb_bracket: iterations to find root brackets.
         seb_root: iterations to find seb root.
-        smb_flux: iterations to solve soil moisture flux.
-        coupling: iterations to solve coupled system
+        smb_flux: iterations to solve the surface moisture budget root.
+        moisture_picard: iterations for the mixed-form soil moisture Picard
+            solve.
+        coupling: iterations to solve coupled system.
     """
     sfc_flux: int
     seb_bracket: int
     seb_root: int
     smb_flux: int
+    moisture_picard: int
     coupling: int
 
 @dataclass(frozen=True)
@@ -253,12 +264,18 @@ class TolerancesConfig:
         sfc_flux: tolerance for Obukhov length.
         seb_root: tolerance for seb root.
         smb_flux: tolerance for SMB root-finding on surface moisture [m3/m3].
+        moisture_picard: convergence tolerance for the mixed-form soil
+            moisture Picard solve [m3/m3].
+        moisture_bounds: admissible post-solve soil moisture overshoot before
+            clipping or failure [m3/m3].
         coupling_temp: tolerance for soil temperature in coupling.
         coupling_mois: tolerance for soil moisture in coupling.
     """
     sfc_flux: float
     seb_root: float
     smb_flux: float
+    moisture_picard: float
+    moisture_bounds: float
     coupling_temp: float
     coupling_mois: float
 
@@ -267,8 +284,8 @@ class NumericsConfig:
     """Numerical scheme parameters.
 
     Attributes:
-        diffusion_back_weight: Backward weighting factor for the
-            diffusion solver (0.5 for Crank-Nicolson).
+        heat_diffusion_back_weight: Backward weighting factor for the
+            soil heat diffusion solver (0.5 for Crank-Nicolson).
         warm_start_turbulence: If True, compute MOST diagnostics at time=0
             using forcing[0] (offline mode).
         initialize_surface_temperature_from_seb: If True, initialize the top
@@ -276,7 +293,7 @@ class NumericsConfig:
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
-    diffusion_back_weight: float
+    heat_diffusion_back_weight: float
     iterations: IterationsConfig
     tolerances: TolerancesConfig
     warm_start_turbulence: bool = False
@@ -388,6 +405,11 @@ class CanopyConfig:
         vpd_coef: VPD sensitivity for f2(VPD) [1/Pa] (Jarvis).
         t_opt: Optimum air temperature for f3(T) [K] (Jarvis).
         t_coef: Width of f3(T) parabola [1/K^2] (Jarvis).
+        r_ground: In-canopy aerodynamic resistance for heat transport
+            from the radiative skin to the soil top [s/m]. Acts in
+            series with the top-cell soil conductive resistance,
+            scaled by ``veg_fraction``. ``0.0`` recovers the
+            bare-skin behaviour where ``T_skin = T_soil_top``.
     """
     model: str = 'none'
     lai: Any = 0.0
@@ -400,6 +422,7 @@ class CanopyConfig:
     vpd_coef: Any = 1.0e-4
     t_opt: Any = 298.0
     t_coef: Any = 1.6e-3
+    r_ground: Any = 0.0
 
 @dataclass(frozen=True)
 class OutputConfig:

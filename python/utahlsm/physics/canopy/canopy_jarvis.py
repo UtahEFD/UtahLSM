@@ -54,6 +54,7 @@ class CanopyJarvis(Canopy):
         vpd_coef: NDArray[np.float64],
         t_opt: NDArray[np.float64],
         t_coef: NDArray[np.float64],
+        r_ground: NDArray[np.float64],
         z: NDArray[np.float64],
     ) -> None:
         """Initializes the Jarvis canopy model parameters.
@@ -69,6 +70,8 @@ class CanopyJarvis(Canopy):
             vpd_coef: Vapor-pressure-deficit sensitivity for each column [1/Pa].
             t_opt: Optimum leaf temperature for each column [K].
             t_coef: Temperature response curvature for each column [1/K^2].
+            r_ground: In-canopy aerodynamic resistance for ground heat
+                transport for each column [s/m].
             z: Soil node depths [m], shape (nz,).
         """
         super().__init__(
@@ -78,6 +81,7 @@ class CanopyJarvis(Canopy):
             beta=beta,
             rs_min=rs_min,
             rs_max=rs_max,
+            r_ground=r_ground,
             z=z,
         )
         self.logger.info('Using the Jarvis canopy model')

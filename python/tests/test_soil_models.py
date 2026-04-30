@@ -179,6 +179,50 @@ class TestWaterPotential:
                 assert psi <= 1e-6, \
                     f"{ModelClass.__name__}: Significantly positive psi={psi} at theta={theta}"
 
+    def test_water_content_inverts_water_potential(self, soil_props, soil_types_to_test):
+        """Test that θ(ψ(θ)) recovers the original moisture value."""
+        properties_dict, dataset_name = soil_props
+        for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
+            model = ModelClass(properties_dict, soil_types_to_test, dataset_name)
+            layer = 0
+            theta_test = np.linspace(
+                model.properties.residual[layer] + 0.01,
+                model.properties.porosity[layer] - 0.01,
+                10,
+            )
+
+            psi = np.array(
+                [model.water_potential(theta, level=layer) for theta in theta_test]
+            )
+            theta_back = np.array(
+                [model.water_content(psi_i, level=layer) for psi_i in psi]
+            )
+
+            assert_allclose(theta_back, theta_test, rtol=1e-5, atol=1e-6)
+
+    def test_moisture_capacity_positive(self, soil_props, soil_types_to_test):
+        """Test that dθ/dψ is finite and non-negative in the unsaturated range."""
+        properties_dict, dataset_name = soil_props
+        for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
+            model = ModelClass(properties_dict, soil_types_to_test, dataset_name)
+            layer = 0
+            theta_test = np.linspace(
+                model.properties.residual[layer] + 0.01,
+                model.properties.porosity[layer] - 0.01,
+                10,
+            )
+            psi = np.array(
+                [model.water_potential(theta, level=layer) for theta in theta_test]
+            )
+            capacity = np.array(
+                [model.moisture_capacity(psi_i, level=layer) for psi_i in psi]
+            )
+
+            assert np.all(np.isfinite(capacity)), \
+                f"{ModelClass.__name__}: Non-finite moisture capacity"
+            assert np.all(capacity >= 0.0), \
+                f"{ModelClass.__name__}: Negative moisture capacity"
+
 
 # ============================================================================
 # Tests: Hydraulic Conductivity

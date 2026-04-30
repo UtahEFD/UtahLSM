@@ -207,6 +207,61 @@ class Soil(ABC):
         raise NotImplementedError
 
     @overload
+    def water_content(self, psi: float, level: int = None) -> float: ...
+
+    @overload
+    def water_content(
+        self, psi: NDArray[np.float64], level: int = None
+    ) -> NDArray[np.float64]: ...
+
+    @abstractmethod
+    def water_content(
+        self, psi: Union[float, NDArray[np.float64]], level: int = None
+    ) -> Union[float, NDArray[np.float64]]:
+        """Computes soil moisture content from water potential.
+
+        This is the inverse of ``water_potential`` and is required by the
+        mixed-form Richards solver, which iterates in pressure head while
+        storing moisture as the prognostic state.
+
+        Args:
+            psi: Soil water potential [m]. Can be a scalar value or an array
+                of values.
+            level: Optional specific soil layer index. If provided with a
+                scalar ``psi``, indicates which layer the potential belongs to.
+
+        Returns:
+            Soil moisture content [m^3/m^3]. Returns the same type as ``psi``.
+        """
+        raise NotImplementedError
+
+    @overload
+    def moisture_capacity(self, psi: float, level: int = None) -> float: ...
+
+    @overload
+    def moisture_capacity(
+        self, psi: NDArray[np.float64], level: int = None
+    ) -> NDArray[np.float64]: ...
+
+    @abstractmethod
+    def moisture_capacity(
+        self, psi: Union[float, NDArray[np.float64]], level: int = None
+    ) -> Union[float, NDArray[np.float64]]:
+        """Computes the specific moisture capacity dθ/dψ.
+
+        Args:
+            psi: Soil water potential [m]. Can be a scalar value or an array
+                of values.
+            level: Optional specific soil layer index. If provided with a
+                scalar ``psi``, indicates which layer the potential belongs to.
+
+        Returns:
+            Specific moisture capacity [m^3/m^3 per m head]. Returns the same
+            type as ``psi``.
+        """
+        raise NotImplementedError
+
+    @overload
     def conductivity_moisture(
         self, soil_q: float, level: int = None
     ) -> float: ...
@@ -279,14 +334,11 @@ class Soil(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def surface_water_content(self, psi_sfc: float) -> float:
         """Computes surface soil moisture from water potential.
 
-        This method must be implemented by subclasses to compute the soil
-        moisture at the surface given a water potential value. This is used
-        to determine surface moisture content from the surface water
-        potential solution.
+        This is a convenience wrapper for the top soil layer's inverse
+        retention curve.
 
         Args:
             psi_sfc: Water potential at the surface [Pa].
@@ -294,7 +346,7 @@ class Soil(ABC):
         Returns:
             Soil moisture content at the surface [m^3/m^3].
         """
-        raise NotImplementedError
+        return float(self.water_content(psi_sfc, level=0))
 
     # --- Validation Methods ---
 

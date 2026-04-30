@@ -31,18 +31,21 @@ def _make_minimal_model(
     model.logger = logging.getLogger("test")
     model.input = SimpleNamespace(
         numerics=NumericsConfig(
-            diffusion_back_weight=0.5,
+            heat_diffusion_back_weight=0.5,
             iterations=IterationsConfig(
                 sfc_flux=1,
                 seb_bracket=1,
                 seb_root=1,
                 smb_flux=1,
+                moisture_picard=1,
                 coupling=coupling_iterations,
             ),
             tolerances=TolerancesConfig(
                 sfc_flux=1e-6,
                 seb_root=1e-12,
                 smb_flux=1e-12,
+                moisture_picard=1e-8,
+                moisture_bounds=1e-12,
                 coupling_temp=tol_temp,
                 coupling_mois=tol_mois,
             ),

@@ -15,7 +15,7 @@ def _make_model() -> UtahLSM:
     model.logger = logging.getLogger("test")
     model.input = SimpleNamespace(
         numerics=SimpleNamespace(
-            tolerances=SimpleNamespace(smb_flux=1e-6)
+            tolerances=SimpleNamespace(moisture_bounds=1e-6)
         )
     )
     model.sfc_state = SimpleNamespace(moisture=np.array([0.20], dtype=float))
@@ -40,13 +40,13 @@ def _make_model() -> UtahLSM:
 def test_solve_diffusion_mois_clips_tiny_overshoots():
     model = _make_model()
 
-    def fake_solve_diffusion(**_kwargs):
+    def fake_solve_mixed_moisture(**_kwargs):
         model.soil_state.moisture[:] = np.array(
             [[0.10 - 5e-7], [0.25], [0.40 + 5e-7]],
             dtype=float,
         )
 
-    model._solve_diffusion = fake_solve_diffusion  # type: ignore[assignment]
+    model._solve_mixed_moisture = fake_solve_mixed_moisture  # type: ignore[assignment]
 
     model._solve_diffusion_mois()
 
@@ -59,13 +59,13 @@ def test_solve_diffusion_mois_clips_tiny_overshoots():
 def test_solve_diffusion_mois_raises_on_material_overshoot():
     model = _make_model()
 
-    def fake_solve_diffusion(**_kwargs):
+    def fake_solve_mixed_moisture(**_kwargs):
         model.soil_state.moisture[:] = np.array(
             [[0.10 - 2e-4], [0.25], [0.40 + 2e-4]],
             dtype=float,
         )
 
-    model._solve_diffusion = fake_solve_diffusion  # type: ignore[assignment]
+    model._solve_mixed_moisture = fake_solve_mixed_moisture  # type: ignore[assignment]
 
     with pytest.raises(SolverError, match="Soil moisture left physical bounds"):
         model._solve_diffusion_mois()

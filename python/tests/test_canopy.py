@@ -66,6 +66,7 @@ def canopy_params_single(z_layers):
         "vpd_coef": np.full(ncol, 1.0e-4),
         "t_opt": np.full(ncol, 298.0),
         "t_coef": np.full(ncol, 1.6e-3),
+        "r_ground": np.full(ncol, 0.0),
         "z": z_layers,
     }
 
@@ -89,6 +90,7 @@ def canopy_params_3col(z_layers):
         "vpd_coef": np.full(ncol, 1.0e-4),
         "t_opt": np.full(ncol, 298.0),
         "t_coef": np.full(ncol, 1.6e-3),
+        "r_ground": np.full(ncol, 0.0),
         "z": z_layers,
     }
 

@@ -63,6 +63,11 @@ class Canopy(ABC):
             shape (ncol,).
         rs_max: Maximum (cuticular) resistance per column [s/m],
             shape (ncol,).
+        r_ground: In-canopy aerodynamic resistance for heat transport
+            from the radiative skin to the soil top [s/m] per column,
+            shape (ncol,). Used in series with the soil's top-cell
+            conductive resistance to attenuate ground heat flux under
+            vegetation.
         root_fraction: Precomputed per-layer root fraction, shape
             (nz, ncol). Columns sum to 1.
     """
@@ -75,6 +80,7 @@ class Canopy(ABC):
         beta: NDArray[np.float64],
         rs_min: NDArray[np.float64],
         rs_max: NDArray[np.float64],
+        r_ground: NDArray[np.float64],
         z: NDArray[np.float64],
     ) -> None:
         """Initializes the canopy base.
@@ -87,6 +93,8 @@ class Canopy(ABC):
                 are typical for grasslands.
             rs_min: Minimum stomatal resistance [s/m] (ncol,).
             rs_max: Maximum resistance [s/m] (ncol,).
+            r_ground: In-canopy aerodynamic resistance to ground heat
+                transport [s/m] (ncol,).
             z: Soil layer node depths [m], shape (nz,). Values are
                 non-positive with `z[0] = 0` at the surface.
         """
@@ -97,6 +105,7 @@ class Canopy(ABC):
         self.beta = np.asarray(beta, dtype=float)
         self.rs_min = np.asarray(rs_min, dtype=float)
         self.rs_max = np.asarray(rs_max, dtype=float)
+        self.r_ground = np.asarray(r_ground, dtype=float)
         self.z = np.asarray(z, dtype=float)
 
         self.root_fraction: NDArray[np.float64] = self._build_root_profile()

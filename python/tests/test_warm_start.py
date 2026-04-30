@@ -22,7 +22,7 @@ def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
 
     model.input = SimpleNamespace(
         numerics=NumericsConfig(
-            diffusion_back_weight=0.5,
+            heat_diffusion_back_weight=0.5,
             warm_start_turbulence=warm_start_turbulence,
             initialize_surface_temperature_from_seb=False,
             iterations=IterationsConfig(
@@ -30,12 +30,15 @@ def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
                 seb_bracket=10,
                 seb_root=10,
                 smb_flux=10,
+                moisture_picard=10,
                 coupling=2,
             ),
             tolerances=TolerancesConfig(
                 sfc_flux=1e-6,
                 seb_root=1e-12,
                 smb_flux=1e-12,
+                moisture_picard=1e-8,
+                moisture_bounds=1e-12,
                 coupling_temp=1e-6,
                 coupling_mois=1e-12,
             ),

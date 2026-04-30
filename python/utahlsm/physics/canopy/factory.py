@@ -103,6 +103,7 @@ def get_canopy_model(
         'beta': as_col('beta', config.beta),
         'rs_min': as_col('rs_min', config.rs_min),
         'rs_max': as_col('rs_max', config.rs_max),
+        'r_ground': as_col('r_ground', config.r_ground),
         'z': z,
     }
     validate_col('lai', common['lai'], min_value=0.0)
@@ -120,6 +121,7 @@ def get_canopy_model(
     )
     validate_col('rs_min', common['rs_min'], min_value=0.0, min_inclusive=False)
     validate_col('rs_max', common['rs_max'], min_value=0.0, min_inclusive=False)
+    validate_col('r_ground', common['r_ground'], min_value=0.0)
     if np.any(common['rs_max'] < common['rs_min']):
         raise NamelistError(
             "Canopy parameter 'rs_max' must be >= 'rs_min' in every column."

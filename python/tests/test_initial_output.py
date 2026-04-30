@@ -104,14 +104,21 @@ def _make_model(
     model.input = _DummyNamelist(
         grid=SimpleNamespace(nz=2, nx=1, ny=1, z=np.array([0.1, 0.2])),
         numerics=NumericsConfig(
-            diffusion_back_weight=0.5,
+            heat_diffusion_back_weight=0.5,
             iterations=IterationsConfig(
-                sfc_flux=10, seb_bracket=10, seb_root=10, smb_flux=10, coupling=2
+                sfc_flux=10,
+                seb_bracket=10,
+                seb_root=10,
+                smb_flux=10,
+                moisture_picard=10,
+                coupling=2,
             ),
             tolerances=TolerancesConfig(
                 sfc_flux=1e-6,
                 seb_root=1e-12,
                 smb_flux=1e-12,
+                moisture_picard=1e-8,
+                moisture_bounds=1e-12,
                 coupling_temp=1e-6,
                 coupling_mois=1e-12,
             ),
@@ -192,7 +199,9 @@ def test_initial_output_can_initialize_surface_temperature_from_seb():
     """When enabled, SEB initialization can populate initial diagnostics."""
     model = _make_model(warm_start=False, has_forcing=True)
     model.input.numerics = NumericsConfig(
-        diffusion_back_weight=model.input.numerics.diffusion_back_weight,
+        heat_diffusion_back_weight=(
+            model.input.numerics.heat_diffusion_back_weight
+        ),
         iterations=model.input.numerics.iterations,
         tolerances=model.input.numerics.tolerances,
         warm_start_turbulence=False,
@@ -201,6 +210,7 @@ def test_initial_output_can_initialize_surface_temperature_from_seb():
 
     def fake_solve_seb() -> None:
         model.sfc_state.temperature[:] = 280.0
+        model.sfc_state.soil_top_temperature[:] = 280.0
         model.sfc_state.turbulence.friction_velocity[0] = 0.2
         model.sfc_state.turbulence.obukhov_length[0] = 50.0
         model.sfc_state.fluxes.sensible_heat[0] = -10.0

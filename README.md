@@ -119,10 +119,13 @@ The `lsm_namelist.json` file controls all simulation settings. Key sections:
 **Numerics:**
 - `iterations`: Max iterations for different solvers (recommend 20-50 for typical cases)
 - `tolerances`: Convergence criteria (energy balance tolerance typically 0.1-1 W/m²)
-- `diffusion_back_weight`: Theta scheme parameter—controls numerical stability of diffusion solver
+- `heat_diffusion_back_weight`: Theta scheme parameter for the soil heat solver
   - `0.0` = Forward-Time Centered-Space (explicit, faster but less stable)
   - `0.5` = Crank-Nicolson (balanced)
   - `1.0` = Backward-Time Centered-Space (implicit, slower but very stable)
+- `iterations.moisture_picard`: Iteration cap for the mixed-form soil moisture Picard solve
+- `tolerances.moisture_picard`: Convergence tolerance for the mixed-form soil moisture Picard solve
+- `tolerances.moisture_bounds`: Allowed post-solve overshoot before the model clips or raises
 
 **Soil:**
 - `model`: 1 (Brooks-Corey), 2 (Campbell), or 3 (Van Genuchten)
@@ -200,13 +203,15 @@ See `../cases/GABLS3/lsm_namelist.json` for a complete example.
 
 **Numerical stability considerations:**
 
-- **Diffusion solver theta parameter**: Use `diffusion_back_weight=1.0` (implicit) for stability; lower values permit larger time steps but risk instability in short runs
+- **Heat solver theta parameter**: Use `heat_diffusion_back_weight=1.0` (implicit) for maximum damping in the soil heat solve
+- **Moisture Picard controls**: Increase `iterations.moisture_picard` or relax `tolerances.moisture_picard` if the Richards solve is not converging
 - **SEB solver tolerance**: Tighter tolerance (e.g., 0.1 W/m²) improves surface energy balance closure but increases computation
 - **Time step size**: Determined by forcing data; smaller steps improve accuracy but increase computation
 
 **Troubleshooting:**
 
-- **Simulation diverges or oscillates**: Increase `diffusion_back_weight` toward 1.0; check soil moisture/temperature initial conditions for physical realism
+- **Heat solver oscillates**: Increase `heat_diffusion_back_weight` toward `1.0`; check soil temperature initial conditions for physical realism
+- **Moisture solve fails bounds or convergence**: Increase `iterations.moisture_picard`, relax `tolerances.moisture_picard`, or inspect the forcing and soil hydraulic parameters
 - **Slow convergence**: Increase `iterations` in numerics config; check atmospheric forcing data for realistic values
 - **Memory issues with large grids**: Currently optimized for column simulations (nx=ny=1); 3D simulations require vectorization work
 - **Unrealistic results**: Verify soil type matches your study domain; check that soil moisture is between residual and saturation

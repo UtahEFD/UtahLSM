@@ -15,16 +15,19 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
       "seb_bracket": 100,
       "seb_root": 100,
       "smb_flux": 100,
+      "moisture_picard": 25,
       "coupling": 50
     },
     "tolerances": {
       "sfc_flux": 0.001,
       "seb_root": 1e-06,
       "smb_flux": 1e-06,
+      "moisture_picard": 1e-08,
+      "moisture_bounds": 1e-06,
       "coupling_temp": 0.01,
       "coupling_mois": 1e-05
     },
-    "diffusion_back_weight": 0.5,
+    "heat_diffusion_back_weight": 0.5,
     "warm_start_turbulence": true,
     "initialize_surface_temperature_from_seb": true
   },
@@ -85,7 +88,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 | Section | Purpose |
 | --- | --- |
 | `general` | Logging verbosity |
-| `numerics` | Iteration caps, tolerances, and diffusion scheme controls |
+| `numerics` | Iteration caps, tolerances, and heat-solver controls |
 | `time` | UTC and Julian-day context for radiation timing |
 | `grid` | Horizontal column count and number of soil levels |
 | `surface` | Roughness lengths, measurement heights, and MOST options |
@@ -103,8 +106,8 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 
 ### `numerics`
 
-`diffusion_back_weight`
-: Theta-scheme backward weight for the soil diffusion solves. `0.5` gives a Crank-Nicolson style weighting.
+`heat_diffusion_back_weight`
+: Theta-scheme backward weight for the soil heat diffusion solve. `0.5` gives a Crank-Nicolson style weighting.
 
 `warm_start_turbulence`
 : If `true`, initialize the turbulence state from the first forcing record before the first coupled solve.
@@ -113,10 +116,10 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 : If `true`, perform a standalone surface energy balance initialization before the normal timestep loop.
 
 `iterations`
-: Integer caps for the nonlinear iterations used by surface fluxes, SEB bracketing, SEB root finding, SMB root finding, and the outer coupled solve.
+: Integer caps for the nonlinear iterations used by surface fluxes, SEB bracketing, SEB root finding, SMB root finding, the mixed-form soil moisture Picard solve, and the outer coupled solve.
 
 `tolerances`
-: Floating-point convergence criteria for the same iteration families.
+: Floating-point convergence criteria for the same iteration families, plus the admissible post-solve soil moisture bounds overshoot before clipping or failure.
 
 ### `time`
 

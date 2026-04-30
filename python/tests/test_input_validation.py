@@ -20,18 +20,21 @@ def _base_namelist() -> dict:
     return {
         "general": {"log_level": "info"},
         "numerics": {
-            "diffusion_back_weight": 0.5,
+            "heat_diffusion_back_weight": 0.5,
             "iterations": {
                 "sfc_flux": 100,
                 "seb_bracket": 100,
                 "seb_root": 100,
                 "smb_flux": 100,
+                "moisture_picard": 25,
                 "coupling": 50,
             },
             "tolerances": {
                 "sfc_flux": 1e-3,
                 "seb_root": 1e-6,
                 "smb_flux": 1e-6,
+                "moisture_picard": 1e-8,
+                "moisture_bounds": 1e-6,
                 "coupling_temp": 1e-2,
                 "coupling_mois": 1e-5,
             },

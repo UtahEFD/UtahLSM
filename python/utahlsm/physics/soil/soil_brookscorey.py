@@ -48,27 +48,6 @@ class BrooksCorey(Soil):
         self.logger.info('--- Using the Brooks-Corey model')
         super().__init__(properties_dict, soil_type_names, dataset_name)
 
-    def surface_water_content(self, psi_sfc: float) -> float:
-        """Computes surface soil water content from surface water potential.
-
-        Args:
-            psi_sfc: The soil water potential at the surface [m].
-
-        Returns:
-            The volumetric soil moisture content at the surface [m^3/m^3].
-        """
-        b = self.properties.b[0]
-        psi_sat = self.properties.psi_sat[0]
-        porosity = self.properties.porosity[0]
-        residual = self.properties.residual[0]
-        soil_e = porosity-residual
-        # Guard against psi_sfc == 0 (saturated soil); return porosity
-        psi_sfc = np.where(psi_sfc == 0, np.nan, psi_sfc)
-        soil_q = residual+soil_e*( (psi_sat/psi_sfc)**(1./b) )
-        soil_q = np.where(np.isnan(psi_sfc), porosity, soil_q)
-
-        return soil_q
-
     def water_potential(
         self, soil_q: Union[float, NDArray[np.float64]], level: int = None
     ) -> Union[float, NDArray[np.float64]]:
@@ -105,6 +84,56 @@ class BrooksCorey(Soil):
         psi = psi_sat*( Se**(-b) )
 
         return psi
+
+    def water_content(
+        self, psi: Union[float, NDArray[np.float64]], level: int = None
+    ) -> Union[float, NDArray[np.float64]]:
+        """Computes soil moisture from water potential."""
+        if level is not None:
+            b = self.properties.b[level]
+            psi_sat = self.properties.psi_sat[level]
+            porosity = self.properties.porosity[level]
+            residual = self.properties.residual[level]
+        else:
+            psi_arr = np.asarray(psi)
+            b = self._expand_profile_property(self.properties.b, psi_arr)
+            psi_sat = self._expand_profile_property(
+                self.properties.psi_sat, psi_arr)
+            porosity = self._expand_profile_property(
+                self.properties.porosity, psi_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, psi_arr)
+
+        soil_e = porosity - residual
+        psi_arr = np.asarray(psi, dtype=float)
+        safe_psi = np.where(np.abs(psi_arr) < 1e-12, np.nan, psi_arr)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            Se = np.abs(psi_sat / safe_psi) ** (1.0 / b)
+        soil_q = residual + soil_e * Se
+        soil_q = np.where(psi_arr >= psi_sat, porosity, soil_q)
+        soil_q = np.clip(soil_q, residual, porosity)
+        return soil_q.item() if np.isscalar(psi) else soil_q
+
+    def moisture_capacity(
+        self, psi: Union[float, NDArray[np.float64]], level: int = None
+    ) -> Union[float, NDArray[np.float64]]:
+        """Computes specific moisture capacity dθ/dψ."""
+        soil_q = self.water_content(psi, level=level)
+        psi_arr = np.asarray(psi, dtype=float)
+        soil_q_arr = np.asarray(soil_q, dtype=float)
+        if level is not None:
+            b = self.properties.b[level]
+            residual = self.properties.residual[level]
+        else:
+            b = self._expand_profile_property(self.properties.b, psi_arr)
+            residual = self._expand_profile_property(
+                self.properties.residual, psi_arr)
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            capacity = -(soil_q_arr - residual) / (b * psi_arr)
+        capacity = np.where(np.isfinite(capacity), capacity, 0.0)
+        capacity = np.where(psi_arr >= 0.0, 0.0, capacity)
+        return float(capacity) if np.isscalar(psi) else capacity
 
     def conductivity_moisture(
         self, soil_q: Union[float, NDArray[np.float64]], level: int = None

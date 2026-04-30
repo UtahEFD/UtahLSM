@@ -184,6 +184,7 @@ class UtahLSM:
 
         self.sfc_state: SurfaceState = SurfaceState()
         self.sfc_state.temperature = np.zeros(self.ncol)
+        self.sfc_state.soil_top_temperature = np.zeros(self.ncol)
         self.sfc_state.moisture = np.zeros(self.ncol)
         self.sfc_state.specific_humidity = np.zeros(self.ncol)
         self.sfc_state.fluxes.kinematic_heat = np.zeros(self.ncol)
@@ -360,6 +361,8 @@ class UtahLSM:
 
         self.sfc_state.temperature = np.array(
             self.soil_state.temperature[0], copy=True)
+        self.sfc_state.soil_top_temperature = np.array(
+            self.soil_state.temperature[0], copy=True)
         self.sfc_state.moisture = np.array(
             self.soil_state.moisture[0], copy=True)
 
@@ -378,7 +381,9 @@ class UtahLSM:
 
             self._refresh_canopy_diagnostics()
             self._solve_seb()
-            self.soil_state.temperature[0] = self.sfc_state.temperature
+            # The top soil cell holds the soil-top temperature, which
+            # equals the radiative skin only when r_canopy_thermal = 0.
+            self.soil_state.temperature[0] = self.sfc_state.soil_top_temperature
 
             if hasattr(self.output, "outfile") and hasattr(
                 self.output.outfile, "setncattr"
@@ -577,7 +582,7 @@ class UtahLSM:
         """Splits the converged total LH into soil and canopy components.
 
         Also records per-layer root uptake rate [m^3/m^3/s] used as a
-        sink term in the moisture diffusion RHS. Layer 0's root fraction
+        sink term in the soil moisture RHS. Layer 0's root fraction
         is folded into layer 1 so the surface BC is unaffected by
         transpiration (the SMB already balances the top layer).
         """
@@ -746,8 +751,8 @@ class UtahLSM:
                 sliced to match len(cols).
 
         Returns:
-            Tuple of (ustar, flux_wT, flux_wq, ground_heat, L,
-                      sensible, latent, converged).
+            Tuple of (ustar, flux_wT, flux_wq, ground_heat,
+                      soil_top_T, L, sensible, latent, converged).
         """
         CP = c.thermodynamic.SPECIFIC_HEAT
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
@@ -757,6 +762,7 @@ class UtahLSM:
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         TOL = self.input.numerics.tolerances.sfc_flux
 
+        canopy = getattr(self, 'canopy', None)
         if cols is not None:
             atm_T = self.atm_state.temperature[cols]
             atm_p = self.atm_state.pressure[cols]
@@ -764,6 +770,12 @@ class UtahLSM:
             atm_ws = self.atm_state.wind_speed[cols]
             K_mid = self.solver_state.conductivity_thermal_mid[cols]
             soil_T1 = self.soil_state.temperature[1, cols]
+            if canopy is not None:
+                f_veg = canopy.veg_fraction[cols]
+                r_g_aero = canopy.r_ground[cols]
+            else:
+                f_veg = np.zeros_like(soil_T1)
+                r_g_aero = np.zeros_like(soil_T1)
         else:
             atm_T = self.atm_state.temperature
             atm_p = self.atm_state.pressure
@@ -771,6 +783,12 @@ class UtahLSM:
             atm_ws = self.atm_state.wind_speed
             K_mid = self.solver_state.conductivity_thermal_mid
             soil_T1 = self.soil_state.temperature[1]
+            if canopy is not None:
+                f_veg = canopy.veg_fraction
+                r_g_aero = canopy.r_ground
+            else:
+                f_veg = np.zeros_like(soil_T1)
+                r_g_aero = np.zeros_like(soil_T1)
 
         z_m = self.input.surface.z_m
         z_o = self.input.surface.z_o
@@ -788,7 +806,22 @@ class UtahLSM:
         rho = atm_p / (RD * Tv)
 
         gnd_q = self.soil.surface_specific_humidity(sfc_T, sfc_q, atm_p)
-        ground_heat = K_mid * (sfc_T - soil_T1) / dz
+
+        # Ground heat flux: skin → soil-top conduction with an in-canopy
+        # aerodynamic resistance acting in series. Converting the
+        # aerodynamic resistance r_ground [s/m] to a thermal resistance
+        # uses the volumetric heat capacity of air ρ·Cp [J/m^3/K], so
+        # r_canopy_thermal [K·m^2/W] = r_ground / (ρ·Cp). The resistance
+        # is scaled by veg_fraction so a bare patch (f_veg=0) recovers
+        # the original direct-conduction limit.
+        r_soil = dz / np.maximum(K_mid, 1e-12)
+        r_canopy_thermal = f_veg * r_g_aero / (rho * CP)
+        r_total = r_soil + r_canopy_thermal
+        ground_heat = (sfc_T - soil_T1) / r_total
+        # Soil-top temperature: what the conduction equation alone (no
+        # canopy) would need at the soil surface to carry G into layer
+        # 1. Equals sfc_T when r_canopy_thermal = 0; otherwise cooler.
+        soil_top_T = sfc_T - ground_heat * r_canopy_thermal
 
         L = np.array(L_init, copy=True)
         converged = np.zeros_like(L, dtype=bool)
@@ -835,7 +868,8 @@ class UtahLSM:
         sensible = rho * CP * flux_wT
         latent = rho * LV * flux_wq
 
-        return ustar, flux_wT, flux_wq, ground_heat, L, sensible, latent, converged
+        return (ustar, flux_wT, flux_wq, ground_heat, soil_top_T,
+                L, sensible, latent, converged)
 
     def _compute_seb_vec(
         self,
@@ -866,7 +900,7 @@ class UtahLSM:
             sfc_q = self.sfc_state.moisture
             rad_net = self.atm_state.radiation_net
 
-        _, _, _, ground_heat, _, sensible, latent, _ = self._solve_most(
+        _, _, _, ground_heat, _, _, sensible, latent, _ = self._solve_most(
             sfc_T, sfc_q, initial_L, max_iter=1, cols=cols
         )
 
@@ -973,8 +1007,9 @@ class UtahLSM:
         sfc_q_vec = self._as_column_vector(sfc_q, "sfc_q")
         L_init = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
 
-        ustar, flux_wT, flux_wq, ground_heat, L, sensible, latent, converged = (
-            self._solve_most(sfc_T_vec, sfc_q_vec, L_init, max_iter=ITER_MAX)
+        (ustar, flux_wT, flux_wq, ground_heat, soil_top_T,
+         L, sensible, latent, converged) = self._solve_most(
+            sfc_T_vec, sfc_q_vec, L_init, max_iter=ITER_MAX
         )
 
         if not converged.all():
@@ -990,6 +1025,7 @@ class UtahLSM:
         self.sfc_state.fluxes.kinematic_moisture[:] = flux_wq
         self.sfc_state.fluxes.sensible_heat[:] = sensible
         self.sfc_state.fluxes.latent_heat[:] = latent
+        self.sfc_state.soil_top_temperature = np.asarray(soil_top_T)
 
     def _solve_surface_coupling(self) -> None:
         """Iteratively solves the coupled SEB and SMB.
@@ -1048,18 +1084,17 @@ class UtahLSM:
                          avg_diffusivity: str = 'arithmetic') -> None:
         """Solves a generic 1D diffusion equation using a theta scheme.
 
-        This is a parameterized diffusion solver that handles both heat and
-        moisture diffusion. The key difference is that moisture diffusion
-        includes an additional hydraulic conductivity gradient term.
+        This helper now serves the soil heat solve. The moisture equation
+        uses a dedicated mixed-form Richards implementation.
 
         Args:
             state_field: Reference to the field to update (temperature or
                 moisture) [NDArray[np.float64]].
             get_diffusivity: Callable that computes diffusivity profile from
                 soil moisture [Callable[[NDArray[np.float64]], NDArray[np.float64]]].
-            get_conductivity: Optional callable that computes conductivity
-                profile from soil moisture. None for heat diffusion,
-                function for moisture diffusion
+            get_conductivity: Optional callable that computes an auxiliary
+                conductivity-like profile used by the tridiagonal assembly.
+                Retained for backwards compatibility within this helper
                 [Optional[Callable[[NDArray[np.float64]], NDArray[np.float64]]]].
             sfc_boundary: Surface boundary value for Dirichlet BC [float].
             field_name: Name of the field for logging/documentation [str].
@@ -1083,7 +1118,7 @@ class UtahLSM:
               theta = 1.0 -> BTCS (implicit)
         """
         self.logger.debug('Solving %s diffusion', field_name)
-        theta_b = self.input.numerics.diffusion_back_weight
+        theta_b = self.input.numerics.heat_diffusion_back_weight
         theta_f = 1.0 - theta_b
         nz = self.input.grid.nz
         dz = self.input.grid.z[0] - self.input.grid.z[1]
@@ -1278,35 +1313,208 @@ class UtahLSM:
             state_field[:] = field
 
     def _solve_diffusion_heat(self) -> None:
-        """Solves the soil heat diffusion equation using a theta scheme."""
+        """Solves the soil heat diffusion equation using a theta scheme.
+
+        The Dirichlet BC is the soil-top temperature, not the radiative
+        skin: when an in-canopy thermal resistance is configured the
+        two differ by ``G * r_canopy_thermal``. With no canopy
+        resistance the two are identical, recovering the original
+        bare-skin behaviour.
+        """
         self._solve_diffusion(
             state_field=self.soil_state.temperature,
             get_diffusivity=self.soil.diffusivity_thermal,
             get_conductivity=None,
-            sfc_boundary=self.sfc_state.temperature,
+            sfc_boundary=self.sfc_state.soil_top_temperature,
             field_name='temperature'
         )
 
+    def _solve_mixed_moisture(
+        self,
+        source_term: Optional[np.ndarray] = None,
+    ) -> None:
+        """Solves soil moisture with a mixed-form Richards Picard iteration.
+
+        The nonlinear solve iterates in pressure head while the prognostic
+        state remains volumetric moisture content. Darcy fluxes are assembled
+        at faces using a positive-downward depth coordinate and a lagged
+        conductivity from the current Picard iterate.
+        """
+        nz = self.input.grid.nz
+        dt = self.tstep
+        if nz < 2:
+            raise ValueError('Mixed-form moisture solve requires nz >= 2.')
+
+        moisture = np.asarray(self.soil_state.moisture, dtype=float)
+        squeeze = False
+        if moisture.ndim == 1:
+            moisture = moisture[:, None]
+            squeeze = True
+        elif moisture.ndim != 2 or moisture.shape[0] != nz:
+            raise ValueError(
+                f'moisture has unexpected shape {moisture.shape}.')
+
+        ncol = moisture.shape[1]
+        theta_sfc = self._as_column_vector(
+            self.sfc_state.moisture, 'moisture boundary')
+        if theta_sfc.size != ncol:
+            raise ValueError(
+                f'moisture boundary size {theta_sfc.size} does not match '
+                f'ncol={ncol}.'
+            )
+
+        dx = abs(self.input.grid.z[1] - self.input.grid.z[0])
+        if dx <= 0.0:
+            raise ValueError(
+                f'Expected non-zero soil spacing, got dz={dx}.'
+            )
+        dx2 = dx ** 2
+
+        e = self.solver_state.diffusion_e
+        f = self.solver_state.diffusion_f
+        g = self.solver_state.diffusion_g
+        r = self.solver_state.diffusion_r
+        if e.shape != (nz - 1, ncol):
+            e = self.solver_state.diffusion_e = np.zeros((nz - 1, ncol))
+            f = self.solver_state.diffusion_f = np.zeros((nz - 1, ncol))
+            g = self.solver_state.diffusion_g = np.zeros((nz - 1, ncol))
+            r = self.solver_state.diffusion_r = np.zeros((nz - 1, ncol))
+        else:
+            e.fill(0.0)
+            f.fill(0.0)
+            g.fill(0.0)
+            r.fill(0.0)
+
+        residual = self.soil._expand_profile_property(
+            self.soil.properties.residual, moisture)
+        porosity = self.soil._expand_profile_property(
+            self.soil.properties.porosity, moisture)
+        span = np.maximum(porosity - residual, 1e-12)
+        theta_for_head = np.clip(
+            moisture, residual + 1e-6 * span, porosity
+        )
+
+        residual0 = float(self.soil.properties.residual[0])
+        porosity0 = float(self.soil.properties.porosity[0])
+        span0 = max(porosity0 - residual0, 1e-12)
+        theta_sfc_head = np.clip(theta_sfc, residual0 + 1e-6 * span0, porosity0)
+        psi_sfc = np.asarray(
+            self.soil.water_potential(theta_sfc_head, level=0), dtype=float
+        )
+
+        psi_iter = np.asarray(
+            self.soil.water_potential(theta_for_head), dtype=float
+        )
+        psi_iter[0] = psi_sfc
+        theta_iter = np.array(theta_for_head, copy=True)
+        theta_iter[0] = theta_sfc
+        theta_old = np.array(moisture, copy=True)
+
+        src = None
+        if source_term is not None:
+            src = np.asarray(source_term, dtype=float)
+            if src.ndim == 1:
+                src = src[:, None]
+            if src.shape != (nz, ncol):
+                raise ValueError(
+                    f"source_term shape {src.shape} does not match "
+                    f"(nz, ncol)=({nz}, {ncol})."
+                )
+
+        iter_max = self.input.numerics.iterations.moisture_picard
+        tol = max(float(self.input.numerics.tolerances.moisture_picard), 1e-8)
+        converged = np.zeros(ncol, dtype=bool)
+
+        for i in range(iter_max):
+            theta_iter[:] = np.asarray(
+                self.soil.water_content(psi_iter), dtype=float
+            )
+            theta_iter[0] = theta_sfc
+
+            capacity = np.asarray(
+                self.soil.moisture_capacity(psi_iter), dtype=float
+            )
+            capacity = np.maximum(capacity, 0.0)
+            K_node = np.asarray(
+                self.soil.conductivity_moisture(theta_iter), dtype=float
+            )
+            K_face = np.sqrt(np.maximum(K_node[:-1] * K_node[1:], 0.0))
+
+            q_up = K_face * (1.0 - (psi_iter[1:] - psi_iter[:-1]) / dx)
+            q_dn = np.zeros_like(q_up)
+            q_dn[:-1] = (
+                K_face[1:]
+                * (1.0 - (psi_iter[2:] - psi_iter[1:-1]) / dx)
+            )
+            # Zero gradient of pressure head at the lower boundary implies
+            # free drainage: q = K.
+            q_dn[-1] = K_node[-1]
+
+            K_up = K_face
+            K_dn = np.zeros_like(K_up)
+            K_dn[:-1] = K_face[1:]
+
+            e.fill(0.0)
+            f[:] = capacity[1:] / dt + (K_up + K_dn) / dx2
+            g.fill(0.0)
+            e[1:] = -K_up[1:] / dx2
+            g[:-1] = -K_dn[:-1] / dx2
+
+            r[:] = (
+                -(theta_iter[1:] - theta_old[1:]) / dt
+                - (q_dn - q_up) / dx
+            )
+            if src is not None:
+                r += src[1:]
+
+            delta_psi = solvers.tridiagonal(e, f, g, r)
+            psi_iter[1:] += delta_psi
+            psi_iter[0] = psi_sfc
+
+            theta_next = np.asarray(
+                self.soil.water_content(psi_iter), dtype=float
+            )
+            theta_next[0] = theta_sfc
+            delta_theta = np.max(
+                np.abs(theta_next[1:] - theta_iter[1:]), axis=0
+            )
+            theta_iter[:] = theta_next
+            converged = delta_theta < tol
+            if converged.all():
+                self.logger.debug(
+                    'Mixed-form moisture solve converged in %d Picard '
+                    'iterations.',
+                    i + 1,
+                )
+                break
+
+        if not converged.all():
+            self.logger.warning(
+                'Mixed-form moisture solve did not converge for %d of %d '
+                'columns after %d iterations.',
+                int(np.sum(~converged)),
+                ncol,
+                iter_max,
+            )
+
+        if squeeze:
+            self.soil_state.moisture[:] = theta_iter[:, 0]
+        else:
+            self.soil_state.moisture[:] = theta_iter
+
     def _solve_diffusion_mois(self) -> None:
-        """Solves the soil moisture diffusion equation using a theta scheme.
+        """Solves soil moisture with a mixed-form Richards equation.
 
         When a canopy is active, the per-layer root extraction rate (a
-        volumetric sink in [m^3/m^3/s]) is injected into the RHS so
-        transpiration removes water distributively from the root zone
-        rather than from the bare-soil top-layer balance.
+        volumetric sink in [m^3/m^3/s]) is injected explicitly into the
+        moisture tendency so transpiration removes water distributively
+        from the root zone rather than from the bare-soil top-layer
+        balance.
         """
         source = None
         if getattr(self, 'canopy', None) is not None:
             source = -self.canopy_state.root_uptake
-        self._solve_diffusion(
-            state_field=self.soil_state.moisture,
-            get_diffusivity=self.soil.diffusivity_moisture,
-            get_conductivity=self.soil.conductivity_gradient,
-            sfc_boundary=self.sfc_state.moisture,
-            field_name='moisture',
-            source_term=source,
-            avg_diffusivity='geometric',
-        )
+        self._solve_mixed_moisture(source_term=source)
         self._enforce_soil_moisture_bounds()
 
     def _enforce_soil_moisture_bounds(self) -> None:
@@ -1318,7 +1526,7 @@ class UtahLSM:
         porosity = self.soil._expand_profile_property(
             self.soil.properties.porosity, moisture
         )
-        tol = max(float(self.input.numerics.tolerances.smb_flux), 1e-8)
+        tol = max(float(self.input.numerics.tolerances.moisture_bounds), 1e-8)
 
         below_hard = moisture < (residual - tol)
         above_hard = moisture > (porosity + tol)
@@ -1332,7 +1540,8 @@ class UtahLSM:
                 for idx in bad_idx[:5]
             )
             raise SolverError(
-                'Soil moisture left physical bounds after moisture diffusion: '
+                'Soil moisture left physical bounds after the mixed moisture '
+                'solve: '
                 f'{int(np.sum(hard_mask))} cells outside [residual, porosity] '
                 f'by more than tol={tol:.1e}. '
                 f'Min(theta-residual)={min_delta:.3e}, '
@@ -1344,7 +1553,7 @@ class UtahLSM:
         if np.any(clip_mask):
             self.logger.warning(
                 'Clipping %d soil moisture values to [residual, porosity] '
-                'after moisture diffusion (tol=%.1e).',
+                'after the mixed moisture solve (tol=%.1e).',
                 int(np.sum(clip_mask)),
                 tol,
             )

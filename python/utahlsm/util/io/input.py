@@ -113,8 +113,8 @@ class Input:
         tolerances_data = namelist_data['numerics']['tolerances']
         numerics_data = namelist_data['numerics']
         self.numerics = NumericsConfig(
-            diffusion_back_weight=(
-                namelist_data['numerics']['diffusion_back_weight']),
+            heat_diffusion_back_weight=(
+                numerics_data['heat_diffusion_back_weight']),
             warm_start_turbulence=bool(
                 numerics_data.get('warm_start_turbulence', False)),
             initialize_surface_temperature_from_seb=bool(
