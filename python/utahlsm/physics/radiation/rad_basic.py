@@ -18,7 +18,6 @@ methods for calculating incoming and outgoing shortwave and longwave radiation
 based on fundamental physical principles and empirical relationships.
 """
 import logging
-from typing import Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -58,7 +57,7 @@ class RadBasic(Radiation):
         time_utc: int,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64],
                NDArray[np.float64], NDArray[np.float64]]:
         """Computes the four surface radiation components.
 

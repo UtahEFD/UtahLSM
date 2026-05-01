@@ -22,7 +22,7 @@ models.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple, TypeVar
+from typing import TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -72,7 +72,7 @@ class Radiation(ABC):
         time_utc: float,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64],
                NDArray[np.float64], NDArray[np.float64]]:
         """Computes the four surface radiation components.
 
