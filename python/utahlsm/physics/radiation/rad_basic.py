@@ -20,12 +20,11 @@ based on fundamental physical principles and empirical relationships.
 import logging
 
 import numpy as np
-from numpy.typing import NDArray
 
 from ...data_models import AtmosphericState, SurfaceState
 from ...util import constants as c
 from ...util.io import logging_helper
-from .radiation import Radiation
+from .radiation import Radiation, ScalarOrArray
 
 
 class RadBasic(Radiation):
@@ -54,11 +53,11 @@ class RadBasic(Radiation):
     def compute_components(
         self,
         julian_day: int,
-        time_utc: int,
+        time_utc: float,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64],
-               NDArray[np.float64], NDArray[np.float64]]:
+    ) -> tuple[ScalarOrArray, ScalarOrArray,
+               ScalarOrArray, ScalarOrArray]:
         """Computes the four surface radiation components.
 
         Args:
@@ -76,7 +75,7 @@ class RadBasic(Radiation):
         lw_out = self._longwave_out(sfc_state)
         return sw_in, sw_out, lw_in, lw_out
 
-    def _shortwave_in(self, julian_day: int, time_utc: int) -> float:
+    def _shortwave_in(self, julian_day: int, time_utc: float) -> ScalarOrArray:
         """Computes downward shortwave radiation for clear-sky conditions.
 
         Args:
@@ -105,7 +104,7 @@ class RadBasic(Radiation):
         )
         return sw_in
 
-    def _shortwave_out(self, sw_in: float) -> float:
+    def _shortwave_out(self, sw_in: ScalarOrArray) -> ScalarOrArray:
         """Computes upward shortwave radiation based on surface albedo.
 
         Args:
@@ -118,7 +117,7 @@ class RadBasic(Radiation):
 
     def _longwave_in(
         self, atm_state: AtmosphericState, sfc_state: SurfaceState
-    ) -> float:
+    ) -> ScalarOrArray:
         """Computes clear-sky downwelling longwave radiation.
 
         Uses the Brutsaert (1975) emissivity relation.
@@ -135,17 +134,17 @@ class RadBasic(Radiation):
         SB = c.radiation.STEFAN_BOLTZMANN
 
         # local references to atmospheric state
-        pa: float = atm_state.pressure
-        qa: float = atm_state.specific_humidity
-        Ta: float = atm_state.temperature
+        pa = atm_state.pressure
+        qa = atm_state.specific_humidity
+        Ta = atm_state.temperature
 
         # vapor pressure and effective emissivity (Brutsaert 1975)
-        vapor_pressure: float = (pa * qa) / (EPSILON + qa)
-        emissivity_eff: float = 1.24 * (vapor_pressure / Ta) ** (1 / 7.0)
+        vapor_pressure = (pa * qa) / (EPSILON + qa)
+        emissivity_eff = 1.24 * (vapor_pressure / Ta) ** (1 / 7.0)
 
         return emissivity_eff * SB * (Ta ** 4)
 
-    def _longwave_out(self, sfc_state: SurfaceState) -> float:
+    def _longwave_out(self, sfc_state: SurfaceState) -> ScalarOrArray:
         """Computes upward longwave radiation using the Stefan-Boltzmann law.
 
         Args:
@@ -155,9 +154,9 @@ class RadBasic(Radiation):
             The outgoing longwave radiation in W/m^2.
         """
         # local constants
-        SB: float = c.radiation.STEFAN_BOLTZMANN
+        SB = c.radiation.STEFAN_BOLTZMANN
 
         # local references to surface state
-        Ts: float = sfc_state.temperature
+        Ts = sfc_state.temperature
 
         return self.emissivity * SB * (Ts ** 4)
