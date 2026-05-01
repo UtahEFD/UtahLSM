@@ -2,10 +2,10 @@
 #
 # UtahLSM
 #
-# Copyright (c) 2017–2025 Jeremy A. Gibbs
-# Copyright (c) 2017–2025 Rob Stoll
-# Copyright (c) 2017–2025 Eric Pardyjak
-# Copyright (c) 2017–2025 Pete Willemsen
+# Copyright (c) 2017–2026 Jeremy A. Gibbs
+# Copyright (c) 2017–2026 Rob Stoll
+# Copyright (c) 2017–2026 Eric Pardyjak
+# Copyright (c) 2017–2026 Pete Willemsen
 #
 # This file is part of UtahLSM.
 #
@@ -42,7 +42,7 @@ def main() -> None:
             be found.
     """
     # Start a timer for the simulation
-    t1: float = time.time()
+    t1: float = time.perf_counter()
 
     # Set up command-line argument parsing
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
@@ -146,7 +146,7 @@ def main() -> None:
             output_lsm.close()
 
     # Calculate and print the total runtime
-    t2: float = time.time()
+    t2: float = time.perf_counter()
     tt: float = t2 - t1
     print(f'Done! Completed in {tt:0.4f} seconds')
     print('##############################################################')
