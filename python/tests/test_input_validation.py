@@ -102,16 +102,26 @@ def test_validate_forcing_data_clips_small_boundary_excursions() -> None:
     atm_T = np.array([[199.8, 350.2]])
     atm_q = np.array([[-5e-5, 0.0502]])
     atm_p = np.array([[49950.0, 110050.0]])
-    r_net = np.array([[-110.0, 1210.0]])
+    sw_in = np.array([[-2.0, 1410.0]])
+    sw_out = np.array([[-2.0, 1410.0]])
+    lw_in = np.array([[95.0, 605.0]])
+    lw_out = np.array([[95.0, 705.0]])
+    r_net = np.array([[-210.0, 1210.0]])
 
     input_obj._validate_forcing_data(
-        atm_U, atm_T, atm_q, atm_p, r_net, _ntime=1)
+        atm_U, atm_T, atm_q, atm_p,
+        sw_in, sw_out, lw_in, lw_out,
+        r_net, _ntime=1)
 
     assert_allclose(atm_U, np.array([[1e-4, 50.0]]))
     assert_allclose(atm_T, np.array([[200.0, 350.0]]))
     assert_allclose(atm_q, np.array([[0.0, 0.05]]))
     assert_allclose(atm_p, np.array([[50000.0, 110000.0]]))
-    assert_allclose(r_net, np.array([[-100.0, 1200.0]]))
+    assert_allclose(sw_in, np.array([[0.0, 1400.0]]))
+    assert_allclose(sw_out, np.array([[0.0, 1400.0]]))
+    assert_allclose(lw_in, np.array([[100.0, 600.0]]))
+    assert_allclose(lw_out, np.array([[100.0, 700.0]]))
+    assert_allclose(r_net, np.array([[-200.0, 1200.0]]))
 
 
 def test_validate_forcing_data_raises_on_large_violation() -> None:
@@ -124,7 +134,11 @@ def test_validate_forcing_data_raises_on_large_violation() -> None:
             atm_T=np.array([[190.0]]),
             atm_q=np.array([[0.01]]),
             atm_p=np.array([[101325.0]]),
-            r_net=np.array([[200.0]]),
+            sw_in=np.array([[300.0]]),
+            sw_out=np.array([[60.0]]),
+            lw_in=np.array([[350.0]]),
+            lw_out=np.array([[400.0]]),
+            r_net=np.array([[190.0]]),
             _ntime=1,
         )
 

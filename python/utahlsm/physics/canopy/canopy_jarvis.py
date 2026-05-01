@@ -110,7 +110,7 @@ class CanopyJarvis(Canopy):
         Returns:
             Bulk stomatal resistance for each column [s/m].
         """
-        f1 = self._f_radiation(atm_state.radiation_net)
+        f1 = self._f_radiation(atm_state.sw_in)
         f2 = self._f_vpd(atm_state)
         f3 = self._f_temperature(sfc_state.temperature)
         f4 = self._f_moisture(soil_state.moisture, theta_wilt, theta_fc)
@@ -123,22 +123,25 @@ class CanopyJarvis(Canopy):
     # --- Stress functions ---
 
     def _f_radiation(
-        self, rad_net: NDArray[np.float64]
+        self, sw_in: NDArray[np.float64]
     ) -> NDArray[np.float64]:
         """f1(R) — radiation stress.
 
-        Uses the Noilhan-Planton saturating form ``(1 + R/R_½) /
-        (1 + LAI·R_½/R_½,min)``. We simplify to the widely-used
-        variant ``f = R / (R + R_½)`` with R clipped at zero so
-        stomata close at night.
+        Uses the widely-adopted saturating form ``f = R / (R + R_½)``
+        with R = downwelling shortwave radiation clipped at zero so
+        stomata close at night. This follows the canonical
+        Noilhan-Planton (1989) and Jarvis (1976) convention. Driving
+        f1 with SW_in (rather than net radiation) avoids a spurious
+        ~1 h stomatal-closure window after sunrise when the longwave
+        deficit keeps Rn negative even as SW_in climbs.
 
         Args:
-            rad_net: Net radiation [W/m^2] (ncol,).
+            sw_in: Downwelling shortwave radiation [W/m^2] (ncol,).
 
         Returns:
             Radiation stress factor in [0, 1] (ncol,).
         """
-        R = np.maximum(np.asarray(rad_net, dtype=float), 0.0)
+        R = np.maximum(np.asarray(sw_in, dtype=float), 0.0)
         return R / (R + self.rg_half)
 
     def _f_vpd(self, atm_state: AtmosphericState) -> NDArray[np.float64]:

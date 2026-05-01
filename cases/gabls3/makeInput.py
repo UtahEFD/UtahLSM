@@ -180,7 +180,6 @@ swu = np.asarray(rad.variables['SWU'][tidx:tend], dtype=float)
 swd = np.asarray(rad.variables['SWD'][tidx:tend], dtype=float)
 lwu = np.asarray(rad.variables['LWU'][tidx:tend], dtype=float)
 lwd = np.asarray(rad.variables['LWD'][tidx:tend], dtype=float)
-net = swd - swu + lwd - lwu
 rad.close()
 
 
@@ -210,16 +209,28 @@ metr_q.units = "g g-1"
 metr_p = metr.createVariable("atm_p", "f8", ("t",))
 metr_p.long_name = "pressure"
 metr_p.units = "Pa"
-metr_r = metr.createVariable("R_net", "f8", ("t",))
-metr_r.long_name = "net radiation"
-metr_r.units = "W m-2"
+metr_swd = metr.createVariable("sw_in", "f8", ("t",))
+metr_swd.long_name = "downwelling shortwave radiation"
+metr_swd.units = "W m-2"
+metr_swu = metr.createVariable("sw_out", "f8", ("t",))
+metr_swu.long_name = "upwelling (reflected) shortwave radiation"
+metr_swu.units = "W m-2"
+metr_lwd = metr.createVariable("lw_in", "f8", ("t",))
+metr_lwd.long_name = "downwelling longwave radiation"
+metr_lwd.units = "W m-2"
+metr_lwu = metr.createVariable("lw_out", "f8", ("t",))
+metr_lwu.long_name = "upwelling (emitted) longwave radiation"
+metr_lwu.units = "W m-2"
 
 metr_s[:] = dt
 metr_u[:] = ws
 metr_t[:] = pt
 metr_q[:] = qs
 metr_p[:] = pa
-metr_r[:] = net
+metr_swd[:] = swd
+metr_swu[:] = swu
+metr_lwd[:] = lwd
+metr_lwu[:] = lwu
 metr.close()
 
 
@@ -308,7 +319,7 @@ namelist['canopy']['rooting_depth'] = float(0.4)
 namelist['canopy']['beta'] = float(0.943)
 namelist['canopy']['rs_min'] = float(40.0)
 namelist['canopy']['rs_max'] = float(5000.0)
-namelist['canopy']['rg_half'] = float(100.0)
+namelist['canopy']['rg_half'] = float(30.0)
 namelist['canopy']['vpd_coef'] = float(1.0e-4)
 namelist['canopy']['t_opt'] = float(298.0)
 namelist['canopy']['t_coef'] = float(1.6e-3)

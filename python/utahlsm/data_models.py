@@ -46,12 +46,23 @@ class AtmosphericState:
         temperature: Air temperature [K] (scalar or per-column array).
         specific_humidity: Specific humidity [kg/kg] (scalar or per-column array).
         pressure: Atmospheric pressure [Pa] (scalar or per-column array).
-        radiation_net: Net radiation [W/m^2] (scalar or per-column array).
+        sw_in: Downwelling shortwave radiation [W/m^2].
+        sw_out: Upwelling (reflected) shortwave radiation [W/m^2].
+        lw_in: Downwelling longwave radiation [W/m^2].
+        lw_out: Upwelling (emitted) longwave radiation [W/m^2].
+        radiation_net: Net radiation [W/m^2]. Always equals
+            ``sw_in - sw_out + lw_in - lw_out`` once the radiation
+            components are populated; the field is retained for
+            convenience and is what the SEB residual reads.
     """
     wind_speed: Union[float, NDArray[np.float64]] = 0.0
     temperature: Union[float, NDArray[np.float64]] = 0.0
     specific_humidity: Union[float, NDArray[np.float64]] = 0.0
     pressure: Union[float, NDArray[np.float64]] = 0.0
+    sw_in: Union[float, NDArray[np.float64]] = 0.0
+    sw_out: Union[float, NDArray[np.float64]] = 0.0
+    lw_in: Union[float, NDArray[np.float64]] = 0.0
+    lw_out: Union[float, NDArray[np.float64]] = 0.0
     radiation_net: Union[float, NDArray[np.float64]] = 0.0
 
 @dataclass

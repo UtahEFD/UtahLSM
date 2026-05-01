@@ -52,6 +52,10 @@ class TestAtmosphericState:
         assert atm.temperature == 0.0
         assert atm.specific_humidity == 0.0
         assert atm.pressure == 0.0
+        assert atm.sw_in == 0.0
+        assert atm.sw_out == 0.0
+        assert atm.lw_in == 0.0
+        assert atm.lw_out == 0.0
         assert atm.radiation_net == 0.0
 
     def test_initialization_with_values(self):

@@ -36,6 +36,10 @@ def test_input_shapes_single_column() -> None:
     assert np.asarray(first.temperature).shape == (1,)
     assert np.asarray(first.specific_humidity).shape == (1,)
     assert np.asarray(first.pressure).shape == (1,)
+    assert np.asarray(first.sw_in).shape == (1,)
+    assert np.asarray(first.sw_out).shape == (1,)
+    assert np.asarray(first.lw_in).shape == (1,)
+    assert np.asarray(first.lw_out).shape == (1,)
     assert np.asarray(first.radiation_net).shape == (1,)
 
 
@@ -68,4 +72,8 @@ def test_input_shapes_multi_column(tmp_path: Path) -> None:
     assert np.asarray(first.temperature).shape == (ncol,)
     assert np.asarray(first.specific_humidity).shape == (ncol,)
     assert np.asarray(first.pressure).shape == (ncol,)
+    assert np.asarray(first.sw_in).shape == (ncol,)
+    assert np.asarray(first.sw_out).shape == (ncol,)
+    assert np.asarray(first.lw_in).shape == (ncol,)
+    assert np.asarray(first.lw_out).shape == (ncol,)
     assert np.asarray(first.radiation_net).shape == (ncol,)

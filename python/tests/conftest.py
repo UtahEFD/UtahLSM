@@ -52,6 +52,7 @@ def atm_neutral():
         temperature=283.15,          # K (~10°C)
         specific_humidity=0.005,     # kg/kg
         pressure=101325.0,           # Pa (standard sea level)
+        sw_in=500.0,                 # W/m^2
         radiation_net=500.0          # W/m^2
     )
 
@@ -68,6 +69,7 @@ def atm_stable():
         temperature=275.15,          # K (cold, ~2°C)
         specific_humidity=0.003,     # kg/kg (dry)
         pressure=101325.0,           # Pa
+        sw_in=100.0,                 # W/m^2
         radiation_net=100.0          # W/m^2 (weak radiation)
     )
 
@@ -84,6 +86,7 @@ def atm_unstable():
         temperature=298.15,          # K (warm, ~25°C)
         specific_humidity=0.015,     # kg/kg (moist)
         pressure=101325.0,           # Pa
+        sw_in=800.0,                 # W/m^2
         radiation_net=800.0          # W/m^2 (strong radiation)
     )
 

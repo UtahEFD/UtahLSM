@@ -62,7 +62,7 @@ def canopy_params_single(z_layers):
         "beta": np.full(ncol, 0.965),
         "rs_min": np.full(ncol, 40.0),
         "rs_max": np.full(ncol, 5000.0),
-        "rg_half": np.full(ncol, 100.0),
+        "rg_half": np.full(ncol, 30.0),
         "vpd_coef": np.full(ncol, 1.0e-4),
         "t_opt": np.full(ncol, 298.0),
         "t_coef": np.full(ncol, 1.6e-3),
@@ -86,7 +86,7 @@ def canopy_params_3col(z_layers):
         "beta": np.full(ncol, 0.965),
         "rs_min": np.full(ncol, 40.0),
         "rs_max": np.full(ncol, 5000.0),
-        "rg_half": np.full(ncol, 100.0),
+        "rg_half": np.full(ncol, 30.0),
         "vpd_coef": np.full(ncol, 1.0e-4),
         "t_opt": np.full(ncol, 298.0),
         "t_coef": np.full(ncol, 1.6e-3),
@@ -215,7 +215,8 @@ class TestJarvisStressFunctions:
         q_sat = thermo.saturation_specific_humidity(T, p)
         atm = AtmosphericState(
             temperature=T, pressure=p, specific_humidity=q_sat,
-            wind_speed=np.array([3.0]), radiation_net=np.array([400.0]),
+            wind_speed=np.array([3.0]),
+            sw_in=np.array([400.0]),
         )
         f = jarvis_single._f_vpd(atm)
         assert np.isclose(f, 1.0)
@@ -228,7 +229,8 @@ class TestJarvisStressFunctions:
         atm = AtmosphericState(
             temperature=T, pressure=p,
             specific_humidity=0.1 * q_sat,
-            wind_speed=np.array([3.0]), radiation_net=np.array([400.0]),
+            wind_speed=np.array([3.0]),
+            sw_in=np.array([400.0]),
         )
         f = jarvis_single._f_vpd(atm)
         assert 0.0 < f[0] < 1.0
@@ -265,7 +267,8 @@ class TestComputeResistance:
             temperature=np.array([298.0]),
             specific_humidity=np.array([0.01]),
             pressure=np.array([101325.0]),
-            radiation_net=np.array([500.0]),
+            sw_in=np.array([500.0]),
+            radiation_net=np.array([400.0]),
         )
         sfc = SurfaceState(temperature=np.array([298.0]))
         soil = SoilState(
@@ -278,7 +281,7 @@ class TestComputeResistance:
     def test_r_s_bounded_by_rs_max(self, jarvis_single):
         atm, sfc, soil = self._states(11)
         # Shut the radiation stress → total stress collapses.
-        atm.radiation_net = np.array([0.0])
+        atm.sw_in = np.array([0.0])
         r_s = jarvis_single.compute_resistance(
             atm, sfc, soil,
             theta_wilt=np.full(11, 0.1),
@@ -292,7 +295,7 @@ class TestComputeResistance:
         atm, sfc, soil = self._states(11)
         # High radiation, optimal temp, saturated air, wet soil.
         from utahlsm.physics import thermo
-        atm.radiation_net = np.array([5_000.0])  # saturates f1
+        atm.sw_in = np.array([5_000.0])  # saturates f1
         sfc.temperature = np.array([298.0])      # f3 = 1 (leaf ≡ sfc)
         q_sat = thermo.saturation_specific_humidity(
             atm.temperature, atm.pressure)

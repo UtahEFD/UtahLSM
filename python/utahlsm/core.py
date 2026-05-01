@@ -113,7 +113,10 @@ class UtahLSM:
         self.sfc_state.moisture = sfc_theta
         self.sfc_state.specific_humidity = sfc_q
 
-        # Run radiation model if configured
+        # Run radiation model if configured. The model populates the four
+        # component fields (sw_in, sw_out, lw_in, lw_out) on atm_state;
+        # radiation_net is derived from them so the SEB and any consumers
+        # of the components remain mutually consistent.
         if self.input.radiation.model:
             total_seconds = self.input.time.utc_start + runtime
             days_passed = int(total_seconds // 86400)
@@ -122,11 +125,16 @@ class UtahLSM:
                 self.input.time.utc_year) else 365)
             julian_day = ((self.input.time.julian_day
                 + days_passed - 1) % days_per_year) + 1
-            self.atm_state.radiation_net = self._as_column_vector(
-                self.rad.compute_net(
-                    julian_day, current_utc, self.atm_state, self.sfc_state
-                ),
-                "radiation_net",
+            sw_in, sw_out, lw_in, lw_out = self.rad.compute_components(
+                julian_day, current_utc, self.atm_state, self.sfc_state
+            )
+            self.atm_state.sw_in = self._as_column_vector(sw_in, "sw_in")
+            self.atm_state.sw_out = self._as_column_vector(sw_out, "sw_out")
+            self.atm_state.lw_in = self._as_column_vector(lw_in, "lw_in")
+            self.atm_state.lw_out = self._as_column_vector(lw_out, "lw_out")
+            self.atm_state.radiation_net = (
+                self.atm_state.sw_in - self.atm_state.sw_out
+                + self.atm_state.lw_in - self.atm_state.lw_out
             )
 
     def run(self) -> None:
@@ -200,6 +208,10 @@ class UtahLSM:
         self.atm_state.temperature = np.zeros(self.ncol)
         self.atm_state.specific_humidity = np.zeros(self.ncol)
         self.atm_state.pressure = np.zeros(self.ncol)
+        self.atm_state.sw_in = np.zeros(self.ncol)
+        self.atm_state.sw_out = np.zeros(self.ncol)
+        self.atm_state.lw_in = np.zeros(self.ncol)
+        self.atm_state.lw_out = np.zeros(self.ncol)
         self.atm_state.radiation_net = np.zeros(self.ncol)
 
         self.solver_state: SolverState = SolverState()
@@ -299,11 +311,22 @@ class UtahLSM:
             temperature=np.array(self.atm_state.temperature, copy=True),
             specific_humidity=np.array(self.atm_state.specific_humidity, copy=True),
             pressure=np.array(self.atm_state.pressure, copy=True),
+            sw_in=np.array(self.atm_state.sw_in, copy=True),
+            sw_out=np.array(self.atm_state.sw_out, copy=True),
+            lw_in=np.array(self.atm_state.lw_in, copy=True),
+            lw_out=np.array(self.atm_state.lw_out, copy=True),
             radiation_net=np.array(self.atm_state.radiation_net, copy=True),
         )
 
     def _load_atm_state(self, atm_state: AtmosphericState) -> None:
-        """Loads atmospheric state data into column vectors."""
+        """Loads atmospheric state data into column vectors.
+
+        Forcing-driven runs supply the four radiation components; the
+        net is derived here so SEB residuals stay consistent with
+        component-level diagnostics (e.g. Jarvis f1 reading sw_in).
+        Built-in radiation runs overwrite all five fields in
+        :meth:`update` after this method returns.
+        """
         self.atm_state.wind_speed = self._as_column_vector(
             atm_state.wind_speed, "wind_speed")
         self.atm_state.temperature = self._as_column_vector(
@@ -312,8 +335,18 @@ class UtahLSM:
             atm_state.specific_humidity, "specific_humidity")
         self.atm_state.pressure = self._as_column_vector(
             atm_state.pressure, "pressure")
-        self.atm_state.radiation_net = self._as_column_vector(
-            atm_state.radiation_net, "radiation_net")
+        self.atm_state.sw_in = self._as_column_vector(
+            atm_state.sw_in, "sw_in")
+        self.atm_state.sw_out = self._as_column_vector(
+            atm_state.sw_out, "sw_out")
+        self.atm_state.lw_in = self._as_column_vector(
+            atm_state.lw_in, "lw_in")
+        self.atm_state.lw_out = self._as_column_vector(
+            atm_state.lw_out, "lw_out")
+        self.atm_state.radiation_net = (
+            self.atm_state.sw_in - self.atm_state.sw_out
+            + self.atm_state.lw_in - self.atm_state.lw_out
+        )
 
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""

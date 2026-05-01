@@ -22,9 +22,10 @@ models.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import Tuple, TypeVar
 
 import numpy as np
+from numpy.typing import NDArray
 
 from ...data_models import AtmosphericState, SurfaceState
 from ...util.io import logging_helper
@@ -65,22 +66,28 @@ class Radiation(ABC):
 
     # Abstract methods ---
     @abstractmethod
-    def compute_net(self, julian_day: int, time_utc: float,
-                    atm_state: AtmosphericState,
-                    sfc_state: SurfaceState) -> float:
-        """Computes the net radiation at the surface.
+    def compute_components(
+        self,
+        julian_day: int,
+        time_utc: float,
+        atm_state: AtmosphericState,
+        sfc_state: SurfaceState,
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64],
+               NDArray[np.float64], NDArray[np.float64]]:
+        """Computes the four surface radiation components.
 
-        This is an abstract method that must be implemented by any concrete
-        subclass. It calculates the net radiation flux (shortwave and longwave)
-        at the land surface.
+        Concrete subclasses return the downwelling and upwelling shortwave
+        and longwave fluxes at the surface; the caller derives net
+        radiation as ``sw_in - sw_out + lw_in - lw_out``.
 
         Args:
-            julian_day: The current Julian day of the year.
-            time_utc: The current time in UTC seconds from midnight.
-            atm_state: The current state of the atmosphere.
-            sfc_state: The current state of the surface.
+            julian_day: Current Julian day of the year.
+            time_utc: Current time in UTC seconds from midnight.
+            atm_state: Current state of the atmosphere.
+            sfc_state: Current state of the surface.
 
         Returns:
-            The net radiation in W/m^2.
+            Tuple ``(sw_in, sw_out, lw_in, lw_out)`` in W/m^2, each
+            shaped consistently with the column layout.
         """
         raise NotImplementedError

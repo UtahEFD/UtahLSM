@@ -18,8 +18,10 @@ methods for calculating incoming and outgoing shortwave and longwave radiation
 based on fundamental physical principles and empirical relationships.
 """
 import logging
+from typing import Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 from ...data_models import AtmosphericState, SurfaceState
 from ...util import constants as c
@@ -50,34 +52,30 @@ class RadBasic(Radiation):
         self.logger.info('Using the basic model')
         super().__init__(latitude, longitude, albedo, emissivity)
 
-    def compute_net(
+    def compute_components(
         self,
         julian_day: int,
         time_utc: int,
         atm_state: AtmosphericState,
-        sfc_state: SurfaceState
-    ) -> float:
-        """Computes the surface net radiation.
-
-        This method calculates the four components of the radiation budget
-        (incoming/outgoing shortwave and longwave radiation) and sums them
-        to find the net radiation at the surface.
+        sfc_state: SurfaceState,
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64],
+               NDArray[np.float64], NDArray[np.float64]]:
+        """Computes the four surface radiation components.
 
         Args:
-            julian_day: The current Julian day of the year.
-            time_utc: The current time in UTC seconds from midnight.
-            atm_state: The current state of the atmosphere.
-            sfc_state: The current state of the surface.
+            julian_day: Current Julian day of the year.
+            time_utc: Current time in UTC seconds from midnight.
+            atm_state: Current state of the atmosphere.
+            sfc_state: Current state of the surface.
 
         Returns:
-            The net radiation in W/m^2.
+            Tuple ``(sw_in, sw_out, lw_in, lw_out)`` in W/m^2.
         """
         sw_in = self._shortwave_in(julian_day, time_utc)
         sw_out = self._shortwave_out(sw_in)
+        lw_in = self._longwave_in(atm_state, sfc_state)
         lw_out = self._longwave_out(sfc_state)
-        lw_in = self._longwave_in(atm_state,sfc_state)
-
-        return sw_in - sw_out + lw_in - lw_out
+        return sw_in, sw_out, lw_in, lw_out
 
     def _shortwave_in(self, julian_day: int, time_utc: int) -> float:
         """Computes downward shortwave radiation for clear-sky conditions.
