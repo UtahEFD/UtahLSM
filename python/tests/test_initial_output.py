@@ -74,7 +74,6 @@ class _DummyOutput:
 
 def _make_model(
     *,
-    warm_start: bool,
     has_forcing: bool,
     output_save: bool = True,
     output_fields: list[str] | None = None,
@@ -100,7 +99,6 @@ def _make_model(
         radiation_net=np.array([0.0]),
     )
     model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
-    model._did_warm_start_turbulence = False
 
     model.input = _DummyNamelist(
         grid=SimpleNamespace(nz=2, nx=1, ny=1, z=np.array([0.1, 0.2])),
@@ -123,8 +121,6 @@ def _make_model(
                 coupling_temp=1e-6,
                 coupling_mois=1e-12,
             ),
-            warm_start_turbulence=warm_start,
-            initialize_surface_temperature_from_seb=False,
         ),
         output=OutputConfig(
             save=output_save,
@@ -137,83 +133,14 @@ def _make_model(
             else None
         ),
     )
-
-    def fake_warm_start() -> None:
-        model.sfc_state.turbulence.friction_velocity[0] = 0.123
-        model.sfc_state.turbulence.obukhov_length[0] = 456.0
-        model.sfc_state.fluxes.sensible_heat[0] = 7.0
-        model.sfc_state.fluxes.latent_heat[0] = 8.0
-        model.sfc_state.fluxes.ground_heat[0] = 9.0
-
-    model._warm_start_turbulence = fake_warm_start
     return model
 
 
-def test_initial_output_defaults_to_zeros() -> None:
-    """Keeps the initial output snapshot at zeros by default."""
-    model = _make_model(warm_start=False, has_forcing=True)
-    model._setup_output()
-    assert model.output.configured_fields == [
-        "ust", "obl", "shf", "lhf", "ghf", "seb_res",
-        "soil_z", "soil_T", "soil_q",
-    ]
-    assert model.output.saved_initial == {
-        "ust": 0.0,
-        "obl": 0.0,
-        "shf": 0.0,
-        "lhf": 0.0,
-        "ghf": 0.0,
-        "seb_res": 0.0,
-    }
+def test_initial_output_runs_full_coupling_when_forced() -> None:
+    """Drives SEB+SMB coupling at forcing[0] and writes converged diagnostics."""
+    model = _make_model(has_forcing=True)
 
-
-def test_initial_output_warm_starts_when_enabled_and_forced() -> None:
-    """Writes warm-started diagnostics into the initial output snapshot."""
-    model = _make_model(warm_start=True, has_forcing=True)
-    model._setup_output()
-    assert model.output.saved_initial == {
-        "ust": 0.123,
-        "obl": 456.0,
-        "shf": 7.0,
-        "lhf": 8.0,
-        "ghf": 9.0,
-        "seb_res": 0.0,
-    }
-    assert model._did_warm_start_turbulence is True
-    assert (
-        model.output.outfile.attrs.get("initial_diagnostics")
-        == "warm_start_turbulence using forcing[0]"
-    )
-
-
-def test_initial_output_does_not_warm_start_without_forcing() -> None:
-    """Does not warm-start initial output when forcing is unavailable."""
-    model = _make_model(warm_start=True, has_forcing=False)
-    model._setup_output()
-    assert model.output.saved_initial == {
-        "ust": 0.0,
-        "obl": 0.0,
-        "shf": 0.0,
-        "lhf": 0.0,
-        "ghf": 0.0,
-        "seb_res": 0.0,
-    }
-
-
-def test_initial_output_can_initialize_surface_temperature_from_seb() -> None:
-    """When enabled, SEB initialization can populate initial diagnostics."""
-    model = _make_model(warm_start=False, has_forcing=True)
-    model.input.numerics = NumericsConfig(
-        heat_diffusion_back_weight=(
-            model.input.numerics.heat_diffusion_back_weight
-        ),
-        iterations=model.input.numerics.iterations,
-        tolerances=model.input.numerics.tolerances,
-        warm_start_turbulence=False,
-        initialize_surface_temperature_from_seb=True,
-    )
-
-    def fake_solve_seb() -> None:
+    def fake_coupling() -> None:
         model.sfc_state.temperature[:] = 280.0
         model.sfc_state.soil_top_temperature[:] = 280.0
         model.sfc_state.turbulence.friction_velocity[0] = 0.2
@@ -222,7 +149,7 @@ def test_initial_output_can_initialize_surface_temperature_from_seb() -> None:
         model.sfc_state.fluxes.latent_heat[0] = 5.0
         model.sfc_state.fluxes.ground_heat[0] = -40.0
 
-    model._solve_seb = fake_solve_seb
+    model._solve_surface_coupling = fake_coupling
 
     model._setup_output()
 
@@ -236,16 +163,39 @@ def test_initial_output_can_initialize_surface_temperature_from_seb() -> None:
         "seb_res": 0.0,
     }
     assert (
-        model.output.outfile.attrs.get("initial_surface_temperature")
-        == "initialized from SEB using forcing[0]"
+        model.output.outfile.attrs.get("initial_state")
+        == "SEB+SMB coupling using forcing[0]"
     )
+
+
+def test_initial_output_skips_coupling_without_forcing() -> None:
+    """Leaves the initial output at zeros when no forcing is available."""
+    model = _make_model(has_forcing=False)
+
+    called = {"count": 0}
+
+    def fake_coupling() -> None:
+        called["count"] += 1
+
+    model._solve_surface_coupling = fake_coupling
+    model._setup_output()
+
+    assert called["count"] == 0
+    assert model.output.saved_initial == {
+        "ust": 0.0,
+        "obl": 0.0,
+        "shf": 0.0,
+        "lhf": 0.0,
+        "ghf": 0.0,
+        "seb_res": 0.0,
+    }
+    assert "initial_state" not in model.output.outfile.attrs
 
 
 def test_setup_output_filters_requested_fields() -> None:
     """Writes only the explicitly requested output fields."""
     model = _make_model(
-        warm_start=False,
-        has_forcing=True,
+        has_forcing=False,
         output_fields=["soil_z", "ust", "soil_T"],
     )
 
@@ -259,8 +209,7 @@ def test_setup_output_filters_requested_fields() -> None:
 def test_setup_output_skips_normal_fields_when_save_disabled() -> None:
     """Disables normal output when the namelist turns saving off."""
     model = _make_model(
-        warm_start=False,
-        has_forcing=True,
+        has_forcing=False,
         output_save=False,
     )
 
@@ -274,8 +223,7 @@ def test_setup_output_skips_normal_fields_when_save_disabled() -> None:
 def test_setup_output_rejects_unknown_requested_field() -> None:
     """Raises when `output.fields` contains an unknown variable name."""
     model = _make_model(
-        warm_start=False,
-        has_forcing=True,
+        has_forcing=False,
         output_fields=["bogus_field"],
     )
 

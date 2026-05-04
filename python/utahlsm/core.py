@@ -73,11 +73,9 @@ class UtahLSM:
         output_fields: A dictionary of fields selected for normal output.
     """
 
-    # Class-level annotations for attributes set inside helper methods
-    # called from __init__; they let mypy resolve the type when these
-    # attributes are read in update()/save() before mypy has traced the
-    # helper.
-    _did_warm_start_turbulence: bool
+    # Class-level annotation for attributes set inside helper methods
+    # called from __init__; lets mypy resolve the type when this attribute
+    # is read in update()/save() before mypy has traced the helper.
     output_fields: dict[str, np.ndarray]
 
     def __init__(self, input_lsm: Input, output_lsm: Output) -> None:
@@ -155,12 +153,6 @@ class UtahLSM:
         """
         self.logger.info('Solving soil state')
 
-        if (self.input.numerics.warm_start_turbulence
-            and not self._did_warm_start_turbulence
-        ):
-            self._warm_start_turbulence()
-            self._did_warm_start_turbulence = True
-
         # Set initial guesses for new surface temp and moisture
         self.sfc_state.temperature = np.array(
             self.soil_state.temperature[0], copy=True)
@@ -230,7 +222,6 @@ class UtahLSM:
         self.solver_state.diffusion_f = np.zeros((nz_diff, self.ncol))
         self.solver_state.diffusion_g = np.zeros((nz_diff, self.ncol))
         self.solver_state.diffusion_r = np.zeros((nz_diff, self.ncol))
-        self._did_warm_start_turbulence = False
 
         # Canopy defaults to bare-soil until _setup_physics instantiates
         # a concrete model from the namelist. Stubbing it here keeps
@@ -433,39 +424,33 @@ class UtahLSM:
             atmos = self.input.forcing.atmos
             forcing0 = atmos[0] if atmos else None
 
-        if forcing0 is not None and (
-            self.input.numerics.initialize_surface_temperature_from_seb
-        ):
+        if forcing0 is not None:
+            # Drive the full SEB+SMB Picard coupling at forcing[0] so that
+            # T_s, θ_sfc, and L are mutually consistent at t=0. Without
+            # this, step 1 sees SMB shifting θ_sfc away from the initial
+            # soil-top moisture, which redistributes the energy balance
+            # (LE↔SHF) and produces a large, non-physical jump in u*/L.
+            assert self.input.forcing is not None
             saved_atm_state = self._copy_atm_state()
             saved_tstep = getattr(self, "tstep", 0.0)
             self._load_atm_state(forcing0)
-            assert self.input.forcing is not None
             self.tstep = float(self.input.forcing.tstep)
 
-            self._refresh_canopy_diagnostics()
-            self._solve_seb()
-            # The top soil cell holds the soil-top temperature, which
-            # equals the radiative skin only when r_canopy_thermal = 0.
+            self._solve_surface_coupling()
+
+            # Top soil cell carries soil-top temperature; equals the
+            # radiative skin only when r_canopy_thermal = 0.
             self._ensure_writable_soil_field("temperature")
             self.soil_state.temperature[0] = self.sfc_state.soil_top_temperature
 
             if self.output.outfile is not None:
                 self.output.outfile.setncattr(
-                    "initial_surface_temperature",
-                    "initialized from SEB using forcing[0]",
+                    "initial_state",
+                    "SEB+SMB coupling using forcing[0]",
                 )
 
             self._load_atm_state(saved_atm_state)
             self.tstep = saved_tstep
-
-        if forcing0 is not None and self.input.numerics.warm_start_turbulence:
-            self._warm_start_turbulence()
-            self._did_warm_start_turbulence = True
-            if self.output.outfile is not None:
-                self.output.outfile.setncattr(
-                    "initial_diagnostics",
-                    "warm_start_turbulence using forcing[0]",
-                )
 
         self.full_output_fields = {
             'ust': self.sfc_state.turbulence.friction_velocity,
@@ -537,30 +522,6 @@ class UtahLSM:
             )
 
         return {field: available_fields[field] for field in requested}
-
-    def _warm_start_turbulence(self) -> None:
-        """Warm-start MOST diagnostics using forcing[0] (offline mode only)."""
-        if self.input.forcing is None:
-            return
-        atmos = self.input.forcing.atmos
-        if not atmos:
-            return
-        forcing0 = atmos[0]
-        saved_atm_state = self._copy_atm_state()
-        saved_tstep = getattr(self, "tstep", 0.0)
-
-        self._load_atm_state(forcing0)
-        self.tstep = float(self.input.forcing.tstep)
-
-        sfc_T = np.array(self.soil_state.temperature[0], copy=True)
-        sfc_q = np.array(self.soil_state.moisture[0], copy=True)
-        self.sfc_state.temperature = sfc_T
-        self.sfc_state.moisture = sfc_q
-        self._refresh_canopy_diagnostics()
-        self._compute_fluxes(sfc_T, sfc_q)
-
-        self._load_atm_state(saved_atm_state)
-        self.tstep = saved_tstep
 
     @staticmethod
     def _is_leap_year(year: int) -> bool:
@@ -795,7 +756,9 @@ class UtahLSM:
         # Diagnostic SEB residual at the converged Obukhov length.
         # Should be ~ tol_root in magnitude; sustained drift over long
         # integrations indicates a tolerance or coupling problem.
-        self.sfc_state.seb_residual = (
+        # In-place update preserves the array reference held by the
+        # output writer.
+        self.sfc_state.seb_residual[:] = (
             np.asarray(self.atm_state.radiation_net)
             - self.sfc_state.fluxes.ground_heat
             - self.sfc_state.fluxes.sensible_heat

@@ -304,18 +304,12 @@ class NumericsConfig:
     Attributes:
         heat_diffusion_back_weight: Backward weighting factor for the
             soil heat diffusion solver (0.5 for Crank-Nicolson).
-        warm_start_turbulence: If True, compute MOST diagnostics at time=0
-            using forcing[0] (offline mode).
-        initialize_surface_temperature_from_seb: If True, initialize the top
-            soil-layer temperature by solving SEB at time=0 using forcing[0].
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
     heat_diffusion_back_weight: float
     iterations: IterationsConfig
     tolerances: TolerancesConfig
-    warm_start_turbulence: bool = False
-    initialize_surface_temperature_from_seb: bool = False
 
 @dataclass(frozen=True)
 class TimeConfig:

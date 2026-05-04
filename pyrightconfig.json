@@ -1,0 +1,11 @@
+{
+  "include": ["python"],
+  "executionEnvironments": [
+    {
+      "root": "python",
+      "pythonVersion": "3.10",
+      "extraPaths": ["python"]
+    }
+  ],
+  "reportUnknownMemberType": "none"
+}
