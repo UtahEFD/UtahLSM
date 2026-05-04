@@ -27,7 +27,7 @@ Covers:
 
 import logging
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -36,8 +36,8 @@ from numpy.typing import NDArray
 from utahlsm.core import UtahLSM
 from utahlsm.data_models import (
     AtmosphericState,
-    CanopyState,
     CanopyConfig,
+    CanopyState,
     SoilState,
     SurfaceState,
     TurbulenceScales,
@@ -419,8 +419,9 @@ class TestFactory:
 @pytest.mark.canopy
 class TestCanopyABC:
     def test_cannot_instantiate_directly(self, canopy_params_single: dict[str, Any]) -> None:
+        canopy_cls = cast(Any, Canopy)
         with pytest.raises(TypeError):
-            Canopy(**canopy_params_single)
+            canopy_cls(**canopy_params_single)
 
 
 @pytest.mark.canopy
@@ -461,7 +462,7 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
     z_layers: NDArray[np.float64],
 ) -> None:
     """Vegetation dew condensation must not be routed backward into roots."""
-    model = UtahLSM.__new__(UtahLSM)
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.ncol = 1
     model.canopy = jarvis_single

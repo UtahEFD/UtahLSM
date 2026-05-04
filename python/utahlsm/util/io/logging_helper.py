@@ -99,8 +99,12 @@ def finalize_logging(level_str: str = 'info') -> None:
     console_handler.setLevel(log_level)
     console_handler.setFormatter(log_format)
 
-    # reset root handlers
-    root_logger.handlers = []
+    # Reset root handlers, closing any previously finalized file handlers.
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+        if handler is not _buffer_handler:
+            handler.close()
+
     root_logger.setLevel(log_level)
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
@@ -109,5 +113,5 @@ def finalize_logging(level_str: str = 'info') -> None:
     if _buffer_handler is not None:
         _buffer_handler.setTarget(file_handler)
         _buffer_handler.flush()
-        root_logger.removeHandler(_buffer_handler)
+        _buffer_handler.close()
         _buffer_handler = None

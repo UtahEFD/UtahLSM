@@ -6,6 +6,7 @@ fluxes consistent with the final converged surface state.
 
 import logging
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -26,9 +27,9 @@ def _make_minimal_model(
     coupling_iterations: int = 3,
     tol_temp: float = 1e-6,
     tol_mois: float = 1e-12,
-) -> UtahLSM:
+) -> Any:
     """Create a minimal UtahLSM instance for unit-testing private methods."""
-    model = UtahLSM.__new__(UtahLSM)
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.input = SimpleNamespace(
         numerics=NumericsConfig(

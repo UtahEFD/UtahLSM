@@ -2,6 +2,7 @@
 
 import logging
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -9,8 +10,8 @@ from utahlsm.core import UtahLSM
 from utahlsm.data_models import AtmosphericState, SoilState, SurfaceState
 
 
-def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> UtahLSM:
-    model = UtahLSM.__new__(UtahLSM)
+def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> Any:
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.ncol = 1
     model.atm_state = AtmosphericState(

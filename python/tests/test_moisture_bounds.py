@@ -2,7 +2,7 @@
 
 import logging
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -12,8 +12,8 @@ from utahlsm.exceptions import SolverError
 from utahlsm.physics.soil.soil import Soil
 
 
-def _make_model() -> UtahLSM:
-    model = UtahLSM.__new__(UtahLSM)
+def _make_model() -> Any:
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.input = SimpleNamespace(
         numerics=SimpleNamespace(
@@ -39,7 +39,7 @@ def _make_model() -> UtahLSM:
     fake_soil.logger = logging.getLogger("test")
     fake_soil.enforce_moisture_bounds = (
         lambda moisture, tol=1e-8: Soil.enforce_moisture_bounds(
-            fake_soil, moisture, tol
+            cast(Soil, fake_soil), moisture, tol
         )
     )
     model.soil = fake_soil

@@ -2,6 +2,7 @@
 
 import logging
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -11,7 +12,7 @@ from utahlsm.data_models import AtmosphericState, SoilState, SurfaceState
 
 def test_zeta_max_changes_obukhov_length_clamp() -> None:
     """Changing zeta_max changes the applied L clamp under strong stability."""
-    model = UtahLSM.__new__(UtahLSM)
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.ncol = 1
     model.tstep = 600.0

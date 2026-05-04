@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -77,9 +78,9 @@ def _make_model(
     has_forcing: bool,
     output_save: bool = True,
     output_fields: list[str] | None = None,
-) -> UtahLSM:
+) -> Any:
     """Create a minimal UtahLSM instance for `_setup_output()` tests."""
-    model = UtahLSM.__new__(UtahLSM)
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.ncol = 1
     model.output = _DummyOutput()
     model.sfc_state = SurfaceState(

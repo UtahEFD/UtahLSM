@@ -2,6 +2,7 @@
 
 import logging
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -16,8 +17,8 @@ from utahlsm.physics.soil.soil_brookscorey import BrooksCorey
 from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
 
 
-def _make_model(theta: float = 0.25) -> UtahLSM:
-    model = UtahLSM.__new__(UtahLSM)
+def _make_model(theta: float = 0.25) -> Any:
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.ncol = 1
     model.tstep = 3600.0

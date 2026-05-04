@@ -2,6 +2,7 @@
 
 import logging
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -15,9 +16,9 @@ from utahlsm.data_models import (
 )
 
 
-def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
+def _make_model_for_run(*, warm_start_turbulence: bool) -> Any:
     """Create a minimal UtahLSM instance for unit-testing `run()` behavior."""
-    model = UtahLSM.__new__(UtahLSM)
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
 
     model.input = SimpleNamespace(

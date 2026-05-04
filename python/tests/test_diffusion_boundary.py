@@ -2,6 +2,7 @@
 
 import logging
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 
@@ -17,7 +18,7 @@ from utahlsm.data_models import (
 
 def test_bottom_neumann_boundary_couples_deepest_heat_layer() -> None:
     """The bottom zero-gradient row must not decouple the deepest layer."""
-    model = UtahLSM.__new__(UtahLSM)
+    model: Any = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
     model.tstep = 1.0
     model.ncol = 1

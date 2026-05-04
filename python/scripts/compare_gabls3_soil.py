@@ -39,7 +39,7 @@ from __future__ import annotations
 import argparse
 import math
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import matplotlib.axes
 import matplotlib.dates as mdates
@@ -196,14 +196,16 @@ def _make_panel_grid(n_timeseries: int) -> tuple[matplotlib.figure.Figure, np.nd
     else:
         ncols = 4
     nrows = math.ceil(total_panels / ncols)
-    fig: matplotlib.figure.Figure
-    axes: np.ndarray
-    fig, axes = plt.subplots(
-        nrows,
-        ncols,
-        figsize=(5.1 * ncols, 2.8 * nrows + 0.4),
-        squeeze=False,
+    fig, axes = cast(
+        tuple[matplotlib.figure.Figure, np.ndarray],
+        cast(Any, plt.subplots)(
+            nrows,
+            ncols,
+            figsize=(5.1 * ncols, 2.8 * nrows + 0.4),
+            squeeze=False,
+        ),
     )
+    axes = np.asarray(axes, dtype=object)
     axes_flat = axes.ravel()
     for ax in axes_flat[total_panels:]:
         ax.set_visible(False)
@@ -212,10 +214,12 @@ def _make_panel_grid(n_timeseries: int) -> tuple[matplotlib.figure.Figure, np.nd
 
 
 def _format_time_axis(ax: matplotlib.axes.Axes, t_start: np.datetime64, t_end: np.datetime64) -> None:
-    locator = mdates.AutoDateLocator(minticks=4, maxticks=7)
-    ax.set_xlim(t_start, t_end)
+    locator = cast(Any, mdates.AutoDateLocator)(minticks=4, maxticks=7)
+    x_start = float(cast(Any, mdates.date2num)(t_start.astype("datetime64[ms]").astype(object)))
+    x_end = float(cast(Any, mdates.date2num)(t_end.astype("datetime64[ms]").astype(object)))
+    ax.set_xlim(x_start, x_end)
     ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+    ax.xaxis.set_major_formatter(cast(Any, mdates.ConciseDateFormatter)(locator))
     ax.tick_params(axis="x", labelrotation=20)
 
 

@@ -339,22 +339,16 @@ def create_root_function() -> Callable[[float, str], tuple[Callable[[float], flo
         """
         if type_ == 'quadratic':
             # f(x) = (x - root)^2 - 1
-            f: Callable[[float], float] = lambda x: (x - root)**2 - 1
-            bracket = [root - 2, root + 2]
+            return lambda x: (x - root)**2 - 1, [root - 2, root + 2]
         elif type_ == 'cubic':
             # f(x) = (x - root)^3 - 1
-            f: Callable[[float], float] = lambda x: (x - root)**3 - 1
-            bracket = [root - 2, root + 2]
+            return lambda x: (x - root)**3 - 1, [root - 2, root + 2]
         elif type_ == 'sine':
             # f(x) = sin(x - root)
-            f: Callable[[float], float] = lambda x: np.sin(x - root)
-            bracket = [root - np.pi/2, root + np.pi/2]
-        else:  # rational
-            # f(x) = 1/(x - root) - 1
-            f: Callable[[float], float] = lambda x: 1 / (x - root + 1e-6) - 1
-            bracket = [root - 1, root + 1]
+            return lambda x: float(np.sin(x - root)), [root - np.pi/2, root + np.pi/2]
 
-        return f, bracket
+        # f(x) = 1/(x - root) - 1
+        return lambda x: 1 / (x - root + 1e-6) - 1, [root - 1, root + 1]
 
     return _create_function
 
@@ -364,7 +358,10 @@ def create_root_function() -> Callable[[float, str], tuple[Callable[[float], flo
 # ============================================================================
 
 @pytest.fixture
-def assert_physically_reasonable():
+def assert_physically_reasonable() -> Callable[
+    [float, str, float | None, float | None],
+    None,
+]:
     """Fixture providing assertion helpers for physical constraints.
 
     Returns:

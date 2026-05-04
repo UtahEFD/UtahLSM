@@ -184,10 +184,9 @@ class Input:
                 the schema.
         """
         try:
-            schema_resource = resources.files(__package__).joinpath(
+            schema_resource = resources.files('utahlsm.util.io').joinpath(
                 'schema_namelist.json')
-            with schema_resource.open('r', encoding='utf-8') as f:
-                schema = json.load(f)
+            schema = json.loads(schema_resource.read_text(encoding='utf-8'))
             with open(namelist_path, encoding='utf-8') as f:
                 namelist_data = json.load(f)
             jsonschema.validate(instance=namelist_data, schema=schema)

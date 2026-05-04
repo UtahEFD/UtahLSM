@@ -36,9 +36,11 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+import matplotlib.axes
 import matplotlib.dates as mdates
+import matplotlib.figure
 import matplotlib.pyplot as plt
 import netCDF4 as nc
 import numpy as np
@@ -73,7 +75,7 @@ def _overlap(t_model: np.ndarray, t_obs: np.ndarray) -> slice:
     return slice(int(idx[0]), int(idx[-1]) + 1)
 
 
-def _plot_panel(ax: Any, t_m: np.ndarray, y_m: np.ndarray | None, t_o: np.ndarray, y_o: np.ndarray | None, ylabel: str, title: str, model_label: str,
+def _plot_panel(ax: matplotlib.axes.Axes, t_m: np.ndarray, y_m: np.ndarray | None, t_o: np.ndarray, y_o: np.ndarray | None, ylabel: str, title: str, model_label: str,
                 partition: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None) -> None:
     """Plot a single flux panel (model vs obs, optionally partitioned)."""
     if y_m is None or y_o is None:
@@ -135,7 +137,13 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
         ust_o = _nan_fill(ods.variables["UST"][sl])
         t_obs_sl = t_obs[sl]
 
-    fig, axes = plt.subplots(4, 1, figsize=(10, 11), sharex=True, squeeze=True)
+    fig, axes = cast(
+        tuple[matplotlib.figure.Figure, np.ndarray],
+        cast(Any, plt.subplots)(
+            4, 1, figsize=(10, 11), sharex=True, squeeze=True
+        ),
+    )
+    axes = np.asarray(axes, dtype=object)
 
     partition = None
     if lhf_soil_m is not None and lhf_veg_m is not None:
@@ -152,8 +160,8 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
                 "m s$^{-1}$", "Friction velocity", "UtahLSM u*")
 
     axes[-1].set_xlabel("Time (UTC)")
-    axes[-1].xaxis.set_major_locator(mdates.HourLocator(interval=1))
-    axes[-1].xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H%M"))
+    axes[-1].xaxis.set_major_locator(cast(Any, mdates.HourLocator)(interval=1))
+    axes[-1].xaxis.set_major_formatter(cast(Any, mdates.DateFormatter)("%m-%d %H%M"))
     fig.suptitle(f"GABLS3: UtahLSM vs Cabauw observations\n"
                  f"model: {model_path.name}   obs: {obs_path.name}",
                  fontsize=11)

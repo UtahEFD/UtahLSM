@@ -20,13 +20,29 @@ from custom files specified by file path.
 
 import json
 from importlib import resources
-from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import jsonschema
 
 from ...exceptions import NamelistError
+
+
+class ResourcePath(Protocol):
+    """Minimal packaged-resource interface used by this loader."""
+
+    @property
+    def name(self) -> str:
+        """Return the resource base name."""
+        ...
+
+    def is_file(self) -> bool:
+        """Return whether this resource points to a file."""
+        ...
+
+    def read_text(self, encoding: str | None = None) -> str:
+        """Read the resource as text."""
+        ...
 
 
 class SoilPropertiesLoader:
@@ -93,7 +109,7 @@ class SoilPropertiesLoader:
                 f'Available bundled datasets: {available}'
             )
 
-        bundled_path: Traversable = SoilPropertiesLoader._get_bundled_path(dataset_name)
+        bundled_path = SoilPropertiesLoader._get_bundled_path(dataset_name)
 
         if not bundled_path.is_file():
             raise NamelistError(
@@ -144,7 +160,7 @@ class SoilPropertiesLoader:
         return cast(dict[str, dict[str, float]], data['soil_types'])
 
     @staticmethod
-    def _load_from_resource(resource: Traversable, source: str) -> dict[str, dict[str, float]]:
+    def _load_from_resource(resource: ResourcePath, source: str) -> dict[str, dict[str, float]]:
         """Load packaged JSON resources from the installed utahlsm package.
 
         Args:
@@ -160,8 +176,7 @@ class SoilPropertiesLoader:
                 fails schema validation.
         """
         try:
-            with resource.open('r', encoding='utf-8') as f:
-                data: dict[str, Any] = json.load(f)
+            data: dict[str, Any] = json.loads(resource.read_text(encoding='utf-8'))
         except json.JSONDecodeError as e:
             raise NamelistError(
                 f'Invalid JSON in soil property resource {source}: {e}'
@@ -186,10 +201,9 @@ class SoilPropertiesLoader:
             NamelistError: If data fails schema validation.
         """
         try:
-            schema_resource = resources.files(__package__).joinpath(
+            schema_resource = resources.files('utahlsm.util.io').joinpath(
                 'schema_soil_properties.json')
-            with schema_resource.open('r', encoding='utf-8') as f:
-                schema = json.load(f)
+            schema = json.loads(schema_resource.read_text(encoding='utf-8'))
         except Exception as e:
             raise NamelistError(
                 f'Failed to load soil properties schema: {e}'
@@ -209,7 +223,7 @@ class SoilPropertiesLoader:
             ) from e
 
     @staticmethod
-    def _get_bundled_path(dataset_name: str) -> Traversable:
+    def _get_bundled_path(dataset_name: str) -> ResourcePath:
         """Get the packaged resource for a bundled dataset file.
 
         Args:

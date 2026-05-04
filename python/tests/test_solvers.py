@@ -525,7 +525,7 @@ class TestRootBrentVec:
         b = roots + 1.0
 
         def f(x: NDArray[Any]) -> NDArray[Any]:
-            return x - roots
+            return np.asarray(x - roots)
 
         root, converged = root_brent_vec(f, a, b, tol=1e-8)
 
@@ -540,7 +540,7 @@ class TestRootBrentVec:
         b = np.array([3.0, 3.0, 0.25])
 
         def f(x: NDArray[Any]) -> NDArray[Any]:
-            return x - roots
+            return np.asarray(x - roots)
 
         with pytest.raises(ValueError, match="Root not bracketed"):
             root_brent_vec(f, a, b, tol=1e-8)

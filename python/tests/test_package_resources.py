@@ -11,8 +11,8 @@ from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
 def test_packaged_resources_exist() -> None:
     """Checks that packaged schemas, soil datasets, and typing marker exist."""
     package_root = resources.files('utahlsm')
-    io_root = package_root.joinpath('util', 'io')
-    soil_root = package_root.joinpath('data', 'soil')
+    io_root = package_root.joinpath('util').joinpath('io')
+    soil_root = package_root.joinpath('data').joinpath('soil')
 
     assert package_root.joinpath('py.typed').is_file()
     assert io_root.joinpath('schema_namelist.json').is_file()
