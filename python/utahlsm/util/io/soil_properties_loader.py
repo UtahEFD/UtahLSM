@@ -22,7 +22,7 @@ import json
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import jsonschema
 
@@ -141,7 +141,7 @@ class SoilPropertiesLoader:
             ) from e
 
         SoilPropertiesLoader._validate(data, str(path))
-        return data['soil_types']
+        return cast(dict[str, dict[str, float]], data['soil_types'])
 
     @staticmethod
     def _load_from_resource(resource: Traversable, source: str) -> dict[str, dict[str, float]]:
@@ -172,7 +172,7 @@ class SoilPropertiesLoader:
             ) from e
 
         SoilPropertiesLoader._validate(data, source)
-        return data['soil_types']
+        return cast(dict[str, dict[str, float]], data['soil_types'])
 
     @staticmethod
     def _validate(data: dict[str, Any], source: str = 'properties') -> None:
@@ -218,8 +218,12 @@ class SoilPropertiesLoader:
         Returns:
             Traversable resource for the JSON file in utahlsm/data/soil/
         """
-        return resources.files('utahlsm').joinpath(
-            'data', 'soil', f'{dataset_name}.json')
+        return (
+            resources.files('utahlsm')
+            .joinpath('data')
+            .joinpath('soil')
+            .joinpath(f'{dataset_name}.json')
+        )
 
 
 def _is_file_path(spec: str) -> bool:

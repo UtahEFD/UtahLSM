@@ -17,10 +17,10 @@ from utahlsm.data_models import (
 
 def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
     """Create a minimal UtahLSM instance for unit-testing `run()` behavior."""
-    model = UtahLSM.__new__(UtahLSM)  # type: ignore[attr-defined]
+    model = UtahLSM.__new__(UtahLSM)
     model.logger = logging.getLogger("test")
 
-    model.input = SimpleNamespace(  # type: ignore[assignment]
+    model.input = SimpleNamespace(
         numerics=NumericsConfig(
             heat_diffusion_back_weight=0.5,
             warm_start_turbulence=warm_start_turbulence,
@@ -51,17 +51,17 @@ def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
         type=np.array(["clay", "clay"], dtype=object),
     )
     model.sfc_state = SurfaceState()
-    model._did_warm_start_turbulence = False  # type: ignore[attr-defined]
+    model._did_warm_start_turbulence = False
 
     # No-op the rest of the time step to isolate warm-start call conditions.
-    model._solve_surface_coupling = lambda: None  # type: ignore[assignment]
-    model._solve_diffusion_heat = lambda: None  # type: ignore[assignment]
-    model._solve_diffusion_mois = lambda: None  # type: ignore[assignment]
+    model._solve_surface_coupling = lambda: None
+    model._solve_diffusion_heat = lambda: None
+    model._solve_diffusion_mois = lambda: None
 
     return model
 
 
-def test_run_does_not_warm_start_by_default():
+def test_run_does_not_warm_start_by_default() -> None:
     """Does not warm-start unless explicitly enabled in numerics config."""
     model = _make_model_for_run(warm_start_turbulence=False)
 
@@ -70,13 +70,13 @@ def test_run_does_not_warm_start_by_default():
     def fake_warm_start() -> None:
         called["count"] += 1
 
-    model._warm_start_turbulence = fake_warm_start  # type: ignore[attr-defined]
+    model._warm_start_turbulence = fake_warm_start
 
     model.run()
     assert called["count"] == 0
 
 
-def test_run_warm_starts_only_once_when_enabled():
+def test_run_warm_starts_only_once_when_enabled() -> None:
     """Warm-start executes only on the first call to `run()`."""
     model = _make_model_for_run(warm_start_turbulence=True)
 
@@ -85,14 +85,14 @@ def test_run_warm_starts_only_once_when_enabled():
     def fake_warm_start() -> None:
         called["count"] += 1
 
-    model._warm_start_turbulence = fake_warm_start  # type: ignore[attr-defined]
+    model._warm_start_turbulence = fake_warm_start
 
     model.run()
     model.run()
     assert called["count"] == 1
 
 
-def test_run_calls_warm_start_before_coupling():
+def test_run_calls_warm_start_before_coupling() -> None:
     """Warm-start happens before the coupled surface solve."""
     model = _make_model_for_run(warm_start_turbulence=True)
 
@@ -104,8 +104,8 @@ def test_run_calls_warm_start_before_coupling():
     def fake_coupling() -> None:
         sequence.append("coupling")
 
-    model._warm_start_turbulence = fake_warm_start  # type: ignore[attr-defined]
-    model._solve_surface_coupling = fake_coupling  # type: ignore[assignment]
+    model._warm_start_turbulence = fake_warm_start
+    model._solve_surface_coupling = fake_coupling
 
     model.run()
     assert sequence[:2] == ["warm_start", "coupling"]

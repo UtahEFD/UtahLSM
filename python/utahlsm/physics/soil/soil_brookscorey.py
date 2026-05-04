@@ -19,7 +19,7 @@ widely used model for describing soil hydraulic properties.
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -82,7 +82,7 @@ class BrooksCorey(Soil):
         Se = np.maximum((soil_q-residual)/(porosity-residual), 1e-12)
         psi = psi_sat*( Se**(-b) )
 
-        return psi
+        return cast(FloatOrArray, psi)
 
     def water_content(
         self, psi: FloatOrArray, level: int | None = None
@@ -113,22 +113,31 @@ class BrooksCorey(Soil):
     def moisture_capacity(
         self, psi: FloatOrArray, level: int | None = None
     ) -> FloatOrArray:
-        """Computes specific moisture capacity dθ/dψ."""
+        """Computes specific moisture capacity dθ/dψ.
+
+        Brooks-Corey defines θ = θ_s for ψ ≥ ψ_sat (the air-entry
+        potential), so dθ/dψ = 0 there. Without that clamp, the
+        analytic expression diverges as ψ → 0 from below in the
+        unphysical supersaturated branch and destabilises the
+        Picard solver.
+        """
         soil_q = self.water_content(psi, level=level)
         psi_arr = np.asarray(psi, dtype=float)
         soil_q_arr = np.asarray(soil_q, dtype=float)
         if level is not None:
             b        = self.properties.b[level]
+            psi_sat  = self.properties.psi_sat[level]
             residual = self.properties.residual[level]
         else:
             _2d = psi_arr.ndim == 2
             b        = self.properties.b[:, None]        if _2d else self.properties.b
+            psi_sat  = self.properties.psi_sat[:, None]  if _2d else self.properties.psi_sat
             residual = self.properties.residual[:, None] if _2d else self.properties.residual
 
         with np.errstate(divide='ignore', invalid='ignore'):
             capacity = -(soil_q_arr - residual) / (b * psi_arr)
         capacity = np.where(np.isfinite(capacity), capacity, 0.0)
-        capacity = np.where(psi_arr >= 0.0, 0.0, capacity)
+        capacity = np.where(psi_arr >= psi_sat, 0.0, capacity)
         return float(capacity) if np.isscalar(psi) else capacity
 
     def conductivity_moisture(
@@ -163,7 +172,7 @@ class BrooksCorey(Soil):
         Se = (soil_q-residual)/(porosity-residual)
         conductivity = K_sat*( Se**(2.*b+3.) )
 
-        return conductivity
+        return cast(FloatOrArray, conductivity)
 
     def conductivity_gradient(
         self, soil_q: NDArray[np.float64]

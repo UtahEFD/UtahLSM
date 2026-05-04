@@ -18,6 +18,7 @@ using standard Monin-Obukhov Similarity Theory (MOST) functions to describe
 the stability and flux-profile relationships in the atmospheric surface layer.
 """
 import logging
+from typing import cast
 
 import numpy as np
 
@@ -74,7 +75,7 @@ class SurfaceMOST(Surface):
         """
         obukL_arr = np.asarray(obukL, dtype=float)
         obukL_mag = np.maximum(np.abs(obukL_arr), min_val)
-        return np.copysign(obukL_mag, obukL_arr)
+        return cast(FloatOrArray, np.copysign(obukL_mag, obukL_arr))
 
     def phim(self, z: float, obukL: FloatOrArray) -> FloatOrArray:
         """Computes the dimensionless stability function for momentum (phi_m).
@@ -332,9 +333,9 @@ class SurfaceMOST(Surface):
             The stability-corrected log-law function value.
         """
         VK = c.physical.VON_KARMAN
-        return VK / (
+        return cast(FloatOrArray, VK / (
             np.log(z1 / z0) - self.psim(z1, obukhov_l) + self.psim(z0, obukhov_l)
-        )
+        ))
 
     def fh(self, z1: float, z0h: float,
            obukhov_l: FloatOrArray) -> FloatOrArray:
@@ -349,6 +350,6 @@ class SurfaceMOST(Surface):
             The stability-corrected log-law function value.
         """
         VK = c.physical.VON_KARMAN
-        return VK / (
+        return cast(FloatOrArray, VK / (
             np.log(z1 / z0h) - self.psih(z1, obukhov_l) + self.psih(z0h, obukhov_l)
-        )
+        ))

@@ -31,13 +31,13 @@ def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> Ut
     )
     model.sfc_state.turbulence.obukhov_length[0] = L0
 
-    model.soil = SimpleNamespace(surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T))  # type: ignore[assignment]
-    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))  # type: ignore[assignment]
-    model.sfc = SimpleNamespace(  # type: ignore[assignment]
-        fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),  # type: ignore[return-value]
-        fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),  # type: ignore[return-value]
+    model.soil = SimpleNamespace(surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T))
+    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
+    model.sfc = SimpleNamespace(
+        fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),
+        fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),
     )
-    model.input = SimpleNamespace(  # type: ignore[assignment]
+    model.input = SimpleNamespace(
         surface=SimpleNamespace(
             z_m=10.0,
             z_o=0.1,
@@ -56,26 +56,26 @@ def _make_minimal_model(*, gustiness: float, stable_only: bool, L0: float) -> Ut
     return model
 
 
-def test_gustiness_increases_ustar_when_stable():
+def test_gustiness_increases_ustar_when_stable() -> None:
     """Applies gustiness when L>=0 and stable_only is True."""
     model = _make_minimal_model(gustiness=1.0, stable_only=True, L0=10.0)
-    model._compute_fluxes(model.sfc_state.temperature, model.sfc_state.moisture)  # type: ignore[attr-defined]
+    model._compute_fluxes(model.sfc_state.temperature, model.sfc_state.moisture)
     expected = np.hypot(3.0, 1.0) * 0.1
     assert np.isclose(model.sfc_state.turbulence.friction_velocity[0], expected)
 
 
-def test_gustiness_not_applied_when_unstable_if_stable_only():
+def test_gustiness_not_applied_when_unstable_if_stable_only() -> None:
     """Does not apply gustiness when L<0 and stable_only is True."""
     model = _make_minimal_model(gustiness=1.0, stable_only=True, L0=-10.0)
-    model._compute_fluxes(model.sfc_state.temperature, model.sfc_state.moisture)  # type: ignore[attr-defined]
+    model._compute_fluxes(model.sfc_state.temperature, model.sfc_state.moisture)
     expected = 3.0 * 0.1
     assert np.isclose(model.sfc_state.turbulence.friction_velocity[0], expected)
 
 
-def test_gustiness_always_applied_when_not_stable_only():
+def test_gustiness_always_applied_when_not_stable_only() -> None:
     """Applies gustiness regardless of stability when stable_only is False."""
     model = _make_minimal_model(gustiness=1.0, stable_only=False, L0=-10.0)
-    model._compute_fluxes(model.sfc_state.temperature, model.sfc_state.moisture)  # type: ignore[attr-defined]
+    model._compute_fluxes(model.sfc_state.temperature, model.sfc_state.moisture)
     expected = np.hypot(3.0, 1.0) * 0.1
     assert np.isclose(model.sfc_state.turbulence.friction_velocity[0], expected)
 

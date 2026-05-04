@@ -84,12 +84,12 @@ MOIS_MIN_SPAN = 0.05
 
 
 def _model_times(ds: nc.Dataset) -> np.ndarray:
-    t_sec = np.asarray(ds.variables["time"][:]).astype(float)  # type: ignore[arg-type]
+    t_sec = np.asarray(ds.variables["time"][:]).astype(float)
     return MODEL_T0 + (t_sec * 1000.0).astype("timedelta64[ms]")
 
 
 def _obs_times(ds: nc.Dataset) -> np.ndarray:
-    t_hr = np.asarray(ds.variables["time"][:]).astype(float)  # type: ignore[arg-type]
+    t_hr = np.asarray(ds.variables["time"][:]).astype(float)
     return OBS_T0 + (t_hr * 3600.0 * 1000.0).astype("timedelta64[ms]")
 
 
@@ -130,10 +130,10 @@ def _load_model(model_path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, n
     with nc.Dataset(model_path) as mds:
         t_model = _model_times(mds)
         # soil_z in model is negative-downward (z[0]=0, z[1]<0, ...).
-        z_neg = np.asarray(mds.variables["soil_z"][:]).astype(float)  # type: ignore[arg-type]
+        z_neg = np.asarray(mds.variables["soil_z"][:]).astype(float)
         z_model = -z_neg  # positive-downward metres
-        soil_T = np.asarray(mds.variables["soil_T"][:]).astype(float)  # type: ignore[arg-type]
-        soil_q = np.asarray(mds.variables["soil_q"][:]).astype(float)  # type: ignore[arg-type]
+        soil_T = np.asarray(mds.variables["soil_T"][:]).astype(float)
+        soil_q = np.asarray(mds.variables["soil_q"][:]).astype(float)
         # Collapse any (t, z, y, x) to (t, z) by taking column 0.
         if soil_T.ndim > 2:
             soil_T = soil_T.reshape(soil_T.shape[0], soil_T.shape[1], -1)[:, :, 0]
@@ -198,7 +198,7 @@ def _make_panel_grid(n_timeseries: int) -> tuple[matplotlib.figure.Figure, np.nd
     nrows = math.ceil(total_panels / ncols)
     fig: matplotlib.figure.Figure
     axes: np.ndarray
-    fig, axes = plt.subplots(  # type: ignore[misc]
+    fig, axes = plt.subplots(
         nrows,
         ncols,
         figsize=(5.1 * ncols, 2.8 * nrows + 0.4),
@@ -213,10 +213,10 @@ def _make_panel_grid(n_timeseries: int) -> tuple[matplotlib.figure.Figure, np.nd
 
 def _format_time_axis(ax: matplotlib.axes.Axes, t_start: np.datetime64, t_end: np.datetime64) -> None:
     locator = mdates.AutoDateLocator(minticks=4, maxticks=7)
-    ax.set_xlim(t_start, t_end)  # type: ignore[arg-type]
+    ax.set_xlim(t_start, t_end)
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
-    ax.tick_params(axis="x", labelrotation=20)  # type: ignore[call-arg]
+    ax.tick_params(axis="x", labelrotation=20)
 
 
 def _is_bottom_row(panel_idx: int, total_panels: int, ncols: int) -> bool:
@@ -231,13 +231,13 @@ def _series_stats(
 ) -> tuple[float, float] | None:
     if t_obs.size == 0:
         return None
-    model_interp: np.ndarray = np.asarray(np.interp(  # type: ignore[arg-type]
-        (t_obs - t_obs[0]).astype("timedelta64[s]").astype(float),  # type: ignore[misc]
-        (t_model - t_obs[0]).astype("timedelta64[s]").astype(float),  # type: ignore[misc]
+    model_interp: np.ndarray = np.asarray(np.interp(
+        (t_obs - t_obs[0]).astype("timedelta64[s]").astype(float),
+        (t_model - t_obs[0]).astype("timedelta64[s]").astype(float),
         model_vals,
     ))
-    diff: np.ndarray = np.asarray(model_interp - obs_vals)  # type: ignore[arg-type]
-    diff = np.asarray(diff[np.isfinite(diff)])  # type: ignore[arg-type]
+    diff: np.ndarray = np.asarray(model_interp - obs_vals)
+    diff = np.asarray(diff[np.isfinite(diff)])
     if diff.size == 0:
         return None
     return float(diff.mean()), float(np.sqrt((diff**2).mean()))
@@ -262,12 +262,12 @@ def _plot_timeseries_panels(
             continue
         model_vals = model_vals_by_depth[depth]
         obs_vals = obs_vals_by_label[label]
-        ax.plot(t_model, model_vals, color="#d62728",  # type: ignore[arg-type]
+        ax.plot(t_model, model_vals, color="#d62728",
                 lw=1.2, label=f"UtahLSM @ {depth*100:.0f} cm")
-        ax.plot(t_obs, obs_vals, color="k", lw=0.8,  # type: ignore[arg-type]
+        ax.plot(t_obs, obs_vals, color="k", lw=0.8,
                 alpha=0.8, label=f"obs {label}")
         ax.set_ylabel(ylabel)
-        ax.set_title(f"{title_prefix} @ {depth*100:.0f} cm")  # type: ignore[misc]
+        ax.set_title(f"{title_prefix} @ {depth*100:.0f} cm")
         ax.grid(True, alpha=0.3)
         _set_axis_limits(ax, "y", _finite_values(model_vals, obs_vals), min_span)
         stats = _series_stats(t_model, model_vals, t_obs, obs_vals)
@@ -301,17 +301,17 @@ def _plot_final_profile(
     title: str,
     min_span: float,
 ) -> None:
-    ax.plot(model_final, z_model, color="#d62728", marker="o",  # type: ignore[arg-type]
+    ax.plot(model_final, z_model, color="#d62728", marker="o",
             lw=1.5, label="UtahLSM final")
     if obs_depths.size > 0:
-        ax.plot(obs_vals_final, obs_depths, color="k", marker="s",  # type: ignore[arg-type]
+        ax.plot(obs_vals_final, obs_depths, color="k", marker="s",
                 ms=6, lw=0, label="obs final")
     ax.invert_yaxis()
-    ax.set_xlabel(xlabel)  # type: ignore[misc]
-    ax.set_title(title)  # type: ignore[misc]
-    ax.grid(True, alpha=0.3) # type: ignore[misc]
+    ax.set_xlabel(xlabel)
+    ax.set_title(title)
+    ax.grid(True, alpha=0.3)
     _set_axis_limits(ax, "x", _finite_values(model_final, obs_vals_final), min_span)
-    ax.legend(loc="best", fontsize=8) # type: ignore[misc]
+    ax.legend(loc="best", fontsize=8)
 
 
 def compare_soil_temperature(
@@ -353,7 +353,7 @@ def compare_soil_temperature(
     for i, ax in enumerate(axes_ts):
         _format_time_axis(ax, t_model[0], t_model[-1])
         if _is_bottom_row(i, total_panels, ncols):
-            ax.set_xlabel("Time (UTC)")  # type: ignore[misc]
+            ax.set_xlabel("Time (UTC)")
 
     # Final-time profile comparison (use the last overlapping obs sample).
     depths_arr = np.array(list(depths_present.values()))
@@ -368,17 +368,17 @@ def compare_soil_temperature(
         "T [K]", "Final soil temperature profile", TEMP_MIN_SPAN_K,
     )
 
-    fig.suptitle(  # type: ignore[misc]
+    fig.suptitle(
         f"GABLS3 soil temperature: UtahLSM vs Cabauw\n"
         f"model: {model_path.name}   obs: {obs_path.name}",
         fontsize=11)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
 
     if out_path is not None:
-        fig.savefig(out_path, dpi=150)  # type: ignore[misc]
+        fig.savefig(out_path, dpi=150)
         print(f"Saved figure → {out_path}")
     if show:
-        plt.show()  # type: ignore[misc]
+        plt.show()
     plt.close(fig)
 
     print("\nSoil temperature bias vs obs (K, overlap window):")
@@ -429,7 +429,7 @@ def compare_soil_moisture(
     for i, ax in enumerate(axes_ts):
         _format_time_axis(ax, t_model[0], t_model[-1])
         if _is_bottom_row(i, total_panels, ncols):
-            ax.set_xlabel("Time (UTC)")  # type: ignore[misc]
+            ax.set_xlabel("Time (UTC)")
 
     depths_arr = np.array(list(depths_present.values()))
     obs_final = np.array([
@@ -444,17 +444,17 @@ def compare_soil_moisture(
         MOIS_MIN_SPAN,
     )
 
-    fig.suptitle(  # type: ignore[misc]
+    fig.suptitle(
         f"GABLS3 soil moisture: UtahLSM vs Cabauw\n"
         f"model: {model_path.name}   obs: {obs_path.name}",
         fontsize=11)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
 
     if out_path is not None:
-        fig.savefig(out_path, dpi=150)  # type: ignore[misc]
+        fig.savefig(out_path, dpi=150)
         print(f"Saved figure → {out_path}")
     if show:
-        plt.show()  # type: ignore[misc]
+        plt.show()
     plt.close(fig)
 
     print("\nSoil moisture bias vs obs (m3/m3, overlap window):")

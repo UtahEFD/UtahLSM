@@ -26,12 +26,11 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
-from ._types import FloatOrArray
+from ._types import FloatOrArray, FloatOrArrayLike
 
 # --- State Data Models ---
 
@@ -85,8 +84,8 @@ class SoilState:
         default_factory=lambda: np.array([]))
     moisture: NDArray[np.float64] = field(
         default_factory=lambda: np.array([]))
-    type: NDArray[np.str_] = field(
-        default_factory=lambda: np.array([], dtype=str))
+    type: NDArray[np.object_] = field(
+        default_factory=lambda: np.array([], dtype=object))
 
 @dataclass
 class SurfaceFluxes:
@@ -144,7 +143,11 @@ class SurfaceState:
             (scalar or per-column array).
         fluxes: A dataclass containing all surface fluxes.
         turbulence: A dataclass containing turbulence scales.
-
+        seb_residual: Final post-solve surface energy budget residual
+            ``Rn - H - LE - G`` [W/m^2], one per column. Diagnostic
+            for monitoring thermal drift over long integrations; the
+            magnitude reflects how cleanly the SEB closed at the
+            converged Obukhov length.
     """
     temperature: FloatOrArray = 0.0
     soil_top_temperature: FloatOrArray = 0.0
@@ -152,6 +155,8 @@ class SurfaceState:
     specific_humidity: FloatOrArray = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
+    seb_residual: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
 
 @dataclass
 class CanopyState:
@@ -425,17 +430,17 @@ class CanopyConfig:
             bare-skin behaviour where ``T_skin = T_soil_top``.
     """
     model: str = 'none'
-    lai: Any = 0.0
-    veg_fraction: Any = 0.0
-    rooting_depth: Any = 0.0
-    beta: Any = 0.965
-    rs_min: Any = 40.0
-    rs_max: Any = 5000.0
-    rg_half: Any = 100.0
-    vpd_coef: Any = 1.0e-4
-    t_opt: Any = 298.0
-    t_coef: Any = 1.6e-3
-    r_ground: Any = 0.0
+    lai: FloatOrArrayLike = 0.0
+    veg_fraction: FloatOrArrayLike = 0.0
+    rooting_depth: FloatOrArrayLike = 0.0
+    beta: FloatOrArrayLike = 0.965
+    rs_min: FloatOrArrayLike = 40.0
+    rs_max: FloatOrArrayLike = 5000.0
+    rg_half: FloatOrArrayLike = 100.0
+    vpd_coef: FloatOrArrayLike = 1.0e-4
+    t_opt: FloatOrArrayLike = 298.0
+    t_coef: FloatOrArrayLike = 1.6e-3
+    r_ground: FloatOrArrayLike = 0.0
 
 @dataclass(frozen=True)
 class OutputConfig:

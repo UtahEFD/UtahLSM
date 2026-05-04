@@ -25,19 +25,25 @@ Covers:
   partition reduces to pure bare-soil when f_veg == 0 or r_s is huge.
 """
 
+import logging
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
 import pytest
 from numpy.typing import NDArray
 
+from utahlsm.core import UtahLSM
 from utahlsm.data_models import (
     AtmosphericState,
+    CanopyState,
     CanopyConfig,
     SoilState,
     SurfaceState,
+    TurbulenceScales,
 )
 from utahlsm.exceptions import NamelistError
+from utahlsm.physics import thermo
 from utahlsm.physics.canopy.canopy import Canopy
 from utahlsm.physics.canopy.canopy_jarvis import CanopyJarvis
 from utahlsm.physics.canopy.factory import get_canopy_model
@@ -190,25 +196,25 @@ class TestJarvisStressFunctions:
     """Individual f1..f4 factors and their physical limits."""
 
     def test_f_radiation_night_zero(self, jarvis_single: CanopyJarvis) -> None:
-        f = jarvis_single._f_radiation(np.array([-50.0]))  # type: ignore[attr-defined]
+        f = jarvis_single._f_radiation(np.array([-50.0]))
         assert np.all(f == 0.0)
 
     def test_f_radiation_saturates(self, jarvis_single: CanopyJarvis) -> None:
-        f_low = jarvis_single._f_radiation(np.array([10.0]))  # type: ignore[attr-defined]
-        f_high = jarvis_single._f_radiation(np.array([2000.0]))  # type: ignore[attr-defined]
+        f_low = jarvis_single._f_radiation(np.array([10.0]))
+        f_high = jarvis_single._f_radiation(np.array([2000.0]))
         assert f_low[0] < f_high[0]
         assert f_high[0] < 1.0  # saturating form never reaches 1
         assert f_high[0] > 0.9
 
     def test_f_temperature_optimum(self, jarvis_single: CanopyJarvis) -> None:
         leaf_T = np.array([298.0])  # exactly t_opt
-        f = jarvis_single._f_temperature(leaf_T)  # type: ignore[attr-defined]
+        f = jarvis_single._f_temperature(leaf_T)
         assert np.isclose(f, 1.0)
 
     def test_f_temperature_cold_clip(self, jarvis_single: CanopyJarvis) -> None:
         # 50K below optimum drives the parabola negative → clipped to 0.
         leaf_T = np.array([248.0])
-        f = jarvis_single._f_temperature(leaf_T)  # type: ignore[attr-defined]
+        f = jarvis_single._f_temperature(leaf_T)
         assert f[0] == 0.0
 
     def test_f_vpd_saturated_air(self, jarvis_single: CanopyJarvis) -> None:
@@ -221,7 +227,7 @@ class TestJarvisStressFunctions:
             wind_speed=np.array([3.0]),
             sw_in=np.array([400.0]),
         )
-        f = jarvis_single._f_vpd(atm)  # type: ignore[attr-defined]
+        f = jarvis_single._f_vpd(atm)
         assert np.isclose(f, 1.0)
 
     def test_f_vpd_dry_air_reduces(self, jarvis_single: CanopyJarvis) -> None:
@@ -235,7 +241,7 @@ class TestJarvisStressFunctions:
             wind_speed=np.array([3.0]),
             sw_in=np.array([400.0]),
         )
-        f = jarvis_single._f_vpd(atm)  # type: ignore[attr-defined]
+        f = jarvis_single._f_vpd(atm)
         assert 0.0 < f[0] < 1.0
 
     def test_f_moisture_wilt_collapses(self, jarvis_single: CanopyJarvis) -> None:
@@ -243,7 +249,7 @@ class TestJarvisStressFunctions:
         theta = np.full(nz, 0.1)
         wilt = np.full(nz, 0.1)
         fc = np.full(nz, 0.3)
-        f = jarvis_single._f_moisture(theta, wilt, fc)  # type: ignore[attr-defined]
+        f = jarvis_single._f_moisture(theta, wilt, fc)
         assert np.isclose(f, 0.0)
 
     def test_f_moisture_above_fc_ones(self, jarvis_single: CanopyJarvis) -> None:
@@ -251,7 +257,7 @@ class TestJarvisStressFunctions:
         theta = np.full(nz, 0.45)
         wilt = np.full(nz, 0.1)
         fc = np.full(nz, 0.3)
-        f = jarvis_single._f_moisture(theta, wilt, fc)  # type: ignore[attr-defined]
+        f = jarvis_single._f_moisture(theta, wilt, fc)
         assert np.isclose(f, 1.0)
 
 
@@ -414,4 +420,105 @@ class TestFactory:
 class TestCanopyABC:
     def test_cannot_instantiate_directly(self, canopy_params_single: dict[str, Any]) -> None:
         with pytest.raises(TypeError):
-            Canopy(**canopy_params_single)  # type: ignore[abstract]
+            Canopy(**canopy_params_single)
+
+
+@pytest.mark.canopy
+class TestCanopyParameterShapes:
+    """Direct canopy construction still normalizes scalar column parameters."""
+
+    def test_direct_constructor_broadcasts_scalars_to_inferred_ncol(
+        self, canopy_params_3col: dict[str, Any]
+    ) -> None:
+        params = dict(canopy_params_3col)
+        params['veg_fraction'] = 0.5
+        params['r_ground'] = 3.0
+        params['rg_half'] = 40.0
+
+        canopy = CanopyJarvis(**params)
+
+        assert canopy.ncol == 3
+        assert canopy.veg_fraction.shape == (3,)
+        assert np.allclose(canopy.veg_fraction, 0.5)
+        assert canopy.r_ground.shape == (3,)
+        assert np.allclose(canopy.r_ground, 3.0)
+        assert canopy.rg_half.shape == (3,)
+        assert np.allclose(canopy.rg_half, 40.0)
+
+    def test_direct_constructor_rejects_mismatched_column_sizes(
+        self, canopy_params_3col: dict[str, Any]
+    ) -> None:
+        params = dict(canopy_params_3col)
+        params['veg_fraction'] = np.array([0.2, 0.8])
+
+        with pytest.raises(ValueError, match='sizes disagree'):
+            CanopyJarvis(**params)
+
+
+@pytest.mark.canopy
+def test_supersaturated_air_does_not_create_negative_root_uptake(
+    jarvis_single: CanopyJarvis,
+    z_layers: NDArray[np.float64],
+) -> None:
+    """Vegetation dew condensation must not be routed backward into roots."""
+    model = UtahLSM.__new__(UtahLSM)
+    model.logger = logging.getLogger("test")
+    model.ncol = 1
+    model.canopy = jarvis_single
+
+    sfc_T = np.array([280.0])
+    atm_p = np.array([101325.0])
+    q_sat_sfc = thermo.saturation_specific_humidity(sfc_T, atm_p)
+    atm_q = 1.2 * q_sat_sfc
+
+    model.atm_state = AtmosphericState(
+        wind_speed=np.array([3.0]),
+        temperature=np.array([280.0]),
+        specific_humidity=atm_q,
+        pressure=atm_p,
+        sw_in=np.array([300.0]),
+        radiation_net=np.array([100.0]),
+    )
+    model.sfc_state = SurfaceState(
+        temperature=sfc_T,
+        moisture=np.array([0.25]),
+        turbulence=TurbulenceScales(
+            friction_velocity=np.array([0.3]),
+            obukhov_length=np.array([100.0]),
+        ),
+    )
+    model.soil_state = SoilState(
+        temperature=np.full((z_layers.size, 1), 280.0),
+        moisture=np.full((z_layers.size, 1), 0.25),
+        type=np.array(["clay"] * z_layers.size, dtype=object)[:, None],
+    )
+    model.canopy_state = CanopyState(
+        resistance=np.array([100.0]),
+        theta_root=np.array([0.25]),
+        transpiration=np.zeros(1),
+        evap_soil=np.zeros(1),
+        latent_veg=np.zeros(1),
+        latent_soil=np.zeros(1),
+        root_uptake=np.zeros((z_layers.size, 1)),
+    )
+    model.input = SimpleNamespace(
+        surface=SimpleNamespace(z_s=2.0, z_t=0.01),
+        grid=SimpleNamespace(nz=z_layers.size, z=z_layers),
+    )
+    model.sfc = SimpleNamespace(
+        fh=lambda _z_s, _z_t, L: np.full_like(L, 0.1),
+    )
+    model.soil = SimpleNamespace(
+        surface_specific_humidity=lambda _T, _q, _p: atm_q,
+    )
+
+    flux = model._partition_flux_wq(
+        sfc_T, atm_q, atm_q, atm_p, np.array([0.3]), np.array([0.1])
+    )
+    model._finalize_canopy_partition()
+
+    assert np.allclose(flux, 0.0)
+    assert np.allclose(model.canopy_state.transpiration, 0.0)
+    assert np.allclose(model.canopy_state.latent_veg, 0.0)
+    assert np.all(model.canopy_state.root_uptake >= 0.0)
+    assert np.allclose(model.canopy_state.root_uptake, 0.0)

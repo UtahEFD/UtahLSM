@@ -23,10 +23,11 @@ through the simulation in time.
 
 import logging
 from dataclasses import replace
-from typing import Callable, Optional
+from typing import Callable, Literal, Optional, cast
 
 import numpy as np
 
+from ._types import FloatOrArray
 from .data_models import (
     AtmosphericState,
     CanopyState,
@@ -35,7 +36,6 @@ from .data_models import (
     SurfaceState,
 )
 from .exceptions import NamelistError, SolverError
-from ._types import FloatOrArray
 from .physics import Canopy, Radiation, Soil, Surface, thermo
 from .physics.canopy.factory import get_canopy_model
 from .physics.radiation.factory import get_radiation_model
@@ -72,6 +72,14 @@ class UtahLSM:
             current model configuration.
         output_fields: A dictionary of fields selected for normal output.
     """
+
+    # Class-level annotations for attributes set inside helper methods
+    # called from __init__; they let mypy resolve the type when these
+    # attributes are read in update()/save() before mypy has traced the
+    # helper.
+    _did_warm_start_turbulence: bool
+    output_fields: dict[str, np.ndarray]
+
     def __init__(self, input_lsm: Input, output_lsm: Output) -> None:
         """Initializes the UtahLSM model.
 
@@ -148,7 +156,7 @@ class UtahLSM:
         self.logger.info('Solving soil state')
 
         if (self.input.numerics.warm_start_turbulence
-            and not getattr(self, "_did_warm_start_turbulence", False)
+            and not self._did_warm_start_turbulence
         ):
             self._warm_start_turbulence()
             self._did_warm_start_turbulence = True
@@ -202,6 +210,7 @@ class UtahLSM:
         self.sfc_state.fluxes.ground_heat = np.zeros(self.ncol)
         self.sfc_state.turbulence.friction_velocity = np.zeros(self.ncol)
         self.sfc_state.turbulence.obukhov_length = np.full(self.ncol, 1e6)
+        self.sfc_state.seb_residual = np.zeros(self.ncol)
 
         self.atm_state: AtmosphericState = AtmosphericState()
         self.atm_state.wind_speed = np.zeros(self.ncol)
@@ -221,7 +230,7 @@ class UtahLSM:
         self.solver_state.diffusion_f = np.zeros((nz_diff, self.ncol))
         self.solver_state.diffusion_g = np.zeros((nz_diff, self.ncol))
         self.solver_state.diffusion_r = np.zeros((nz_diff, self.ncol))
-        self._did_warm_start_turbulence: bool = False
+        self._did_warm_start_turbulence = False
 
         # Canopy defaults to bare-soil until _setup_physics instantiates
         # a concrete model from the namelist. Stubbing it here keeps
@@ -258,7 +267,7 @@ class UtahLSM:
             if data.shape == (nz, ncol):
                 return data
             if data.shape == (nz, 1):
-                return np.repeat(data, ncol, axis=1) if ncol > 1 else data
+                return np.broadcast_to(data, (nz, ncol)) if ncol > 1 else data
             raise ValueError(
                 f"{name} shape {data.shape} does not match (nz, ncol)=({nz}, "
                 f"{ncol})."
@@ -273,6 +282,26 @@ class UtahLSM:
         raise ValueError(
             f"{name} has unsupported dimensions: {data.ndim}."
         )
+
+    def _ensure_writable_soil_field(
+        self, field_name: Literal["temperature", "moisture"]
+    ) -> np.ndarray:
+        """Returns a writable soil state field, copying broadcast views lazily."""
+        if field_name == "temperature":
+            field = self.soil_state.temperature
+            output_name = "soil_T"
+        else:
+            field = self.soil_state.moisture
+            output_name = "soil_q"
+        if not field.flags.writeable:
+            field = np.array(field, copy=True)
+            if field_name == "temperature":
+                self.soil_state.temperature = field
+            else:
+                self.soil_state.moisture = field
+            if hasattr(self, "output_fields"):
+                self.output_fields[output_name] = field
+        return field
 
     def _as_column_vector(self, value: object, name: str) -> np.ndarray:
         """Coerces scalars or (y, x) fields into (ncol,) arrays."""
@@ -370,7 +399,7 @@ class UtahLSM:
                 self.input.soil_properties_name
             )
             self.sfc: Surface = get_surface_model(self.input.surface)
-            self.canopy: Optional[Canopy] = get_canopy_model(
+            self.canopy = get_canopy_model(
                 self.input.canopy, self.input.grid.z, self.ncol
             )
         except NamelistError as e:
@@ -417,6 +446,7 @@ class UtahLSM:
             self._solve_seb()
             # The top soil cell holds the soil-top temperature, which
             # equals the radiative skin only when r_canopy_thermal = 0.
+            self._ensure_writable_soil_field("temperature")
             self.soil_state.temperature[0] = self.sfc_state.soil_top_temperature
 
             if self.output.outfile is not None:
@@ -443,6 +473,7 @@ class UtahLSM:
             'shf': self.sfc_state.fluxes.sensible_heat,
             'lhf': self.sfc_state.fluxes.latent_heat,
             'ghf': self.sfc_state.fluxes.ground_heat,
+            'seb_res': self.sfc_state.seb_residual,
             'soil_z': self.input.grid.z,
             'soil_T': self.soil_state.temperature,
             'soil_q': self.soil_state.moisture,
@@ -591,7 +622,7 @@ class UtahLSM:
         """
         canopy = getattr(self, 'canopy', None)
         if canopy is None:
-            return (gnd_q - atm_q) * ustar * fh
+            return cast(np.ndarray, (gnd_q - atm_q) * ustar * fh)
 
         if cols is not None:
             f_veg = canopy.veg_fraction[cols]
@@ -606,7 +637,8 @@ class UtahLSM:
         # 1/(ra + rs) normalized: flux = f_veg·(q_sat - q_a)·u_fh/(1 + u_fh·r_s)
         denom = 1.0 + u_fh * r_s
         t_veg = f_veg * (q_sat - atm_q) * u_fh / denom
-        return e_soil + t_veg
+        t_veg = np.maximum(0.0, t_veg)
+        return cast(np.ndarray, e_soil + t_veg)
 
     def _finalize_canopy_partition(self) -> None:
         """Splits the converged total LH into soil and canopy components.
@@ -652,6 +684,7 @@ class UtahLSM:
 
         E_soil_kin = (1.0 - f_veg) * (gnd_q - atm_q) * u_fh
         T_veg_kin = f_veg * (q_sat - atm_q) * u_fh / (1.0 + u_fh * r_s)
+        T_veg_kin = np.maximum(0.0, T_veg_kin)
 
         E_soil_mass = rho_a * E_soil_kin          # [kg/m^2/s]
         T_veg_mass = rho_a * T_veg_kin            # [kg/m^2/s]
@@ -696,10 +729,12 @@ class UtahLSM:
         # Keep the initial Obukhov length fixed during root-finding
         initial_L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
 
-        # Create vectorized brackets around current temperatures
+        # Create vectorized brackets around current temperatures. Keep trial
+        # temperatures physically valid for thermodynamic helper functions.
         current_T: np.ndarray = np.array(self.sfc_state.temperature, copy=True)
         bracket_width = 1.0
-        temp_a: np.ndarray = current_T - bracket_width
+        min_sfc_temp = 100.0
+        temp_a: np.ndarray = np.maximum(current_T - bracket_width, min_sfc_temp)
         temp_b: np.ndarray = current_T + bracket_width
 
         seb_a = self._compute_seb_vec(temp_a, initial_L)
@@ -715,7 +750,9 @@ class UtahLSM:
             expand_left = needs_expansion & (np.abs(seb_a) < np.abs(seb_b))
             expand_right = needs_expansion & ~expand_left
 
-            temp_a = np.where(expand_left, temp_a - step, temp_a)
+            temp_a = np.where(
+                expand_left, np.maximum(temp_a - step, min_sfc_temp), temp_a
+            )
             temp_b = np.where(expand_right, temp_b + step, temp_b)
 
             # Only recompute SEB for columns that changed
@@ -754,6 +791,16 @@ class UtahLSM:
 
         # Final flux update with resolved temperatures (vectorized, once)
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
+
+        # Diagnostic SEB residual at the converged Obukhov length.
+        # Should be ~ tol_root in magnitude; sustained drift over long
+        # integrations indicates a tolerance or coupling problem.
+        self.sfc_state.seb_residual = (
+            np.asarray(self.atm_state.radiation_net)
+            - self.sfc_state.fluxes.ground_heat
+            - self.sfc_state.fluxes.sensible_heat
+            - self.sfc_state.fluxes.latent_heat
+        )
 
     def _solve_most(
         self,
@@ -1255,14 +1302,17 @@ class UtahLSM:
         cf_m = theta_f * cm
         cf = 1.0 - cf_p - cf_m
 
-        # Assign coefficients to tridiagonal matrix arrays
-        e[j] = cb_p - cb_m
-        f[j] = cb + 2.0 * cb_m
+        # Assign coefficients to tridiagonal matrix arrays.  The bottom
+        # Neumann condition uses the symmetric ghost node
+        # field[nz] = field[nz - 2], so the missing lower coefficient folds
+        # into the sub-diagonal coupling to the layer above.
+        e[j] = cb_p + cb_m
+        f[j] = cb
 
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
-        r[j] = ((cf_p - cf_m) * field[j] +
-                (cf + 2.0 * cf_m) * field[j + 1])
+        r[j] = ((cf_p + cf_m) * field[j] +
+                cf * field[j + 1])
 
         # Apply optional per-layer source (e.g. root-uptake sink) for
         # layers 1..nz-1. source_term has shape (nz, ncol); r is
@@ -1296,6 +1346,7 @@ class UtahLSM:
         resistance the two are identical, recovering the original
         bare-skin behaviour.
         """
+        self._ensure_writable_soil_field("temperature")
         self._solve_diffusion(
             state_field=self.soil_state.temperature,
             get_diffusivity=self.soil.diffusivity_thermal,
@@ -1319,6 +1370,7 @@ class UtahLSM:
         if nz < 2:
             raise ValueError('Mixed-form moisture solve requires nz >= 2.')
 
+        self._ensure_writable_soil_field("moisture")
         moisture = np.asarray(self.soil_state.moisture, dtype=float)
         squeeze = False
         if moisture.ndim == 1:

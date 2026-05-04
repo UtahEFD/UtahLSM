@@ -33,16 +33,16 @@ def write_2x2_case(single_case: Path, multi_case: Path) -> None:
         dst.createDimension("x", 2)
 
         soil_z = np.asarray(src.variables["soil_z"][:], dtype=float)
-        dst.createVariable("soil_z", "f8", ("z",))[:] = soil_z  # type: ignore[assignment]
+        dst.createVariable("soil_z", "f8", ("z",))[:] = soil_z
 
         for name in ("soil_T", "soil_q"):
             data = np.asarray(src.variables[name][:], dtype=float)
             tiled = np.broadcast_to(data[:, None, None], (nz, 2, 2))
-            dst.createVariable(name, "f8", ("z", "y", "x"))[:] = tiled  # type: ignore[assignment]
+            dst.createVariable(name, "f8", ("z", "y", "x"))[:] = tiled
 
         soil_type = np.asarray(src.variables["soil_type"][:], dtype=object)
         tiled_type = np.broadcast_to(soil_type[:, None, None], (nz, 2, 2))
-        dst.createVariable("soil_type", str, ("z", "y", "x"))[:] = tiled_type  # type: ignore[assignment]
+        dst.createVariable("soil_type", str, ("z", "y", "x"))[:] = tiled_type
 
     with (
         nc.Dataset(single_case / "lsm_offline.nc") as src,
@@ -55,13 +55,13 @@ def write_2x2_case(single_case: Path, multi_case: Path) -> None:
         dst.createDimension("scalar", 1)
 
         tstep = float(np.asarray(src.variables["tstep"][:], dtype=float))
-        dst.createVariable("tstep", "f8", ("scalar",))[:] = [tstep]  # type: ignore[assignment]
+        dst.createVariable("tstep", "f8", ("scalar",))[:] = [tstep]
 
         for name in ("atm_U", "atm_T", "atm_q", "atm_p",
                      "sw_in", "sw_out", "lw_in", "lw_out"):
             data = np.asarray(src.variables[name][:], dtype=float)
             tiled = np.broadcast_to(data[:, None, None], (ntime, 2, 2))
-            dst.createVariable(name, "f8", ("t", "y", "x"))[:] = tiled  # type: ignore[assignment]
+            dst.createVariable(name, "f8", ("t", "y", "x"))[:] = tiled
 
 
 def run_case(case_dir: Path, outfile: Path) -> None:

@@ -184,19 +184,19 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
             s = float(b - fb * (b - a) / (fb - fa))
 
         # Condition 1: Is the new point outside the desired range?
-        cond1: bool = bool((s < (3 * a + b) / 4.0) or (s > b))  # type: ignore[arg-type]
+        cond1: bool = bool((s < (3 * a + b) / 4.0) or (s > b))
         # Condition 2: Is the step not decreasing fast enough
         # (bisection was last step)?
-        cond2: bool = bool(mflag and (abs(s - b) >= abs(b - c) / 2.0))  # type: ignore[arg-type]
+        cond2: bool = bool(mflag and (abs(s - b) >= abs(b - c) / 2.0))
         # Condition 3: Is the step not decreasing fast enough
         # (interpolation was last step)?
-        cond3: bool = bool((not mflag) and (abs(s - b) >= abs(c - d) / 2.0))  # type: ignore[arg-type]
+        cond3: bool = bool((not mflag) and (abs(s - b) >= abs(c - d) / 2.0))
         # Condition 4: Is the bracket shrinking too slowly
         # (bisection was last step)?
-        cond4: bool = bool(mflag and (abs(b - c) < tol))  # type: ignore[arg-type]
+        cond4: bool = bool(mflag and (abs(b - c) < tol))
         # Condition 5: Is the bracket shrinking too slowly
         # (interpolation was last step)?
-        cond5: bool = bool((not mflag) and (abs(c - d) < tol))  # type: ignore[arg-type]
+        cond5: bool = bool((not mflag) and (abs(c - d) < tol))
 
         if cond1 or cond2 or cond3 or cond4 or cond5:
             # Fallback to bisection
@@ -298,7 +298,7 @@ def root_brent_vec(
     fc = fa.copy()
     d = a.copy()
 
-    mflag = np.ones(n, dtype=bool)
+    mflag: np.ndarray = np.ones(n, dtype=bool)
     converged = np.abs(b - a) < tol
 
     for _ in range(iter_max):

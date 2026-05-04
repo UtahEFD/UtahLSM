@@ -135,7 +135,7 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
         ust_o = _nan_fill(ods.variables["UST"][sl])
         t_obs_sl = t_obs[sl]
 
-    fig, axes = plt.subplots(4, 1, figsize=(10, 11), sharex=True, squeeze=True)  # type: ignore[var-annotated]
+    fig, axes = plt.subplots(4, 1, figsize=(10, 11), sharex=True, squeeze=True)
 
     partition = None
     if lhf_soil_m is not None and lhf_veg_m is not None:
@@ -154,17 +154,17 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
     axes[-1].set_xlabel("Time (UTC)")
     axes[-1].xaxis.set_major_locator(mdates.HourLocator(interval=1))
     axes[-1].xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H%M"))
-    fig.suptitle(f"GABLS3: UtahLSM vs Cabauw observations\n"  # type: ignore[misc]
+    fig.suptitle(f"GABLS3: UtahLSM vs Cabauw observations\n"
                  f"model: {model_path.name}   obs: {obs_path.name}",
                  fontsize=11)
     fig.autofmt_xdate()
     fig.tight_layout(rect=(0, 0, 1, 0.96))
 
     if out_path is not None:
-        fig.savefig(out_path, dpi=150)  # type: ignore[misc]
+        fig.savefig(out_path, dpi=150)
         print(f"Saved figure → {out_path}")
     if show:
-        plt.show()  # type: ignore[misc]
+        plt.show()
     plt.close(fig)
 
     # Headline stats (overlap window).
@@ -173,19 +173,19 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
             print(f"  {label:>8}: not in model output")
             return
         # Nearest-neighbor interpolate model onto obs times for bias/RMSE.
-        mi: np.ndarray = np.interp(  # type: ignore[assignment]
-            (t_o - t_o[0]).astype("timedelta64[s]").astype(float),  # type: ignore[misc]
-            (t_m - t_o[0]).astype("timedelta64[s]").astype(float),  # type: ignore[misc]
+        mi: np.ndarray = np.interp(
+            (t_o - t_o[0]).astype("timedelta64[s]").astype(float),
+            (t_m - t_o[0]).astype("timedelta64[s]").astype(float),
             m,
         )
-        diff_raw: np.ndarray = np.asarray(mi - o)  # type: ignore[arg-type]
-        diff: np.ndarray = np.asarray(diff_raw[np.isfinite(diff_raw)])  # type: ignore[arg-type]
+        diff_raw: np.ndarray = np.asarray(mi - o)
+        diff: np.ndarray = np.asarray(diff_raw[np.isfinite(diff_raw)])
         if diff.size == 0:
             print(f"  {label:>8}: no overlap")
             return
         print(f"  {label:>8}: bias={diff.mean():+7.2f}  "
               f"rmse={np.sqrt((diff**2).mean()):6.2f}  "
-              f"peak obs={np.nanmax(o):7.2f}  peak model={np.nanmax(np.asarray(mi)):7.2f}")  # type: ignore[arg-type]
+              f"peak obs={np.nanmax(o):7.2f}  peak model={np.nanmax(np.asarray(mi)):7.2f}")
 
     print("\nSummary (overlap window only):")
     _stats("H", shf_m, shf_o, t_model, t_obs_sl)

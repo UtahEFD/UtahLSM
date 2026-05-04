@@ -47,7 +47,7 @@ from utahlsm.data_models import (
 class TestAtmosphericState:
     """Tests for atmospheric state dataclass."""
 
-    def test_initialization_default_values(self):
+    def test_initialization_default_values(self) -> None:
         """Test that AtmosphericState initializes with default values."""
         atm = AtmosphericState()
 
@@ -61,7 +61,7 @@ class TestAtmosphericState:
         assert atm.lw_out == 0.0
         assert atm.radiation_net == 0.0
 
-    def test_initialization_with_values(self):
+    def test_initialization_with_values(self) -> None:
         """Test AtmosphericState initialization with custom values."""
         atm = AtmosphericState(
             wind_speed=5.0,
@@ -86,7 +86,7 @@ class TestAtmosphericState:
             assert 200.0 <= atm.temperature <= 330.0, \
                 f"Temperature {atm.temperature} K out of reasonable range"
 
-    def test_physical_constraints(self):
+    def test_physical_constraints(self) -> None:
         """Test physical constraint checking for atmospheric state."""
         atm = AtmosphericState(
             wind_speed=0.0,      # Zero wind is valid
@@ -114,15 +114,25 @@ class TestAtmosphericState:
 class TestSoilState:
     """Tests for soil state dataclass."""
 
-    def test_initialization_default_arrays(self):
+    def test_initialization_default_arrays(self) -> None:
         """Test that SoilState initializes with empty arrays."""
         soil = SoilState()
 
         assert isinstance(soil.temperature, np.ndarray)
         assert isinstance(soil.moisture, np.ndarray)
         assert isinstance(soil.type, np.ndarray)
+        assert soil.type.dtype == object
 
-    def test_initialization_with_arrays(self):
+    def test_default_soil_type_array_does_not_truncate_strings(self) -> None:
+        """Test default soil type array can be resized without truncation."""
+        soil = SoilState()
+
+        soil.type = np.resize(soil.type, 1)
+        soil.type[0] = 'clay'
+
+        assert soil.type[0] == 'clay'
+
+    def test_initialization_with_arrays(self) -> None:
         """Test SoilState initialization with custom arrays."""
         temp = np.array([293.15, 290.0, 285.0])
         mois = np.array([0.3, 0.25, 0.2])
@@ -158,7 +168,7 @@ class TestSoilState:
         assert np.all(soil_state_simple.moisture >= 0.0)
         assert np.all(soil_state_simple.moisture <= 1.0)
 
-    def test_soil_type_tracking(self):
+    def test_soil_type_tracking(self) -> None:
         """Test that soil types are properly stored."""
         types = np.array(['sand', 'clay', 'loam', 'sand', 'clay'], dtype=str)
         soil = SoilState(
@@ -180,14 +190,14 @@ class TestSoilState:
 class TestSurfaceFluxes:
     """Tests for surface fluxes dataclass."""
 
-    def test_initialization_default_arrays(self):
+    def test_initialization_default_arrays(self) -> None:
         """Test SurfaceFluxes default initialization."""
         fluxes = SurfaceFluxes()
 
         assert isinstance(fluxes.kinematic_heat, np.ndarray)
         assert len(fluxes.kinematic_heat) == 1
 
-    def test_flux_vector_shapes(self):
+    def test_flux_vector_shapes(self) -> None:
         """Test that flux vectors have consistent shapes."""
         fluxes = SurfaceFluxes(
             kinematic_heat=np.array([0.01]),
@@ -222,7 +232,7 @@ class TestSurfaceFluxes:
 class TestTurbulenceScales:
     """Tests for turbulence scales dataclass."""
 
-    def test_initialization_default_arrays(self):
+    def test_initialization_default_arrays(self) -> None:
         """Test TurbulenceScales default initialization."""
         turb = TurbulenceScales()
 
@@ -337,7 +347,7 @@ class TestDataclassImmutability:
     configuration and state, ensuring data integrity.
     """
 
-    def test_atmospheric_state_frozen(self):
+    def test_atmospheric_state_frozen(self) -> None:
         """Test that AtmosphericState is frozen."""
         atm = AtmosphericState(wind_speed=5.0)
 
@@ -368,7 +378,7 @@ class TestDataclassImmutability:
 class TestStateConstraints:
     """Tests for physical constraints on state values."""
 
-    def test_temperature_continuity(self):
+    def test_temperature_continuity(self) -> None:
         """Test that temperature profiles are continuous.
 
         There should be no huge jumps between adjacent soil layers.
@@ -384,7 +394,7 @@ class TestStateConstraints:
         assert np.all(temp_diff < 10.0), \
             "Unrealistic temperature jumps between layers"
 
-    def test_moisture_bounds(self):
+    def test_moisture_bounds(self) -> None:
         """Test that moisture stays within [0, 1]."""
         soil = SoilState(
             temperature=np.full(5, 293.15),

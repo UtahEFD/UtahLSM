@@ -30,11 +30,12 @@ Design axioms (see CLAUDE.md / design discussion):
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import numpy as np
 from numpy.typing import NDArray
 
+from ..._types import FloatOrArrayLike
 from ...data_models import AtmosphericState, SoilState, SurfaceState
 from ...util.io import logging_helper
 
@@ -99,18 +100,72 @@ class Canopy(ABC):
                 non-positive with `z[0] = 0` at the surface.
         """
         self.logger: logging.Logger = logging_helper.get_logger('CANOPY')
-        self.lai = np.asarray(lai, dtype=float)
-        self.veg_fraction = np.asarray(veg_fraction, dtype=float)
-        self.rooting_depth = np.asarray(rooting_depth, dtype=float)
-        self.beta = np.asarray(beta, dtype=float)
-        self.rs_min = np.asarray(rs_min, dtype=float)
-        self.rs_max = np.asarray(rs_max, dtype=float)
-        self.r_ground = np.asarray(r_ground, dtype=float)
+        ncol = self._infer_column_count(
+            {
+                'lai': lai,
+                'veg_fraction': veg_fraction,
+                'rooting_depth': rooting_depth,
+                'beta': beta,
+                'rs_min': rs_min,
+                'rs_max': rs_max,
+                'r_ground': r_ground,
+            }
+        )
+        self.ncol = ncol
+        self.lai = self._as_column_param('lai', lai, ncol)
+        self.veg_fraction = self._as_column_param(
+            'veg_fraction', veg_fraction, ncol
+        )
+        self.rooting_depth = self._as_column_param(
+            'rooting_depth', rooting_depth, ncol
+        )
+        self.beta = self._as_column_param('beta', beta, ncol)
+        self.rs_min = self._as_column_param('rs_min', rs_min, ncol)
+        self.rs_max = self._as_column_param('rs_max', rs_max, ncol)
+        self.r_ground = self._as_column_param('r_ground', r_ground, ncol)
         self.z = np.asarray(z, dtype=float)
 
         self.root_fraction: NDArray[np.float64] = self._build_root_profile()
 
     # --- Shared utilities ---
+
+    @staticmethod
+    def _infer_column_count(params: dict[str, FloatOrArrayLike]) -> int:
+        """Infers the common column count from scalar-or-column parameters."""
+        sizes: dict[str, int] = {}
+        for name, value in params.items():
+            arr = np.asarray(value, dtype=float)
+            if arr.ndim > 0 and arr.size != 1:
+                sizes[name] = arr.size
+        unique_sizes = set(sizes.values())
+        if len(unique_sizes) > 1:
+            detail = ', '.join(
+                f"{name}={size}" for name, size in sorted(sizes.items())
+            )
+            raise ValueError(
+                "Canopy per-column parameter sizes disagree: "
+                f"{detail}."
+            )
+        return unique_sizes.pop() if unique_sizes else 1
+
+    @staticmethod
+    def _as_column_param(
+        name: str,
+        value: FloatOrArrayLike,
+        ncol: int,
+    ) -> NDArray[np.float64]:
+        """Returns a scalar-or-column canopy parameter as shape ``(ncol,)``."""
+        arr = np.asarray(value, dtype=float)
+        if arr.ndim == 0:
+            return np.full(ncol, float(arr))
+        if arr.size == ncol:
+            return cast(NDArray[np.float64], arr.reshape(ncol))
+        if arr.size == 1:
+            return np.full(ncol, float(arr.flat[0]))
+        raise ValueError(
+            f"Canopy parameter '{name}' has size {arr.size}; expected "
+            f"1 or ncol={ncol}."
+        )
 
     def _build_root_profile(self) -> NDArray[np.float64]:
         """Constructs the normalized per-layer root fraction.
@@ -127,7 +182,7 @@ class Canopy(ABC):
         # Layer interfaces: z is negative-downward with z[0]=0. Build
         # per-layer top/bottom depths (positive, metres).
         nz = self.z.size
-        ncol = self.lai.size
+        ncol = self.ncol
         d_top = np.zeros(nz)
         d_bot = np.zeros(nz)
         # Treat each soil node as owning the half-cells above/below it.
@@ -176,7 +231,8 @@ class Canopy(ABC):
         f = np.asarray(field)
         if f.ndim == 1:
             f = f[:, None]
-        return np.sum(self.root_fraction * f, axis=0)
+        return cast(
+            NDArray[np.float64], np.sum(self.root_fraction * f, axis=0))
 
     # --- Abstract interface ---
 

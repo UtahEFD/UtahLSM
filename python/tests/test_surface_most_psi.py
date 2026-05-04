@@ -5,7 +5,7 @@ import numpy as np
 from utahlsm.physics.surface.sfc_most import SurfaceMOST
 
 
-def test_default_stable_psi_matches_dyer_hicks():
+def test_default_stable_psi_matches_dyer_hicks() -> None:
     """Default stable ψ uses the legacy Dyer/Hicks linear form."""
     sfc = SurfaceMOST()
     zeta = np.array([0.0, 0.1, 0.5, 1.0, 5.0])
@@ -14,7 +14,7 @@ def test_default_stable_psi_matches_dyer_hicks():
     assert np.allclose(actual, expected)
 
 
-def test_beljaars_holtslag_1991_is_well_behaved_for_stable_zeta():
+def test_beljaars_holtslag_1991_is_well_behaved_for_stable_zeta() -> None:
     """BH91 stable ψ returns finite, non-positive values for zeta >= 0."""
     sfc = SurfaceMOST(psi_stable="beljaars-holtslag")
     zeta = np.array([0.0, 1e-6, 0.1, 1.0, 5.0, 20.0])
@@ -30,7 +30,7 @@ def test_beljaars_holtslag_1991_is_well_behaved_for_stable_zeta():
     assert psih[0] == 0.0
 
 
-def test_cheng_brutsaert_2005_is_well_behaved_for_stable_zeta():
+def test_cheng_brutsaert_2005_is_well_behaved_for_stable_zeta() -> None:
     """CB05 stable ψ returns finite, non-positive values for zeta >= 0."""
     sfc = SurfaceMOST(psi_stable="cheng-brutsaert")
     zeta = np.array([0.0, 1e-6, 0.1, 1.0, 5.0, 20.0])

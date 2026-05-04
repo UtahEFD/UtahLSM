@@ -13,9 +13,11 @@
 #
 """Shared type aliases for UtahLSM."""
 
+from collections.abc import Sequence
 from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
 
 FloatOrArray = Union[float, NDArray[np.float64]]
+FloatOrArrayLike = Union[float, Sequence[float], NDArray[np.float64]]

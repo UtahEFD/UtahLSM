@@ -23,6 +23,8 @@ temperature, or moisture factor collapses, ``r_s`` saturates at
 ``r_s,max`` (cuticular ceiling).
 """
 
+from typing import cast
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -86,10 +88,12 @@ class CanopyJarvis(Canopy):
             z=z,
         )
         self.logger.info('Using the Jarvis canopy model')
-        self.rg_half = np.asarray(rg_half, dtype=float)
-        self.vpd_coef = np.asarray(vpd_coef, dtype=float)
-        self.t_opt = np.asarray(t_opt, dtype=float)
-        self.t_coef = np.asarray(t_coef, dtype=float)
+        self.rg_half = self._as_column_param('rg_half', rg_half, self.ncol)
+        self.vpd_coef = self._as_column_param(
+            'vpd_coef', vpd_coef, self.ncol
+        )
+        self.t_opt = self._as_column_param('t_opt', t_opt, self.ncol)
+        self.t_coef = self._as_column_param('t_coef', t_coef, self.ncol)
 
     def compute_resistance(
         self,
@@ -119,7 +123,7 @@ class CanopyJarvis(Canopy):
         F = np.clip(f1 * f2 * f3 * f4, 1e-6, 1.0)
         lai_eff = np.maximum(self.lai, 1e-6)
         r_s = self.rs_min / (lai_eff * F)
-        return np.minimum(r_s, self.rs_max)
+        return cast(NDArray[np.float64], np.minimum(r_s, self.rs_max))
 
     # --- Stress functions ---
 
@@ -143,7 +147,7 @@ class CanopyJarvis(Canopy):
             Radiation stress factor in [0, 1] (ncol,).
         """
         R = np.maximum(np.asarray(sw_in, dtype=float), 0.0)
-        return R / (R + self.rg_half)
+        return cast(NDArray[np.float64], R / (R + self.rg_half))
 
     def _f_vpd(self, atm_state: AtmosphericState) -> NDArray[np.float64]:
         """f2(VPD) — atmospheric dryness stress.

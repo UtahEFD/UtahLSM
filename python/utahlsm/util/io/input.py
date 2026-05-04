@@ -22,7 +22,7 @@ access all setup information.
 import json
 import logging
 from importlib import resources
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import jsonschema
 import netCDF4 as nc
@@ -192,7 +192,7 @@ class Input:
                 namelist_data = json.load(f)
             jsonschema.validate(instance=namelist_data, schema=schema)
             self.logger.info('--- namelist validation successful')
-            return namelist_data
+            return cast(dict[str, Any], namelist_data)
         except (FileNotFoundError, json.JSONDecodeError,
                 jsonschema.ValidationError) as e:
             self.logger.error('--- namelist error: %s', e)
@@ -549,7 +549,7 @@ class Input:
             hard_failures = out_of_range & ~small_excursions
 
             if np.any(hard_failures):
-                bad_values: NDArray[np.float64] = data[hard_failures]  # type: ignore[assignment]
+                bad_values: NDArray[np.float64] = data[hard_failures]
                 sample_indices = np.flatnonzero(hard_failures)[:5].tolist()
                 raise ValueError(
                     f'Offline forcing {name} contains {bad_values.size} '
@@ -566,7 +566,7 @@ class Input:
                 'Clipping %d forcing entries for %s to [%f, %f] %s.',
                 num_clipped, name, lower, upper, units)
             data[small_excursions] = np.clip(
-                data[small_excursions], lower, upper)  # type: ignore[arg-type]
+                data[small_excursions], lower, upper)
             return True
 
         issues_found = False

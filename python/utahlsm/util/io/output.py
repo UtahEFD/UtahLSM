@@ -95,6 +95,11 @@ class Output:
             'long_name': 'ground heat flux',
             'units': 'W m-2'
         },
+        'seb_res': {
+            'dimension': ('t',),
+            'long_name': 'surface energy budget residual (Rn-H-LE-G)',
+            'units': 'W m-2'
+        },
         'r_s': {
             'dimension': ('t',),
             'long_name': 'bulk stomatal resistance',
@@ -172,7 +177,7 @@ class Output:
         if has_xy:
             self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
             self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
-            for field in ('ust', 'obl', 'shf', 'lhf', 'ghf',
+            for field in ('ust', 'obl', 'shf', 'lhf', 'ghf', 'seb_res',
                           'r_s', 'theta_root', 'lhf_soil', 'lhf_veg'):
                 self.attributes[field]['dimension'] = ('t', 'y', 'x')
 
@@ -194,7 +199,8 @@ class Output:
         dims = self.attributes['time']['dimension']
         name = self.attributes['time']['long_name']
         units = self.attributes['time']['units']
-        ncvar: nc.Variable = self.outfile.createVariable('time', 'f8', dims)  # type: ignore[assignment]
+        ncvar: nc.Variable[np.float64] = self.outfile.createVariable(
+            'time', 'f8', dims)
         ncvar.units = units
         ncvar.long_name = name
         self.fields_time['time'] = ncvar
@@ -204,7 +210,7 @@ class Output:
             dims  = self.attributes[field]['dimension']
             units = self.attributes[field]['units']
             name  = self.attributes[field]['long_name']
-            ncvar: nc.Variable = self.outfile.createVariable(field, 'f8', dims)  # type: ignore[assignment]
+            ncvar = self.outfile.createVariable(field, 'f8', dims)
             ncvar.units = units
             ncvar.long_name = name
             if 't' in dims:

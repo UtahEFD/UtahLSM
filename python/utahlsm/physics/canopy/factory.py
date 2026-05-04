@@ -18,7 +18,7 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from ..._types import FloatOrArray
+from ..._types import FloatOrArrayLike
 from ...data_models import CanopyConfig
 from ...exceptions import NamelistError
 from ...util.io import logging_helper
@@ -51,7 +51,7 @@ def get_canopy_model(
         return None
 
     # Helper to coerce a namelist scalar or sequence into (ncol,).
-    def as_col(name: str, value: FloatOrArray) -> NDArray[np.float64]:
+    def as_col(name: str, value: FloatOrArrayLike) -> NDArray[np.float64]:
         arr = np.asarray(value, dtype=float)
         if arr.ndim == 0:
             return np.full(ncol, float(arr))

@@ -198,7 +198,7 @@ class VanGenuchten(Soil):
         inner = 1 - (1 - Se_pow_inv_m)**m
         conductivity = K_sat * np.sqrt(Se) * inner**2
 
-        return conductivity
+        return cast(FloatOrArray, conductivity)
 
     def conductivity_gradient(
         self, soil_q: NDArray[np.float64]

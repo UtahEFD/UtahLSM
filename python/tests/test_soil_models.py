@@ -89,7 +89,7 @@ def soil_types_to_test(soil_props):
 class TestWaterPotential:
     """Tests for water potential calculations across soil models."""
 
-    def test_brookscorey_water_potential_monotonicity(self, soil_props, soil_types_to_test):
+    def test_brookscorey_water_potential_monotonicity(self, soil_props, soil_types_to_test) -> None:
         """Test that water potential is roughly monotonic with moisture.
 
         Physical principle: wetter soil should have less negative (higher) water potential.
@@ -117,7 +117,7 @@ class TestWaterPotential:
             assert psi[i] <= psi[i+1] + 1e-6, \
                 f"Water potential not monotonic at indices {i},{i+1}: {psi[i]}, {psi[i+1]}"
 
-    def test_campbell_water_potential_saturation(self, soil_props, soil_types_to_test):
+    def test_campbell_water_potential_saturation(self, soil_props, soil_types_to_test) -> None:
         """Test that water potential at saturation is near zero (or specified value).
 
         At saturation (theta = porosity), water potential should be at maximum
@@ -134,7 +134,7 @@ class TestWaterPotential:
         # Should be close to zero or slightly negative
         assert psi_sat < 0.1, f"Water potential at saturation should be near 0: {psi_sat}"
 
-    def test_vangenuchten_water_potential_residual(self, soil_props, soil_types_to_test):
+    def test_vangenuchten_water_potential_residual(self, soil_props, soil_types_to_test) -> None:
         """Test that water potential at residual moisture is very negative.
 
         At residual moisture, water is tightly bound to soil particles.
@@ -151,7 +151,7 @@ class TestWaterPotential:
         assert psi_res < -100.0, \
             f"Water potential at residual should be very negative: {psi_res}"
 
-    def test_water_potential_bounds(self, soil_props, soil_types_to_test):
+    def test_water_potential_bounds(self, soil_props, soil_types_to_test) -> None:
         """Test that water potential stays within physical bounds.
 
         For any moisture level, psi should remain between saturation and
@@ -169,7 +169,7 @@ class TestWaterPotential:
                 20
             )
 
-            for theta in theta_test:  # type: ignore[assignment]
+            for theta in theta_test:
                 psi = model.water_potential(theta, level=layer)
 
                 # Water potential should be reasonable (not inf, not nan)
@@ -180,7 +180,7 @@ class TestWaterPotential:
                 assert psi <= 1e-6, \
                     f"{ModelClass.__name__}: Significantly positive psi={psi} at theta={theta}"
 
-    def test_water_content_inverts_water_potential(self, soil_props, soil_types_to_test):
+    def test_water_content_inverts_water_potential(self, soil_props, soil_types_to_test) -> None:
         """Test that θ(ψ(θ)) recovers the original moisture value."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -201,7 +201,7 @@ class TestWaterPotential:
 
             assert_allclose(theta_back, theta_test, rtol=1e-5, atol=1e-6)
 
-    def test_moisture_capacity_positive(self, soil_props, soil_types_to_test):
+    def test_moisture_capacity_positive(self, soil_props, soil_types_to_test) -> None:
         """Test that dθ/dψ is finite and non-negative in the unsaturated range."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -233,7 +233,7 @@ class TestWaterPotential:
 class TestHydraulicConductivity:
     """Tests for hydraulic conductivity calculations."""
 
-    def test_conductivity_moisture_saturation(self, soil_props, soil_types_to_test):
+    def test_conductivity_moisture_saturation(self, soil_props, soil_types_to_test) -> None:
         """Test that conductivity at saturation equals K_sat.
 
         At saturation (theta = porosity), moisture conductivity should equal
@@ -253,7 +253,7 @@ class TestHydraulicConductivity:
             # Should match (with small tolerance for numerical issues)
             assert_allclose(K_at_sat, K_sat, rtol=0.01)
 
-    def test_conductivity_moisture_decreases_with_dryness(self, soil_props, soil_types_to_test):
+    def test_conductivity_moisture_decreases_with_dryness(self, soil_props, soil_types_to_test) -> None:
         """Test that conductivity increases as soil wets.
 
         Physical constraint: K(theta) is monotonically increasing with theta
@@ -277,7 +277,7 @@ class TestHydraulicConductivity:
                 assert K[i] <= K[i+1] * 1.01, \
                     f"{ModelClass.__name__}: K not monotonic at {i},{i+1}: {K[i]}, {K[i+1]}"
 
-    def test_conductivity_moisture_positive(self, soil_props, soil_types_to_test):
+    def test_conductivity_moisture_positive(self, soil_props, soil_types_to_test) -> None:
         """Test that moisture conductivity is non-negative."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -290,7 +290,7 @@ class TestHydraulicConductivity:
                 20
             )
 
-            for theta in theta_test:  # type: ignore[assignment]
+            for theta in theta_test:
                 K = model.conductivity_moisture(theta, level=layer)
 
                 # Should be non-negative (very small values near residual can be ~0)
@@ -308,7 +308,7 @@ class TestHydraulicConductivity:
 class TestThermalProperties:
     """Tests for thermal conductivity and diffusivity."""
 
-    def test_thermal_conductivity_positive(self, soil_props, soil_types_to_test):
+    def test_thermal_conductivity_positive(self, soil_props, soil_types_to_test) -> None:
         """Test that thermal conductivity is always positive."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -325,7 +325,7 @@ class TestThermalProperties:
             assert np.all(np.isfinite(K_th)), \
                 f"{ModelClass.__name__}: Non-finite K_th found"
 
-    def test_thermal_diffusivity_positive(self, soil_props, soil_types_to_test):
+    def test_thermal_diffusivity_positive(self, soil_props, soil_types_to_test) -> None:
         """Test that thermal diffusivity is always positive.
 
         Thermal diffusivity = K_th / (density * specific_heat)
@@ -345,7 +345,7 @@ class TestThermalProperties:
             assert np.all(np.isfinite(D_th)), \
                 f"{ModelClass.__name__}: Non-finite D_th found"
 
-    def test_moisture_diffusivity_valid(self, soil_props, soil_types_to_test):
+    def test_moisture_diffusivity_valid(self, soil_props, soil_types_to_test) -> None:
         """Test that moisture diffusivity returns valid values."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -370,7 +370,7 @@ class TestThermalProperties:
 class TestSoilParameterConstraints:
     """Tests for soil property bounds and physical consistency."""
 
-    def test_residual_less_than_porosity(self, soil_props, soil_types_to_test):
+    def test_residual_less_than_porosity(self, soil_props, soil_types_to_test) -> None:
         """Test that residual moisture < porosity for all layers."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -379,7 +379,7 @@ class TestSoilParameterConstraints:
             assert np.all(model.properties.residual < model.properties.porosity), \
                 f"{ModelClass.__name__}: Residual >= Porosity in some layers"
 
-    def test_porosity_in_physical_range(self, soil_props, soil_types_to_test):
+    def test_porosity_in_physical_range(self, soil_props, soil_types_to_test) -> None:
         """Test that porosity is between 0 and 1."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -388,7 +388,7 @@ class TestSoilParameterConstraints:
             assert np.all(model.properties.porosity > 0.0)
             assert np.all(model.properties.porosity < 1.0)
 
-    def test_saturated_conductivity_positive(self, soil_props, soil_types_to_test):
+    def test_saturated_conductivity_positive(self, soil_props, soil_types_to_test) -> None:
         """Test that K_sat is positive for all layers."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -397,7 +397,7 @@ class TestSoilParameterConstraints:
             assert np.all(model.properties.K_sat > 0.0), \
                 f"{ModelClass.__name__}: Non-positive K_sat"
 
-    def test_heat_capacity_positive(self, soil_props, soil_types_to_test):
+    def test_heat_capacity_positive(self, soil_props, soil_types_to_test) -> None:
         """Test that volumetric heat capacity is positive."""
         properties_dict, dataset_name = soil_props
         for ModelClass in [BrooksCorey, Campbell, VanGenuchten]:
@@ -415,7 +415,7 @@ class TestSoilParameterConstraints:
 class TestModelConsistency:
     """Tests for consistency across different soil models."""
 
-    def test_all_models_compute_same_layer_count(self, soil_props, soil_types_to_test):
+    def test_all_models_compute_same_layer_count(self, soil_props, soil_types_to_test) -> None:
         """Test that all models handle the same number of layers."""
         properties_dict, dataset_name = soil_props
         models = [
@@ -431,7 +431,7 @@ class TestModelConsistency:
             assert len(model.properties.residual) == nz_expected
             assert len(model.properties.K_sat) == nz_expected
 
-    def test_moisture_in_physical_bounds(self, soil_props, soil_types_to_test):
+    def test_moisture_in_physical_bounds(self, soil_props, soil_types_to_test) -> None:
         """Test that test moisture values stay in [residual, porosity] bounds."""
         properties_dict, dataset_name = soil_props
         model = BrooksCorey(properties_dict, soil_types_to_test, dataset_name)
@@ -444,7 +444,7 @@ class TestModelConsistency:
             5
         )
 
-        for theta in theta_test:  # type: ignore[assignment]
+        for theta in theta_test:
             assert theta >= model.properties.residual[layer] - 1e-10
             assert theta <= model.properties.porosity[layer] + 1e-10
 
@@ -457,7 +457,7 @@ class TestModelConsistency:
 class TestNumericalStability:
     """Tests for numerical stability near boundaries."""
 
-    def test_no_nan_near_saturation(self, soil_props, soil_types_to_test):
+    def test_no_nan_near_saturation(self, soil_props, soil_types_to_test) -> None:
         """Test that calculations don't produce NaN near saturation."""
         properties_dict, dataset_name = soil_props
         model = BrooksCorey(properties_dict, soil_types_to_test, dataset_name)
@@ -467,14 +467,14 @@ class TestNumericalStability:
         porosity = model.properties.porosity[layer]
         theta_near_sat = np.linspace(porosity * 0.95, porosity * 0.9999, 5)
 
-        for theta in theta_near_sat:  # type: ignore[assignment]
+        for theta in theta_near_sat:
             psi = model.water_potential(theta, level=layer)
             K = model.conductivity_moisture(theta, level=layer)
 
             assert np.isfinite(psi), "NaN in water potential near saturation"
             assert np.isfinite(K), "NaN in conductivity near saturation"
 
-    def test_no_inf_near_residual(self, soil_props, soil_types_to_test):
+    def test_no_inf_near_residual(self, soil_props, soil_types_to_test) -> None:
         """Test that calculations stay finite near residual moisture.
 
         Note: Some models may have singularities exactly at residual.
@@ -487,7 +487,7 @@ class TestNumericalStability:
         residual = model.properties.residual[layer]
         theta_near_res = np.linspace(residual * 1.1, residual * 1.5, 5)
 
-        for theta in theta_near_res:  # type: ignore[assignment]
+        for theta in theta_near_res:
             if theta > residual:  # Only test above residual
                 psi = model.water_potential(theta, level=layer)
                 assert np.isfinite(psi), "Inf/NaN in water potential near residual"
