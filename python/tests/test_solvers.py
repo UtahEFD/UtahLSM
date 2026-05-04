@@ -28,9 +28,12 @@ Testing Strategy:
 5. Test numerical stability and convergence
 """
 
+from typing import Any, Callable
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from numpy.typing import NDArray
 
 from utahlsm.util.solvers import root_brent, root_brent_vec, tridiagonal
 
@@ -78,7 +81,7 @@ class TestTridiagonal:
         expected = np.array([5.0/3.0, 2.0/3.0])
         assert_allclose(x, expected, rtol=1e-10)
 
-    def test_well_conditioned_system(self, create_tridiagonal_system):
+    def test_well_conditioned_system(self, create_tridiagonal_system: Any) -> None:
         """Test with well-conditioned tridiagonal system.
 
         A well-conditioned system has strong diagonal dominance,
@@ -90,7 +93,7 @@ class TestTridiagonal:
         # Should match expected solution closely
         assert_allclose(x, x_expected, rtol=1e-8)
 
-    def test_diagonal_dominant_system(self, create_tridiagonal_system):
+    def test_diagonal_dominant_system(self, create_tridiagonal_system: Any) -> None:
         """Test with diagonal-dominant system.
 
         System where |b[i]| > |a[i]| + |c[i]| for all i.
@@ -100,7 +103,7 @@ class TestTridiagonal:
 
         assert_allclose(x, x_expected, rtol=1e-7)
 
-    def test_ill_conditioned_system(self, create_tridiagonal_system):
+    def test_ill_conditioned_system(self, create_tridiagonal_system: Any) -> None:
         """Test with ill-conditioned system.
 
         System where diagonal dominance is weak. Still solvable
@@ -112,7 +115,7 @@ class TestTridiagonal:
         # Tolerance is looser for ill-conditioned systems
         assert_allclose(x, x_expected, rtol=1e-5)
 
-    def test_large_system(self, create_tridiagonal_system):
+    def test_large_system(self, create_tridiagonal_system: Any) -> None:
         """Test with larger system (100 elements).
 
         Ensures algorithm scales properly.
@@ -269,7 +272,7 @@ class TestTridiagonal:
         assert_allclose(x, x_expected, rtol=1e-8)
 
     @pytest.mark.parametrize("n", [5, 10, 20, 50])
-    def test_various_sizes(self, create_tridiagonal_system, n):
+    def test_various_sizes(self, create_tridiagonal_system: Any, n: int) -> None:
         """Parametrized test: verify solver works for various matrix sizes."""
         a, b, c, r, x_expected = create_tridiagonal_system(n, 'well-conditioned')
         x = tridiagonal(a, b, c, r)
@@ -291,7 +294,7 @@ class TestRootBrent:
 
         Linear functions should converge in very few iterations.
         """
-        f = lambda x: 2*x - 4
+        f: Callable[[float], float] = lambda x: 2*x - 4  # type: ignore[misc]
         root, converged = root_brent(f, 0.0, 4.0, tol=1e-6)
 
         assert converged, "Solver should converge for linear function"
@@ -303,25 +306,25 @@ class TestRootBrent:
         Root at x = 3 ± sqrt(1) = {2, 4}. We search in bracket [1, 3.5]
         which should find the root at x ≈ 2.
         """
-        f = lambda x: (x - 3)**2 - 1
+        f: Callable[[float], float] = lambda x: (x - 3)**2 - 1  # type: ignore[misc]
         root, converged = root_brent(f, 1.0, 3.5, tol=1e-6)
 
         assert converged
         # Root should be near 2
         assert 1.9 < root < 2.1
-        assert_allclose(f(root), 0.0, atol=1e-5)
+        assert_allclose(f(root), 0.0, atol=1e-5)  # type: ignore[arg-type]  # type: ignore[arg-type]
 
     def test_cubic_function(self):
         """Test with cubic: f(x) = (x-1)^3 - 8, root at x ≈ 3.
 
         (x-1)^3 = 8 => x - 1 = 2 => x = 3
         """
-        f = lambda x: (x - 1)**3 - 8
+        f: Callable[[float], float] = lambda x: (x - 1)**3 - 8  # type: ignore[misc]
         root, converged = root_brent(f, 2.0, 4.0, tol=1e-6)
 
         assert converged
         assert_allclose(root, 3.0, rtol=1e-5)
-        assert_allclose(f(root), 0.0, atol=1e-5)
+        assert_allclose(f(root), 0.0, atol=1e-5)  # type: ignore[arg-type]
 
     def test_sine_function(self):
         """Test with sine function: f(x) = sin(x), root at x = π.
@@ -329,7 +332,7 @@ class TestRootBrent:
         sin(x) has roots at multiples of π. Testing in [2, 4] should
         find the root near π ≈ 3.14159.
         """
-        f = lambda x: np.sin(x)
+        f: Callable[[float], Any] = lambda x: np.sin(x)  # type: ignore[misc]
         root, converged = root_brent(f, 2.0, 4.0, tol=1e-8)
 
         assert converged
@@ -341,20 +344,20 @@ class TestRootBrent:
 
         exp(x) = 5 => x = ln(5) ≈ 1.609
         """
-        f = lambda x: np.exp(x) - 5
+        f: Callable[[float], Any] = lambda x: np.exp(x) - 5  # type: ignore[misc]
         root, converged = root_brent(f, 0.0, 3.0, tol=1e-8)
 
         assert converged
         expected_root = np.log(5)
         assert_allclose(root, expected_root, rtol=1e-6)
-        assert_allclose(f(root), 0.0, atol=1e-7)
+        assert_allclose(f(root), 0.0, atol=1e-7)  # type: ignore[arg-type]
 
     def test_convergence_without_tolerance(self):
         """Test convergence criterion: bracket size < tolerance.
 
         As tolerance shrinks, solution should be more accurate.
         """
-        f = lambda x: x**2 - 2  # Root at sqrt(2)
+        f: Callable[[float], float] = lambda x: x**2 - 2  # Root at sqrt(2)  # type: ignore[misc]
         expected = np.sqrt(2)
 
         for tol in [1e-3, 1e-6, 1e-9]:
@@ -369,8 +372,8 @@ class TestRootBrent:
         With iter_max=2, the solver shouldn't converge on a difficult function.
         We use a steep function with narrow bracket.
         """
-        f = lambda x: (x - 1.5)**3 - 1  # Root at x ≈ 2.26
-        root, converged = root_brent(f, 1.0, 3.0, iter_max=2, tol=1e-10)
+        f: Callable[[float], float] = lambda x: (x - 1.5)**3 - 1  # Root at x ≈ 2.26  # type: ignore[misc]
+        _root, converged = root_brent(f, 1.0, 3.0, iter_max=2, tol=1e-10)
 
         # With only 2 iterations, convergence is unlikely with tight tolerance
         assert not converged
@@ -381,7 +384,7 @@ class TestRootBrent:
         Function must have different signs at bracket endpoints.
         f(x) = x^2 has no sign change in [1, 2] (always positive).
         """
-        f = lambda x: x**2  # Always non-negative
+        f: Callable[[float], float] = lambda x: x**2  # Always non-negative  # type: ignore[misc]
         with pytest.raises(ValueError, match="Root not bracketed"):
             root_brent(f, 1.0, 2.0, tol=1e-6)
 
@@ -390,7 +393,7 @@ class TestRootBrent:
 
         f(a) = 0 should be detected (though not ideal for numerical methods).
         """
-        f = lambda x: x - 2
+        f: Callable[[float], float] = lambda x: x - 2  # type: ignore[misc]
         # Bracket with root at left endpoint
         with pytest.raises(ValueError, match="Root not bracketed"):
             # f(2) = 0, f(3) > 0, so f(a)*f(b) = 0 (triggers error)
@@ -401,7 +404,7 @@ class TestRootBrent:
 
         These require careful bracketing but Brent's method is robust.
         """
-        f = lambda x: 100 * (x - 1.5)**3  # Very steep near x=1.5
+        f: Callable[[float], float] = lambda x: 100 * (x - 1.5)**3  # Very steep near x=1.5  # type: ignore[misc]
         root, converged = root_brent(f, 1.0, 2.0, tol=1e-6, iter_max=100)
 
         # Brent's method should still converge despite steep slope
@@ -423,7 +426,7 @@ class TestRootBrent:
         - At high temp (ts_norm=1, 325K): deficit (outgoing > net_rad)
         This guarantees a sign change and a root in [0, 1].
         """
-        def energy_balance(ts_normalized):
+        def energy_balance(ts_normalized: float) -> float:
             # Map normalized [0, 1] to physical temperature [275, 325 K]
             ts = 275.0 + 50.0 * ts_normalized
 
@@ -446,14 +449,14 @@ class TestRootBrent:
         root, converged = root_brent(energy_balance, 0.0, 1.0, tol=1e-6)
         assert converged, "Brent's method should converge for energy balance equation"
         assert 0.0 <= root <= 1.0, f"Root should be in bracket [0, 1], got {root}"
-        assert_allclose(energy_balance(root), 0.0, atol=1e-4)
+        assert_allclose(energy_balance(root), 0.0, atol=1e-4)  # type: ignore[arg-type]
 
     def test_large_bracket(self):
         """Test convergence with large initial bracket.
 
         Large brackets shouldn't prevent convergence, just cost more iterations.
         """
-        f = lambda x: x**3 - 1  # Root at x=1
+        f: Callable[[float], float] = lambda x: x**3 - 1  # Root at x=1  # type: ignore[misc]
         root, converged = root_brent(f, -100.0, 100.0, tol=1e-8, iter_max=200)
 
         assert converged
@@ -464,7 +467,7 @@ class TestRootBrent:
 
         f(x) = x has root at x = 0.
         """
-        f = lambda x: x
+        f: Callable[[float], float] = lambda x: x  # type: ignore[misc]
         root, converged = root_brent(f, -1.0, 1.0, tol=1e-8)
 
         assert converged
@@ -476,25 +479,25 @@ class TestRootBrent:
         f(x) = cos(x) has roots at π/2, 3π/2, 5π/2, ...
         Searching in [1, 2] should find root near π/2 ≈ 1.571
         """
-        f = lambda x: np.cos(x)
+        f: Callable[[float], Any] = lambda x: np.cos(x)  # type: ignore[misc]
         root, converged = root_brent(f, 1.0, 2.0, tol=1e-8)
 
         assert converged
         assert_allclose(root, np.pi/2, rtol=1e-6)
 
-    @pytest.mark.parametrize("func,bracket,expected", [
-        (lambda x: x - 1.5, [1.0, 2.0], 1.5),
-        (lambda x: 2*x - 3, [0.0, 2.0], 1.5),
-        (lambda x: (x-3)**2 - 4, [0.5, 2.5], 1.0),  # Root at x=1, bracket in (0.5, 2.5)
-        (lambda x: np.exp(x) - 2, [0.0, 1.0], np.log(2)),
+    @pytest.mark.parametrize("func,bracket,expected", [  # type: ignore[arg-type]
+        (lambda x: x - 1.5, [1.0, 2.0], 1.5),  # type: ignore[misc]
+        (lambda x: 2*x - 3, [0.0, 2.0], 1.5),  # type: ignore[misc]
+        (lambda x: (x-3)**2 - 4, [0.5, 2.5], 1.0),  # type: ignore[misc]
+        (lambda x: np.exp(x) - 2, [0.0, 1.0], np.log(2)),  # type: ignore[misc]
     ])
-    def test_various_functions(self, func, bracket, expected):
+    def test_various_functions(self, func: Any, bracket: Any, expected: Any) -> None:
         """Parametrized test: verify solver on various function types."""
         root, converged = root_brent(func, bracket[0], bracket[1], tol=1e-8)
 
         assert converged
         assert_allclose(root, expected, rtol=1e-5)
-        assert_allclose(func(root), 0.0, atol=1e-5)
+        assert_allclose(func(root), 0.0, atol=1e-5)  # type: ignore[arg-type]
 
     def test_convergence_is_monotonic(self):
         """Test that bracket size decreases monotonically.
@@ -502,7 +505,7 @@ class TestRootBrent:
         The root should be in a shrinking bracket with each iteration.
         This is guaranteed by Brent's algorithm, but we can verify behavior.
         """
-        f = lambda x: x**2 - 5  # Root at sqrt(5) ≈ 2.236
+        f: Callable[[float], float] = lambda x: x**2 - 5  # Root at sqrt(5) ≈ 2.236  # type: ignore[misc]
 
         # Use function to track bracket shrinkage
         root, converged = root_brent(f, 1.0, 3.0, tol=1e-8, iter_max=50)
@@ -521,14 +524,14 @@ class TestRootBrentVec:
         a = roots - 1.0
         b = roots + 1.0
 
-        def f(x):
+        def f(x: NDArray[Any]) -> NDArray[Any]:
             return x - roots
 
         root, converged = root_brent_vec(f, a, b, tol=1e-8)
 
         assert np.all(converged)
         assert_allclose(root, roots, rtol=1e-6, atol=1e-8)
-        assert_allclose(f(root), 0.0, atol=1e-8)
+        assert_allclose(f(root), 0.0, atol=1e-8)  # type: ignore[arg-type]
 
     def test_unbracketed_root_error(self):
         """Raise immediately when any entry is not properly bracketed."""
@@ -536,7 +539,7 @@ class TestRootBrentVec:
         a = np.array([0.0, 2.0, -1.75])
         b = np.array([3.0, 3.0, 0.25])
 
-        def f(x):
+        def f(x: NDArray[Any]) -> NDArray[Any]:
             return x - roots
 
         with pytest.raises(ValueError, match="Root not bracketed"):

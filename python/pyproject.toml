@@ -159,6 +159,10 @@ convention = "google"
 "tests/conftest.py" = ["E731", "RUF013", "D"]  # Lambda assignments in fixtures are acceptable, Optional defaults
 "utahlsm_offline.py" = ["D100"]  # Script entry point
 
+[tool.pyright]
+# matplotlib stubs use **kwargs: Unknown pervasively; suppress the noise.
+reportUnknownMemberType = "none"
+
 [tool.mypy]
 # Static type checking configuration
 python_version = "3.9"

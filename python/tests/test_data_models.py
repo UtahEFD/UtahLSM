@@ -31,8 +31,11 @@ from numpy.testing import assert_array_equal
 
 from utahlsm.data_models import (
     AtmosphericState,
+    GridConfig,
     SoilState,
+    SurfaceConfig,
     SurfaceFluxes,
+    SurfaceState,
     TurbulenceScales,
 )
 
@@ -74,7 +77,7 @@ class TestAtmosphericState:
         assert atm.pressure == 101325.0
         assert atm.radiation_net == 500.0
 
-    def test_reasonable_temperature_range(self, atm_neutral, atm_stable, atm_unstable):
+    def test_reasonable_temperature_range(self, atm_neutral: AtmosphericState, atm_stable: AtmosphericState, atm_unstable: AtmosphericState) -> None:
         """Test that fixture atmospheric states have reasonable temperatures.
 
         Temperatures should be in range [200 K, 330 K] (roughly -73°C to 57°C).
@@ -123,7 +126,7 @@ class TestSoilState:
         """Test SoilState initialization with custom arrays."""
         temp = np.array([293.15, 290.0, 285.0])
         mois = np.array([0.3, 0.25, 0.2])
-        soil_type = np.array(['clay', 'loam', 'sand'])
+        soil_type = np.array(['clay', 'loam', 'sand'], dtype=str)
 
         soil = SoilState(
             temperature=temp,
@@ -135,7 +138,7 @@ class TestSoilState:
         assert_array_equal(soil.moisture, mois)
         assert_array_equal(soil.type, soil_type)
 
-    def test_array_consistency(self, soil_state_simple):
+    def test_array_consistency(self, soil_state_simple: SoilState) -> None:
         """Test that soil state arrays have consistent dimensions."""
         nz = len(soil_state_simple.temperature)
 
@@ -144,20 +147,20 @@ class TestSoilState:
         assert len(soil_state_simple.type) == nz, \
             "Type array must match temperature array length"
 
-    def test_reasonable_temperature_values(self, soil_state_profile):
+    def test_reasonable_temperature_values(self, soil_state_profile: SoilState) -> None:
         """Test that soil temperatures are in reasonable range."""
         # Soil temperatures typically between 0 K and 350 K
         assert np.all(soil_state_profile.temperature > 250.0)
         assert np.all(soil_state_profile.temperature < 330.0)
 
-    def test_reasonable_moisture_values(self, soil_state_simple):
+    def test_reasonable_moisture_values(self, soil_state_simple: SoilState) -> None:
         """Test that soil moisture is between 0 and 1."""
         assert np.all(soil_state_simple.moisture >= 0.0)
         assert np.all(soil_state_simple.moisture <= 1.0)
 
     def test_soil_type_tracking(self):
         """Test that soil types are properly stored."""
-        types = np.array(['sand', 'clay', 'loam', 'sand', 'clay'])
+        types = np.array(['sand', 'clay', 'loam', 'sand', 'clay'], dtype=str)
         soil = SoilState(
             temperature=np.full(5, 293.15),
             moisture=np.full(5, 0.3),
@@ -201,7 +204,7 @@ class TestSurfaceFluxes:
         assert len(fluxes.latent_heat) == n_flux
         assert len(fluxes.ground_heat) == n_flux
 
-    def test_reasonable_flux_magnitudes(self, surface_state_base):
+    def test_reasonable_flux_magnitudes(self, surface_state_base: SurfaceState) -> None:
         """Test that fluxes are physically reasonable magnitudes."""
         fluxes = surface_state_base.fluxes
 
@@ -226,14 +229,14 @@ class TestTurbulenceScales:
         assert isinstance(turb.friction_velocity, np.ndarray)
         assert isinstance(turb.obukhov_length, np.ndarray)
 
-    def test_friction_velocity_positive(self, surface_state_base):
+    def test_friction_velocity_positive(self, surface_state_base: SurfaceState) -> None:
         """Test that friction velocity is non-negative."""
         u_star = surface_state_base.turbulence.friction_velocity
 
         assert np.all(u_star >= 0.0), \
             "Friction velocity must be non-negative"
 
-    def test_obukhov_length_is_finite(self, surface_state_base):
+    def test_obukhov_length_is_finite(self, surface_state_base: SurfaceState) -> None:
         """Test that Obukhov length is finite."""
         L_ob = surface_state_base.turbulence.obukhov_length
 
@@ -249,12 +252,12 @@ class TestTurbulenceScales:
 class TestSurfaceState:
     """Tests for surface state dataclass."""
 
-    def test_initialization_with_fluxes(self, surface_state_base):
+    def test_initialization_with_fluxes(self, surface_state_base: SurfaceState) -> None:
         """Test SurfaceState initialization with nested dataclasses."""
         assert isinstance(surface_state_base.fluxes, SurfaceFluxes)
         assert isinstance(surface_state_base.turbulence, TurbulenceScales)
 
-    def test_surface_temperature_reasonable(self, surface_state_base):
+    def test_surface_temperature_reasonable(self, surface_state_base: SurfaceState) -> None:
         """Test that surface temperature is in reasonable range."""
         # Surface temperature typically 250-330 K
         assert 250.0 <= surface_state_base.temperature <= 330.0
@@ -268,16 +271,16 @@ class TestSurfaceState:
 class TestGridConfig:
     """Tests for grid configuration dataclass."""
 
-    def test_initialization(self, grid_config_5layers):
+    def test_initialization(self, grid_config_5layers: GridConfig) -> None:
         """Test GridConfig initialization."""
         assert grid_config_5layers.nz == 5
         assert len(grid_config_5layers.z) == 5
 
-    def test_depth_positive(self, grid_config_5layers):
+    def test_depth_positive(self, grid_config_5layers: GridConfig) -> None:
         """Test that all depth values are positive."""
         assert np.all(grid_config_5layers.z > 0.0)
 
-    def test_depths_increasing(self, grid_config_10layers):
+    def test_depths_increasing(self, grid_config_10layers: GridConfig) -> None:
         """Test that layer depths increase with depth (geometric spacing)."""
         z = grid_config_10layers.z
 
@@ -285,7 +288,7 @@ class TestGridConfig:
         for i in range(1, len(z)):
             assert z[i] > z[i-1], f"Depths not monotonic: {z[i]} <= {z[i-1]}"
 
-    def test_nz_matches_arrays(self, grid_config_5layers):
+    def test_nz_matches_arrays(self, grid_config_5layers: GridConfig) -> None:
         """Test that nz matches array sizes."""
         assert grid_config_5layers.nz == len(grid_config_5layers.z)
 
@@ -298,12 +301,12 @@ class TestGridConfig:
 class TestSurfaceConfig:
     """Tests for surface configuration dataclass."""
 
-    def test_initialization(self, surface_config):
+    def test_initialization(self, surface_config: SurfaceConfig) -> None:
         """Test SurfaceConfig initialization."""
         assert surface_config.z_o > 0.0
         assert surface_config.z_t > 0.0
 
-    def test_roughness_scaling(self, surface_config):
+    def test_roughness_scaling(self, surface_config: SurfaceConfig) -> None:
         """Test that thermal roughness is smaller than momentum roughness.
 
         Typically: z_t < z_o (heat exchange is more efficient than momentum).
@@ -311,12 +314,12 @@ class TestSurfaceConfig:
         assert surface_config.z_t < surface_config.z_o, \
             "Thermal roughness should be less than aerodynamic roughness"
 
-    def test_measurement_heights_positive(self, surface_config):
+    def test_measurement_heights_positive(self, surface_config: SurfaceConfig) -> None:
         """Test that measurement heights are positive."""
         assert surface_config.z_m > 0.0
         assert surface_config.z_s > 0.0
 
-    def test_surface_properties_in_bounds(self, surface_config):
+    def test_surface_properties_in_bounds(self, surface_config: SurfaceConfig) -> None:
         """Test that albedo and emissivity are in [0, 1]."""
         assert 0.0 <= surface_config.albedo <= 1.0
         assert 0.0 <= surface_config.emissivity <= 1.0
@@ -347,7 +350,7 @@ class TestDataclassImmutability:
             # Expected for frozen dataclass
             pass
 
-    def test_grid_config_values_reasonable(self, grid_config_5layers):
+    def test_grid_config_values_reasonable(self, grid_config_5layers: GridConfig) -> None:
         """Test that grid config values are in reasonable ranges."""
         # All depths should be positive
         assert np.all(grid_config_5layers.z > 0.0)
@@ -373,7 +376,7 @@ class TestStateConstraints:
         soil = SoilState(
             temperature=np.array([293.15, 292.0, 291.0, 290.0, 289.0]),
             moisture=np.full(5, 0.3),
-            type=np.array(['clay'] * 5)
+            type=np.array(['clay'] * 5, dtype=str)
         )
 
         # Check that temperature changes are smooth
@@ -386,7 +389,7 @@ class TestStateConstraints:
         soil = SoilState(
             temperature=np.full(5, 293.15),
             moisture=np.array([0.1, 0.2, 0.3, 0.4, 0.5]),
-            type=np.array(['sand', 'loam', 'clay', 'loam', 'sand'])
+            type=np.array(['sand', 'loam', 'clay', 'loam', 'sand'], dtype=str)
         )
 
         assert np.all(soil.moisture >= 0.0)

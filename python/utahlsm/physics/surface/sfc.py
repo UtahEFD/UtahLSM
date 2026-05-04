@@ -21,11 +21,9 @@ necessary stability functions.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TypeVar, Union
+from typing import TypeVar
 
-import numpy as np
-from numpy.typing import NDArray
-
+from ..._types import FloatOrArray
 from ...util.io import logging_helper
 
 ST = TypeVar('ST', bound='Surface')
@@ -48,8 +46,8 @@ class Surface(ABC):
     #--- Abstract methods ---
     @abstractmethod
     def fm(self, z1: float, z0: float,
-           obukhov_l: Union[float, NDArray[np.float64]]
-    ) -> Union[float, NDArray[np.float64]]:
+           obukhov_l: FloatOrArray
+    ) -> FloatOrArray:
         """Computes the stability function for momentum.
 
         This is an abstract method that must be implemented by any concrete
@@ -67,8 +65,8 @@ class Surface(ABC):
 
     @abstractmethod
     def fh(self, z1: float, z0h: float,
-           obukhov_l: Union[float, NDArray[np.float64]]
-    ) -> Union[float, NDArray[np.float64]]:
+           obukhov_l: FloatOrArray
+    ) -> FloatOrArray:
         """Computes the stability function for heat.
 
         This is an abstract method that must be implemented by any concrete

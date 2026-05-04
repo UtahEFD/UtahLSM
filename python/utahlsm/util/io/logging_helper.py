@@ -107,7 +107,7 @@ def finalize_logging(level_str: str = 'info') -> None:
 
     # flush buffered messages
     if _buffer_handler is not None:
-        _buffer_handler.setTarget(root_logger)
+        _buffer_handler.setTarget(file_handler)
         _buffer_handler.flush()
         root_logger.removeHandler(_buffer_handler)
         _buffer_handler = None

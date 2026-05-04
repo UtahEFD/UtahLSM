@@ -150,8 +150,8 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
     Raises:
         ValueError: If the root is not bracketed (i.e., f(a) * f(b) >= 0).
     """
-    fa = f(a)
-    fb = f(b)
+    fa: float = float(f(a))
+    fb: float = float(f(b))
 
     if fa * fb >= 0:
         raise ValueError(
@@ -176,55 +176,55 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
         # are distinct
         if (abs(fa) > tol and abs(fb) > tol and abs(fc) > tol and
                 fa != fc and fb != fc):
-            s = (a * fb * fc / ((fa - fb) * (fa - fc)) +
+            s = float(a * fb * fc / ((fa - fb) * (fa - fc)) +
                  b * fa * fc / ((fb - fa) * (fb - fc)) +
                  c * fa * fb / ((fc - fa) * (fc - fb)))
         # Otherwise, fall back to the secant method
         else:
-            s = b - fb * (b - a) / (fb - fa)
+            s = float(b - fb * (b - a) / (fb - fa))
 
         # Condition 1: Is the new point outside the desired range?
-        cond1 = (s < (3 * a + b) / 4.0) or (s > b)
+        cond1: bool = bool((s < (3 * a + b) / 4.0) or (s > b))  # type: ignore[arg-type]
         # Condition 2: Is the step not decreasing fast enough
         # (bisection was last step)?
-        cond2 = mflag and (abs(s - b) >= abs(b - c) / 2.0)
+        cond2: bool = bool(mflag and (abs(s - b) >= abs(b - c) / 2.0))  # type: ignore[arg-type]
         # Condition 3: Is the step not decreasing fast enough
         # (interpolation was last step)?
-        cond3 = (not mflag) and (abs(s - b) >= abs(c - d) / 2.0)
+        cond3: bool = bool((not mflag) and (abs(s - b) >= abs(c - d) / 2.0))  # type: ignore[arg-type]
         # Condition 4: Is the bracket shrinking too slowly
         # (bisection was last step)?
-        cond4 = mflag and (abs(b - c) < tol)
+        cond4: bool = bool(mflag and (abs(b - c) < tol))  # type: ignore[arg-type]
         # Condition 5: Is the bracket shrinking too slowly
         # (interpolation was last step)?
-        cond5 = (not mflag) and (abs(c - d) < tol)
+        cond5: bool = bool((not mflag) and (abs(c - d) < tol))  # type: ignore[arg-type]
 
         if cond1 or cond2 or cond3 or cond4 or cond5:
             # Fallback to bisection
-            s = (a + b) / 2.0
+            s = float((a + b) / 2.0)
             mflag = True
         else:
             mflag = False
 
-        fs = f(s)
+        fs: float = float(f(s))
         d = c          # d is now the second to last best guess
         c, fc = b, fb  # The last best guess becomes the second to last
 
         # Move the bounds to keep the root bracketed
         if fa * fs < 0:
-            b, fb = s, fs
+            b, fb = float(s), fs
         else:
-            a, fa = s, fs
+            a, fa = float(s), fs
 
         # Ensure 'b' is always the best current root estimate
         if abs(fa) < abs(fb):
-            a, b = b, a
+            a, b = float(b), float(a)
             fa, fb = fb, fa
 
         # Check for convergence
         if abs(b - a) < tol:
-            return b, True
+            return float(b), True
 
-    return b, False
+    return float(b), False
 
 
 def root_brent_vec(

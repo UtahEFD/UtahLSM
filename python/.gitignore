@@ -111,6 +111,9 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
+# Ruff
+.ruff_cache/
+
 # mkdocs documentation
 /site
 site/
@@ -140,7 +143,6 @@ cases/*/output/
 lsm_*.nc
 .claude/
 *png
-scripts/
 
 
 # Temporary files

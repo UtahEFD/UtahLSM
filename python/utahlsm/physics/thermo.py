@@ -20,17 +20,13 @@ pressure, saturation specific humidity) so that the surface, soil, and
 canopy modules all reference a single implementation.
 """
 
-from typing import Union
-
 import numpy as np
-from numpy.typing import NDArray
 
+from .._types import FloatOrArray
 from ..util import constants as c
 
-Number = Union[float, NDArray[np.float64]]
 
-
-def saturation_vapor_pressure(T: Number) -> Number:
+def saturation_vapor_pressure(T: FloatOrArray) -> FloatOrArray:
     """Saturation vapor pressure over liquid water via the Tetens formula.
 
     Args:
@@ -45,7 +41,7 @@ def saturation_vapor_pressure(T: Number) -> Number:
     )
 
 
-def saturation_specific_humidity(T: Number, p: Number) -> Number:
+def saturation_specific_humidity(T: FloatOrArray, p: FloatOrArray) -> FloatOrArray:
     """Saturation specific humidity q_sat [kg/kg].
 
     Args:

@@ -26,6 +26,7 @@ temperature, or moisture factor collapses, ``r_s`` saturates at
 import numpy as np
 from numpy.typing import NDArray
 
+from ..._types import FloatOrArray
 from ...data_models import AtmosphericState, SoilState, SurfaceState
 from ...physics import thermo
 from ...util import constants as c
@@ -123,7 +124,7 @@ class CanopyJarvis(Canopy):
     # --- Stress functions ---
 
     def _f_radiation(
-        self, sw_in: NDArray[np.float64]
+        self, sw_in: FloatOrArray
     ) -> NDArray[np.float64]:
         """f1(R) — radiation stress.
 
@@ -163,7 +164,7 @@ class CanopyJarvis(Canopy):
         return 1.0 / (1.0 + self.vpd_coef * vpd)
 
     def _f_temperature(
-        self, leaf_T: NDArray[np.float64]
+        self, leaf_T: FloatOrArray
     ) -> NDArray[np.float64]:
         """f3(T) — leaf temperature stress (parabolic about t_opt).
 

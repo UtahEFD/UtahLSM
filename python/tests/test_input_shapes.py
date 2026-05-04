@@ -31,6 +31,7 @@ def test_input_shapes_single_column() -> None:
     assert np.asarray(input_lsm.initial.temperature).shape == (nz, 1)
     assert np.asarray(input_lsm.initial.moisture).shape == (nz, 1)
 
+    assert input_lsm.forcing is not None
     first = input_lsm.forcing.atmos[0]
     assert np.asarray(first.wind_speed).shape == (1,)
     assert np.asarray(first.temperature).shape == (1,)
@@ -67,6 +68,7 @@ def test_input_shapes_multi_column(tmp_path: Path) -> None:
     assert np.asarray(input_lsm.initial.temperature).shape == (nz, ncol)
     assert np.asarray(input_lsm.initial.moisture).shape == (nz, ncol)
 
+    assert input_lsm.forcing is not None
     first = input_lsm.forcing.atmos[0]
     assert np.asarray(first.wind_speed).shape == (ncol,)
     assert np.asarray(first.temperature).shape == (ncol,)

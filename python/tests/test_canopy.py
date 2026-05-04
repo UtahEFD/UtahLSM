@@ -25,8 +25,11 @@ Covers:
   partition reduces to pure bare-soil when f_veg == 0 or r_s is huge.
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from utahlsm.data_models import (
     AtmosphericState,
@@ -44,7 +47,7 @@ from utahlsm.physics.canopy.factory import get_canopy_model
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def z_layers():
+def z_layers() -> NDArray[np.float64]:
     """Soil node depths used throughout these tests (negative-downward)."""
     # 11 layers from 0 to -3 m, geometric-ish spacing.
     return -np.array([0.0, 0.02, 0.06, 0.13, 0.25, 0.45, 0.75, 1.20,
@@ -52,7 +55,7 @@ def z_layers():
 
 
 @pytest.fixture
-def canopy_params_single(z_layers):
+def canopy_params_single(z_layers: NDArray[np.float64]) -> dict[str, Any]:
     """Per-column parameters for a single-column grassland canopy."""
     ncol = 1
     return {
@@ -72,12 +75,12 @@ def canopy_params_single(z_layers):
 
 
 @pytest.fixture
-def jarvis_single(canopy_params_single):
+def jarvis_single(canopy_params_single: dict[str, Any]) -> CanopyJarvis:
     return CanopyJarvis(**canopy_params_single)
 
 
 @pytest.fixture
-def canopy_params_3col(z_layers):
+def canopy_params_3col(z_layers: NDArray[np.float64]) -> dict[str, Any]:
     ncol = 3
     return {
         "lai": np.array([1.0, 3.0, 5.0]),
@@ -96,7 +99,7 @@ def canopy_params_3col(z_layers):
 
 
 @pytest.fixture
-def jarvis_3col(canopy_params_3col):
+def jarvis_3col(canopy_params_3col: dict[str, Any]) -> CanopyJarvis:
     return CanopyJarvis(**canopy_params_3col)
 
 
@@ -108,22 +111,22 @@ def jarvis_3col(canopy_params_3col):
 class TestRootDistribution:
     """Covers the Jackson-1996 truncated root-fraction construction."""
 
-    def test_columns_sum_to_one(self, jarvis_single):
+    def test_columns_sum_to_one(self, jarvis_single: CanopyJarvis) -> None:
         rf = jarvis_single.root_fraction
         assert rf.shape == (11, 1)
         assert np.isclose(rf.sum(axis=0), 1.0).all()
 
-    def test_positive_everywhere(self, jarvis_single):
+    def test_positive_everywhere(self, jarvis_single: CanopyJarvis) -> None:
         assert np.all(jarvis_single.root_fraction >= 0.0)
 
-    def test_roots_respect_rooting_depth(self, jarvis_single, z_layers):
+    def test_roots_respect_rooting_depth(self, jarvis_single: CanopyJarvis, z_layers: NDArray[np.float64]) -> None:
         rf = jarvis_single.root_fraction[:, 0]
         # rooting_depth = 0.4m, so layers whose top is beyond 0.4m
         # should have zero fraction. Use node depths (positive) as a proxy.
         deep_layers = -z_layers > 0.5
         assert np.all(rf[deep_layers] == 0.0)
 
-    def test_per_column_rooting_respected(self, jarvis_3col, z_layers):
+    def test_per_column_rooting_respected(self, jarvis_3col: CanopyJarvis, z_layers: NDArray[np.float64]) -> None:
         rf = jarvis_3col.root_fraction
         # All columns must still sum to 1.
         assert np.allclose(rf.sum(axis=0), 1.0)
@@ -131,7 +134,7 @@ class TestRootDistribution:
         # profile than column 2 (1.0m).
         assert rf[1, 0] > rf[1, 2]
 
-    def test_degenerate_rooting_depth_zero(self, canopy_params_single):
+    def test_degenerate_rooting_depth_zero(self, canopy_params_single: dict[str, Any]) -> None:
         params = dict(canopy_params_single)
         params['rooting_depth'] = np.array([0.0])
         canopy = CanopyJarvis(**params)
@@ -144,22 +147,22 @@ class TestRootDistribution:
 class TestRootZoneMean:
     """Covers the weighted-mean utility used by f4(θ_root)."""
 
-    def test_constant_field_preserved(self, jarvis_single):
+    def test_constant_field_preserved(self, jarvis_single: CanopyJarvis) -> None:
         nz = 11
         field = np.full(nz, 0.3)
         mean = jarvis_single.root_zone_mean(field)
         assert mean.shape == (1,)
         assert np.isclose(mean[0], 0.3)
 
-    def test_reduces_across_columns(self, jarvis_3col):
+    def test_reduces_across_columns(self, jarvis_3col: CanopyJarvis) -> None:
         field = np.full((11, 3), 0.25)
         mean = jarvis_3col.root_zone_mean(field)
         assert mean.shape == (3,)
         assert np.allclose(mean, 0.25)
 
     def test_weights_shallow_for_shallow_roots(
-        self, canopy_params_single, z_layers
-    ):
+        self, canopy_params_single: dict[str, Any], z_layers: NDArray[np.float64]
+    ) -> None:
         # Moisture profile with a dry top and wet bottom: shallow-rooted
         # column should see lower θ_root than a deep-rooted column.
         nz = len(z_layers)
@@ -186,45 +189,45 @@ class TestRootZoneMean:
 class TestJarvisStressFunctions:
     """Individual f1..f4 factors and their physical limits."""
 
-    def test_f_radiation_night_zero(self, jarvis_single):
-        f = jarvis_single._f_radiation(np.array([-50.0]))
+    def test_f_radiation_night_zero(self, jarvis_single: CanopyJarvis) -> None:
+        f = jarvis_single._f_radiation(np.array([-50.0]))  # type: ignore[attr-defined]
         assert np.all(f == 0.0)
 
-    def test_f_radiation_saturates(self, jarvis_single):
-        f_low = jarvis_single._f_radiation(np.array([10.0]))
-        f_high = jarvis_single._f_radiation(np.array([2000.0]))
+    def test_f_radiation_saturates(self, jarvis_single: CanopyJarvis) -> None:
+        f_low = jarvis_single._f_radiation(np.array([10.0]))  # type: ignore[attr-defined]
+        f_high = jarvis_single._f_radiation(np.array([2000.0]))  # type: ignore[attr-defined]
         assert f_low[0] < f_high[0]
         assert f_high[0] < 1.0  # saturating form never reaches 1
         assert f_high[0] > 0.9
 
-    def test_f_temperature_optimum(self, jarvis_single):
+    def test_f_temperature_optimum(self, jarvis_single: CanopyJarvis) -> None:
         leaf_T = np.array([298.0])  # exactly t_opt
-        f = jarvis_single._f_temperature(leaf_T)
+        f = jarvis_single._f_temperature(leaf_T)  # type: ignore[attr-defined]
         assert np.isclose(f, 1.0)
 
-    def test_f_temperature_cold_clip(self, jarvis_single):
+    def test_f_temperature_cold_clip(self, jarvis_single: CanopyJarvis) -> None:
         # 50K below optimum drives the parabola negative → clipped to 0.
         leaf_T = np.array([248.0])
-        f = jarvis_single._f_temperature(leaf_T)
+        f = jarvis_single._f_temperature(leaf_T)  # type: ignore[attr-defined]
         assert f[0] == 0.0
 
-    def test_f_vpd_saturated_air(self, jarvis_single):
+    def test_f_vpd_saturated_air(self, jarvis_single: CanopyJarvis) -> None:
         from utahlsm.physics import thermo
-        T = np.array([293.15])
-        p = np.array([101325.0])
+        T: NDArray[np.float64] = np.array([293.15])
+        p: NDArray[np.float64] = np.array([101325.0])
         q_sat = thermo.saturation_specific_humidity(T, p)
         atm = AtmosphericState(
             temperature=T, pressure=p, specific_humidity=q_sat,
             wind_speed=np.array([3.0]),
             sw_in=np.array([400.0]),
         )
-        f = jarvis_single._f_vpd(atm)
+        f = jarvis_single._f_vpd(atm)  # type: ignore[attr-defined]
         assert np.isclose(f, 1.0)
 
-    def test_f_vpd_dry_air_reduces(self, jarvis_single):
+    def test_f_vpd_dry_air_reduces(self, jarvis_single: CanopyJarvis) -> None:
         from utahlsm.physics import thermo
-        T = np.array([293.15])
-        p = np.array([101325.0])
+        T: NDArray[np.float64] = np.array([293.15])
+        p: NDArray[np.float64] = np.array([101325.0])
         q_sat = thermo.saturation_specific_humidity(T, p)
         atm = AtmosphericState(
             temperature=T, pressure=p,
@@ -232,23 +235,23 @@ class TestJarvisStressFunctions:
             wind_speed=np.array([3.0]),
             sw_in=np.array([400.0]),
         )
-        f = jarvis_single._f_vpd(atm)
+        f = jarvis_single._f_vpd(atm)  # type: ignore[attr-defined]
         assert 0.0 < f[0] < 1.0
 
-    def test_f_moisture_wilt_collapses(self, jarvis_single):
+    def test_f_moisture_wilt_collapses(self, jarvis_single: CanopyJarvis) -> None:
         nz = 11
         theta = np.full(nz, 0.1)
         wilt = np.full(nz, 0.1)
         fc = np.full(nz, 0.3)
-        f = jarvis_single._f_moisture(theta, wilt, fc)
+        f = jarvis_single._f_moisture(theta, wilt, fc)  # type: ignore[attr-defined]
         assert np.isclose(f, 0.0)
 
-    def test_f_moisture_above_fc_ones(self, jarvis_single):
+    def test_f_moisture_above_fc_ones(self, jarvis_single: CanopyJarvis) -> None:
         nz = 11
         theta = np.full(nz, 0.45)
         wilt = np.full(nz, 0.1)
         fc = np.full(nz, 0.3)
-        f = jarvis_single._f_moisture(theta, wilt, fc)
+        f = jarvis_single._f_moisture(theta, wilt, fc)  # type: ignore[attr-defined]
         assert np.isclose(f, 1.0)
 
 
@@ -261,7 +264,7 @@ class TestComputeResistance:
     """Tests of the combined r_s = rs_min / (LAI · Π f_i) response."""
 
     @staticmethod
-    def _states(nz):
+    def _states(nz: int) -> tuple[AtmosphericState, SurfaceState, SoilState]:
         atm = AtmosphericState(
             wind_speed=np.array([3.0]),
             temperature=np.array([298.0]),
@@ -278,7 +281,7 @@ class TestComputeResistance:
         )
         return atm, sfc, soil
 
-    def test_r_s_bounded_by_rs_max(self, jarvis_single):
+    def test_r_s_bounded_by_rs_max(self, jarvis_single: CanopyJarvis) -> None:
         atm, sfc, soil = self._states(11)
         # Shut the radiation stress → total stress collapses.
         atm.sw_in = np.array([0.0])
@@ -290,7 +293,7 @@ class TestComputeResistance:
         assert r_s.shape == (1,)
         assert np.isclose(r_s[0], 5000.0)
 
-    def test_r_s_bounded_below_by_rs_min_over_lai(self, jarvis_single):
+    def test_r_s_bounded_below_by_rs_min_over_lai(self, jarvis_single: CanopyJarvis) -> None:
         """At optimal conditions, r_s ≈ rs_min / LAI."""
         atm, sfc, soil = self._states(11)
         # High radiation, optimal temp, saturated air, wet soil.
@@ -311,7 +314,7 @@ class TestComputeResistance:
         assert r_s[0] >= 40.0 / 3.0
         assert r_s[0] < 40.0  # well below rs_min single-leaf
 
-    def test_r_s_moisture_monotonic(self, jarvis_single):
+    def test_r_s_moisture_monotonic(self, jarvis_single: CanopyJarvis) -> None:
         atm, sfc, soil = self._states(11)
         wilt = np.full(11, 0.15)
         fc = np.full(11, 0.30)
@@ -336,12 +339,12 @@ class TestComputeResistance:
 class TestFactory:
     """Tests ``get_canopy_model`` namelist dispatch and broadcasting."""
 
-    def test_none_returns_none(self, z_layers):
+    def test_none_returns_none(self, z_layers: NDArray[np.float64]) -> None:
         cfg = CanopyConfig(model='none')
         canopy = get_canopy_model(cfg, z_layers, ncol=1)
         assert canopy is None
 
-    def test_jarvis_scalar_broadcasts_to_ncol(self, z_layers):
+    def test_jarvis_scalar_broadcasts_to_ncol(self, z_layers: NDArray[np.float64]) -> None:
         cfg = CanopyConfig(
             model='jarvis', lai=3.0, veg_fraction=0.9,
             rooting_depth=0.4,
@@ -352,20 +355,21 @@ class TestFactory:
         assert np.allclose(canopy.lai, 3.0)
         assert canopy.veg_fraction.shape == (4,)
 
-    def test_jarvis_sequence_respected(self, z_layers):
+    def test_jarvis_sequence_respected(self, z_layers: NDArray[np.float64]) -> None:
         cfg = CanopyConfig(
             model='jarvis', lai=[1.0, 2.0, 3.0], veg_fraction=0.5,
             rooting_depth=0.4,
         )
         canopy = get_canopy_model(cfg, z_layers, ncol=3)
+        assert isinstance(canopy, CanopyJarvis)
         assert np.allclose(canopy.lai, [1.0, 2.0, 3.0])
 
-    def test_invalid_model_raises(self, z_layers):
+    def test_invalid_model_raises(self, z_layers: NDArray[np.float64]) -> None:
         cfg = CanopyConfig(model='penman')
         with pytest.raises(NamelistError):
             get_canopy_model(cfg, z_layers, ncol=1)
 
-    def test_size_mismatch_raises(self, z_layers):
+    def test_size_mismatch_raises(self, z_layers: NDArray[np.float64]) -> None:
         cfg = CanopyConfig(
             model='jarvis', lai=[1.0, 2.0], veg_fraction=0.5,
             rooting_depth=0.4,
@@ -388,9 +392,9 @@ class TestFactory:
         ],
     )
     def test_invalid_parameters_raise(
-        self, z_layers, overrides, match
-    ):
-        cfg_kwargs = {
+        self, z_layers: NDArray[np.float64], overrides: dict[str, Any], match: str
+    ) -> None:
+        cfg_kwargs: dict[str, Any] = {
             'model': 'jarvis',
             'lai': 3.0,
             'veg_fraction': 0.9,
@@ -408,6 +412,6 @@ class TestFactory:
 
 @pytest.mark.canopy
 class TestCanopyABC:
-    def test_cannot_instantiate_directly(self, canopy_params_single):
+    def test_cannot_instantiate_directly(self, canopy_params_single: dict[str, Any]) -> None:
         with pytest.raises(TypeError):
             Canopy(**canopy_params_single)  # type: ignore[abstract]

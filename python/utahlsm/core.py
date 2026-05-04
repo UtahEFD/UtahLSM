@@ -35,6 +35,7 @@ from .data_models import (
     SurfaceState,
 )
 from .exceptions import NamelistError, SolverError
+from ._types import FloatOrArray
 from .physics import Canopy, Radiation, Soil, Surface, thermo
 from .physics.canopy.factory import get_canopy_model
 from .physics.radiation.factory import get_radiation_model
@@ -125,6 +126,7 @@ class UtahLSM:
                 self.input.time.utc_year) else 365)
             julian_day = ((self.input.time.julian_day
                 + days_passed - 1) % days_per_year) + 1
+            assert self.rad is not None
             sw_in, sw_out, lw_in, lw_out = self.rad.compute_components(
                 julian_day, current_utc, self.atm_state, self.sfc_state
             )
@@ -144,8 +146,6 @@ class UtahLSM:
         updating the soil profiles via diffusion solvers.
         """
         self.logger.info('Solving soil state')
-        if hasattr(self, 'soil'):
-            self.soil._validate_moisture_bounds(self.soil_state.moisture)
 
         if (self.input.numerics.warm_start_turbulence
             and not getattr(self, "_did_warm_start_turbulence", False)
@@ -353,7 +353,7 @@ class UtahLSM:
         self.logger.info('Initializing physics modules')
         try:
             if self.input.radiation.model:
-                self.rad: Radiation = get_radiation_model(
+                self.rad: Radiation | None = get_radiation_model(
                     self.input.radiation.model,
                     self.input.radiation.latitude,
                     self.input.radiation.longitude,
@@ -361,7 +361,7 @@ class UtahLSM:
                     self.input.surface.emissivity
                 )
             else:
-                self.rad: Radiation = None
+                self.rad = None
                 self.logger.info('Using radiation forcing data')
             self.soil: Soil = get_soil_model(
                 self.input.soil.model,
@@ -381,7 +381,7 @@ class UtahLSM:
         """Sets up the output file dimensions and fields."""
         nx = self.input.grid.nx
         ny = self.input.grid.ny
-        self.output_dims: dict = {
+        self.output_dims: dict[str, int] = {
             't': 0,
             'z': self.input.grid.nz
         }
@@ -410,6 +410,7 @@ class UtahLSM:
             saved_atm_state = self._copy_atm_state()
             saved_tstep = getattr(self, "tstep", 0.0)
             self._load_atm_state(forcing0)
+            assert self.input.forcing is not None
             self.tstep = float(self.input.forcing.tstep)
 
             self._refresh_canopy_diagnostics()
@@ -418,9 +419,7 @@ class UtahLSM:
             # equals the radiative skin only when r_canopy_thermal = 0.
             self.soil_state.temperature[0] = self.sfc_state.soil_top_temperature
 
-            if hasattr(self.output, "outfile") and hasattr(
-                self.output.outfile, "setncattr"
-            ):
+            if self.output.outfile is not None:
                 self.output.outfile.setncattr(
                     "initial_surface_temperature",
                     "initialized from SEB using forcing[0]",
@@ -432,9 +431,7 @@ class UtahLSM:
         if forcing0 is not None and self.input.numerics.warm_start_turbulence:
             self._warm_start_turbulence()
             self._did_warm_start_turbulence = True
-            if hasattr(self.output, "outfile") and hasattr(
-                self.output.outfile, "setncattr"
-            ):
+            if self.output.outfile is not None:
                 self.output.outfile.setncattr(
                     "initial_diagnostics",
                     "warm_start_turbulence using forcing[0]",
@@ -575,11 +572,11 @@ class UtahLSM:
     def _partition_flux_wq(
         self,
         sfc_T: np.ndarray,
-        gnd_q: np.ndarray,
+        gnd_q: FloatOrArray,
         atm_q: np.ndarray,
         atm_p: np.ndarray,
         ustar: np.ndarray,
-        fh: np.ndarray,
+        fh: FloatOrArray,
         cols: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Kinematic moisture flux with optional canopy partition.
@@ -700,10 +697,10 @@ class UtahLSM:
         initial_L = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
 
         # Create vectorized brackets around current temperatures
-        current_T = self.sfc_state.temperature.copy()
+        current_T: np.ndarray = np.array(self.sfc_state.temperature, copy=True)
         bracket_width = 1.0
-        temp_a = current_T - bracket_width
-        temp_b = current_T + bracket_width
+        temp_a: np.ndarray = current_T - bracket_width
+        temp_b: np.ndarray = current_T + bracket_width
 
         seb_a = self._compute_seb_vec(temp_a, initial_L)
         seb_b = self._compute_seb_vec(temp_b, initial_L)
@@ -765,7 +762,8 @@ class UtahLSM:
         L_init: np.ndarray,
         max_iter: int,
         cols: Optional[np.ndarray] = None,
-    ) -> tuple:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+               np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Computes surface fluxes via Monin-Obukhov Similarity Theory.
 
         This is the shared MOST solver used by both the SEB residual
@@ -797,11 +795,11 @@ class UtahLSM:
 
         canopy = getattr(self, 'canopy', None)
         if cols is not None:
-            atm_T = self.atm_state.temperature[cols]
-            atm_p = self.atm_state.pressure[cols]
-            atm_q = self.atm_state.specific_humidity[cols]
-            atm_ws = self.atm_state.wind_speed[cols]
-            K_mid = self.solver_state.conductivity_thermal_mid[cols]
+            atm_T: np.ndarray = np.asarray(self.atm_state.temperature)[cols]
+            atm_p: np.ndarray = np.asarray(self.atm_state.pressure)[cols]
+            atm_q: np.ndarray = np.asarray(self.atm_state.specific_humidity)[cols]
+            atm_ws: np.ndarray = np.asarray(self.atm_state.wind_speed)[cols]
+            K_mid: np.ndarray = np.asarray(self.solver_state.conductivity_thermal_mid)[cols]
             soil_T1 = self.soil_state.temperature[1, cols]
             if canopy is not None:
                 f_veg = canopy.veg_fraction[cols]
@@ -810,11 +808,11 @@ class UtahLSM:
                 f_veg = np.zeros_like(soil_T1)
                 r_g_aero = np.zeros_like(soil_T1)
         else:
-            atm_T = self.atm_state.temperature
-            atm_p = self.atm_state.pressure
-            atm_q = self.atm_state.specific_humidity
-            atm_ws = self.atm_state.wind_speed
-            K_mid = self.solver_state.conductivity_thermal_mid
+            atm_T = np.asarray(self.atm_state.temperature)
+            atm_p = np.asarray(self.atm_state.pressure)
+            atm_q = np.asarray(self.atm_state.specific_humidity)
+            atm_ws = np.asarray(self.atm_state.wind_speed)
+            K_mid = np.asarray(self.solver_state.conductivity_thermal_mid)
             soil_T1 = self.soil_state.temperature[1]
             if canopy is not None:
                 f_veg = canopy.veg_fraction
@@ -856,21 +854,21 @@ class UtahLSM:
         # 1. Equals sfc_T when r_canopy_thermal = 0; otherwise cooler.
         soil_top_T = sfc_T - ground_heat * r_canopy_thermal
 
-        L = np.array(L_init, copy=True)
-        converged = np.zeros_like(L, dtype=bool)
-        ustar = np.zeros_like(L)
-        flux_wT = np.zeros_like(L)
-        flux_wq = np.zeros_like(L)
+        obukhov_l = np.array(L_init, copy=True)
+        converged = np.zeros_like(obukhov_l, dtype=bool)
+        ustar = np.zeros_like(obukhov_l)
+        flux_wT = np.zeros_like(obukhov_l)
+        flux_wq = np.zeros_like(obukhov_l)
 
         for _ in range(max_iter):
-            fm = self.sfc.fm(z_m, z_o, L)
-            fh = self.sfc.fh(z_s, z_t, L)
+            fm = self.sfc.fm(z_m, z_o, obukhov_l)
+            fh = self.sfc.fh(z_s, z_t, obukhov_l)
 
             wind_eff = atm_ws
             if gustiness > 0.0:
                 gust = np.hypot(atm_ws, gustiness)
                 if gustiness_stable_only:
-                    wind_eff = np.where(L >= 0.0, gust, atm_ws)
+                    wind_eff = np.where(obukhov_l >= 0.0, gust, atm_ws)
                 else:
                     wind_eff = gust
 
@@ -891,9 +889,9 @@ class UtahLSM:
             L_new = np.where(zeta > zeta_max, z_m / zeta_max, L_new)
             L_new = np.where(zeta < -zeta_max, -z_m / zeta_max, L_new)
 
-            diff = np.abs(L_new - L)
+            diff = np.abs(L_new - obukhov_l)
             converged |= diff <= TOL
-            L = np.where(converged, L, L_new)
+            obukhov_l = np.where(converged, obukhov_l, L_new)
 
             if converged.all():
                 break
@@ -902,7 +900,7 @@ class UtahLSM:
         latent = rho * LV * flux_wq
 
         return (ustar, flux_wT, flux_wq, ground_heat, soil_top_T,
-                L, sensible, latent, converged)
+                obukhov_l, sensible, latent, converged)
 
     def _compute_seb_vec(
         self,
@@ -927,17 +925,17 @@ class UtahLSM:
         """
         sfc_T = np.asarray(sfc_T)
         if cols is not None:
-            sfc_q = self.sfc_state.moisture[cols]
-            rad_net = self.atm_state.radiation_net[cols]
+            sfc_q: np.ndarray = np.asarray(self.sfc_state.moisture)[cols]
+            rad_net: np.ndarray = np.asarray(self.atm_state.radiation_net)[cols]
         else:
-            sfc_q = self.sfc_state.moisture
-            rad_net = self.atm_state.radiation_net
+            sfc_q = np.asarray(self.sfc_state.moisture)
+            rad_net = np.asarray(self.atm_state.radiation_net)
 
         _, _, _, ground_heat, _, _, sensible, latent, _ = self._solve_most(
             sfc_T, sfc_q, initial_L, max_iter=1, cols=cols
         )
 
-        return rad_net - ground_heat - sensible - latent
+        return np.asarray(rad_net - ground_heat - sensible - latent)
 
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB) for surface moisture.
@@ -967,18 +965,18 @@ class UtahLSM:
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
         sfc_T = self.sfc_state.temperature
-        L = self.sfc_state.turbulence.obukhov_length
+        obukhov_l = self.sfc_state.turbulence.obukhov_length
         ust = self.sfc_state.turbulence.friction_velocity
         Tv = self.atm_state.temperature * (1.0 + EVT * atm_q)
         rho_a = atm_p / (RD * Tv)
-        fh = self.sfc.fh(z_s, z_t, L)
+        fh = self.sfc.fh(z_s, z_t, obukhov_l)
 
         residual_q = float(self.soil.properties.residual[0])
         porosity = float(self.soil.properties.porosity[0])
 
         # Subsurface properties (fixed during SMB solve)
-        psi1 = self.soil.water_potential(self.soil_state.moisture)[1]
-        K1 = self.soil.conductivity_moisture(self.soil_state.moisture)[1]
+        psi1: np.ndarray = np.asarray(self.soil.water_potential(self.soil_state.moisture))[1]
+        K1: np.ndarray = np.asarray(self.soil.conductivity_moisture(self.soil_state.moisture))[1]
 
         canopy = getattr(self, 'canopy', None)
         if canopy is not None:
@@ -999,7 +997,7 @@ class UtahLSM:
             # removed from the root-zone moisture budget (diffusion RHS),
             # not the surface flux residual.
             E_soil = (1.0 - f_veg) * rho_a * (gnd_q - atm_q) * ust * fh
-            return E_soil + RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
+            return np.asarray(E_soil + RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0))
 
         # Shrink the bracket slightly off the physical bounds to keep
         # ψ(θ) and K(θ) finite and well-defined at the endpoints.
@@ -1023,7 +1021,7 @@ class UtahLSM:
 
         self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)
 
-    def _compute_fluxes(self, sfc_T: np.ndarray, sfc_q: np.ndarray) -> None:
+    def _compute_fluxes(self, sfc_T: FloatOrArray, sfc_q: FloatOrArray) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
 
         This is an iterative process to find the friction velocity (ustar)
@@ -1041,7 +1039,7 @@ class UtahLSM:
         L_init = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
 
         (ustar, flux_wT, flux_wq, ground_heat, soil_top_T,
-         L, sensible, latent, converged) = self._solve_most(
+         obukhov_l, sensible, latent, converged) = self._solve_most(
             sfc_T_vec, sfc_q_vec, L_init, max_iter=ITER_MAX
         )
 
@@ -1051,7 +1049,7 @@ class UtahLSM:
                 int(np.sum(~converged)),
             )
 
-        self.sfc_state.turbulence.obukhov_length[:] = L
+        self.sfc_state.turbulence.obukhov_length[:] = obukhov_l
         self.sfc_state.turbulence.friction_velocity[:] = ustar
         self.sfc_state.fluxes.ground_heat[:] = ground_heat
         self.sfc_state.fluxes.kinematic_heat[:] = flux_wT
@@ -1073,6 +1071,8 @@ class UtahLSM:
         max_outer_iter = self.input.numerics.iterations.coupling
         tol_temp = self.input.numerics.tolerances.coupling_temp
         tol_mois = self.input.numerics.tolerances.coupling_mois
+        diff_T = np.zeros(1)
+        diff_q = np.zeros(1)
 
         for i in range(max_outer_iter):
             prev_T = np.array(self.sfc_state.temperature, copy=True)
@@ -1110,39 +1110,31 @@ class UtahLSM:
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
         self._finalize_canopy_partition()
 
-    def _solve_diffusion(self,state_field: np.ndarray,get_diffusivity: Callable,
-                         get_conductivity: Optional[Callable],
-                         sfc_boundary: float,field_name: str = 'field',
+    def _solve_diffusion(self,state_field: np.ndarray,
+                         get_diffusivity: Callable[[np.ndarray], np.ndarray],
+                         sfc_boundary: FloatOrArray,field_name: str = 'field',
                          source_term: Optional[np.ndarray] = None,
                          avg_diffusivity: str = 'arithmetic') -> None:
         """Solves a generic 1D diffusion equation using a theta scheme.
 
-        This helper now serves the soil heat solve. The moisture equation
+        This helper serves the soil heat solve. The moisture equation
         uses a dedicated mixed-form Richards implementation.
 
         Args:
-            state_field: Reference to the field to update (temperature or
-                moisture) [NDArray[np.float64]].
+            state_field: Reference to the field to update (temperature) [NDArray].
             get_diffusivity: Callable that computes diffusivity profile from
                 soil moisture [Callable[[NDArray[np.float64]], NDArray[np.float64]]].
-            get_conductivity: Optional callable that computes an auxiliary
-                conductivity-like profile used by the tridiagonal assembly.
-                Retained for backwards compatibility within this helper
-                [Optional[Callable[[NDArray[np.float64]], NDArray[np.float64]]]].
-            sfc_boundary: Surface boundary value for Dirichlet BC [float].
-            field_name: Name of the field for logging/documentation [str].
+            sfc_boundary: Surface boundary value for Dirichlet BC.
+            field_name: Name of the field for logging/documentation.
             source_term: Optional per-layer source (or sink, if negative)
-                with units of the state field per second, shape
-                (nz, ncol). Applied as ``dt · source`` to the RHS of the
-                tridiagonal system for layers 1..nz-1.
+                with units of the state field per second, shape (nz, ncol).
+                Applied as ``dt · source`` to the RHS for layers 1..nz-1.
             avg_diffusivity: Averaging rule for interface diffusivity. Use
                 ``"arithmetic"`` for simple means or ``"geometric"`` for
                 multiplicative averaging.
 
         Physics:
-            - Diffusivity always depends on soil moisture (not the state
-              being solved)
-            - Conductivity (if present) also depends on soil moisture
+            - Diffusivity always depends on soil moisture
             - Dirichlet BC at top (surface): uses sfc_boundary
             - Neumann BC at bottom: assumes zero gradient
             - Theta scheme parameterization:
@@ -1188,54 +1180,31 @@ class UtahLSM:
             g.fill(0.0)
             r.fill(0.0)
 
-        # Compute diffusivity using soil moisture (always, for both heat
-        # and moisture). Moisture diffusivity D_θ spans orders of
-        # magnitude with θ, so arithmetic face-averaging is dominated by
-        # the wetter node; geometric mean (Haverkamp & Vauclin, 1979) is
-        # the standard choice there. Thermal diffusivity α varies far
-        # less, so arithmetic is fine.
+        # Compute diffusivity using soil moisture
         D = get_diffusivity(self.soil_state.moisture)
         if avg_diffusivity == 'geometric':
             D_mid = np.sqrt(np.maximum(D[:-1] * D[1:], 0.0))
         else:
             D_mid = 0.5 * (D[:-1] + D[1:])
 
-        # Compute conductivity terms if provided (moisture case)
-        K_lin = None
-        if get_conductivity is not None:
-            K_lin = get_conductivity(field)
-
         # === First soil level below surface (i=0) ===
-        Cp = dt * D_mid[0] / dz2
-        Cm = dt * D_mid[1] / dz2
+        cp = dt * D_mid[0] / dz2
+        cm = dt * D_mid[1] / dz2
 
         # Backward (implicit) coefficients
-        CBp = -theta_b * Cp
-        CBm = -theta_b * Cm
-        CB = 1.0 - CBp - CBm
+        cb_p = -theta_b * cp
+        cb_m = -theta_b * cm
+        cb = 1.0 - cb_p - cb_m
 
         # Forward (explicit) coefficients
-        CFp = theta_f * Cp
-        CFm = theta_f * Cm
-        CF = 1.0 - CFp - CFm
+        cf_p = theta_f * cp
+        cf_m = theta_f * cm
+        cf = 1.0 - cf_p - cf_m
 
-        # Add conductivity terms if applicable (moisture case)
-        if K_lin is not None:
-            Cpk = dt * K_lin[0] / (2 * dz)
-            Cmk = dt * K_lin[2] / (2 * dz)
-            CBpk = -theta_b * Cpk
-            CBmk = -theta_b * Cmk
-            CBp += CBpk
-            CBm -= CBmk
-            CFpk = theta_f * Cpk
-            CFmk = theta_f * Cmk
-            CFp += CFpk
-            CFm -= CFmk
-
-        f[0] = CB
-        g[0] = CBm
-        r[0] = (CFp * field[0] + CF * field[1] +
-                CFm * field[2] - CBp * sfc_boundary_vec)
+        f[0] = cb
+        g[0] = cb_m
+        r[0] = (cf_p * field[0] + cf * field[1] +
+                cf_m * field[2] - cb_p * sfc_boundary_vec)
 
         # === Interior soil levels (Vectorized) ===
         # Define slices to represent indices i, i+1, and i+2
@@ -1247,80 +1216,53 @@ class UtahLSM:
 
         # Compute diffusion coefficients for all interior points
         # D_mid is size (nz-1), so we slice up to nz-2
-        Cp = dt * D_mid[idx] / dz2
-        Cm = dt * D_mid[idx_p1] / dz2
+        cp = dt * D_mid[idx] / dz2
+        cm = dt * D_mid[idx_p1] / dz2
 
         # Backward (implicit) coefficients
-        CBp = -theta_b * Cp
-        CBm = -theta_b * Cm
-        CB  = 1.0 - CBp - CBm
+        cb_p = -theta_b * cp
+        cb_m = -theta_b * cm
+        cb   = 1.0 - cb_p - cb_m
 
         # Forward (explicit) coefficients
-        CFp = theta_f * Cp
-        CFm = theta_f * Cm
-        CF  = 1.0 - CFp - CFm
-
-        # Add conductivity terms if applicable (moisture case)
-        if K_lin is not None:
-            # K_lin is size (nz)
-            Cpk = dt * K_lin[idx] / (2 * dz)
-            Cmk = dt * K_lin[idx_p2] / (2 * dz)
-            CBpk = -theta_b * Cpk
-            CBmk = -theta_b * Cmk
-            CBp += CBpk
-            CBm -= CBmk
-            CFpk = theta_f * Cpk
-            CFmk = theta_f * Cmk
-            CFp += CFpk
-            CFm -= CFmk
+        cf_p = theta_f * cp
+        cf_m = theta_f * cm
+        cf   = 1.0 - cf_p - cf_m
 
         # Assign coefficients to tridiagonal matrix arrays
-        e[idx] = CBp
-        f[idx] = CB
-        g[idx] = CBm
+        e[idx] = cb_p
+        f[idx] = cb
+        g[idx] = cb_m
 
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
-        r[idx] = (CFp * field[idx] +
-                  CF  * field[idx_p1] +
-                  CFm * field[idx_p2])
+        r[idx] = (cf_p * field[idx] +
+                  cf   * field[idx_p1] +
+                  cf_m * field[idx_p2])
 
         # === Bottom level (Neumann BC: zero gradient) ===
         j = nz - 2
-        Cp = dt * D_mid[j] / dz2
-        Cm = dt * D_mid[j] / dz2
+        cp = dt * D_mid[j] / dz2
+        cm = dt * D_mid[j] / dz2
 
         # Backward (implicit) coefficients
-        CBp = -theta_b * Cp
-        CBm = -theta_b * Cm
-        CB = 1.0 - CBp - CBm
+        cb_p = -theta_b * cp
+        cb_m = -theta_b * cm
+        cb = 1.0 - cb_p - cb_m
 
         # Forward (explicit) coefficients
-        CFp = theta_f * Cp
-        CFm = theta_f * Cm
-        CF = 1.0 - CFp - CFm
-
-        # Add conductivity terms if applicable (moisture case)
-        if K_lin is not None:
-            Cpk = dt * K_lin[j] / (2 * dz)
-            Cmk = dt * K_lin[j] / (2 * dz)
-            CBpk = -theta_b * Cpk
-            CBmk = -theta_b * Cmk
-            CBp += CBpk
-            CBm -= CBmk
-            CFpk = theta_f * Cpk
-            CFmk = theta_f * Cmk
-            CFp += CFpk
-            CFm -= CFmk
+        cf_p = theta_f * cp
+        cf_m = theta_f * cm
+        cf = 1.0 - cf_p - cf_m
 
         # Assign coefficients to tridiagonal matrix arrays
-        e[j] = CBp - CBm
-        f[j] = CB + 2.0 * CBm
+        e[j] = cb_p - cb_m
+        f[j] = cb + 2.0 * cb_m
 
         # Compute the Right Hand Side (RHS) vector r
         # state_field is size (nz)
-        r[j] = ((CFp - CFm) * field[j] +
-                (CF + 2.0 * CFm) * field[j + 1])
+        r[j] = ((cf_p - cf_m) * field[j] +
+                (cf + 2.0 * cf_m) * field[j + 1])
 
         # Apply optional per-layer source (e.g. root-uptake sink) for
         # layers 1..nz-1. source_term has shape (nz, ncol); r is
@@ -1357,7 +1299,6 @@ class UtahLSM:
         self._solve_diffusion(
             state_field=self.soil_state.temperature,
             get_diffusivity=self.soil.diffusivity_thermal,
-            get_conductivity=None,
             sfc_boundary=self.sfc_state.soil_top_temperature,
             field_name='temperature'
         )
@@ -1418,10 +1359,9 @@ class UtahLSM:
             g.fill(0.0)
             r.fill(0.0)
 
-        residual = self.soil._expand_profile_property(
-            self.soil.properties.residual, moisture)
-        porosity = self.soil._expand_profile_property(
-            self.soil.properties.porosity, moisture)
+        _2d = moisture.ndim == 2
+        residual = self.soil.properties.residual[:, None] if _2d else self.soil.properties.residual
+        porosity = self.soil.properties.porosity[:, None] if _2d else self.soil.properties.porosity
         span = np.maximum(porosity - residual, 1e-12)
         theta_for_head = np.clip(
             moisture, residual + 1e-6 * span, porosity
@@ -1548,46 +1488,5 @@ class UtahLSM:
         if getattr(self, 'canopy', None) is not None:
             source = -self.canopy_state.root_uptake
         self._solve_mixed_moisture(source_term=source)
-        self._enforce_soil_moisture_bounds()
-
-    def _enforce_soil_moisture_bounds(self) -> None:
-        """Clips tiny moisture overshoots and raises on material violations."""
-        moisture = np.asarray(self.soil_state.moisture, dtype=float)
-        residual = self.soil._expand_profile_property(
-            self.soil.properties.residual, moisture
-        )
-        porosity = self.soil._expand_profile_property(
-            self.soil.properties.porosity, moisture
-        )
         tol = max(float(self.input.numerics.tolerances.moisture_bounds), 1e-8)
-
-        below_hard = moisture < (residual - tol)
-        above_hard = moisture > (porosity + tol)
-        hard_mask = below_hard | above_hard
-        if np.any(hard_mask):
-            min_delta = float(np.min(moisture - residual))
-            max_delta = float(np.max(moisture - porosity))
-            bad_idx = np.argwhere(hard_mask)
-            examples = ", ".join(
-                f"{tuple(int(i) for i in idx)}={float(moisture[tuple(idx)]):.6f}"
-                for idx in bad_idx[:5]
-            )
-            raise SolverError(
-                'Soil moisture left physical bounds after the mixed moisture '
-                'solve: '
-                f'{int(np.sum(hard_mask))} cells outside [residual, porosity] '
-                f'by more than tol={tol:.1e}. '
-                f'Min(theta-residual)={min_delta:.3e}, '
-                f'Max(theta-porosity)={max_delta:.3e}. '
-                f'Examples: {examples}'
-            )
-
-        clip_mask = (moisture < residual) | (moisture > porosity)
-        if np.any(clip_mask):
-            self.logger.warning(
-                'Clipping %d soil moisture values to [residual, porosity] '
-                'after the mixed moisture solve (tol=%.1e).',
-                int(np.sum(clip_mask)),
-                tol,
-            )
-            np.clip(moisture, residual, porosity, out=moisture)
+        self.soil.enforce_moisture_bounds(self.soil_state.moisture, tol)

@@ -22,8 +22,11 @@ Key fixtures:
 - Configuration dataclasses
 """
 
+from typing import Any, Callable
+
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from utahlsm.data_models import (
     AtmosphericState,
@@ -40,7 +43,7 @@ from utahlsm.data_models import (
 # ============================================================================
 
 @pytest.fixture
-def atm_neutral():
+def atm_neutral() -> AtmosphericState:
     """Neutral atmospheric conditions (typical for testing).
 
     Returns:
@@ -58,7 +61,7 @@ def atm_neutral():
 
 
 @pytest.fixture
-def atm_stable():
+def atm_stable() -> AtmosphericState:
     """Stable atmospheric conditions (cold, calm, strong inversion).
 
     Returns:
@@ -75,7 +78,7 @@ def atm_stable():
 
 
 @pytest.fixture
-def atm_unstable():
+def atm_unstable() -> AtmosphericState:
     """Unstable atmospheric conditions (warm, calm, strong convection).
 
     Returns:
@@ -96,7 +99,7 @@ def atm_unstable():
 # ============================================================================
 
 @pytest.fixture
-def soil_state_simple():
+def soil_state_simple() -> SoilState:
     """Simple soil state with uniform properties.
 
     Returns:
@@ -106,12 +109,12 @@ def soil_state_simple():
     return SoilState(
         temperature=np.full(nz, 293.15),  # 20°C everywhere
         moisture=np.full(nz, 0.3),         # 30% saturation
-        type=np.array(['clay'] * nz)       # Same soil type
+        type=np.array(['clay'] * nz, dtype=str)       # Same soil type
     )
 
 
 @pytest.fixture
-def soil_state_profile():
+def soil_state_profile() -> SoilState:
     """Soil state with realistic vertical profile.
 
     Returns:
@@ -127,12 +130,12 @@ def soil_state_profile():
     return SoilState(
         temperature=temp,
         moisture=mois,
-        type=np.array(['clay'] * nz)
+        type=np.array(['clay'] * nz, dtype=str)
     )
 
 
 @pytest.fixture
-def soil_state_dry():
+def soil_state_dry() -> SoilState:
     """Dry soil state (low moisture).
 
     Returns:
@@ -142,12 +145,12 @@ def soil_state_dry():
     return SoilState(
         temperature=np.full(nz, 293.15),  # 20°C
         moisture=np.full(nz, 0.15),       # 15% (dry)
-        type=np.array(['sand'] * nz)
+        type=np.array(['sand'] * nz, dtype=str)
     )
 
 
 @pytest.fixture
-def soil_state_saturated():
+def soil_state_saturated() -> SoilState:
     """Saturated soil state (high moisture).
 
     Returns:
@@ -157,7 +160,7 @@ def soil_state_saturated():
     return SoilState(
         temperature=np.full(nz, 293.15),  # 20°C
         moisture=np.full(nz, 0.45),       # 45% (wet)
-        type=np.array(['clay'] * nz)
+        type=np.array(['clay'] * nz, dtype=str)
     )
 
 
@@ -166,7 +169,7 @@ def soil_state_saturated():
 # ============================================================================
 
 @pytest.fixture
-def surface_state_base():
+def surface_state_base() -> SurfaceState:
     """Basic surface state for testing.
 
     Returns:
@@ -193,7 +196,7 @@ def surface_state_base():
 # ============================================================================
 
 @pytest.fixture
-def grid_config_5layers():
+def grid_config_5layers() -> GridConfig:
     """Grid configuration with 5 soil layers.
 
     Returns:
@@ -211,7 +214,7 @@ def grid_config_5layers():
 
 
 @pytest.fixture
-def grid_config_10layers():
+def grid_config_10layers() -> GridConfig:
     """Grid configuration with 10 soil layers (finer resolution).
 
     Returns:
@@ -233,7 +236,7 @@ def grid_config_10layers():
 
 
 @pytest.fixture
-def surface_config():
+def surface_config() -> SurfaceConfig:
     """Surface configuration for MOST calculations.
 
     Returns:
@@ -255,13 +258,22 @@ def surface_config():
 # ============================================================================
 
 @pytest.fixture
-def create_tridiagonal_system():
+def create_tridiagonal_system() -> Callable[[int, str], tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.floating[Any]]]]:
     """Factory fixture to create test tridiagonal systems.
 
     Returns:
         A function that creates tridiagonal systems with known solutions.
     """
-    def _create_system(n: int, condition='well-conditioned') -> tuple:
+    def _create_system(
+        n: int,
+        condition: str = 'well-conditioned'
+    ) -> tuple[
+        NDArray[np.floating[Any]],
+        NDArray[np.floating[Any]],
+        NDArray[np.floating[Any]],
+        NDArray[np.floating[Any]],
+        NDArray[np.floating[Any]],
+    ]:
         """Create a tridiagonal system Ax = b.
 
         Args:
@@ -305,13 +317,16 @@ def create_tridiagonal_system():
 
 
 @pytest.fixture
-def create_root_function():
+def create_root_function() -> Callable[[float, str], tuple[Callable[[float], float], list[float]]]:
     """Factory fixture to create test functions for root-finding.
 
     Returns:
         A function that creates test functions with known roots.
     """
-    def _create_function(root: float, type_: str = 'quadratic'):
+    def _create_function(
+        root: float,
+        type_: str = 'quadratic'
+    ) -> tuple[Callable[[float], float], list[float]]:
         """Create a test function with a known root.
 
         Args:
@@ -324,19 +339,19 @@ def create_root_function():
         """
         if type_ == 'quadratic':
             # f(x) = (x - root)^2 - 1
-            f = lambda x: (x - root)**2 - 1
+            f: Callable[[float], float] = lambda x: (x - root)**2 - 1
             bracket = [root - 2, root + 2]
         elif type_ == 'cubic':
             # f(x) = (x - root)^3 - 1
-            f = lambda x: (x - root)**3 - 1
+            f: Callable[[float], float] = lambda x: (x - root)**3 - 1
             bracket = [root - 2, root + 2]
         elif type_ == 'sine':
             # f(x) = sin(x - root)
-            f = lambda x: np.sin(x - root)
+            f: Callable[[float], float] = lambda x: np.sin(x - root)
             bracket = [root - np.pi/2, root + np.pi/2]
         else:  # rational
             # f(x) = 1/(x - root) - 1
-            f = lambda x: 1 / (x - root + 1e-6) - 1
+            f: Callable[[float], float] = lambda x: 1 / (x - root + 1e-6) - 1
             bracket = [root - 1, root + 1]
 
         return f, bracket
@@ -355,7 +370,12 @@ def assert_physically_reasonable():
     Returns:
         A function that checks physical constraints.
     """
-    def _check(value: float, name: str, min_: float = None, max_: float = None):
+    def _check(
+        value: float,
+        name: str,
+        min_: float | None = None,
+        max_: float | None = None
+    ) -> None:
         """Check that a value is within physically reasonable bounds.
 
         Args:

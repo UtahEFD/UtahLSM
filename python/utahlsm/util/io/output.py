@@ -194,7 +194,7 @@ class Output:
         dims = self.attributes['time']['dimension']
         name = self.attributes['time']['long_name']
         units = self.attributes['time']['units']
-        ncvar = self.outfile.createVariable('time', 'f8', dims)
+        ncvar: nc.Variable = self.outfile.createVariable('time', 'f8', dims)  # type: ignore[assignment]
         ncvar.units = units
         ncvar.long_name = name
         self.fields_time['time'] = ncvar
@@ -204,7 +204,7 @@ class Output:
             dims  = self.attributes[field]['dimension']
             units = self.attributes[field]['units']
             name  = self.attributes[field]['long_name']
-            ncvar = self.outfile.createVariable(field, 'f8', dims)
+            ncvar: nc.Variable = self.outfile.createVariable(field, 'f8', dims)  # type: ignore[assignment]
             ncvar.units = units
             ncvar.long_name = name
             if 't' in dims:
@@ -264,7 +264,7 @@ class Output:
         """Returns the output handler for context-managed use."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         """Closes the output handler when exiting a context manager."""
         self.close()
 

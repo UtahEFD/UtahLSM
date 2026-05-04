@@ -22,7 +22,7 @@ access all setup information.
 import json
 import logging
 from importlib import resources
-from typing import Optional
+from typing import Any, Optional
 
 import jsonschema
 import netCDF4 as nc
@@ -167,7 +167,7 @@ class Input:
             )
         return z_arr
 
-    def _load_and_validate_namelist(self, namelist_path: str) -> dict:
+    def _load_and_validate_namelist(self, namelist_path: str) -> dict[str, Any]:
         """Loads and validates the JSON namelist against a schema.
 
         Args:
@@ -200,7 +200,7 @@ class Input:
 
     def _load_initial_conditions(
             self, inputfile: str, nx: int, ny: int,
-            nz: int) -> dict[str, NDArray]:
+            nz: int) -> dict[str, NDArray[Any]]:
         """Loads data from the NetCDF initialization file.
 
         Args:
@@ -229,7 +229,7 @@ class Input:
 
                 ncol = nx * ny
 
-                def _decode_soil_type(array: NDArray) -> NDArray:
+                def _decode_soil_type(array: NDArray[Any]) -> NDArray[Any]:
                     if array.dtype.kind == 'S':
                         return np.char.decode(array, 'utf-8').astype(object)
                     if array.dtype.kind in ('U', 'O'):
@@ -239,7 +239,7 @@ class Input:
                         f"got dtype {array.dtype}"
                     )
 
-                def _ensure_z_1d(soil_z: NDArray) -> NDArray[np.float64]:
+                def _ensure_z_1d(soil_z: NDArray[Any]) -> NDArray[np.float64]:
                     z = (-1) * soil_z.astype('float')
                     if z.ndim == 1:
                         if z.shape[0] != nz:
@@ -279,7 +279,7 @@ class Input:
                     )
 
                 def _reshape_soil_field(
-                    field: NDArray, name: str
+                    field: NDArray[Any], name: str
                 ) -> NDArray[np.float64]:
                     data = field.astype('float')
                     if data.ndim == 1:
@@ -312,8 +312,8 @@ class Input:
                     )
 
                 def _reshape_soil_type(
-                    field: NDArray, name: str
-                ) -> NDArray:
+                    field: NDArray[Any], name: str
+                ) -> NDArray[Any]:
                     data = _decode_soil_type(field)
                     if data.ndim == 1:
                         if data.shape[0] != nz:
@@ -352,7 +352,7 @@ class Input:
                         f"{name} has unsupported dimensions: {data.ndim}."
                     )
 
-                init_dict = {
+                init_dict: dict[str, NDArray[Any]] = {
                     'z': _ensure_z_1d(soil_z_var),
                     'temperature': _reshape_soil_field(soil_T_var, "soil_T"),
                     'moisture': _reshape_soil_field(soil_q_var, "soil_q"),
@@ -365,7 +365,7 @@ class Input:
             raise
 
     def _load_soil_properties(
-        self, soil_config: dict, soil_type_array: NDArray
+        self, soil_config: dict[str, Any], soil_type_array: NDArray[np.str_]
     ) -> None:
         """Loads soil properties from JSON files and validates soil types.
 
@@ -381,11 +381,11 @@ class Input:
         try:
             properties_spec = soil_config['properties']
             self.soil_properties = SoilPropertiesLoader.load(properties_spec)
-            self.soil_properties_name = properties_spec
+            self.soil_properties_name: str = properties_spec
 
             # Validate that all soil types in initial conditions are available
             # in the loaded properties
-            self.soil_type_names = []
+            self.soil_type_names: list[str] = []
             for soil_type_name in soil_type_array:
                 soil_type_lower = soil_type_name.lower()
                 if soil_type_lower not in self.soil_properties:
@@ -437,7 +437,7 @@ class Input:
                 ny = self.grid.ny
                 nx = self.grid.nx
 
-                def _reshape_forcing(field: NDArray, name: str) -> NDArray:
+                def _reshape_forcing(field: NDArray[Any], name: str) -> NDArray[Any]:
                     data = field.astype('float')
                     if data.ndim == 1:
                         if data.shape[0] != ntime:
@@ -505,11 +505,11 @@ class Input:
             self.logger.error('--- offline forcing error: %s', e)
             raise
 
-    def _validate_forcing_data(self, atm_U: NDArray, atm_T: NDArray,
-                               atm_q: NDArray, atm_p: NDArray,
-                               sw_in: NDArray, sw_out: NDArray,
-                               lw_in: NDArray, lw_out: NDArray,
-                               r_net: NDArray, _ntime: int) -> None:
+    def _validate_forcing_data(self, atm_U: NDArray[np.float64], atm_T: NDArray[np.float64],
+                               atm_q: NDArray[np.float64], atm_p: NDArray[np.float64],
+                               sw_in: NDArray[np.float64], sw_out: NDArray[np.float64],
+                               lw_in: NDArray[np.float64], lw_out: NDArray[np.float64],
+                               r_net: NDArray[np.float64], _ntime: int) -> None:
         """Validates atmospheric forcing data for physical consistency.
 
         Slight excursions beyond the supported forcing bounds are clipped to
@@ -535,7 +535,7 @@ class Input:
                 bounds by more than the configured clipping tolerance.
         """
         def _clip_or_raise(
-                data: NDArray, *, name: str, lower: float, upper: float,
+                data: NDArray[np.float64], *, name: str, lower: float, upper: float,
                 lower_tol: float, upper_tol: float, units: str) -> bool:
             below = data < lower
             above = data > upper
@@ -549,7 +549,7 @@ class Input:
             hard_failures = out_of_range & ~small_excursions
 
             if np.any(hard_failures):
-                bad_values = data[hard_failures]
+                bad_values: NDArray[np.float64] = data[hard_failures]  # type: ignore[assignment]
                 sample_indices = np.flatnonzero(hard_failures)[:5].tolist()
                 raise ValueError(
                     f'Offline forcing {name} contains {bad_values.size} '
@@ -566,7 +566,7 @@ class Input:
                 'Clipping %d forcing entries for %s to [%f, %f] %s.',
                 num_clipped, name, lower, upper, units)
             data[small_excursions] = np.clip(
-                data[small_excursions], lower, upper)
+                data[small_excursions], lower, upper)  # type: ignore[arg-type]
             return True
 
         issues_found = False

@@ -22,16 +22,15 @@ models.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TypeVar, Union
+from typing import TypeVar
 
 import numpy as np
-from numpy.typing import NDArray
 
+from ..._types import FloatOrArray
 from ...data_models import AtmosphericState, SurfaceState
 from ...util.io import logging_helper
 
 RT = TypeVar('RT', bound='Radiation')
-ScalarOrArray = Union[float, NDArray[np.float64]]
 logger = logging_helper.get_logger('RAD')
 
 class Radiation(ABC):
@@ -73,8 +72,8 @@ class Radiation(ABC):
         time_utc: float,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> tuple[ScalarOrArray, ScalarOrArray,
-               ScalarOrArray, ScalarOrArray]:
+    ) -> tuple[FloatOrArray, FloatOrArray,
+               FloatOrArray, FloatOrArray]:
         """Computes the four surface radiation components.
 
         Concrete subclasses return the downwelling and upwelling shortwave

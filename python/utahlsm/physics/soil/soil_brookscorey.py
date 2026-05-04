@@ -19,11 +19,12 @@ widely used model for describing soil hydraulic properties.
 """
 
 import logging
-from typing import Union
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
+from ..._types import FloatOrArray
 from ...util.io import logging_helper
 from .soil import Soil
 
@@ -35,7 +36,8 @@ class BrooksCorey(Soil):
     potential,
     hydraulic conductivity, and diffusivity based on the Brooks-Corey model.
     """
-    def __init__(self, properties_dict: dict, soil_type_names: list,
+    def __init__(self, properties_dict: dict[str, dict[str, Any]],
+                 soil_type_names: list[str],
                  dataset_name: str = 'custom'):
         """Initializes the BrooksCorey soil model.
 
@@ -49,8 +51,8 @@ class BrooksCorey(Soil):
         super().__init__(properties_dict, soil_type_names, dataset_name)
 
     def water_potential(
-        self, soil_q: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, soil_q: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes soil water potential from soil moisture.
 
         Args:
@@ -66,19 +68,16 @@ class BrooksCorey(Soil):
             ValueError: If soil_q is out of valid bounds.
         """
         if level is not None:
-            b = self.properties.b[level]
-            psi_sat = self.properties.psi_sat[level]
+            b        = self.properties.b[level]
+            psi_sat  = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
         else:
-            soil_q_arr = np.asarray(soil_q)
-            b = self._expand_profile_property(self.properties.b, soil_q_arr)
-            psi_sat = self._expand_profile_property(
-                self.properties.psi_sat, soil_q_arr)
-            porosity = self._expand_profile_property(
-                self.properties.porosity, soil_q_arr)
-            residual = self._expand_profile_property(
-                self.properties.residual, soil_q_arr)
+            _2d = np.asarray(soil_q).ndim == 2
+            b        = self.properties.b[:, None]        if _2d else self.properties.b
+            psi_sat  = self.properties.psi_sat[:, None]  if _2d else self.properties.psi_sat
+            porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+            residual = self.properties.residual[:, None] if _2d else self.properties.residual
 
         Se = np.maximum((soil_q-residual)/(porosity-residual), 1e-12)
         psi = psi_sat*( Se**(-b) )
@@ -86,23 +85,20 @@ class BrooksCorey(Soil):
         return psi
 
     def water_content(
-        self, psi: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, psi: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes soil moisture from water potential."""
         if level is not None:
-            b = self.properties.b[level]
-            psi_sat = self.properties.psi_sat[level]
+            b        = self.properties.b[level]
+            psi_sat  = self.properties.psi_sat[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
         else:
-            psi_arr = np.asarray(psi)
-            b = self._expand_profile_property(self.properties.b, psi_arr)
-            psi_sat = self._expand_profile_property(
-                self.properties.psi_sat, psi_arr)
-            porosity = self._expand_profile_property(
-                self.properties.porosity, psi_arr)
-            residual = self._expand_profile_property(
-                self.properties.residual, psi_arr)
+            _2d = np.asarray(psi).ndim == 2
+            b        = self.properties.b[:, None]        if _2d else self.properties.b
+            psi_sat  = self.properties.psi_sat[:, None]  if _2d else self.properties.psi_sat
+            porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+            residual = self.properties.residual[:, None] if _2d else self.properties.residual
 
         soil_e = porosity - residual
         psi_arr = np.asarray(psi, dtype=float)
@@ -112,22 +108,22 @@ class BrooksCorey(Soil):
         soil_q = residual + soil_e * Se
         soil_q = np.where(psi_arr >= psi_sat, porosity, soil_q)
         soil_q = np.clip(soil_q, residual, porosity)
-        return soil_q.item() if np.isscalar(psi) else soil_q
+        return float(soil_q.item()) if np.isscalar(psi) else soil_q
 
     def moisture_capacity(
-        self, psi: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, psi: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes specific moisture capacity dθ/dψ."""
         soil_q = self.water_content(psi, level=level)
         psi_arr = np.asarray(psi, dtype=float)
         soil_q_arr = np.asarray(soil_q, dtype=float)
         if level is not None:
-            b = self.properties.b[level]
+            b        = self.properties.b[level]
             residual = self.properties.residual[level]
         else:
-            b = self._expand_profile_property(self.properties.b, psi_arr)
-            residual = self._expand_profile_property(
-                self.properties.residual, psi_arr)
+            _2d = psi_arr.ndim == 2
+            b        = self.properties.b[:, None]        if _2d else self.properties.b
+            residual = self.properties.residual[:, None] if _2d else self.properties.residual
 
         with np.errstate(divide='ignore', invalid='ignore'):
             capacity = -(soil_q_arr - residual) / (b * psi_arr)
@@ -136,8 +132,8 @@ class BrooksCorey(Soil):
         return float(capacity) if np.isscalar(psi) else capacity
 
     def conductivity_moisture(
-        self, soil_q: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, soil_q: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes soil hydraulic conductivity from soil moisture.
 
         Args:
@@ -153,19 +149,16 @@ class BrooksCorey(Soil):
             ValueError: If soil_q is out of valid bounds.
         """
         if level is not None:
-            b = self.properties.b[level]
+            b        = self.properties.b[level]
             porosity = self.properties.porosity[level]
             residual = self.properties.residual[level]
-            K_sat = self.properties.K_sat[level]
+            K_sat    = self.properties.K_sat[level]
         else:
-            soil_q_arr = np.asarray(soil_q)
-            b = self._expand_profile_property(self.properties.b, soil_q_arr)
-            porosity = self._expand_profile_property(
-                self.properties.porosity, soil_q_arr)
-            residual = self._expand_profile_property(
-                self.properties.residual, soil_q_arr)
-            K_sat = self._expand_profile_property(
-                self.properties.K_sat, soil_q_arr)
+            _2d = np.asarray(soil_q).ndim == 2
+            b        = self.properties.b[:, None]        if _2d else self.properties.b
+            porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+            residual = self.properties.residual[:, None] if _2d else self.properties.residual
+            K_sat    = self.properties.K_sat[:, None]    if _2d else self.properties.K_sat
 
         Se = (soil_q-residual)/(porosity-residual)
         conductivity = K_sat*( Se**(2.*b+3.) )
@@ -186,12 +179,11 @@ class BrooksCorey(Soil):
         Returns:
             Linearized dK/dθ for all layers [m/s].
         """
-        b = self._expand_profile_property(self.properties.b, soil_q)
-        porosity = self._expand_profile_property(
-            self.properties.porosity, soil_q)
-        residual = self._expand_profile_property(
-            self.properties.residual, soil_q)
-        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        _2d = soil_q.ndim == 2
+        b        = self.properties.b[:, None]        if _2d else self.properties.b
+        porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+        residual = self.properties.residual[:, None] if _2d else self.properties.residual
+        K_sat    = self.properties.K_sat[:, None]    if _2d else self.properties.K_sat
         soil_e = porosity - residual
         Se = (soil_q - residual) / soil_e
         gradient = K_sat * Se ** (2.0 * b + 2.0) / soil_e
@@ -212,13 +204,12 @@ class BrooksCorey(Soil):
         Raises:
             ValueError: If soil_q is out of valid bounds.
         """
-        b = self._expand_profile_property(self.properties.b, soil_q)
-        psi_sat = self._expand_profile_property(self.properties.psi_sat, soil_q)
-        porosity = self._expand_profile_property(
-            self.properties.porosity, soil_q)
-        residual = self._expand_profile_property(
-            self.properties.residual, soil_q)
-        K_sat = self._expand_profile_property(self.properties.K_sat, soil_q)
+        _2d = soil_q.ndim == 2
+        b        = self.properties.b[:, None]        if _2d else self.properties.b
+        psi_sat  = self.properties.psi_sat[:, None]  if _2d else self.properties.psi_sat
+        porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+        residual = self.properties.residual[:, None] if _2d else self.properties.residual
+        K_sat    = self.properties.K_sat[:, None]    if _2d else self.properties.K_sat
         Se = (soil_q-residual)/(porosity-residual)
         diffusivity = -b*K_sat*psi_sat*( Se**(b+2.) ) / (porosity-residual)
 

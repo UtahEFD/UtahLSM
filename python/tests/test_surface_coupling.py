@@ -27,9 +27,9 @@ def _make_minimal_model(
     tol_mois: float = 1e-12,
 ) -> UtahLSM:
     """Create a minimal UtahLSM instance for unit-testing private methods."""
-    model = UtahLSM.__new__(UtahLSM)
+    model = UtahLSM.__new__(UtahLSM)  # type: ignore[attr-defined]
     model.logger = logging.getLogger("test")
-    model.input = SimpleNamespace(
+    model.input = SimpleNamespace(  # type: ignore[assignment]
         numerics=NumericsConfig(
             heat_diffusion_back_weight=0.5,
             iterations=IterationsConfig(
@@ -85,17 +85,17 @@ def test_compute_seb_vec_is_deterministic_and_pure():
     model.sfc_state.turbulence.obukhov_length[0] = 7.0
     model.sfc_state.turbulence.friction_velocity[0] = 8.0
 
-    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
-    model.soil = SimpleNamespace(surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T))
-    model.sfc = SimpleNamespace(
-        fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),
-        fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),
+    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))  # type: ignore[assignment]
+    model.soil = SimpleNamespace(surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T))  # type: ignore[assignment,misc]
+    model.sfc = SimpleNamespace(  # type: ignore[assignment]
+        fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),  # type: ignore[misc]
+        fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),  # type: ignore[misc]
     )
-    model.input.surface = SimpleNamespace(
+    model.input.surface = SimpleNamespace(  # type: ignore[assignment]
         z_m=10.0, z_o=0.1, z_s=2.0, z_t=0.01, zeta_max=5.0,
         gustiness=0.0, gustiness_stable_only=True,
     )
-    model.input.grid = SimpleNamespace(z=np.array([0.0, 0.05]), nz=2, nx=1, ny=1)
+    model.input.grid = SimpleNamespace(z=np.array([0.0, 0.05]), nz=2, nx=1, ny=1)  # type: ignore[assignment]
 
     saved = (
         float(model.sfc_state.turbulence.obukhov_length[0]),
@@ -110,8 +110,9 @@ def test_compute_seb_vec_is_deterministic_and_pure():
     # _compute_seb_vec is a pure function - same inputs give same outputs
     sfc_T = np.array([280.0])
     initial_L = np.array([2.0])
-    r1 = model._compute_seb_vec(sfc_T, initial_L)
-    r2 = model._compute_seb_vec(sfc_T, initial_L)
+    # Testing internal solver behavior directly
+    r1 = model._compute_seb_vec(sfc_T, initial_L)  # type: ignore[attr-defined]
+    r2 = model._compute_seb_vec(sfc_T, initial_L)  # type: ignore[attr-defined]
     assert np.allclose(r1, r2)
 
     # Pure function should not mutate state
@@ -151,7 +152,7 @@ def test_surface_coupling_recomputes_fluxes_on_convergence():
     model._solve_seb = fake_solve_seb  # type: ignore[attr-defined]
     model._solve_smb = fake_solve_smb  # type: ignore[attr-defined]
 
-    model._solve_surface_coupling()
+    model._solve_surface_coupling()  # type: ignore[attr-defined]
 
     assert calls, "Expected coupled solver to recompute fluxes on exit."
     assert calls[-1][0] == 301.0
@@ -184,7 +185,7 @@ def test_surface_coupling_refreshes_canopy_diagnostics_on_convergence():
     model._solve_seb = fake_solve_seb  # type: ignore[attr-defined]
     model._solve_smb = fake_solve_smb  # type: ignore[attr-defined]
 
-    model._solve_surface_coupling()
+    model._solve_surface_coupling()  # type: ignore[attr-defined]
 
     assert len(refreshes) == 3
     assert refreshes[-1] == (301.0, 0.1005)
@@ -210,7 +211,7 @@ def test_surface_coupling_recomputes_fluxes_on_nonconvergence():
     model._solve_seb = fake_solve_seb  # type: ignore[attr-defined]
     model._solve_smb = fake_solve_smb  # type: ignore[attr-defined]
 
-    model._solve_surface_coupling()
+    model._solve_surface_coupling()  # type: ignore[attr-defined]
 
     assert calls, "Expected coupled solver to recompute fluxes on exit."
 
@@ -238,7 +239,7 @@ def test_surface_coupling_refreshes_canopy_diagnostics_on_nonconvergence():
     model._solve_seb = fake_solve_seb  # type: ignore[attr-defined]
     model._solve_smb = fake_solve_smb  # type: ignore[attr-defined]
 
-    model._solve_surface_coupling()
+    model._solve_surface_coupling()  # type: ignore[attr-defined]
 
     assert len(refreshes) == 3
     assert refreshes[-1] == (302.0, 0.18)

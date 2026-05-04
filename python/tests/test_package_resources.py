@@ -18,13 +18,13 @@ def test_packaged_resources_exist() -> None:
     assert io_root.joinpath('schema_namelist.json').is_file()
     assert io_root.joinpath('schema_soil_properties.json').is_file()
 
-    for dataset in SoilPropertiesLoader.get_bundled_datasets():
+    for dataset in SoilPropertiesLoader.get_bundled_datasets():  # type: ignore[assignment]
         assert soil_root.joinpath(f'{dataset}.json').is_file()
 
 
 def test_bundled_soil_resource_is_packaged() -> None:
     """Ensures bundled soil datasets resolve through packaged resources."""
-    bundled = SoilPropertiesLoader._get_bundled_path('cosby')
+    bundled = SoilPropertiesLoader._get_bundled_path('cosby')  # type: ignore[attr-defined]
 
     assert bundled.is_file()
     assert bundled.name == 'cosby.json'

@@ -25,6 +25,7 @@ Testing Strategy:
 3. Test with realistic soil parameter ranges
 4. Verify numerical stability
 """
+# pyright: basic
 
 import numpy as np
 import pytest
@@ -168,7 +169,7 @@ class TestWaterPotential:
                 20
             )
 
-            for theta in theta_test:
+            for theta in theta_test:  # type: ignore[assignment]
                 psi = model.water_potential(theta, level=layer)
 
                 # Water potential should be reasonable (not inf, not nan)
@@ -289,7 +290,7 @@ class TestHydraulicConductivity:
                 20
             )
 
-            for theta in theta_test:
+            for theta in theta_test:  # type: ignore[assignment]
                 K = model.conductivity_moisture(theta, level=layer)
 
                 # Should be non-negative (very small values near residual can be ~0)
@@ -443,7 +444,7 @@ class TestModelConsistency:
             5
         )
 
-        for theta in theta_test:
+        for theta in theta_test:  # type: ignore[assignment]
             assert theta >= model.properties.residual[layer] - 1e-10
             assert theta <= model.properties.porosity[layer] + 1e-10
 
@@ -466,7 +467,7 @@ class TestNumericalStability:
         porosity = model.properties.porosity[layer]
         theta_near_sat = np.linspace(porosity * 0.95, porosity * 0.9999, 5)
 
-        for theta in theta_near_sat:
+        for theta in theta_near_sat:  # type: ignore[assignment]
             psi = model.water_potential(theta, level=layer)
             K = model.conductivity_moisture(theta, level=layer)
 
@@ -486,7 +487,7 @@ class TestNumericalStability:
         residual = model.properties.residual[layer]
         theta_near_res = np.linspace(residual * 1.1, residual * 1.5, 5)
 
-        for theta in theta_near_res:
+        for theta in theta_near_res:  # type: ignore[assignment]
             if theta > residual:  # Only test above residual
                 psi = model.water_potential(theta, level=layer)
                 assert np.isfinite(psi), "Inf/NaN in water potential near residual"

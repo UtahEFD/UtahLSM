@@ -14,6 +14,8 @@
 """Factory for creating soil model instances."""
 
 
+from typing import Any
+
 from ...exceptions import NamelistError
 from ...util.io import logging_helper
 from .soil import Soil
@@ -25,8 +27,8 @@ logger = logging_helper.get_logger('SOIL')
 
 def get_soil_model(
     key: int,
-    properties_dict: dict,
-    soil_type_names: list,
+    properties_dict: dict[str, dict[str, Any]],
+    soil_type_names: list[str],
     dataset_name: str = 'custom'
 ) -> Soil:
     """Factory function to select and instantiate a soil model.
@@ -44,7 +46,7 @@ def get_soil_model(
         NamelistError: If the provided `key` is not a valid model ID.
     """
     # Dictionary to map keys to classes
-    soil_models = {
+    soil_models: dict[int, type[Soil]] = {
         1: BrooksCorey,
         2: Campbell,
         3: VanGenuchten,

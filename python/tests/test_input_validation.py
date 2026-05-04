@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import jsonschema
 import netCDF4 as nc
@@ -15,7 +16,7 @@ from numpy.testing import assert_allclose
 from utahlsm.util.io.input import Input
 
 
-def _base_namelist() -> dict:
+def _base_namelist() -> dict[str, Any]:
     """Returns a minimal namelist that satisfies the input schema."""
     return {
         "general": {"log_level": "info"},
@@ -92,7 +93,7 @@ def test_load_and_validate_namelist_rejects_unknown_keys(
     input_obj = _make_input()
 
     with pytest.raises(jsonschema.ValidationError, match="warm_start_coupling"):
-        input_obj._load_and_validate_namelist(str(namelist_path))
+        input_obj._load_and_validate_namelist(str(namelist_path))  # type: ignore[attr-defined]
 
 
 def test_validate_forcing_data_clips_small_boundary_excursions() -> None:
@@ -108,7 +109,7 @@ def test_validate_forcing_data_clips_small_boundary_excursions() -> None:
     lw_out = np.array([[95.0, 705.0]])
     r_net = np.array([[-210.0, 1210.0]])
 
-    input_obj._validate_forcing_data(
+    input_obj._validate_forcing_data(  # type: ignore[attr-defined]
         atm_U, atm_T, atm_q, atm_p,
         sw_in, sw_out, lw_in, lw_out,
         r_net, _ntime=1)
@@ -129,7 +130,7 @@ def test_validate_forcing_data_raises_on_large_violation() -> None:
     input_obj = _make_input()
 
     with pytest.raises(ValueError, match="temperature"):
-        input_obj._validate_forcing_data(
+        input_obj._validate_forcing_data(  # type: ignore[attr-defined]
             atm_U=np.array([[2.0]]),
             atm_T=np.array([[190.0]]),
             atm_q=np.array([[0.01]]),
@@ -155,7 +156,7 @@ def test_load_and_validate_namelist_requires_general_and_numerics(
     input_obj = _make_input()
 
     with pytest.raises(jsonschema.ValidationError):
-        input_obj._load_and_validate_namelist(str(namelist_path))
+        input_obj._load_and_validate_namelist(str(namelist_path))  # type: ignore[attr-defined]
 
 
 def test_load_and_validate_namelist_rejects_invalid_canopy_bounds(
@@ -172,7 +173,7 @@ def test_load_and_validate_namelist_rejects_invalid_canopy_bounds(
     input_obj = _make_input()
 
     with pytest.raises(jsonschema.ValidationError, match="maximum of 1"):
-        input_obj._load_and_validate_namelist(str(namelist_path))
+        input_obj._load_and_validate_namelist(str(namelist_path))  # type: ignore[attr-defined]
 
 
 def test_load_initial_conditions_rejects_nonuniform_soil_z(
@@ -181,14 +182,14 @@ def test_load_initial_conditions_rejects_nonuniform_soil_z(
     init_path = tmp_path / "lsm_init.nc"
     with nc.Dataset(init_path, "w") as ds:
         ds.createDimension("z", 3)
-        ds.createVariable("soil_z", "f8", ("z",))[:] = [0.0, 0.05, 0.15]
-        ds.createVariable("soil_T", "f8", ("z",))[:] = [290.0, 289.0, 288.0]
-        ds.createVariable("soil_q", "f8", ("z",))[:] = [0.25, 0.25, 0.25]
-        ds.createVariable("soil_type", str, ("z",))[:] = np.asarray(
+        ds.createVariable("soil_z", "f8", ("z",))[:] = [0.0, 0.05, 0.15]  # type: ignore[assignment]
+        ds.createVariable("soil_T", "f8", ("z",))[:] = [290.0, 289.0, 288.0]  # type: ignore[assignment]
+        ds.createVariable("soil_q", "f8", ("z",))[:] = [0.25, 0.25, 0.25]  # type: ignore[assignment]
+        ds.createVariable("soil_type", str, ("z",))[:] = np.asarray(  # type: ignore[assignment]
             ["clay", "clay", "clay"], dtype=object
         )
 
     input_obj = _make_input()
 
     with pytest.raises(ValueError, match="uniform spacing"):
-        input_obj._load_initial_conditions(str(init_path), nx=1, ny=1, nz=3)
+        input_obj._load_initial_conditions(str(init_path), nx=1, ny=1, nz=3)  # type: ignore[attr-defined]

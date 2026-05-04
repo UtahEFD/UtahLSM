@@ -21,10 +21,11 @@ import logging
 
 import numpy as np
 
+from ..._types import FloatOrArray
 from ...data_models import AtmosphericState, SurfaceState
 from ...util import constants as c
 from ...util.io import logging_helper
-from .radiation import Radiation, ScalarOrArray
+from .radiation import Radiation
 
 
 class RadBasic(Radiation):
@@ -56,8 +57,8 @@ class RadBasic(Radiation):
         time_utc: float,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> tuple[ScalarOrArray, ScalarOrArray,
-               ScalarOrArray, ScalarOrArray]:
+    ) -> tuple[FloatOrArray, FloatOrArray,
+               FloatOrArray, FloatOrArray]:
         """Computes the four surface radiation components.
 
         Args:
@@ -75,7 +76,7 @@ class RadBasic(Radiation):
         lw_out = self._longwave_out(sfc_state)
         return sw_in, sw_out, lw_in, lw_out
 
-    def _shortwave_in(self, julian_day: int, time_utc: float) -> ScalarOrArray:
+    def _shortwave_in(self, julian_day: int, time_utc: float) -> FloatOrArray:
         """Computes downward shortwave radiation for clear-sky conditions.
 
         Args:
@@ -104,7 +105,7 @@ class RadBasic(Radiation):
         )
         return sw_in
 
-    def _shortwave_out(self, sw_in: ScalarOrArray) -> ScalarOrArray:
+    def _shortwave_out(self, sw_in: FloatOrArray) -> FloatOrArray:
         """Computes upward shortwave radiation based on surface albedo.
 
         Args:
@@ -117,7 +118,7 @@ class RadBasic(Radiation):
 
     def _longwave_in(
         self, atm_state: AtmosphericState, sfc_state: SurfaceState
-    ) -> ScalarOrArray:
+    ) -> FloatOrArray:
         """Computes clear-sky downwelling longwave radiation.
 
         Uses the Brutsaert (1975) emissivity relation.
@@ -144,7 +145,7 @@ class RadBasic(Radiation):
 
         return emissivity_eff * SB * (Ta ** 4)
 
-    def _longwave_out(self, sfc_state: SurfaceState) -> ScalarOrArray:
+    def _longwave_out(self, sfc_state: SurfaceState) -> FloatOrArray:
         """Computes upward longwave radiation using the Stefan-Boltzmann law.
 
         Args:

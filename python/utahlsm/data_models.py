@@ -26,10 +26,12 @@ divided into two main sections:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+
+from ._types import FloatOrArray
 
 # --- State Data Models ---
 
@@ -55,15 +57,15 @@ class AtmosphericState:
             components are populated; the field is retained for
             convenience and is what the SEB residual reads.
     """
-    wind_speed: Union[float, NDArray[np.float64]] = 0.0
-    temperature: Union[float, NDArray[np.float64]] = 0.0
-    specific_humidity: Union[float, NDArray[np.float64]] = 0.0
-    pressure: Union[float, NDArray[np.float64]] = 0.0
-    sw_in: Union[float, NDArray[np.float64]] = 0.0
-    sw_out: Union[float, NDArray[np.float64]] = 0.0
-    lw_in: Union[float, NDArray[np.float64]] = 0.0
-    lw_out: Union[float, NDArray[np.float64]] = 0.0
-    radiation_net: Union[float, NDArray[np.float64]] = 0.0
+    wind_speed: FloatOrArray = 0.0
+    temperature: FloatOrArray = 0.0
+    specific_humidity: FloatOrArray = 0.0
+    pressure: FloatOrArray = 0.0
+    sw_in: FloatOrArray = 0.0
+    sw_out: FloatOrArray = 0.0
+    lw_in: FloatOrArray = 0.0
+    lw_out: FloatOrArray = 0.0
+    radiation_net: FloatOrArray = 0.0
 
 @dataclass
 class SoilState:
@@ -83,8 +85,8 @@ class SoilState:
         default_factory=lambda: np.array([]))
     moisture: NDArray[np.float64] = field(
         default_factory=lambda: np.array([]))
-    type: NDArray = field(
-        default_factory=lambda: np.array([]))
+    type: NDArray[np.str_] = field(
+        default_factory=lambda: np.array([], dtype=str))
 
 @dataclass
 class SurfaceFluxes:
@@ -144,10 +146,10 @@ class SurfaceState:
         turbulence: A dataclass containing turbulence scales.
 
     """
-    temperature: Union[float, NDArray[np.float64]] = 0.0
-    soil_top_temperature: Union[float, NDArray[np.float64]] = 0.0
-    moisture: Union[float, NDArray[np.float64]] = 0.0
-    specific_humidity: Union[float, NDArray[np.float64]] = 0.0
+    temperature: FloatOrArray = 0.0
+    soil_top_temperature: FloatOrArray = 0.0
+    moisture: FloatOrArray = 0.0
+    specific_humidity: FloatOrArray = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
 
@@ -203,7 +205,7 @@ class SolverState:
         diffusion_g: Super-diagonal buffer, shape (nz - 1, ncol).
         diffusion_r: Right-hand-side buffer, shape (nz - 1, ncol).
     """
-    conductivity_thermal_mid: Union[float, NDArray[np.float64]] = 0.0
+    conductivity_thermal_mid: FloatOrArray = 0.0
     diffusion_e: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(0))
     diffusion_f: NDArray[np.float64] = field(

@@ -17,11 +17,11 @@ from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
 
 
 def _make_model(theta: float = 0.25) -> UtahLSM:
-    model = UtahLSM.__new__(UtahLSM)
+    model = UtahLSM.__new__(UtahLSM)  # type: ignore[attr-defined]
     model.logger = logging.getLogger("test")
     model.ncol = 1
     model.tstep = 3600.0
-    model.input = SimpleNamespace(
+    model.input = SimpleNamespace(  # type: ignore[assignment]
         grid=SimpleNamespace(nx=1, ny=1, nz=3, z=np.array([0.05, 0.20, 0.35])),
         numerics=NumericsConfig(
             heat_diffusion_back_weight=1.0,
@@ -45,8 +45,8 @@ def _make_model(theta: float = 0.25) -> UtahLSM:
         ),
     )
     model.solver_state = SolverState()
-    model.sfc_state = SimpleNamespace(moisture=np.array([theta], dtype=float))
-    model.soil_state = SimpleNamespace(
+    model.sfc_state = SimpleNamespace(moisture=np.array([theta], dtype=float))  # type: ignore[assignment]
+    model.soil_state = SimpleNamespace(  # type: ignore[assignment]
         moisture=np.array([theta, theta, theta], dtype=float)
     )
     props = SoilPropertiesLoader.load("cosby")
@@ -58,7 +58,8 @@ def test_mixed_moisture_solver_preserves_uniform_equilibrium():
     model = _make_model(theta=0.25)
     initial = np.array(model.soil_state.moisture, copy=True)
 
-    model._solve_diffusion_mois()
+    # Testing internal solver behavior directly
+    model._solve_diffusion_mois()  # type: ignore[attr-defined]
 
     assert np.allclose(model.soil_state.moisture, initial, atol=1e-8)
 
@@ -68,6 +69,7 @@ def test_mixed_moisture_solver_applies_sink_term():
     source = np.array([0.0, -1.0e-7, -1.0e-7], dtype=float)
     initial = np.array(model.soil_state.moisture, copy=True)
 
-    model._solve_mixed_moisture(source_term=source)
+    # Testing internal solver behavior directly
+    model._solve_mixed_moisture(source_term=source)  # type: ignore[attr-defined]
 
     assert np.all(model.soil_state.moisture[1:] < initial[1:])

@@ -20,7 +20,9 @@ from custom files specified by file path.
 
 import json
 from importlib import resources
+from importlib.abc import Traversable
 from pathlib import Path
+from typing import Any
 
 import jsonschema
 
@@ -67,7 +69,7 @@ class SoilPropertiesLoader:
         return SoilPropertiesLoader._load_bundled(properties_spec)
 
     @staticmethod
-    def get_bundled_datasets() -> list:
+    def get_bundled_datasets() -> list[str]:
         """Return list of available bundled dataset names."""
         return SoilPropertiesLoader.BUNDLED_DATASETS.copy()
 
@@ -91,7 +93,7 @@ class SoilPropertiesLoader:
                 f'Available bundled datasets: {available}'
             )
 
-        bundled_path = SoilPropertiesLoader._get_bundled_path(dataset_name)
+        bundled_path: Traversable = SoilPropertiesLoader._get_bundled_path(dataset_name)
 
         if not bundled_path.is_file():
             raise NamelistError(
@@ -138,11 +140,11 @@ class SoilPropertiesLoader:
                 f'Error reading soil property file {path}: {e}'
             ) from e
 
-        SoilPropertiesLoader._validate(data, path)
+        SoilPropertiesLoader._validate(data, str(path))
         return data['soil_types']
 
     @staticmethod
-    def _load_from_resource(resource, source: str) -> dict[str, dict[str, float]]:
+    def _load_from_resource(resource: Traversable, source: str) -> dict[str, dict[str, float]]:
         """Load packaged JSON resources from the installed utahlsm package.
 
         Args:
@@ -159,7 +161,7 @@ class SoilPropertiesLoader:
         """
         try:
             with resource.open('r', encoding='utf-8') as f:
-                data = json.load(f)
+                data: dict[str, Any] = json.load(f)
         except json.JSONDecodeError as e:
             raise NamelistError(
                 f'Invalid JSON in soil property resource {source}: {e}'
@@ -173,7 +175,7 @@ class SoilPropertiesLoader:
         return data['soil_types']
 
     @staticmethod
-    def _validate(data: dict, source: str = 'properties') -> None:
+    def _validate(data: dict[str, Any], source: str = 'properties') -> None:
         """Validate loaded properties against schema.
 
         Args:
@@ -207,7 +209,7 @@ class SoilPropertiesLoader:
             ) from e
 
     @staticmethod
-    def _get_bundled_path(dataset_name: str):
+    def _get_bundled_path(dataset_name: str) -> Traversable:
         """Get the packaged resource for a bundled dataset file.
 
         Args:

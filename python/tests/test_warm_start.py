@@ -17,10 +17,10 @@ from utahlsm.data_models import (
 
 def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
     """Create a minimal UtahLSM instance for unit-testing `run()` behavior."""
-    model = UtahLSM.__new__(UtahLSM)
+    model = UtahLSM.__new__(UtahLSM)  # type: ignore[attr-defined]
     model.logger = logging.getLogger("test")
 
-    model.input = SimpleNamespace(
+    model.input = SimpleNamespace(  # type: ignore[assignment]
         numerics=NumericsConfig(
             heat_diffusion_back_weight=0.5,
             warm_start_turbulence=warm_start_turbulence,
@@ -51,7 +51,7 @@ def _make_model_for_run(*, warm_start_turbulence: bool) -> UtahLSM:
         type=np.array(["clay", "clay"], dtype=object),
     )
     model.sfc_state = SurfaceState()
-    model._did_warm_start_turbulence = False
+    model._did_warm_start_turbulence = False  # type: ignore[attr-defined]
 
     # No-op the rest of the time step to isolate warm-start call conditions.
     model._solve_surface_coupling = lambda: None  # type: ignore[assignment]

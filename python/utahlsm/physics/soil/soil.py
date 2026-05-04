@@ -23,12 +23,13 @@ parameterizations. It provides:
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
-from typing import TypeVar, Union, overload
+from typing import Any, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
 
-from ...exceptions import NamelistError
+from ..._types import FloatOrArray
+from ...exceptions import NamelistError, SolverError
 from ...util import constants as c
 from ...util.io import logging_helper
 from .. import thermo
@@ -73,8 +74,8 @@ class Soil(ABC):
     """
     def __init__(
         self,
-        properties_dict: dict,
-        soil_type_names: list,
+        properties_dict: dict[str, dict[str, Any]],
+        soil_type_names: list[str],
         dataset_name: str = 'custom'
     ) -> None:
         """Initializes the Soil model.
@@ -100,7 +101,9 @@ class Soil(ABC):
         self.logger.info('Using soil property dataset: %s', dataset_name)
 
         # Create temporary lists to hold properties for each layer
-        prop_lists = {f.name: [] for f in fields(SoilProperties)}
+        prop_lists: dict[str, list[float]] = {
+            f.name: [] for f in fields(SoilProperties)
+        }
 
         # Loop to gather properties from the pre-loaded dictionary
         for soil_type_name in soil_type_names:
@@ -176,18 +179,10 @@ class Soil(ABC):
 
     #--- Abstract Methods ---
 
-    @overload
-    def water_potential(self, soil_q: float, level: int = None) -> float: ...
-
-    @overload
-    def water_potential(
-        self, soil_q: NDArray[np.float64], level: int = None
-    ) -> NDArray[np.float64]: ...
-
     @abstractmethod
     def water_potential(
-        self, soil_q: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, soil_q: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes soil water potential using soil moisture content.
 
         This method must be implemented by subclasses to compute the water
@@ -206,18 +201,10 @@ class Soil(ABC):
         """
         raise NotImplementedError
 
-    @overload
-    def water_content(self, psi: float, level: int = None) -> float: ...
-
-    @overload
-    def water_content(
-        self, psi: NDArray[np.float64], level: int = None
-    ) -> NDArray[np.float64]: ...
-
     @abstractmethod
     def water_content(
-        self, psi: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, psi: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes soil moisture content from water potential.
 
         This is the inverse of ``water_potential`` and is required by the
@@ -235,18 +222,10 @@ class Soil(ABC):
         """
         raise NotImplementedError
 
-    @overload
-    def moisture_capacity(self, psi: float, level: int = None) -> float: ...
-
-    @overload
-    def moisture_capacity(
-        self, psi: NDArray[np.float64], level: int = None
-    ) -> NDArray[np.float64]: ...
-
     @abstractmethod
     def moisture_capacity(
-        self, psi: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, psi: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes the specific moisture capacity dθ/dψ.
 
         Args:
@@ -261,20 +240,10 @@ class Soil(ABC):
         """
         raise NotImplementedError
 
-    @overload
-    def conductivity_moisture(
-        self, soil_q: float, level: int = None
-    ) -> float: ...
-
-    @overload
-    def conductivity_moisture(
-        self, soil_q: NDArray[np.float64], level: int = None
-    ) -> NDArray[np.float64]: ...
-
     @abstractmethod
     def conductivity_moisture(
-        self, soil_q: Union[float, NDArray[np.float64]], level: int = None
-    ) -> Union[float, NDArray[np.float64]]:
+        self, soil_q: FloatOrArray, level: int | None = None
+    ) -> FloatOrArray:
         """Computes soil moisture conductivity.
 
         This method must be implemented by subclasses to compute the water
@@ -350,73 +319,54 @@ class Soil(ABC):
 
     # --- Validation Methods ---
 
-    def _validate_moisture_bounds(
-        self, soil_q: Union[float, NDArray[np.float64]], level: int = None
+    def enforce_moisture_bounds(
+        self, moisture: NDArray[np.float64], tol: float = 1e-8
     ) -> None:
-        """Validates that soil moisture is within physically possible bounds.
+        """Enforces physical moisture bounds after a solve step.
 
-        Issues warnings for out-of-bounds values instead of raising errors,
-        allowing simulation to continue with imperfect data for debugging.
+        Raises SolverError if any value lies outside [residual - tol,
+        porosity + tol]. Clips and warns for soft overshoots within tol.
 
         Args:
-            soil_q: Soil moisture content [m^3/m^3].
-            level: The specific soil layer index if soil_q is a scalar.
+            moisture: Soil moisture profile [m^3/m^3], modified in-place.
+            tol: Tolerance for soft clipping before a hard error is raised.
         """
-        if level is not None:
-            porosity = self.properties.porosity[level]
-            if isinstance(soil_q, (int, float)):
-                if soil_q < 0:
-                    self.logger.warning(
-                        'Layer %d: soil moisture %f is negative. '
-                        'Moisture must be >= 0.', level, soil_q
-                    )
-                if soil_q > porosity:
-                    self.logger.warning(
-                        'Layer %d: soil moisture %f exceeds '
-                        'porosity %f.', level, soil_q, porosity)
-        else:
-            porosity = self.properties.porosity
-            if isinstance(soil_q, np.ndarray):
-                if soil_q.ndim == 1:
-                    invalid_neg = np.where(soil_q < 0)[0]
-                    if len(invalid_neg) > 0:
-                        self.logger.warning(
-                            'Layers %s have negative soil '
-                            'moisture: %s. '
-                            'Moisture must be >= 0.',
-                            invalid_neg.tolist(),
-                            soil_q[invalid_neg].tolist())
-                    invalid_high = np.where(soil_q > porosity)[0]
-                    if len(invalid_high) > 0:
-                        self.logger.warning(
-                            'Layers %s have soil '
-                            'moisture exceeding porosity: '
-                            '%s > %s.',
-                            invalid_high.tolist(),
-                            soil_q[invalid_high].tolist(),
-                            porosity[invalid_high].tolist())
-                else:
-                    invalid_neg = soil_q < 0
-                    if np.any(invalid_neg):
-                        num_bad = int(np.sum(invalid_neg))
-                        self.logger.warning(
-                            'Found %d soil moisture values below 0. '
-                            'Moisture must be >= 0.', num_bad)
-                    porosity_2d = porosity[:, None]
-                    invalid_high = soil_q > porosity_2d
-                    if np.any(invalid_high):
-                        num_bad = int(np.sum(invalid_high))
-                        self.logger.warning(
-                            'Found %d soil moisture values exceeding '
-                            'porosity.', num_bad)
+        moisture_arr = np.asarray(moisture, dtype=float)
+        _2d = moisture_arr.ndim == 2
+        residual = self.properties.residual[:, None] if _2d else self.properties.residual
+        porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+        tol = max(tol, 1e-8)
 
-    def _expand_profile_property(
-        self, prop: NDArray[np.float64], soil_q: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
-        """Broadcasts 1D soil properties across columns when needed."""
-        if soil_q.ndim == 2:
-            return prop[:, None]
-        return prop
+        below_hard = moisture_arr < (residual - tol)
+        above_hard = moisture_arr > (porosity + tol)
+        hard_mask = below_hard | above_hard
+        if np.any(hard_mask):
+            min_delta = float(np.min(moisture_arr - residual))
+            max_delta = float(np.max(moisture_arr - porosity))
+            bad_idx = np.argwhere(hard_mask)
+            examples = ", ".join(
+                f"{tuple(int(i) for i in idx)}"
+                f"={float(moisture_arr[tuple(idx)]):.6f}"
+                for idx in bad_idx[:5]
+            )
+            raise SolverError(
+                'Soil moisture left physical bounds after the mixed moisture '
+                f'solve: {int(np.sum(hard_mask))} cells outside '
+                f'[residual, porosity] by more than tol={tol:.1e}. '
+                f'Min(theta-residual)={min_delta:.3e}, '
+                f'Max(theta-porosity)={max_delta:.3e}. '
+                f'Examples: {examples}'
+            )
+
+        clip_mask = (moisture_arr < residual) | (moisture_arr > porosity)
+        if np.any(clip_mask):
+            self.logger.warning(
+                'Clipping %d soil moisture values to [residual, porosity] '
+                'after the mixed moisture solve (tol=%.1e).',
+                int(np.sum(clip_mask)),
+                tol,
+            )
+            np.clip(moisture, residual, porosity, out=moisture)
 
     # --- Shared Methods ---
 
@@ -432,19 +382,19 @@ class Soil(ABC):
         CI_W = c.water.VOLUMETRIC_HEAT_CAPACITY
         CI_A = c.air.DENSITY_REF * c.thermodynamic.SPECIFIC_HEAT
 
-        porosity = self._expand_profile_property(
-            self.properties.porosity, soil_q)
-        Ci = self._expand_profile_property(self.properties.ci, soil_q)
+        _2d = soil_q.ndim == 2
+        porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+        Ci = self.properties.ci[:, None] if _2d else self.properties.ci
         Ks = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CI_A
 
         return Ks
 
     def surface_specific_humidity(
         self,
-        sfc_T: Union[float, NDArray[np.float64]],
-        sfc_theta: Union[float, NDArray[np.float64]],
-        atm_p: Union[float, NDArray[np.float64]]
-    ) -> Union[float, NDArray[np.float64]]:
+        sfc_T: FloatOrArray,
+        sfc_theta: FloatOrArray,
+        atm_p: FloatOrArray
+    ) -> FloatOrArray:
         """Computes the specific humidity at the soil surface.
 
         Args:
@@ -474,9 +424,9 @@ class Soil(ABC):
         Returns:
             The thermal conductivity for each layer [W/m-K].
         """
-        psi = self.water_potential(soil_q)
+        psi = np.asarray(self.water_potential(soil_q))
         pf = np.log10(np.abs(psi * 100) + 1e-9)
-        conductivity = np.where(
+        conductivity: NDArray[np.float64] = np.where(
             pf <= c.soil.CONDUCTIVITY_PF_THRESHOLD,
             c.soil.CONDUCTIVITY_COEFF * np.exp(-(pf + c.soil.CONDUCTIVITY_EXP)),
             c.soil.CONDUCTIVITY_MIN

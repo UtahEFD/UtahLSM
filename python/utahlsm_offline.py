@@ -83,6 +83,7 @@ def main() -> None:
     output_lsm: Optional[utahlsm.Output] = None
     lsm: Optional[utahlsm.UtahLSM] = None
     step_count: int = 0
+    runtime: float = 0.0
     try:
         # Create input and output objects
         input_lsm: utahlsm.Input = utahlsm.Input(
@@ -95,8 +96,9 @@ def main() -> None:
         lsm = utahlsm.UtahLSM(input_lsm, output_lsm)
 
         # --- Main Time-Stepping Loop ---
-        runtime: float = 0
+        assert input_lsm.forcing is not None
         tstep: float = input_lsm.forcing.tstep
+        step_count = 0
         for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
             runtime += tstep
 
