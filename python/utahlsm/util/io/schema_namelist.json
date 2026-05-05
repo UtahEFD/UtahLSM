@@ -121,7 +121,9 @@
                 "vpd_coef": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
                 "t_opt": { "oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}}] },
                 "t_coef": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
-                "r_ground": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] }
+                "r_ground": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
+                "water_capacity_lai": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] },
+                "wet_cooling_max": { "oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "items": {"type": "number", "minimum": 0}}] }
             },
             "required": ["model"],
             "additionalProperties": false

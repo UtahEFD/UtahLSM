@@ -193,7 +193,8 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
             return
         print(f"  {label:>8}: bias={diff.mean():+7.2f}  "
               f"rmse={np.sqrt((diff**2).mean()):6.2f}  "
-              f"peak obs={np.nanmax(o):7.2f}  peak model={np.nanmax(np.asarray(mi)):7.2f}")
+              f"peak obs={np.nanmax(o):7.2f}  peak model={np.nanmax(np.asarray(mi)):7.2f} " 
+              f"min obs={np.nanmin(o):7.2f}  min model={np.nanmin(np.asarray(mi)):7.2f}")
 
     print("\nSummary (overlap window only):")
     _stats("H", shf_m, shf_o, t_model, t_obs_sl)

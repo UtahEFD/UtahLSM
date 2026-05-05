@@ -185,7 +185,13 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 `model`
 : `"none"` for bare soil or `"jarvis"` for the Jarvis resistance parameterization.
 
-The remaining canopy fields are scalar-or-array parameters that can be supplied once or per horizontal column. Common fields are `lai`, `veg_fraction`, `rooting_depth`, `beta`, `rs_min`, `rs_max`, `rg_half`, `vpd_coef`, `t_opt`, and `t_coef`.
+The remaining canopy fields are scalar-or-array parameters that can be supplied once or per horizontal column. Common fields are `lai`, `veg_fraction`, `rooting_depth`, `beta`, `rs_min`, `rs_max`, `rg_half`, `vpd_coef`, `t_opt`, `t_coef`, `r_ground`, `water_capacity_lai`, and `wet_cooling_max`.
+
+`water_capacity_lai`
+: Wet-canopy water holding capacity per LAI [kg m-2 per LAI]. The model uses `veg_fraction * lai * water_capacity_lai` as the per-ground-area dew/interception storage capacity.
+
+`wet_cooling_max`
+: Maximum diagnostic nighttime wet-canopy cooling below the soil/radiative skin [K] used by the dewfall path.
 
 ### `output`
 
@@ -208,6 +214,8 @@ The remaining canopy fields are scalar-or-array parameters that can be supplied 
 - `theta_root`
 - `lhf_soil`
 - `lhf_veg`
+- `lhf_wet`
+- `canopy_water`
 
 `time` is written automatically.
 

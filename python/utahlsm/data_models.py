@@ -169,9 +169,17 @@ class CanopyState:
         resistance: Bulk stomatal + cuticular resistance r_s [s/m].
         theta_root: Root-zone-weighted soil moisture [m^3/m^3].
         transpiration: Canopy transpiration flux [kg/m^2/s].
+        wet_evaporation: Wet-canopy vapor exchange [kg/m^2/s]. Positive
+            values evaporate canopy water storage; negative values are
+            dewfall/condensation into storage.
         evap_soil: Bare-soil evaporation flux [kg/m^2/s]. Sum with
-            ``transpiration`` matches the previous total E.
-        latent_veg: Latent heat flux contribution from canopy [W/m^2].
+            ``transpiration`` and ``wet_evaporation`` matches total E.
+        water_storage: Canopy intercepted/dew water storage [kg/m^2].
+        water_capacity: Maximum canopy water storage [kg/m^2].
+        latent_veg: Latent heat flux contribution from dry canopy
+            transpiration [W/m^2].
+        latent_wet: Latent heat flux contribution from wet canopy
+            evaporation/dewfall [W/m^2].
         latent_soil: Latent heat flux contribution from bare soil [W/m^2].
         root_uptake: Per-layer root extraction rate [m^3 water /
             m^3 soil / s], shape (nz, ncol). Negative sign in the
@@ -183,9 +191,17 @@ class CanopyState:
         default_factory=lambda: np.zeros(1))
     transpiration: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
+    wet_evaporation: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
     evap_soil: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
+    water_storage: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    water_capacity: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
     latent_veg: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    latent_wet: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
     latent_soil: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
@@ -422,6 +438,11 @@ class CanopyConfig:
             series with the top-cell soil conductive resistance,
             scaled by ``veg_fraction``. ``0.0`` recovers the
             bare-skin behaviour where ``T_skin = T_soil_top``.
+        water_capacity_lai: Canopy water holding capacity per LAI
+            [kg/m^2 per LAI]. Total column capacity is
+            ``veg_fraction * lai * water_capacity_lai``.
+        wet_cooling_max: Maximum diagnostic nighttime wet-canopy cooling
+            below the soil/radiative skin used for dewfall [K].
     """
     model: str = 'none'
     lai: FloatOrArrayLike = 0.0
@@ -435,6 +456,8 @@ class CanopyConfig:
     t_opt: FloatOrArrayLike = 298.0
     t_coef: FloatOrArrayLike = 1.6e-3
     r_ground: FloatOrArrayLike = 0.0
+    water_capacity_lai: FloatOrArrayLike = 0.2
+    wet_cooling_max: FloatOrArrayLike = 3.0
 
 @dataclass(frozen=True)
 class OutputConfig:

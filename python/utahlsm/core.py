@@ -232,8 +232,12 @@ class UtahLSM:
             resistance=np.full(self.ncol, np.inf),
             theta_root=np.zeros(self.ncol),
             transpiration=np.zeros(self.ncol),
+            wet_evaporation=np.zeros(self.ncol),
             evap_soil=np.zeros(self.ncol),
+            water_storage=np.zeros(self.ncol),
+            water_capacity=np.zeros(self.ncol),
             latent_veg=np.zeros(self.ncol),
+            latent_wet=np.zeros(self.ncol),
             latent_soil=np.zeros(self.ncol),
             root_uptake=np.zeros((nz, self.ncol)),
         )
@@ -393,6 +397,12 @@ class UtahLSM:
             self.canopy = get_canopy_model(
                 self.input.canopy, self.input.grid.z, self.ncol
             )
+            if self.canopy is not None:
+                self.canopy_state.water_capacity[:] = (
+                    self.canopy.veg_fraction
+                    * self.canopy.lai
+                    * self.canopy.water_capacity_lai
+                )
         except NamelistError as e:
             self.logger.error('Failed to initialize physics modules: %s.', e)
             raise
@@ -469,6 +479,8 @@ class UtahLSM:
                 'theta_root': self.canopy_state.theta_root,
                 'lhf_soil': self.canopy_state.latent_soil,
                 'lhf_veg': self.canopy_state.latent_veg,
+                'lhf_wet': self.canopy_state.latent_wet,
+                'canopy_water': self.canopy_state.water_storage,
             })
         self.output_fields = self._select_output_fields(self.full_output_fields)
         self.output.set_fields(self.output_fields)
@@ -561,45 +573,135 @@ class UtahLSM:
             self.soil_state.moisture
         )
 
+    def _partition_flux_wq_components(
+        self,
+        sfc_T: np.ndarray,
+        gnd_q: FloatOrArray,
+        atm_T: np.ndarray,
+        atm_q: np.ndarray,
+        atm_p: np.ndarray,
+        ustar: np.ndarray,
+        fh: FloatOrArray,
+        cols: Optional[np.ndarray] = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Kinematic soil, dry-canopy, and wet-canopy moisture fluxes.
+
+        Bare-soil mode: single-source form
+        ``flux_wq = (gnd_q - atm_q) · u* · f_h``.
+
+        Canopy-active mode uses three terms: bare-soil exchange, dry
+        stomatal transpiration, and non-stomatal wet-canopy exchange
+        against a prognostic water store. The wet term keeps the signed
+        vapor gradient so dewfall can enter the SEB as negative LE, but
+        evaporation and condensation are capped by the water available
+        or storage capacity over the current timestep.
+        """
+        canopy = getattr(self, 'canopy', None)
+        if canopy is None:
+            soil = cast(np.ndarray, (gnd_q - atm_q) * ustar * fh)
+            return soil, np.zeros_like(soil), np.zeros_like(soil)
+
+        if cols is not None:
+            f_veg = canopy.veg_fraction[cols]
+            r_s = self.canopy_state.resistance[cols]
+            storage = self.canopy_state.water_storage[cols]
+            capacity = self.canopy_state.water_capacity[cols]
+            wet_cooling_max = canopy.wet_cooling_max[cols]
+            lw_in = np.asarray(self.atm_state.lw_in)[cols]
+            sw_in = np.asarray(self.atm_state.sw_in)[cols]
+        else:
+            f_veg = canopy.veg_fraction
+            r_s = self.canopy_state.resistance
+            storage = self.canopy_state.water_storage
+            capacity = self.canopy_state.water_capacity
+            wet_cooling_max = canopy.wet_cooling_max
+            lw_in = np.asarray(self.atm_state.lw_in)
+            sw_in = np.asarray(self.atm_state.sw_in)
+
+        u_fh = ustar * fh
+        q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
+        e_soil = (1.0 - f_veg) * (gnd_q - atm_q) * u_fh
+
+        wet_fraction = np.divide(
+            storage,
+            capacity,
+            out=np.zeros_like(storage),
+            where=capacity > 0.0,
+        )
+        wet_fraction = np.clip(wet_fraction, 0.0, 1.0)
+
+        # 1/(ra + rs) normalized dry transpiration. It is one-way: roots
+        # cannot take up negative water, and dewfall belongs to the wet
+        # storage path below. Wet leaves also reduce the dry transpiring
+        # fraction.
+        denom = 1.0 + u_fh * r_s
+        t_veg = (
+            f_veg
+            * (1.0 - wet_fraction)
+            * np.maximum(q_sat - atm_q, 0.0)
+            * u_fh
+            / denom
+        )
+
+        SB = c.radiation.STEFAN_BOLTZMANN
+        CP = c.thermodynamic.SPECIFIC_HEAT
+        emissivity = getattr(self.input.surface, 'emissivity', 1.0)
+        lw_cooling_flux = np.maximum(emissivity * SB * sfc_T**4 - lw_in, 0.0)
+        night_factor = np.clip(1.0 - sw_in / 50.0, 0.0, 1.0)
+
+        RD = c.thermodynamic.GAS_CONSTANT_DRY
+        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
+        rho = atm_p / (RD * atm_T * (1.0 + EVT * atm_q))
+        cooling = np.divide(
+            lw_cooling_flux,
+            rho * CP * np.maximum(u_fh, 1e-4),
+            out=np.zeros_like(sfc_T),
+            where=rho > 0.0,
+        )
+        cooling = np.minimum(cooling * night_factor, wet_cooling_max)
+        q_sat_wet = thermo.saturation_specific_humidity(sfc_T - cooling, atm_p)
+
+        wet = f_veg * (q_sat_wet - atm_q) * u_fh
+        wet = np.where(wet > 0.0, wet * wet_fraction, wet)
+
+        dt = max(float(getattr(self, 'tstep', 0.0)), 1.0)
+        evap_limit = np.divide(
+            storage,
+            rho * dt,
+            out=np.zeros_like(storage),
+            where=rho > 0.0,
+        )
+        dew_limit = np.divide(
+            np.maximum(capacity - storage, 0.0),
+            rho * dt,
+            out=np.zeros_like(storage),
+            where=rho > 0.0,
+        )
+        wet = np.minimum(wet, evap_limit)
+        wet = np.maximum(wet, -dew_limit)
+
+        return (
+            cast(np.ndarray, e_soil),
+            cast(np.ndarray, t_veg),
+            cast(np.ndarray, wet),
+        )
+
     def _partition_flux_wq(
         self,
         sfc_T: np.ndarray,
         gnd_q: FloatOrArray,
+        atm_T: np.ndarray,
         atm_q: np.ndarray,
         atm_p: np.ndarray,
         ustar: np.ndarray,
         fh: FloatOrArray,
         cols: Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """Kinematic moisture flux with optional canopy partition.
-
-        Bare-soil mode: single-source form
-        ``flux_wq = (gnd_q - atm_q) · u* · f_h``.
-
-        Canopy-active mode: two-source (Noilhan-Planton) combining bare-
-        soil evaporation through the aerodynamic resistance with
-        transpiration through ``r_a + r_s``. Both sources use the same
-        surface temperature (big-leaf, single-T axiom).
-        """
-        canopy = getattr(self, 'canopy', None)
-        if canopy is None:
-            return cast(np.ndarray, (gnd_q - atm_q) * ustar * fh)
-
-        if cols is not None:
-            f_veg = canopy.veg_fraction[cols]
-            r_s = self.canopy_state.resistance[cols]
-        else:
-            f_veg = canopy.veg_fraction
-            r_s = self.canopy_state.resistance
-
-        q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
-        u_fh = ustar * fh
-        e_soil = (1.0 - f_veg) * (gnd_q - atm_q) * u_fh
-        # 1/(ra + rs) normalized: flux = f_veg·(q_sat - q_a)·u_fh/(1 + u_fh·r_s)
-        denom = 1.0 + u_fh * r_s
-        t_veg = f_veg * (q_sat - atm_q) * u_fh / denom
-        t_veg = np.maximum(0.0, t_veg)
-        return cast(np.ndarray, e_soil + t_veg)
+        """Total kinematic moisture flux with optional canopy partition."""
+        e_soil, t_veg, wet = self._partition_flux_wq_components(
+            sfc_T, gnd_q, atm_T, atm_q, atm_p, ustar, fh, cols=cols
+        )
+        return cast(np.ndarray, e_soil + t_veg + wet)
 
     def _finalize_canopy_partition(self) -> None:
         """Splits the converged total LH into soil and canopy components.
@@ -619,9 +721,13 @@ class UtahLSM:
             if hasattr(self, 'canopy_state'):
                 self.canopy_state.evap_soil[:] = 0.0
                 self.canopy_state.transpiration[:] = 0.0
+                self.canopy_state.wet_evaporation[:] = 0.0
+                self.canopy_state.water_storage[:] = 0.0
+                self.canopy_state.water_capacity[:] = 0.0
                 self.canopy_state.latent_soil[:] = (
                     self.sfc_state.fluxes.latent_heat)
                 self.canopy_state.latent_veg[:] = 0.0
+                self.canopy_state.latent_wet[:] = 0.0
                 self.canopy_state.root_uptake[:] = 0.0
             return
 
@@ -638,22 +744,29 @@ class UtahLSM:
             self.sfc_state.turbulence.obukhov_length,
         )
         gnd_q = self.soil.surface_specific_humidity(sfc_T, sfc_q, atm_p)
-        q_sat = thermo.saturation_specific_humidity(sfc_T, atm_p)
-        f_veg = canopy.veg_fraction
-        r_s = self.canopy_state.resistance
-        u_fh = ust * fh
 
-        E_soil_kin = (1.0 - f_veg) * (gnd_q - atm_q) * u_fh
-        T_veg_kin = f_veg * (q_sat - atm_q) * u_fh / (1.0 + u_fh * r_s)
-        T_veg_kin = np.maximum(0.0, T_veg_kin)
+        E_soil_kin, T_veg_kin, W_veg_kin = self._partition_flux_wq_components(
+            sfc_T, gnd_q, atm_T, atm_q, atm_p, ust, fh
+        )
 
         E_soil_mass = rho_a * E_soil_kin          # [kg/m^2/s]
         T_veg_mass = rho_a * T_veg_kin            # [kg/m^2/s]
+        W_veg_mass = rho_a * W_veg_kin            # [kg/m^2/s]
 
         self.canopy_state.evap_soil[:] = E_soil_mass
         self.canopy_state.transpiration[:] = T_veg_mass
+        self.canopy_state.wet_evaporation[:] = W_veg_mass
         self.canopy_state.latent_soil[:] = LV * E_soil_mass
         self.canopy_state.latent_veg[:] = LV * T_veg_mass
+        self.canopy_state.latent_wet[:] = LV * W_veg_mass
+
+        dt = max(float(getattr(self, 'tstep', 0.0)), 0.0)
+        if dt > 0.0:
+            self.canopy_state.water_storage[:] = np.clip(
+                self.canopy_state.water_storage - W_veg_mass * dt,
+                0.0,
+                self.canopy_state.water_capacity,
+            )
 
         # Per-layer uptake rate [m^3/m^3/s] folded into layers 1..nz-1.
         nz = self.input.grid.nz
@@ -885,7 +998,7 @@ class UtahLSM:
             ustar = wind_eff * fm
             flux_wT = (sfc_T - atm_T) * ustar * fh
             flux_wq = self._partition_flux_wq(
-                sfc_T, gnd_q, atm_q, atm_p, ustar, fh, cols=cols
+                sfc_T, gnd_q, atm_T, atm_q, atm_p, ustar, fh, cols=cols
             )
             flux_wTv = flux_wT + EVT * ref_T * flux_wq
 

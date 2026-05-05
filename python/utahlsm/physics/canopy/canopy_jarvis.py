@@ -58,6 +58,8 @@ class CanopyJarvis(Canopy):
         t_opt: NDArray[np.float64],
         t_coef: NDArray[np.float64],
         r_ground: NDArray[np.float64],
+        water_capacity_lai: NDArray[np.float64],
+        wet_cooling_max: NDArray[np.float64],
         z: NDArray[np.float64],
     ) -> None:
         """Initializes the Jarvis canopy model parameters.
@@ -75,6 +77,10 @@ class CanopyJarvis(Canopy):
             t_coef: Temperature response curvature for each column [1/K^2].
             r_ground: In-canopy aerodynamic resistance for ground heat
                 transport for each column [s/m].
+            water_capacity_lai: Wet-canopy water holding capacity per LAI
+                for each column [kg/m^2 per LAI].
+            wet_cooling_max: Maximum diagnostic nighttime wet-canopy cooling
+                below the soil/radiative skin [K].
             z: Soil node depths [m], shape (nz,).
         """
         super().__init__(
@@ -85,6 +91,8 @@ class CanopyJarvis(Canopy):
             rs_min=rs_min,
             rs_max=rs_max,
             r_ground=r_ground,
+            water_capacity_lai=water_capacity_lai,
+            wet_cooling_max=wet_cooling_max,
             z=z,
         )
         self.logger.info('Using the Jarvis canopy model')

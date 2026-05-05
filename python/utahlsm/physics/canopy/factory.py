@@ -105,6 +105,10 @@ def get_canopy_model(
         'rs_min': as_col('rs_min', config.rs_min),
         'rs_max': as_col('rs_max', config.rs_max),
         'r_ground': as_col('r_ground', config.r_ground),
+        'water_capacity_lai': as_col(
+            'water_capacity_lai', config.water_capacity_lai
+        ),
+        'wet_cooling_max': as_col('wet_cooling_max', config.wet_cooling_max),
         'z': z,
     }
     validate_col('lai', common['lai'], min_value=0.0)
@@ -123,6 +127,8 @@ def get_canopy_model(
     validate_col('rs_min', common['rs_min'], min_value=0.0, min_inclusive=False)
     validate_col('rs_max', common['rs_max'], min_value=0.0, min_inclusive=False)
     validate_col('r_ground', common['r_ground'], min_value=0.0)
+    validate_col('water_capacity_lai', common['water_capacity_lai'], min_value=0.0)
+    validate_col('wet_cooling_max', common['wet_cooling_max'], min_value=0.0)
     if np.any(common['rs_max'] < common['rs_min']):
         raise NamelistError(
             "Canopy parameter 'rs_max' must be >= 'rs_min' in every column."

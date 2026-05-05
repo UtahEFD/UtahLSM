@@ -117,8 +117,18 @@ class Output:
         },
         'lhf_veg': {
             'dimension': ('t',),
-            'long_name': 'latent heat flux from canopy transpiration',
+            'long_name': 'latent heat flux from dry canopy transpiration',
             'units': 'W m-2'
+        },
+        'lhf_wet': {
+            'dimension': ('t',),
+            'long_name': 'latent heat flux from wet canopy evaporation or dewfall',
+            'units': 'W m-2'
+        },
+        'canopy_water': {
+            'dimension': ('t',),
+            'long_name': 'canopy intercepted/dew water storage',
+            'units': 'kg m-2'
         },
     }
 
@@ -178,7 +188,8 @@ class Output:
             self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
             self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
             for field in ('ust', 'obl', 'shf', 'lhf', 'ghf', 'seb_res',
-                          'r_s', 'theta_root', 'lhf_soil', 'lhf_veg'):
+                          'r_s', 'theta_root', 'lhf_soil', 'lhf_veg',
+                          'lhf_wet', 'canopy_water'):
                 self.attributes[field]['dimension'] = ('t', 'y', 'x')
 
         for dim, size in dims.items():

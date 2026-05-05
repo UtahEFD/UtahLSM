@@ -76,6 +76,8 @@ def canopy_params_single(z_layers: NDArray[np.float64]) -> dict[str, Any]:
         "t_opt": np.full(ncol, 298.0),
         "t_coef": np.full(ncol, 1.6e-3),
         "r_ground": np.full(ncol, 0.0),
+        "water_capacity_lai": np.full(ncol, 0.2),
+        "wet_cooling_max": np.full(ncol, 3.0),
         "z": z_layers,
     }
 
@@ -100,6 +102,8 @@ def canopy_params_3col(z_layers: NDArray[np.float64]) -> dict[str, Any]:
         "t_opt": np.full(ncol, 298.0),
         "t_coef": np.full(ncol, 1.6e-3),
         "r_ground": np.full(ncol, 0.0),
+        "water_capacity_lai": np.full(ncol, 0.2),
+        "wet_cooling_max": np.full(ncol, 3.0),
         "z": z_layers,
     }
 
@@ -466,6 +470,7 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
     model.logger = logging.getLogger("test")
     model.ncol = 1
     model.canopy = jarvis_single
+    model.tstep = 1800.0
 
     sfc_T = np.array([280.0])
     atm_p = np.array([101325.0])
@@ -477,7 +482,8 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
         temperature=np.array([280.0]),
         specific_humidity=atm_q,
         pressure=atm_p,
-        sw_in=np.array([300.0]),
+        sw_in=np.array([0.0]),
+        lw_in=np.array([280.0]),
         radiation_net=np.array([100.0]),
     )
     model.sfc_state = SurfaceState(
@@ -497,8 +503,16 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
         resistance=np.array([100.0]),
         theta_root=np.array([0.25]),
         transpiration=np.zeros(1),
+        wet_evaporation=np.zeros(1),
         evap_soil=np.zeros(1),
+        water_storage=np.zeros(1),
+        water_capacity=(
+            jarvis_single.veg_fraction
+            * jarvis_single.lai
+            * jarvis_single.water_capacity_lai
+        ),
         latent_veg=np.zeros(1),
+        latent_wet=np.zeros(1),
         latent_soil=np.zeros(1),
         root_uptake=np.zeros((z_layers.size, 1)),
     )
@@ -514,12 +528,15 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
     )
 
     flux = model._partition_flux_wq(
-        sfc_T, atm_q, atm_q, atm_p, np.array([0.3]), np.array([0.1])
+        sfc_T, atm_q, sfc_T, atm_q, atm_p, np.array([0.3]), np.array([0.1])
     )
     model._finalize_canopy_partition()
 
-    assert np.allclose(flux, 0.0)
+    assert flux[0] < 0.0
     assert np.allclose(model.canopy_state.transpiration, 0.0)
     assert np.allclose(model.canopy_state.latent_veg, 0.0)
+    assert model.canopy_state.latent_wet[0] < 0.0
+    assert np.allclose(model.canopy_state.latent_soil, 0.0)
+    assert model.canopy_state.water_storage[0] > 0.0
     assert np.all(model.canopy_state.root_uptake >= 0.0)
     assert np.allclose(model.canopy_state.root_uptake, 0.0)

@@ -21,7 +21,8 @@ Design axioms (see CLAUDE.md / design discussion):
 
 * Single surface temperature — no leaf/ground split, no canopy heat
   storage.
-* No interception reservoir in v1.
+* A simple prognostic wet-canopy water reservoir may be used by the
+  orchestrator for dewfall/interception evaporation.
 * r_s is refreshed once per outer SEB/SMB coupling iteration, not
   inside Brent evaluations.
 * All per-column quantities carry shape ``(ncol,)``; per-layer-per-
@@ -69,6 +70,10 @@ class Canopy(ABC):
             shape (ncol,). Used in series with the soil's top-cell
             conductive resistance to attenuate ground heat flux under
             vegetation.
+        water_capacity_lai: Wet-canopy water holding capacity per LAI
+            [kg/m^2 per LAI], shape (ncol,).
+        wet_cooling_max: Maximum diagnostic nighttime wet-canopy cooling
+            below the soil/radiative skin [K], shape (ncol,).
         root_fraction: Precomputed per-layer root fraction, shape
             (nz, ncol). Columns sum to 1.
     """
@@ -82,6 +87,8 @@ class Canopy(ABC):
         rs_min: NDArray[np.float64],
         rs_max: NDArray[np.float64],
         r_ground: NDArray[np.float64],
+        water_capacity_lai: NDArray[np.float64],
+        wet_cooling_max: NDArray[np.float64],
         z: NDArray[np.float64],
     ) -> None:
         """Initializes the canopy base.
@@ -96,6 +103,10 @@ class Canopy(ABC):
             rs_max: Maximum resistance [s/m] (ncol,).
             r_ground: In-canopy aerodynamic resistance to ground heat
                 transport [s/m] (ncol,).
+            water_capacity_lai: Wet-canopy water holding capacity per LAI
+                [kg/m^2 per LAI] (ncol,).
+            wet_cooling_max: Maximum diagnostic nighttime wet-canopy cooling
+                below the soil/radiative skin [K] (ncol,).
             z: Soil layer node depths [m], shape (nz,). Values are
                 non-positive with `z[0] = 0` at the surface.
         """
@@ -109,6 +120,8 @@ class Canopy(ABC):
                 'rs_min': rs_min,
                 'rs_max': rs_max,
                 'r_ground': r_ground,
+                'water_capacity_lai': water_capacity_lai,
+                'wet_cooling_max': wet_cooling_max,
             }
         )
         self.ncol = ncol
@@ -123,6 +136,12 @@ class Canopy(ABC):
         self.rs_min = self._as_column_param('rs_min', rs_min, ncol)
         self.rs_max = self._as_column_param('rs_max', rs_max, ncol)
         self.r_ground = self._as_column_param('r_ground', r_ground, ncol)
+        self.water_capacity_lai = self._as_column_param(
+            'water_capacity_lai', water_capacity_lai, ncol
+        )
+        self.wet_cooling_max = self._as_column_param(
+            'wet_cooling_max', wet_cooling_max, ncol
+        )
         self.z = np.asarray(z, dtype=float)
 
         self.root_fraction: NDArray[np.float64] = self._build_root_profile()
