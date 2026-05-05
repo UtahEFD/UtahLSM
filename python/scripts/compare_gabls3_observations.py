@@ -193,8 +193,8 @@ def compare(model_path: Path, obs_path: Path, out_path: Path | None,
             return
         print(f"  {label:>8}: bias={diff.mean():+7.2f}  "
               f"rmse={np.sqrt((diff**2).mean()):6.2f}  "
-              f"peak obs={np.nanmax(o):7.2f}  peak model={np.nanmax(np.asarray(mi)):7.2f} " 
-              f"min obs={np.nanmin(o):7.2f}  min model={np.nanmin(np.asarray(mi)):7.2f}")
+              f"min obs={np.nanmin(o):7.2f}  min model={np.nanmin(np.asarray(mi)):7.2f} " 
+              f"max obs={np.nanmax(o):7.2f}  max model={np.nanmax(np.asarray(mi)):7.2f}")
 
     print("\nSummary (overlap window only):")
     _stats("H", shf_m, shf_o, t_model, t_obs_sl)
@@ -208,7 +208,7 @@ def parse_args() -> argparse.Namespace:
     here = Path(__file__).resolve().parent
     default_model = here.parent / "lsm_gabls3_py.nc"
     default_obs = (here.parent.parent / "cases" / "gabls3"
-                   / "observations" / "gabls3_fluxes.nc")
+                   / "observations" / "gabls3_surf_flux.nc")
     default_out = here.parent / "gabls3_compare.png"
 
     p = argparse.ArgumentParser(description=__doc__)

@@ -24,59 +24,40 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-##########################################
+####################################################
 # GABLS3 stable subset (2006-07-02 00 UTC -> 09 UTC)
-##########################################
+####################################################
 
-# Cabauw observations are saved every 10 minutes, so 144 per day.
-# We run the 9 h stable subset that aligns with the LES studies of GABLS3
-# stable conditions, not the full 24 h diurnal case.
-steps_per_day: int = 144
-steps_per_hour: int = 6
-start_day: int = 2
-start_hour_utc: int = 0
-case_duration_hours: int = 9
-tidx: int = ((start_day - 1) * steps_per_day) + (start_hour_utc * steps_per_hour)
-tend: int = tidx + (case_duration_hours * steps_per_hour)
-
-# Soil column: 61 uniform layers from 0 to 0.6 m. Matches lsm_namelist.json
-# nz=61 and the uniform-spacing requirement enforced in Input._validate_uniform_soil_z.
+# Soil column: 61 uniform layers from 0 to 0.6 m.
 dz: float = 0.01
 soil_depth: float = 0.6
-z_int: NDArray[np.float64] = np.linspace(0.0, soil_depth, int(round(soil_depth / dz)) + 1)
-nsoil: int = len(z_int)
-
+soil_zlev_int: NDArray[np.float64] = np.linspace(0.0, soil_depth, int(round(soil_depth / dz)) + 1)
+nsoil: int = len(soil_zlev_int)
 
 ##########################################
 # Soil temperature from CESAR observations
 ##########################################
 
-# Cabauw soil-heat observations at 0, 2, 4, 6, 8, 12, 20, 30, 50 cm. The
-# 0.5 m sensor is the deepest available; values below 0.5 m are held at the
-# 0.5 m reading rather than extrapolated.
-soil_t_obs: nc.Dataset = nc.Dataset('observations/cesar_soil_heat_lb1_t10_v1.0_200607.nc')
-z_obs_T_full: NDArray[np.float64] = np.array([0.00, 0.02, 0.04, 0.06, 0.08, 0.12, 0.20, 0.30, 0.50])
-ts_names: list[str] = ['TS00', 'TS02', 'TS04', 'TS06', 'TS08', 'TS12', 'TS20', 'TS30', 'TS50']
-# CESAR sensors occasionally drop out at individual time steps; skip any
-# masked sensor before interpolating so np.interp doesn't propagate NaN.
-st_vals: list[float] = []
-z_vals: list[float] = []
-for name, depth in zip(ts_names, z_obs_T_full):
-    raw = soil_t_obs.variables[name][tidx]
-    if np.ma.is_masked(raw):
-        continue
-    st_vals.append(float(raw) + 273.15)
-    z_vals.append(depth)
-soil_t_obs.close()
-if not st_vals:
-    raise RuntimeError(
-        f"All soil-temperature sensors are masked at tidx={tidx}; cannot "
-        f"build an initial profile."
-    )
-z_obs_T: NDArray[np.float64] = np.array(z_vals)
-st_ob: NDArray[np.float64] = np.array(st_vals)
-st_oi: NDArray[np.float64] = np.interp(z_int, z_obs_T, st_ob)
+# Cabauw soil-heat observations at 0, 2, 4, 6, 8, 12, 20, 30, 50 cm.
+soil_temp_dat: nc.Dataset = nc.Dataset('observations/gabls3_soil_heat.nc')
+soil_temp_lev: NDArray[np.float64] = np.array([0.00, 0.02, 0.04, 0.06, 0.08, 0.12, 0.20, 0.30, 0.50])
+soil_temp_var: list[str] = ['TS00', 'TS02', 'TS04', 'TS06', 'TS08', 'TS12', 'TS20', 'TS30', 'TS50']
 
+# Skip any masked sensors before interpolating.
+soil_temp_obs = np.ma.stack(
+    [soil_temp_dat.variables[name][0] for name in soil_temp_var]
+).astype(float)
+soil_temp_dat.close()
+valid_T: NDArray[np.bool_] = ~np.ma.getmaskarray(soil_temp_obs)
+if not np.any(valid_T):
+    raise RuntimeError(
+        "All soil-temperature sensors are masked; cannot build an initial profile."
+    )
+soil_temp_lev: NDArray[np.float64] = soil_temp_lev[valid_T]
+soil_temp_obs: NDArray[np.float64] = (
+    np.asarray(soil_temp_obs[valid_T], dtype=float) + 273.15
+)
+soil_temp_ini: NDArray[np.float64] = np.interp(soil_zlev_int, soil_temp_lev, soil_temp_obs)
 
 ##########################################
 # Soil moisture from CESAR observations
@@ -90,24 +71,24 @@ st_oi: NDArray[np.float64] = np.interp(z_int, z_obs_T, st_ob)
 # profile to fill the deeper column. The TDR network shows large day-to-day
 # swings, so it is treated as a fallback below the start-state TH probes
 # rather than the primary anchor.
-sm10: nc.Dataset = nc.Dataset('observations/cesar_soil_water_lb1_t10_v1.1_200607.nc')
-sm_03: float = float(sm10.variables['TH03'][tidx])
-sm_08: float = float(sm10.variables['TH08'][tidx])
-sm_20: float = float(sm10.variables['TH20'][tidx])
-sm10.close()
+soil_mois_thc: nc.Dataset = nc.Dataset('observations/gabls3_soil_mois_thc.nc')
+soil_mois_z03: float = float(soil_mois_thc.variables['TH03'][0])
+soil_mois_z08: float = float(soil_mois_thc.variables['TH08'][0])
+soil_mois_z20: float = float(soil_mois_thc.variables['TH20'][0])
+soil_mois_thc.close()
 
-tdr: nc.Dataset = nc.Dataset('observations/cesar_tdr_soilmoisture_la1_t1d_v1.0_2006.nc')
-jdi: int = 181  # 0-indexed prior day for July 2
-sm_30: float = float(np.mean([tdr.variables[f'SM{i}'][jdi] for i in (3, 9, 15, 21)]))
-sm_45: float = float(np.mean([tdr.variables[f'SM{i}'][jdi] for i in (4, 10, 16, 22)]))
-sm_60: float = float(np.mean([tdr.variables[f'SM{i}'][jdi] for i in (5, 11, 17, 23)]))
-sm_73: float = float(np.mean([tdr.variables[f'SM{i}'][jdi] for i in (6, 12, 18, 24)]))
-tdr.close()
+soil_mois_tdr: nc.Dataset = nc.Dataset('observations/gabls3_soil_mois_tdr.nc')
+soil_mois_z30: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (3,9,15,21)]))
+soil_mois_z45: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (4,10,16,22)]))
+soil_mois_z60: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (5,11,17,23)]))
+soil_mois_z73: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (6,12,18,24)]))
+soil_mois_tdr.close()
 
 # Duplicate TH03 at z=0 so the surface knot reflects the start-time state.
-z_obs_q: NDArray[np.float64] = np.array([0.00, 0.03, 0.08, 0.20, 0.30, 0.45, 0.60, 0.725])
-sm_ob: NDArray[np.float64] = np.array([sm_03, sm_03, sm_08, sm_20, sm_30, sm_45, sm_60, sm_73])
-sm_oi: NDArray[np.float64] = np.interp(z_int, z_obs_q, sm_ob)
+soil_mois_lev: NDArray[np.float64] = np.array([0.00, 0.03, 0.08, 0.20, 0.30, 0.45, 0.60, 0.725])
+soil_mois_obs: NDArray[np.float64] = np.array([soil_mois_z03, soil_mois_z03, soil_mois_z08, 
+    soil_mois_z20, soil_mois_z30, soil_mois_z45, soil_mois_z60, soil_mois_z73])
+soil_mois_ini: NDArray[np.float64] = np.interp(soil_zlev_int, soil_mois_lev, soil_mois_obs)
 
 # Soil type: clay over peat. TH20=0.55 already exceeds cosby clay porosity
 # (0.468), so the clay/peat boundary must sit above 0.20 m. We put it at
@@ -117,8 +98,7 @@ sm_oi: NDArray[np.float64] = np.interp(z_int, z_obs_q, sm_ob)
 # wet TH20 anchor keeps the root-weighted moisture comfortably above the
 # root-weighted wilting so f4 stays positive.
 clay_peat_boundary: float = 0.15
-stype: NDArray[np.str_] = np.where(z_int <= clay_peat_boundary, 'clay', 'peat').astype('U8')
-
+stype: NDArray[np.str_] = np.where(soil_zlev_int <= clay_peat_boundary, 'clay', 'peat').astype('U8')
 
 #######################
 # Initialization file #
@@ -128,8 +108,7 @@ init = nc.Dataset('lsm_init.nc', 'w')
 init.description = (
     "UtahLSM input file for the GABLS3 stable subset (2006-07-02 00 UTC -> "
     "09 UTC). Soil temperature and moisture are taken from the Cabauw CESAR "
-    "observations (cesar_soil_heat_lb1, cesar_soil_water_lb1, "
-    "cesar_tdr_soilmoisture_la1)."
+    "observations."
 )
 init.source = "Jeremy A. Gibbs"
 init.history = "Created " + time.ctime(time.time())
@@ -149,9 +128,9 @@ init_i = init.createVariable("soil_type", "str", ("z",))  # type: ignore[assignm
 init_i.long_name = "soil type"
 init_i.units = ""
 
-init_z[:] = z_int
-init_T[:] = st_oi
-init_q[:] = sm_oi
+init_z[:] = soil_zlev_int
+init_T[:] = soil_temp_ini
+init_q[:] = soil_mois_ini
 init_i[:] = stype
 init.close()
 
@@ -163,12 +142,12 @@ init.close()
 # UtahLSM offline mode expects near-surface forcing and net radiation, so we
 # retain the Cabauw observation time series over the official 24 h GABLS3
 # window even though the parent SCM case is forced geostrophically.
-met: nc.MFDataset = nc.MFDataset('observations/cesar_surface_meteo_lc1_t10_v1.0_200607.nc')
-tm: NDArray[np.float64] = np.asarray(met.variables['time'][tidx:tend], dtype=float) * 3600.0
-ws: NDArray[np.float64] = np.asarray(met.variables['F010'][tidx:tend], dtype=float)
-pt: NDArray[np.float64] = np.asarray(met.variables['TA002'][tidx:tend], dtype=float)
-pa: NDArray[np.float64] = np.asarray(met.variables['P0'][tidx:tend], dtype=float) * 100.0
-qs: NDArray[np.float64] = np.asarray(met.variables['Q002'][tidx:tend], dtype=float) / 1000.0
+met: nc.MFDataset = nc.MFDataset('observations/gabls3_surf_metr.nc')
+tm: NDArray[np.float64] = np.asarray(met.variables['time'][:], dtype=float) * 3600.0
+ws: NDArray[np.float64] = np.asarray(met.variables['F010'][:], dtype=float)
+pt: NDArray[np.float64] = np.asarray(met.variables['TA002'][:], dtype=float)
+pa: NDArray[np.float64] = np.asarray(met.variables['P0'][:], dtype=float) * 100.0
+qs: NDArray[np.float64] = np.asarray(met.variables['Q002'][:], dtype=float) / 1000.0
 met.close()
 
 # CESAR's time variable is stored as float32, so tm[1]-tm[0] comes out
@@ -179,13 +158,12 @@ dt: float = float(round(tm[1] - tm[0]))
 ntime: int = len(tm)
 t_utc: NDArray[np.float64] = (np.round(tm) % 86400).astype(float)
 
-rad: nc.MFDataset = nc.MFDataset('observations/cesar_surface_radiation_lc1_t10_v1.0_200607.nc')
-swu: NDArray[np.float64] = np.asarray(rad.variables['SWU'][tidx:tend], dtype=float)
-swd: NDArray[np.float64] = np.asarray(rad.variables['SWD'][tidx:tend], dtype=float)
-lwu: NDArray[np.float64] = np.asarray(rad.variables['LWU'][tidx:tend], dtype=float)
-lwd: NDArray[np.float64] = np.asarray(rad.variables['LWD'][tidx:tend], dtype=float)
+rad: nc.MFDataset = nc.MFDataset('observations/gabls3_surf_radn.nc')
+swu: NDArray[np.float64] = np.asarray(rad.variables['SWU'][:], dtype=float)
+swd: NDArray[np.float64] = np.asarray(rad.variables['SWD'][:], dtype=float)
+lwu: NDArray[np.float64] = np.asarray(rad.variables['LWU'][:], dtype=float)
+lwd: NDArray[np.float64] = np.asarray(rad.variables['LWD'][:], dtype=float)
 rad.close()
-
 
 ##############################
 # Write all time-series data #
