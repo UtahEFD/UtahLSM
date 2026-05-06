@@ -427,6 +427,12 @@ class Input:
                 sw_out = metfile.variables['sw_out'][:]
                 lw_in = metfile.variables['lw_in'][:]
                 lw_out = metfile.variables['lw_out'][:]
+                seb_storage_var = metfile.variables.get('seb_storage')
+                seb_storage = (
+                    seb_storage_var[:]
+                    if seb_storage_var is not None
+                    else np.zeros_like(sw_in, dtype=float)
+                )
 
                 ncol = self.grid.nx * self.grid.ny
                 ny = self.grid.ny
@@ -471,6 +477,7 @@ class Input:
                 sw_out = _reshape_forcing(sw_out, "sw_out")
                 lw_in = _reshape_forcing(lw_in, "lw_in")
                 lw_out = _reshape_forcing(lw_out, "lw_out")
+                seb_storage = _reshape_forcing(seb_storage, "seb_storage")
 
                 # Net radiation is derived from the four components so the
                 # SEB residual and any component-level consumers (e.g. the
@@ -481,6 +488,11 @@ class Input:
                 self._validate_forcing_data(atm_U, atm_T, atm_q, atm_p,
                                             sw_in, sw_out, lw_in, lw_out,
                                             r_net, ntime)
+                if not np.all(np.isfinite(seb_storage)):
+                    raise ValueError(
+                        "Offline forcing seb_storage must contain only "
+                        "finite values."
+                    )
 
                 atm_data = [
                     AtmosphericState(
@@ -488,7 +500,8 @@ class Input:
                         specific_humidity=atm_q[i], pressure=atm_p[i],
                         sw_in=sw_in[i], sw_out=sw_out[i],
                         lw_in=lw_in[i], lw_out=lw_out[i],
-                        radiation_net=r_net[i])
+                        radiation_net=r_net[i],
+                        seb_storage=seb_storage[i])
                     for i in range(ntime)
                 ]
 

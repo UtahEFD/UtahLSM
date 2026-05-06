@@ -60,6 +60,7 @@ class TestAtmosphericState:
         assert atm.lw_in == 0.0
         assert atm.lw_out == 0.0
         assert atm.radiation_net == 0.0
+        assert atm.seb_storage == 0.0
 
     def test_initialization_with_values(self) -> None:
         """Test AtmosphericState initialization with custom values."""
@@ -68,7 +69,8 @@ class TestAtmosphericState:
             temperature=283.15,
             specific_humidity=0.005,
             pressure=101325.0,
-            radiation_net=500.0
+            radiation_net=500.0,
+            seb_storage=25.0,
         )
 
         assert atm.wind_speed == 5.0
@@ -76,6 +78,7 @@ class TestAtmosphericState:
         assert atm.specific_humidity == 0.005
         assert atm.pressure == 101325.0
         assert atm.radiation_net == 500.0
+        assert atm.seb_storage == 25.0
 
     def test_reasonable_temperature_range(self, atm_neutral: AtmosphericState, atm_stable: AtmosphericState, atm_unstable: AtmosphericState) -> None:
         """Test that fixture atmospheric states have reasonable temperatures.

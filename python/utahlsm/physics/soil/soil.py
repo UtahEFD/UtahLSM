@@ -380,14 +380,14 @@ class Soil(ABC):
             The volumetric heat capacity for each layer [J/m^3-K].
         """
         CI_W = c.water.VOLUMETRIC_HEAT_CAPACITY
-        CI_A = c.air.DENSITY_REF * c.thermodynamic.SPECIFIC_HEAT
 
-        _2d = soil_q.ndim == 2
+        theta = np.asarray(soil_q, dtype=float)
+        _2d = theta.ndim == 2
         porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
         Ci = self.properties.ci[:, None] if _2d else self.properties.ci
-        Ks = (1.-porosity)*Ci + soil_q*CI_W + (porosity-soil_q)*CI_A
+        heat_capacity = (1.0 - porosity) * Ci + theta * CI_W
 
-        return Ks
+        return heat_capacity
 
     def surface_specific_humidity(
         self,

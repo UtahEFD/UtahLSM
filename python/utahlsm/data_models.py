@@ -55,6 +55,10 @@ class AtmosphericState:
             ``sw_in - sw_out + lw_in - lw_out`` once the radiation
             components are populated; the field is retained for
             convenience and is what the SEB residual reads.
+        seb_storage: Prescribed surface-energy storage/closure term [W/m^2].
+            The SEB is solved as ``radiation_net - H - LE - G
+            - seb_storage = 0``. Defaults to zero for energy-conserving
+            model runs.
     """
     wind_speed: FloatOrArray = 0.0
     temperature: FloatOrArray = 0.0
@@ -65,6 +69,7 @@ class AtmosphericState:
     lw_in: FloatOrArray = 0.0
     lw_out: FloatOrArray = 0.0
     radiation_net: FloatOrArray = 0.0
+    seb_storage: FloatOrArray = 0.0
 
 @dataclass
 class SoilState:
@@ -144,9 +149,9 @@ class SurfaceState:
         fluxes: A dataclass containing all surface fluxes.
         turbulence: A dataclass containing turbulence scales.
         seb_residual: Final post-solve surface energy budget residual
-            ``Rn - H - LE - G`` [W/m^2], one per column. Diagnostic
-            for monitoring thermal drift over long integrations; the
-            magnitude reflects how cleanly the SEB closed at the
+            ``Rn - H - LE - G - seb_storage`` [W/m^2], one per column.
+            Diagnostic for monitoring thermal drift over long integrations;
+            the magnitude reflects how cleanly the SEB closed at the
             converged Obukhov length.
     """
     temperature: FloatOrArray = 0.0

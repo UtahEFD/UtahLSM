@@ -69,6 +69,7 @@ def test_compute_seb_vec_is_deterministic_and_pure() -> None:
         specific_humidity=np.array([0.01]),
         pressure=np.array([101000.0]),
         radiation_net=np.array([100.0]),
+        seb_storage=np.array([0.0]),
     )
     model.soil_state = SoilState(
         temperature=np.array([[280.0], [285.0]]),
@@ -116,6 +117,11 @@ def test_compute_seb_vec_is_deterministic_and_pure() -> None:
     r1 = model._compute_seb_vec(sfc_T, initial_L)
     r2 = model._compute_seb_vec(sfc_T, initial_L)
     assert np.allclose(r1, r2)
+
+    model.atm_state.seb_storage = np.array([10.0])
+    r_stored = model._compute_seb_vec(sfc_T, initial_L)
+    assert np.allclose(r_stored, r1 - 10.0)
+    model.atm_state.seb_storage = np.array([0.0])
 
     # Pure function should not mutate state
     restored = (

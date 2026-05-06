@@ -59,7 +59,7 @@ class SurfaceMOST(Surface):
         super().__init__()
 
     def _cap_obukhov_length(self, obukL: FloatOrArray,
-                            min_val: float = 0.1) -> FloatOrArray:
+                            min_val: float = 1E-4) -> FloatOrArray:
         """Caps and preserves sign of Obukhov length.
 
         Ensures |obukL| >= min_val while preserving the original sign.

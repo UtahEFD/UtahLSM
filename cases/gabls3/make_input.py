@@ -134,7 +134,6 @@ init_q[:] = soil_mois_ini
 init_i[:] = stype
 init.close()
 
-
 ###################################
 # Read met tower data for offline #
 ###################################
@@ -164,6 +163,22 @@ swd: NDArray[np.float64] = np.asarray(rad.variables['SWD'][:], dtype=float)
 lwu: NDArray[np.float64] = np.asarray(rad.variables['LWU'][:], dtype=float)
 lwd: NDArray[np.float64] = np.asarray(rad.variables['LWD'][:], dtype=float)
 rad.close()
+
+flux: nc.MFDataset = nc.MFDataset('observations/gabls3_surf_flux.nc')
+shf_obs: NDArray[np.float64] = np.asarray(flux.variables['H'][:], dtype=float)
+lhf_obs: NDArray[np.float64] = np.asarray(flux.variables['LE'][:], dtype=float)
+flux.close()
+
+soil_heat: nc.MFDataset = nc.MFDataset('observations/gabls3_soil_heat.nc')
+ghf_obs: NDArray[np.float64] = np.asarray(soil_heat.variables['FG0'][:], dtype=float)
+soil_heat.close()
+
+# Prescribed unresolved SEB storage/closure term. Positive values remove
+# energy from the modeled H/LE/G partition:
+#   Rn - H - LE - G - seb_storage = 0
+# Here Rn comes from the independent radiation components and G is the
+# Fourier-extrapolated 0 cm soil heat flux.
+seb_storage: NDArray[np.float64] = lwd - lwu + swd - swu - shf_obs - lhf_obs - ghf_obs
 
 ##############################
 # Write all time-series data #
@@ -203,6 +218,10 @@ metr_lwd.units = "W m-2"
 metr_lwu = metr.createVariable("lw_out", "f8", ("t",))  # type: ignore[assignment])
 metr_lwu.long_name = "upwelling (emitted) longwave radiation"
 metr_lwu.units = "W m-2"
+metr_sto = metr.createVariable("seb_storage", "f8", ("t",))  # type: ignore[assignment]
+metr_sto.long_name = "prescribed surface energy storage or closure term"
+metr_sto.units = "W m-2"
+metr_sto.comment = "Computed as LWD-LWU+SWD-SWU-H-LE-FG0 from CESAR observations"
 
 metr_s[:] = dt
 metr_u[:] = ws
@@ -213,6 +232,7 @@ metr_swd[:] = swd
 metr_swu[:] = swu
 metr_lwd[:] = lwd
 metr_lwu[:] = lwu
+metr_sto[:] = seb_storage
 metr.close()
 
 
@@ -278,7 +298,7 @@ namelist['surface']['zeta_max'] = float(1.0)
 # under stable stratification so it doesn't double-count daytime convective
 # wind variance, which is already handled by mean wind.
 namelist['surface']['gustiness'] = float(2.0)
-namelist['surface']['gustiness_stable_only'] = True
+namelist['surface']['gustiness_stable_only'] = False
 
 # Cosby et al. (1984) gives lower θ_wilt for clay (0.220 vs Clapp-Hornberger
 # 0.287) which is closer to the observed Cabauw root-zone moisture and lets
@@ -299,7 +319,7 @@ namelist['canopy']['veg_fraction'] = float(1.0)
 # extending into peat.
 namelist['canopy']['rooting_depth'] = float(0.4)
 namelist['canopy']['beta'] = float(0.943)
-namelist['canopy']['rs_min'] = float(40.0)
+namelist['canopy']['rs_min'] = float(75.0)
 namelist['canopy']['rs_max'] = float(5000.0)
 namelist['canopy']['rg_half'] = float(30.0)
 namelist['canopy']['vpd_coef'] = float(1.0e-4)
@@ -312,11 +332,11 @@ namelist['canopy']['t_coef'] = float(1.6e-3)
 # and the TS00 surface temperature evolution to within ~0.1 K. Lies
 # in the upper end of the Choudhury & Monteith (1988) range for a
 # closed-canopy grassland.
-namelist['canopy']['r_ground'] = float(300.0)
+namelist['canopy']['r_ground'] = float(200.0)
 
 namelist['radiation']['model'] = 0
 namelist['radiation']['latitude'] = float(51.9711)
-namelist['radiation']['longitude'] = float(-4.9267)
+namelist['radiation']['longitude'] = float(4.9267)
 
 namelist['output']['save'] = True
 namelist['output']['fields'] = ['all']

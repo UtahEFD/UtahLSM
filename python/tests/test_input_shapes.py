@@ -42,6 +42,7 @@ def test_input_shapes_single_column() -> None:
     assert np.asarray(first.lw_in).shape == (1,)
     assert np.asarray(first.lw_out).shape == (1,)
     assert np.asarray(first.radiation_net).shape == (1,)
+    assert np.asarray(first.seb_storage).shape == (1,)
 
 
 @pytest.mark.integration
@@ -79,3 +80,4 @@ def test_input_shapes_multi_column(tmp_path: Path) -> None:
     assert np.asarray(first.lw_in).shape == (ncol,)
     assert np.asarray(first.lw_out).shape == (ncol,)
     assert np.asarray(first.radiation_net).shape == (ncol,)
+    assert np.asarray(first.seb_storage).shape == (ncol,)

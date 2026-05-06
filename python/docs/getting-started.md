@@ -38,6 +38,10 @@ The repository includes an offline reference case in `../cases/gabls3/`. The off
 - `lsm_init.nc`
 - `lsm_offline.nc`
 
+`lsm_offline.nc` may include an optional `seb_storage` forcing term
+[W m-2]. When present, the surface energy budget is solved as
+`Rn - H - LE - G - seb_storage = 0`; when omitted, this term defaults to zero.
+
 ```bash
 python utahlsm_offline.py -c gabls3 -o lsm_gabls3.nc
 ```

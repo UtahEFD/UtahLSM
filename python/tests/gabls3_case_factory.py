@@ -63,6 +63,13 @@ def write_2x2_case(single_case: Path, multi_case: Path) -> None:
             tiled = np.broadcast_to(data[:, None, None], (ntime, 2, 2))
             dst.createVariable(name, "f8", ("t", "y", "x"))[:] = tiled
 
+        if "seb_storage" in src.variables:
+            data = np.asarray(src.variables["seb_storage"][:], dtype=float)
+        else:
+            data = np.zeros(ntime)
+        tiled = np.broadcast_to(data[:, None, None], (ntime, 2, 2))
+        dst.createVariable("seb_storage", "f8", ("t", "y", "x"))[:] = tiled
+
 
 def run_case(case_dir: Path, outfile: Path) -> None:
     """Run an offline case through the public UtahLSM Python API."""

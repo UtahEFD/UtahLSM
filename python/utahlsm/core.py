@@ -214,6 +214,7 @@ class UtahLSM:
         self.atm_state.lw_in = np.zeros(self.ncol)
         self.atm_state.lw_out = np.zeros(self.ncol)
         self.atm_state.radiation_net = np.zeros(self.ncol)
+        self.atm_state.seb_storage = np.zeros(self.ncol)
 
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
@@ -340,6 +341,7 @@ class UtahLSM:
             lw_in=np.array(self.atm_state.lw_in, copy=True),
             lw_out=np.array(self.atm_state.lw_out, copy=True),
             radiation_net=np.array(self.atm_state.radiation_net, copy=True),
+            seb_storage=np.array(self.atm_state.seb_storage, copy=True),
         )
 
     def _load_atm_state(self, atm_state: AtmosphericState) -> None:
@@ -367,6 +369,12 @@ class UtahLSM:
             atm_state.lw_in, "lw_in")
         self.atm_state.lw_out = self._as_column_vector(
             atm_state.lw_out, "lw_out")
+        seb_storage = self._as_column_vector(
+            atm_state.seb_storage, "seb_storage")
+        if isinstance(self.atm_state.seb_storage, np.ndarray):
+            self.atm_state.seb_storage[:] = seb_storage
+        else:
+            self.atm_state.seb_storage = seb_storage
         self.atm_state.radiation_net = (
             self.atm_state.sw_in - self.atm_state.sw_out
             + self.atm_state.lw_in - self.atm_state.lw_out
@@ -469,6 +477,7 @@ class UtahLSM:
             'lhf': self.sfc_state.fluxes.latent_heat,
             'ghf': self.sfc_state.fluxes.ground_heat,
             'seb_res': self.sfc_state.seb_residual,
+            'seb_storage': np.asarray(self.atm_state.seb_storage),
             'soil_z': self.input.grid.z,
             'soil_T': self.soil_state.temperature,
             'soil_q': self.soil_state.moisture,
@@ -575,11 +584,11 @@ class UtahLSM:
 
     def _partition_flux_wq_components(
         self,
-        sfc_T: np.ndarray,
+        sfc_T: FloatOrArray,
         gnd_q: FloatOrArray,
-        atm_T: np.ndarray,
-        atm_q: np.ndarray,
-        atm_p: np.ndarray,
+        atm_T: FloatOrArray,
+        atm_q: FloatOrArray,
+        atm_p: FloatOrArray,
         ustar: np.ndarray,
         fh: FloatOrArray,
         cols: Optional[np.ndarray] = None,
@@ -867,12 +876,14 @@ class UtahLSM:
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
 
         # Diagnostic SEB residual at the converged Obukhov length.
+        # Positive seb_storage removes energy from the H/LE/G partition.
         # Should be ~ tol_root in magnitude; sustained drift over long
         # integrations indicates a tolerance or coupling problem.
         # In-place update preserves the array reference held by the
         # output writer.
         self.sfc_state.seb_residual[:] = (
             np.asarray(self.atm_state.radiation_net)
+            - np.asarray(self.atm_state.seb_storage)
             - self.sfc_state.fluxes.ground_heat
             - self.sfc_state.fluxes.sensible_heat
             - self.sfc_state.fluxes.latent_heat
@@ -1050,15 +1061,21 @@ class UtahLSM:
         if cols is not None:
             sfc_q: np.ndarray = np.asarray(self.sfc_state.moisture)[cols]
             rad_net: np.ndarray = np.asarray(self.atm_state.radiation_net)[cols]
+            storage_all = np.asarray(self.atm_state.seb_storage)
+            storage: np.ndarray = (
+                np.full_like(rad_net, float(storage_all))
+                if storage_all.ndim == 0 else storage_all[cols]
+            )
         else:
             sfc_q = np.asarray(self.sfc_state.moisture)
             rad_net = np.asarray(self.atm_state.radiation_net)
+            storage = np.asarray(self.atm_state.seb_storage)
 
         _, _, _, ground_heat, _, _, sensible, latent, _ = self._solve_most(
             sfc_T, sfc_q, initial_L, max_iter=1, cols=cols
         )
 
-        return np.asarray(rad_net - ground_heat - sensible - latent)
+        return np.asarray(rad_net - storage - ground_heat - sensible - latent)
 
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB) for surface moisture.

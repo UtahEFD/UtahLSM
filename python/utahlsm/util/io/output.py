@@ -97,7 +97,12 @@ class Output:
         },
         'seb_res': {
             'dimension': ('t',),
-            'long_name': 'surface energy budget residual (Rn-H-LE-G)',
+            'long_name': 'surface energy budget residual (Rn-H-LE-G-storage)',
+            'units': 'W m-2'
+        },
+        'seb_storage': {
+            'dimension': ('t',),
+            'long_name': 'prescribed surface energy storage or closure term',
             'units': 'W m-2'
         },
         'r_s': {
@@ -188,8 +193,8 @@ class Output:
             self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
             self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
             for field in ('ust', 'obl', 'shf', 'lhf', 'ghf', 'seb_res',
-                          'r_s', 'theta_root', 'lhf_soil', 'lhf_veg',
-                          'lhf_wet', 'canopy_water'):
+                          'seb_storage', 'r_s', 'theta_root', 'lhf_soil',
+                          'lhf_veg', 'lhf_wet', 'canopy_water'):
                 self.attributes[field]['dimension'] = ('t', 'y', 'x')
 
         for dim, size in dims.items():
