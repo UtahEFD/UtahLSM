@@ -489,6 +489,7 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
     model.sfc_state = SurfaceState(
         temperature=sfc_T,
         moisture=np.array([0.25]),
+        air_density=atm_p / (287.04 * np.array([280.0]) * (1.0 + 0.608 * atm_q)),
         turbulence=TurbulenceScales(
             friction_velocity=np.array([0.3]),
             obukhov_length=np.array([100.0]),
@@ -528,7 +529,7 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
     )
 
     flux = model._partition_flux_wq(
-        sfc_T, atm_q, sfc_T, atm_q, atm_p, np.array([0.3]), np.array([0.1])
+        sfc_T, atm_q, atm_q, atm_p, np.array([0.3]), np.array([0.1])
     )
     model._finalize_canopy_partition()
 

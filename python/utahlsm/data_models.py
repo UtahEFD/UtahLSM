@@ -153,6 +153,8 @@ class SurfaceState:
             Diagnostic for monitoring thermal drift over long integrations;
             the magnitude reflects how cleanly the SEB closed at the
             converged Obukhov length.
+        air_density: Moist-air density [kg/m^3] cached once per timestep in
+            ``_load_atm_state`` from the atmospheric state.
     """
     temperature: FloatOrArray = 0.0
     soil_top_temperature: FloatOrArray = 0.0
@@ -162,6 +164,7 @@ class SurfaceState:
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
     seb_residual: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
+    air_density: FloatOrArray = 0.0
 
 @dataclass
 class CanopyState:

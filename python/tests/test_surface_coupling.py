@@ -79,6 +79,7 @@ def test_compute_seb_vec_is_deterministic_and_pure() -> None:
     model.sfc_state = SurfaceState(
         temperature=np.array([280.0]),
         moisture=np.array([0.25]),
+        air_density=np.array([1.206]),
     )
     model.sfc_state.fluxes.ground_heat[0] = 1.0
     model.sfc_state.fluxes.sensible_heat[0] = 2.0

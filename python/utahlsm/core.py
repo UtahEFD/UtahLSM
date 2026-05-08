@@ -379,6 +379,11 @@ class UtahLSM:
             self.atm_state.sw_in - self.atm_state.sw_out
             + self.atm_state.lw_in - self.atm_state.lw_out
         )
+        RD = c.thermodynamic.GAS_CONSTANT_DRY
+        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
+        Tv = self.atm_state.temperature * (
+            1.0 + EVT * self.atm_state.specific_humidity)
+        self.sfc_state.air_density = self.atm_state.pressure / (RD * Tv)
 
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
@@ -587,7 +592,6 @@ class UtahLSM:
         self,
         sfc_T: FloatOrArray,
         gnd_q: FloatOrArray,
-        atm_T: FloatOrArray,
         atm_q: FloatOrArray,
         atm_p: FloatOrArray,
         ustar: np.ndarray,
@@ -659,9 +663,8 @@ class UtahLSM:
         lw_cooling_flux = np.maximum(emissivity * SB * sfc_T**4 - lw_in, 0.0)
         night_factor = np.clip(1.0 - sw_in / 50.0, 0.0, 1.0)
 
-        RD = c.thermodynamic.GAS_CONSTANT_DRY
-        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
-        rho = atm_p / (RD * atm_T * (1.0 + EVT * atm_q))
+        rho = (np.asarray(self.sfc_state.air_density)[cols]
+               if cols is not None else np.asarray(self.sfc_state.air_density))
         cooling = np.divide(
             lw_cooling_flux,
             rho * CP * np.maximum(u_fh, 1e-4),
@@ -700,7 +703,6 @@ class UtahLSM:
         self,
         sfc_T: np.ndarray,
         gnd_q: FloatOrArray,
-        atm_T: np.ndarray,
         atm_q: np.ndarray,
         atm_p: np.ndarray,
         ustar: np.ndarray,
@@ -709,7 +711,7 @@ class UtahLSM:
     ) -> np.ndarray:
         """Total kinematic moisture flux with optional canopy partition."""
         e_soil, t_veg, wet = self._partition_flux_wq_components(
-            sfc_T, gnd_q, atm_T, atm_q, atm_p, ustar, fh, cols=cols
+            sfc_T, gnd_q, atm_q, atm_p, ustar, fh, cols=cols
         )
         return cast(np.ndarray, e_soil + t_veg + wet)
 
@@ -723,8 +725,6 @@ class UtahLSM:
         """
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
         RHO_W = c.water.DENSITY
-        RD = c.thermodynamic.GAS_CONSTANT_DRY
-        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
 
         canopy = getattr(self, 'canopy', None)
         if canopy is None:
@@ -746,7 +746,7 @@ class UtahLSM:
         atm_T = self.atm_state.temperature
         sfc_T = self.sfc_state.temperature
         sfc_q = self.sfc_state.moisture
-        rho_a = atm_p / (RD * atm_T * (1.0 + EVT * atm_q))
+        rho_a = self.sfc_state.air_density
 
         ust = self.sfc_state.turbulence.friction_velocity
         fh = self.sfc.fh(
@@ -756,7 +756,7 @@ class UtahLSM:
         gnd_q = self.soil.surface_specific_humidity(sfc_T, sfc_q, atm_p)
 
         E_soil_kin, T_veg_kin, W_veg_kin = self._partition_flux_wq_components(
-            sfc_T, gnd_q, atm_T, atm_q, atm_p, ust, fh
+            sfc_T, gnd_q, atm_q, atm_p, ust, fh
         )
 
         E_soil_mass = rho_a * E_soil_kin          # [kg/m^2/s]
@@ -928,7 +928,6 @@ class UtahLSM:
         """
         CP = c.thermodynamic.SPECIFIC_HEAT
         LV = c.thermodynamic.LATENT_HEAT_VAPORIZATION
-        RD = c.thermodynamic.GAS_CONSTANT_DRY
         VK = c.physical.VON_KARMAN
         G = c.physical.GRAVITY
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
@@ -972,10 +971,8 @@ class UtahLSM:
         dz = self.input.grid.z[0] - self.input.grid.z[1]
 
         ref_T = atm_T
-        # Moist-air density uses virtual temperature (Tv = T(1 + 0.608 q)).
-        # Tv > T for humid air, so dry-T gives ~0.5–1% high LE in practice.
-        Tv = atm_T * (1.0 + EVT * atm_q)
-        rho = atm_p / (RD * Tv)
+        rho = (np.asarray(self.sfc_state.air_density)[cols]
+               if cols is not None else np.asarray(self.sfc_state.air_density))
 
         gnd_q = self.soil.surface_specific_humidity(sfc_T, sfc_q, atm_p)
 
@@ -1016,7 +1013,7 @@ class UtahLSM:
             ustar = wind_eff * fm
             flux_wT = (sfc_T - atm_T) * ustar * fh
             flux_wq = self._partition_flux_wq(
-                sfc_T, gnd_q, atm_T, atm_q, atm_p, ustar, fh, cols=cols
+                sfc_T, gnd_q, atm_q, atm_p, ustar, fh, cols=cols
             )
             flux_wTv = flux_wT + EVT * ref_T * flux_wq
 
@@ -1101,8 +1098,6 @@ class UtahLSM:
         regime where the previous ψ-inversion approach was ill-conditioned.
         """
         RHO_W = c.water.DENSITY
-        RD = c.thermodynamic.GAS_CONSTANT_DRY
-        EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
 
         z_s = self.input.surface.z_s
         z_t = self.input.surface.z_t
@@ -1113,8 +1108,7 @@ class UtahLSM:
         sfc_T = self.sfc_state.temperature
         obukhov_l = self.sfc_state.turbulence.obukhov_length
         ust = self.sfc_state.turbulence.friction_velocity
-        Tv = self.atm_state.temperature * (1.0 + EVT * atm_q)
-        rho_a = atm_p / (RD * Tv)
+        rho_a = self.sfc_state.air_density
         fh = self.sfc.fh(z_s, z_t, obukhov_l)
 
         residual_q = float(self.soil.properties.residual[0])
