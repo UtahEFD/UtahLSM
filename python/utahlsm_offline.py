@@ -100,15 +100,16 @@ def main() -> None:
         tstep: float = input_lsm.forcing.tstep
         step_count = 0
         for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
-            runtime += tstep
-
-            # Update the model with the latest atmospheric forcing
+            # Update the model with the latest atmospheric forcing.
+            # runtime = step_count * tstep so forcing[i] drives the correct
+            # simulation time (forcing[0] → t=0, forcing[1] → t=tstep, …).
             lsm.update(tstep, runtime, atm_state)
 
             # Run the core physics solvers
             lsm.run()
 
-            # Save the output for the current time step
+            # Advance time to the end of this step, then save.
+            runtime += tstep
             lsm.save(step_count+1, runtime)
     except SolverError as e:
         print('\n!!! NUMERICAL SOLVER FAILURE !!!')
