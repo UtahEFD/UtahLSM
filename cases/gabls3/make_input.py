@@ -256,8 +256,6 @@ namelist['output'] = {}
 namelist['general']['log_level'] = "info"
 
 namelist['numerics']['heat_diffusion_back_weight'] = float(0.5)
-namelist['numerics']['warm_start_turbulence'] = True
-namelist['numerics']['initialize_surface_temperature_from_seb'] = True
 namelist['numerics']['iterations']['sfc_flux'] = 100
 namelist['numerics']['iterations']['seb_bracket'] = 100
 namelist['numerics']['iterations']['seb_root'] = 100
@@ -285,10 +283,10 @@ namelist['grid']['nz'] = nsoil
 # fetch-aware roughness for the surrounding terrain, not the local patch.
 # We are running locally, so use the local value.
 namelist['surface']['z_o'] = float(0.03)
-namelist['surface']['z_t'] = float(0.0015)
+namelist['surface']['z_t'] = float(0.003)
 namelist['surface']['z_m'] = float(10.0)
 namelist['surface']['z_s'] = float(2.0)
-namelist['surface']['albedo'] = float(0.33)
+namelist['surface']['albedo'] = float(0.22)
 namelist['surface']['emissivity'] = float(0.99)
 namelist['surface']['model'] = 1
 namelist['surface']['psi_stable'] = "beljaars-holtslag"
@@ -297,8 +295,8 @@ namelist['surface']['zeta_max'] = float(1.0)
 # 2.0 m/s overdrives u* and prevents nocturnal decoupling. We apply it only
 # under stable stratification so it doesn't double-count daytime convective
 # wind variance, which is already handled by mean wind.
-namelist['surface']['gustiness'] = float(2.0)
-namelist['surface']['gustiness_stable_only'] = False
+namelist['surface']['gustiness'] = float(1.0)
+namelist['surface']['gustiness_stable_only'] = True
 
 # Cosby et al. (1984) gives lower θ_wilt for clay (0.220 vs Clapp-Hornberger
 # 0.287) which is closer to the observed Cabauw root-zone moisture and lets

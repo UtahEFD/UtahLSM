@@ -29,6 +29,7 @@ class _DummyNamelist:
     grid: SimpleNamespace
     numerics: NumericsConfig
     output: OutputConfig
+    soil_type_names: list[str]
     forcing: SimpleNamespace | None = None
 
 
@@ -102,6 +103,7 @@ def _make_model(
 
     model.input = _DummyNamelist(
         grid=SimpleNamespace(nz=2, nx=1, ny=1, z=np.array([0.1, 0.2])),
+        soil_type_names=["clay", "clay"],
         numerics=NumericsConfig(
             heat_diffusion_back_weight=0.5,
             iterations=IterationsConfig(

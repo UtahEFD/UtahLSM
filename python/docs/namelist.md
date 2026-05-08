@@ -27,9 +27,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
       "coupling_temp": 0.01,
       "coupling_mois": 1e-05
     },
-    "heat_diffusion_back_weight": 0.5,
-    "warm_start_turbulence": true,
-    "initialize_surface_temperature_from_seb": true
+    "heat_diffusion_back_weight": 0.5
   },
   "time": {
     "utc_start": 0,
@@ -108,12 +106,6 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 
 `heat_diffusion_back_weight`
 : Theta-scheme backward weight for the soil heat diffusion solve. `0.5` gives a Crank-Nicolson style weighting.
-
-`warm_start_turbulence`
-: If `true`, initialize the turbulence state from the first forcing record before the first coupled solve.
-
-`initialize_surface_temperature_from_seb`
-: If `true`, perform a standalone surface energy balance initialization before the normal timestep loop.
 
 `iterations`
 : Integer caps for the nonlinear iterations used by surface fluxes, SEB bracketing, SEB root finding, SMB root finding, the mixed-form soil moisture Picard solve, and the outer coupled solve.

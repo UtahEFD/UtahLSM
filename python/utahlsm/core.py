@@ -479,6 +479,7 @@ class UtahLSM:
             'seb_res': self.sfc_state.seb_residual,
             'seb_storage': np.asarray(self.atm_state.seb_storage),
             'soil_z': self.input.grid.z,
+            'soil_type': self.input.soil_type_names,
             'soil_T': self.soil_state.temperature,
             'soil_q': self.soil_state.moisture,
         }
@@ -847,15 +848,14 @@ class UtahLSM:
                 idx = np.where(expand_right)[0]
                 seb_b[idx] = self._compute_seb_vec(
                     temp_b[idx], initial_L[idx], cols=idx)
-        else:
-            # Check if any brackets failed after all iterations
-            failed = seb_a * seb_b > 0
-            if np.any(failed):
-                bad_cols = np.where(failed)[0]
-                raise SolverError(
-                    f"SEB Bracket failed at cols={bad_cols.tolist()}. "
-                    f"Residuals a: {seb_a[failed]}, b: {seb_b[failed]}"
-                )
+
+        failed = seb_a * seb_b > 0
+        if np.any(failed):
+            bad_cols = np.where(failed)[0]
+            raise SolverError(
+                f"SEB Bracket failed at cols={bad_cols.tolist()}. "
+                f"Residuals a: {seb_a[failed]}, b: {seb_b[failed]}"
+            )
 
         # Vectorized Brent root-finding
         def seb_func(T: np.ndarray) -> np.ndarray:

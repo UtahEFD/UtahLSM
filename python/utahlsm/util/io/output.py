@@ -58,7 +58,8 @@ class Output:
         'soil_type': {
             'dimension': ('z',),
             'long_name': 'soil type',
-            'units': ''
+            'units': '',
+            'dtype': 'str'
         },
         'soil_T': {
             'dimension': ('t', 'z',),
@@ -140,7 +141,7 @@ class Output:
     def __init__(
         self,
         outfile: str,
-        sync_interval: int = 100,
+        sync_interval: int = 1,
         enabled: bool = True,
     ) -> None:
         """Initializes the Output class and creates the NetCDF file.
@@ -148,7 +149,7 @@ class Output:
         Args:
             outfile: The path and name for the output NetCDF file.
             sync_interval: Number of saves between disk syncs. Higher values
-                improve performance but risk data loss on crash. Defaults to 100.
+                improve performance but risk data loss on crash. Defaults to 1.
             enabled: Whether to create and write the NetCDF file. Defaults to
                 True.
         """
@@ -223,10 +224,12 @@ class Output:
 
         # iterate through keys in dictionary
         for field in fields:
-            dims  = self.attributes[field]['dimension']
-            units = self.attributes[field]['units']
-            name  = self.attributes[field]['long_name']
-            ncvar = self.outfile.createVariable(field, 'f8', dims)
+            attrs = self.attributes[field]
+            dims  = attrs['dimension']
+            units = attrs['units']
+            name  = attrs['long_name']
+            dtype = attrs.get('dtype', 'f8')
+            ncvar = self.outfile.createVariable(field, dtype, dims)
             ncvar.units = units
             ncvar.long_name = name
             if 't' in dims:
