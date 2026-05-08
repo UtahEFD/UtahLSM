@@ -872,21 +872,28 @@ class UtahLSM:
                 n_failed, self.ncol
             )
 
-        # Final flux update with resolved temperatures (vectorized, once)
-        self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
+        # Single-pass MOST update: refreshes ustar and L so that SMB sees
+        # stability consistent with the just-found T_s, without paying for
+        # a full iterative MOST solve. The full solve runs once per timestep
+        # in _solve_surface_coupling after all Picard iterations converge.
+        sfc_q_vec = self._as_column_vector(self.sfc_state.moisture, "sfc_q")
+        L_now = np.array(self.sfc_state.turbulence.obukhov_length, copy=True)
+        (ustar, _, _, ground_heat, soil_top_T,
+         obukhov_l, sensible, latent, _) = self._solve_most(
+            self.sfc_state.temperature, sfc_q_vec, L_now, max_iter=1
+        )
+        self.sfc_state.turbulence.obukhov_length[:] = obukhov_l
+        self.sfc_state.turbulence.friction_velocity[:] = ustar
+        self.sfc_state.soil_top_temperature = np.asarray(soil_top_T)
 
-        # Diagnostic SEB residual at the converged Obukhov length.
-        # Positive seb_storage removes energy from the H/LE/G partition.
-        # Should be ~ tol_root in magnitude; sustained drift over long
-        # integrations indicates a tolerance or coupling problem.
-        # In-place update preserves the array reference held by the
-        # output writer.
+        # Diagnostic SEB residual. Should be ~ tol_root in magnitude;
+        # sustained drift indicates a tolerance or coupling problem.
         self.sfc_state.seb_residual[:] = (
             np.asarray(self.atm_state.radiation_net)
             - np.asarray(self.atm_state.seb_storage)
-            - self.sfc_state.fluxes.ground_heat
-            - self.sfc_state.fluxes.sensible_heat
-            - self.sfc_state.fluxes.latent_heat
+            - ground_heat
+            - sensible
+            - latent
         )
 
     def _solve_most(
