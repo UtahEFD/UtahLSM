@@ -13,47 +13,47 @@
 #
 """Factory for creating radiation model instances."""
 
+from ...data_models import RadiationConfig, SurfaceConfig
 from ...exceptions import NamelistError
 from ...util.io import logging_helper
 from .rad_basic import RadBasic
+from .rad_forcing import RadForcing
 from .radiation import Radiation
 
 logger = logging_helper.get_logger('RAD')
 
 
-def get_radiation_model(key: int, latitude: float, longitude: float,
-                        albedo: float, emissivity: float) -> Radiation:
+def get_radiation_model(
+    radiation: RadiationConfig,
+    surface: SurfaceConfig,
+) -> Radiation:
     """Factory function to select and instantiate a radiation model.
 
-    Based on the integer key provided in the namelist, this function creates
-    and returns an instance of the corresponding radiation model class.
-
     Args:
-        key: An integer identifying the radiation model to use.
-        latitude: The site latitude in degrees.
-        longitude: The site longitude in degrees.
-        albedo: The surface albedo (dimensionless).
-        emissivity: The surface emissivity (dimensionless).
+        radiation: Radiation configuration from the namelist.
+        surface: Surface configuration supplying albedo and emissivity.
 
     Returns:
-        An instance of a concrete `Radiation` subclass.
+        An instance of a concrete :class:`Radiation` subclass.
 
     Raises:
-        NamelistError: If the provided `key` is not a valid model ID.
+        NamelistError: If ``radiation.model`` is not a recognised option.
     """
-    # Dictionary to map keys to classes
-    rad_models = {
-        1: RadBasic,
-    }
+    if radiation.model == 'forcing':
+        return RadForcing()
 
-    try:
-        return rad_models[key](latitude, longitude, albedo, emissivity)
-    except KeyError as e:
-        error_msg = f'{key} is an invalid radiation model.'
-        logger.error('x' * 62)
-        logger.error('Namelist Error: %s', error_msg)
-        logger.error('Valid options are:')
-        for k, v in rad_models.items():
-            logger.error('\t%d (%s)', k, v.__name__)
-        logger.error('x' * 62)
-        raise NamelistError(error_msg) from e
+    if radiation.model == 'basic':
+        return RadBasic(
+            radiation.latitude,
+            radiation.longitude,
+            surface.albedo,
+            surface.emissivity,
+        )
+
+    valid = ['forcing', 'basic']
+    error_msg = f"'{radiation.model}' is an invalid radiation model."
+    logger.error('x' * 62)
+    logger.error('Namelist Error: %s', error_msg)
+    logger.error('Valid options are: %s', ', '.join(valid))
+    logger.error('x' * 62)
+    raise NamelistError(error_msg)

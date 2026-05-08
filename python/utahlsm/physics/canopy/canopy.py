@@ -41,7 +41,7 @@ from ...data_models import AtmosphericState, SoilState, SurfaceState
 from ...util.io import logging_helper
 
 CP = TypeVar('CP', bound='Canopy')
-logger = logging_helper.get_logger('CANOPY')
+logger = logging_helper.get_logger('Canopy')
 
 
 class Canopy(ABC):
@@ -110,7 +110,7 @@ class Canopy(ABC):
             z: Soil layer node depths [m], shape (nz,). Values are
                 non-positive with `z[0] = 0` at the surface.
         """
-        self.logger: logging.Logger = logging_helper.get_logger('CANOPY')
+        self.logger: logging.Logger = logging_helper.get_logger('Canopy')
         ncol = self._infer_column_count(
             {
                 'lai': lai,

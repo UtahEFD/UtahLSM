@@ -25,7 +25,7 @@ from ...util.io import logging_helper
 from .canopy import Canopy
 from .canopy_jarvis import CanopyJarvis
 
-logger = logging_helper.get_logger('CANOPY')
+logger = logging_helper.get_logger('Canopy')
 
 
 def get_canopy_model(

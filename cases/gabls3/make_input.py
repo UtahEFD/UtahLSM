@@ -97,8 +97,9 @@ soil_mois_ini: NDArray[np.float64] = np.interp(soil_zlev_int, soil_mois_lev, soi
 # upper clay has cosby wilt=0.220, the deeper peat has wilt=0.396); the
 # wet TH20 anchor keeps the root-weighted moisture comfortably above the
 # root-weighted wilting so f4 stays positive.
+# Cabauw subsoil is moderately decomposed Holocene peat -> Letts hemic tier.
 clay_peat_boundary: float = 0.15
-stype: NDArray[np.str_] = np.where(soil_zlev_int <= clay_peat_boundary, 'clay', 'peat').astype('U8')
+stype: NDArray[np.str_] = np.where(soil_zlev_int <= clay_peat_boundary, 'clay', 'peat_hemic').astype('U16')
 
 #######################
 # Initialization file #
@@ -288,7 +289,7 @@ namelist['surface']['z_m'] = float(10.0)
 namelist['surface']['z_s'] = float(2.0)
 namelist['surface']['albedo'] = float(0.22)
 namelist['surface']['emissivity'] = float(0.99)
-namelist['surface']['model'] = 1
+namelist['surface']['model'] = "most"
 namelist['surface']['psi_stable'] = "beljaars-holtslag"
 namelist['surface']['zeta_max'] = float(1.0)
 # Beljaars (1995) recommends 0.5-1.0 m/s gustiness under stable conditions;
@@ -300,11 +301,10 @@ namelist['surface']['gustiness_stable_only'] = True
 
 # Cosby et al. (1984) gives lower θ_wilt for clay (0.220 vs Clapp-Hornberger
 # 0.287) which is closer to the observed Cabauw root-zone moisture and lets
-# the Jarvis canopy actually transpire. Peat parameters are common across
-# the three packaged datasets (the peat node here is for the deeper Cabauw
-# layer, not a true bog).
-namelist['soil']['properties'] = "cosby"
-namelist['soil']['model'] = 1
+# the Jarvis canopy actually transpire. The Letts (2000) hemic tier supplies
+# defensible parameters for the moderately decomposed Cabauw subsoil peat.
+namelist['soil']['properties'] = "cosby-letts"
+namelist['soil']['model'] = "van-genuchten"
 
 # These Jarvis parameters remain a UtahLSM-specific canopy choice. Only LAI and
 # vegetation fraction come directly from the published GABLS3 specification.
@@ -332,7 +332,7 @@ namelist['canopy']['t_coef'] = float(1.6e-3)
 # closed-canopy grassland.
 namelist['canopy']['r_ground'] = float(200.0)
 
-namelist['radiation']['model'] = 0
+namelist['radiation']['model'] = "forcing"
 namelist['radiation']['latitude'] = float(51.9711)
 namelist['radiation']['longitude'] = float(4.9267)
 

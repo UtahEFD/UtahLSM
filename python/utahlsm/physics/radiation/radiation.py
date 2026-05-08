@@ -20,49 +20,21 @@ methods, and a factory function (`get_model`) for creating instances of those
 models.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar
-
-import numpy as np
 
 from ..._types import FloatOrArray
 from ...data_models import AtmosphericState, SurfaceState
 from ...util.io import logging_helper
 
 RT = TypeVar('RT', bound='Radiation')
-logger = logging_helper.get_logger('RAD')
+logger = logging_helper.get_logger('Radiation')
 
 class Radiation(ABC):
     """Abstract base class for radiation models.
 
-    This class defines the standard interface for radiation calculations
-    and acts as a factory for creating specific radiation model instances.
-    It cannot be instantiated directly.
-
-    Attributes:
-        logger: A logger for this class.
-        latitude: The site latitude in degrees.
-        longitude: The site longitude in degrees.
-        albedo: The surface albedo (dimensionless).
-        emissivity: The surface emissivity (dimensionless).
+    Concrete subclasses must implement :meth:`compute_components`.
     """
-    def __init__(self, latitude: float, longitude: float, albedo: float,
-                 emissivity: float):
-        """Initializes the Radiation base class.
-
-        Args:
-            latitude: The site latitude in degrees.
-            longitude: The site longitude in degrees.
-            albedo: The surface albedo (dimensionless).
-            emissivity: The surface emissivity (dimensionless).
-        """
-        self.logger: logging.Logger = logging_helper.get_logger('RAD')
-        # Store as radians for internal trig usage.
-        self.latitude: float = float(np.deg2rad(latitude))
-        self.longitude: float = float(np.deg2rad(longitude))
-        self.albedo: float = albedo
-        self.emissivity: float = emissivity
 
     # Abstract methods ---
     @abstractmethod

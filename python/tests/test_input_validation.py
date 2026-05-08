@@ -57,14 +57,14 @@ def _base_namelist() -> dict[str, Any]:
             "z_s": 2.0,
             "albedo": 0.33,
             "emissivity": 0.99,
-            "model": 1,
+            "model": "most",
         },
         "soil": {
             "properties": "rawls-brakensiek",
-            "model": 2,
+            "model": "campbell",
         },
         "radiation": {
-            "model": 0,
+            "model": "forcing",
             "latitude": 40.0,
             "longitude": -111.0,
         },

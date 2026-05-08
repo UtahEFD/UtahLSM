@@ -375,7 +375,7 @@ class SurfaceConfig:
         z_s: Measurement height for temperature and humidity [m].
         albedo: Surface albedo (dimensionless).
         emissivity: Surface emissivity (dimensionless).
-        model: Integer ID for the surface layer model to use.
+        model: Surface layer model selector ('most').
         psi_stable: Stable (z/L>=0) MOST integrated stability correction (ψ).
         zeta_max: Maximum |z/L| used to clamp Obukhov length for MOST.
         gustiness: Additional wind-speed magnitude [m/s] added in quadrature.
@@ -387,7 +387,7 @@ class SurfaceConfig:
     z_s: float
     albedo: float
     emissivity: float
-    model: int
+    model: str
     psi_stable: str = "dyer-hicks"
     zeta_max: float = 5.0
     gustiness: float = 0.0
@@ -400,22 +400,21 @@ class SoilConfig:
     Attributes:
         properties: Name of soil property dataset (e.g., 'cosby-1984') or path
             to custom JSON file.
-        model: Integer ID for the soil physics model to use (1=BrooksCorey,
-            2=Campbell, 3=VanGenuchten).
+        model: Soil model selector ('brooks-corey', 'campbell', 'van-genuchten').
     """
     properties: str
-    model: int
+    model: str
 
 @dataclass(frozen=True)
 class RadiationConfig:
     """Radiation model configuration.
 
     Attributes:
-        model: Integer ID for the radiation model to use.
+        model: Radiation model selector ('forcing', 'basic').
         latitude: Site latitude [degrees].
         longitude: Site longitude [degrees].
     """
-    model: int
+    model: str
     latitude: float
     longitude: float
 

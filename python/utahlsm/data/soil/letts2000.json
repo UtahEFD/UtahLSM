@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "dataset_name": "letts2000",
+    "citation": "Letts, M. G., N. T. Roulet, N. T. Comer, M. R. Skarupa, and D. L. Verseghy (2000), Parametrization of peatland hydraulic properties for the Canadian Land Surface Scheme, Atmos.-Ocean, 38(1), 141-160. ci from de Vries (1963) / Farouki (1981) organic-matter solid-matrix volumetric heat capacity.",
+    "description": "Hydraulic and thermal properties for organic peat soils (fibric, hemic, sapric decomposition tiers). Use alongside a mineral-soil dataset (e.g., cosby) via the composite-include mechanism."
+  },
+  "soil_types": {
+    "peat_fibric": {
+      "b": 2.7,
+      "psi_sat": -0.0103,
+      "porosity": 0.93,
+      "residual": 0.0,
+      "K_sat": 2.8e-4,
+      "ci": 2500000.0
+    },
+    "peat_hemic": {
+      "b": 6.1,
+      "psi_sat": -0.0102,
+      "porosity": 0.88,
+      "residual": 0.0,
+      "K_sat": 2.0e-6,
+      "ci": 2500000.0
+    },
+    "peat_sapric": {
+      "b": 12.0,
+      "psi_sat": -0.0101,
+      "porosity": 0.83,
+      "residual": 0.0,
+      "K_sat": 1.0e-7,
+      "ci": 2500000.0
+    }
+  }
+}

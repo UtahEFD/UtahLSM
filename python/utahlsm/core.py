@@ -120,30 +120,28 @@ class UtahLSM:
         self.sfc_state.moisture = sfc_theta
         self.sfc_state.specific_humidity = sfc_q
 
-        # Run radiation model if configured. The model populates the four
-        # component fields (sw_in, sw_out, lw_in, lw_out) on atm_state;
-        # radiation_net is derived from them so the SEB and any consumers
-        # of the components remain mutually consistent.
-        if self.input.radiation.model:
-            total_seconds = self.input.time.utc_start + runtime
-            days_passed = int(total_seconds // 86400)
-            current_utc = total_seconds % 86400
-            days_per_year = (366 if self._is_leap_year(
-                self.input.time.utc_year) else 365)
-            julian_day = ((self.input.time.julian_day
-                + days_passed - 1) % days_per_year) + 1
-            assert self.rad is not None
-            sw_in, sw_out, lw_in, lw_out = self.rad.compute_components(
-                julian_day, current_utc, self.atm_state, self.sfc_state
-            )
-            self.atm_state.sw_in = self._as_column_vector(sw_in, "sw_in")
-            self.atm_state.sw_out = self._as_column_vector(sw_out, "sw_out")
-            self.atm_state.lw_in = self._as_column_vector(lw_in, "lw_in")
-            self.atm_state.lw_out = self._as_column_vector(lw_out, "lw_out")
-            self.atm_state.radiation_net = (
-                self.atm_state.sw_in - self.atm_state.sw_out
-                + self.atm_state.lw_in - self.atm_state.lw_out
-            )
+        # Compute the four radiation components. RadForcing passes through
+        # forcing values; RadBasic computes from first principles. Either way
+        # radiation_net is derived here so the SEB and any consumers of the
+        # components remain mutually consistent.
+        total_seconds = self.input.time.utc_start + runtime
+        days_passed = int(total_seconds // 86400)
+        current_utc = total_seconds % 86400
+        days_per_year = (366 if self._is_leap_year(
+            self.input.time.utc_year) else 365)
+        julian_day = ((self.input.time.julian_day
+            + days_passed - 1) % days_per_year) + 1
+        sw_in, sw_out, lw_in, lw_out = self.rad.compute_components(
+            julian_day, current_utc, self.atm_state, self.sfc_state
+        )
+        self.atm_state.sw_in = self._as_column_vector(sw_in, "sw_in")
+        self.atm_state.sw_out = self._as_column_vector(sw_out, "sw_out")
+        self.atm_state.lw_in = self._as_column_vector(lw_in, "lw_in")
+        self.atm_state.lw_out = self._as_column_vector(lw_out, "lw_out")
+        self.atm_state.radiation_net = (
+            self.atm_state.sw_in - self.atm_state.sw_out
+            + self.atm_state.lw_in - self.atm_state.lw_out
+        )
 
     def run(self) -> None:
         """Runs the core model physics for a single time step.
@@ -329,21 +327,6 @@ class UtahLSM:
             f"{name} has unsupported dimensions: {data.ndim}."
         )
 
-    def _copy_atm_state(self) -> AtmosphericState:
-        """Returns a shallow copy of the current atmospheric state arrays."""
-        return AtmosphericState(
-            wind_speed=np.array(self.atm_state.wind_speed, copy=True),
-            temperature=np.array(self.atm_state.temperature, copy=True),
-            specific_humidity=np.array(self.atm_state.specific_humidity, copy=True),
-            pressure=np.array(self.atm_state.pressure, copy=True),
-            sw_in=np.array(self.atm_state.sw_in, copy=True),
-            sw_out=np.array(self.atm_state.sw_out, copy=True),
-            lw_in=np.array(self.atm_state.lw_in, copy=True),
-            lw_out=np.array(self.atm_state.lw_out, copy=True),
-            radiation_net=np.array(self.atm_state.radiation_net, copy=True),
-            seb_storage=np.array(self.atm_state.seb_storage, copy=True),
-        )
-
     def _load_atm_state(self, atm_state: AtmosphericState) -> None:
         """Loads atmospheric state data into column vectors.
 
@@ -389,17 +372,10 @@ class UtahLSM:
         """Initializes the physics modules based on user configuration."""
         self.logger.info('Initializing physics modules')
         try:
-            if self.input.radiation.model:
-                self.rad: Radiation | None = get_radiation_model(
-                    self.input.radiation.model,
-                    self.input.radiation.latitude,
-                    self.input.radiation.longitude,
-                    self.input.surface.albedo,
-                    self.input.surface.emissivity
-                )
-            else:
-                self.rad = None
-                self.logger.info('Using radiation forcing data')
+            self.rad: Radiation = get_radiation_model(
+                self.input.radiation,
+                self.input.surface,
+            )
             self.soil: Soil = get_soil_model(
                 self.input.soil.model,
                 self.input.soil_properties,
@@ -454,8 +430,6 @@ class UtahLSM:
             # soil-top moisture, which redistributes the energy balance
             # (LE↔SHF) and produces a large, non-physical jump in u*/L.
             assert self.input.forcing is not None
-            saved_atm_state = self._copy_atm_state()
-            saved_tstep = getattr(self, "tstep", 0.0)
             self._load_atm_state(forcing0)
             self.tstep = float(self.input.forcing.tstep)
 
@@ -471,9 +445,6 @@ class UtahLSM:
                     "initial_state",
                     "SEB+SMB coupling using forcing[0]",
                 )
-
-            self._load_atm_state(saved_atm_state)
-            self.tstep = saved_tstep
 
         self.full_output_fields = {
             'ust': self.sfc_state.turbulence.friction_velocity,

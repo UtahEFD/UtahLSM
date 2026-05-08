@@ -32,23 +32,15 @@ def get_surface_model(surface: SurfaceConfig) -> Surface:
         An instance of a concrete `Surface` subclass.
 
     Raises:
-        NamelistError: If the provided `key` is not a valid model ID.
+        NamelistError: If the provided model name is not valid.
     """
-    # Dictionary to map keys to classes
-    sfc_models = {
-        1: SurfaceMOST,
-    }
+    if surface.model == 'most':
+        return SurfaceMOST(psi_stable=surface.psi_stable)
 
-    try:
-        if surface.model == 1:
-            return SurfaceMOST(psi_stable=surface.psi_stable)
-        return sfc_models[surface.model]()
-    except KeyError as e:
-        error_msg = f'{surface.model} is an invalid surface model.'
-        logger.error('x' * 62)
-        logger.error('Namelist Error: %s', error_msg)
-        logger.error('Valid options are:')
-        for k, v in sfc_models.items():
-            logger.error('\t%d (%s)', k, v.__name__)
-        logger.error('x' * 62)
-        raise NamelistError(error_msg) from e
+    valid = ['most']
+    error_msg = f"'{surface.model}' is an invalid surface model."
+    logger.error('x' * 62)
+    logger.error('Namelist Error: %s', error_msg)
+    logger.error('Valid options are: %s', ', '.join(valid))
+    logger.error('x' * 62)
+    raise NamelistError(error_msg)

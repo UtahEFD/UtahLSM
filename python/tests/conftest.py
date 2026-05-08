@@ -249,7 +249,7 @@ def surface_config() -> SurfaceConfig:
         z_s=2.0,              # Measurement height for temp/humidity [m]
         albedo=0.23,          # Surface albedo
         emissivity=0.98,      # Surface emissivity
-        model=1               # Surface layer model ID
+        model='most'          # Surface layer model
     )
 
 

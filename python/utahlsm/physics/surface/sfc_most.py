@@ -44,7 +44,7 @@ class SurfaceMOST(Surface):
                 - "beljaars-holtslag"
                 - "cheng-brutsaert"
         """
-        self.logger: logging.Logger = logging_helper.get_logger("SFC")
+        self.logger: logging.Logger = logging_helper.get_logger("Surface")
         psi_key = str(psi_stable).strip().lower()
 
         valid = {"dyer-hicks", "beljaars-holtslag", "cheng-brutsaert"}

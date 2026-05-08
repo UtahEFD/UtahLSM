@@ -48,7 +48,7 @@ class Campbell(Soil):
             soil_type_names: List of soil type names for each layer.
             dataset_name: Human-readable name of the dataset being used.
         """
-        self.logger: logging.Logger = logging_helper.get_logger('SOIL')
+        self.logger: logging.Logger = logging_helper.get_logger('Soil')
         self.logger.info('Using the Campbell model')
         super().__init__(properties_dict, soil_type_names, dataset_name)
 

@@ -46,7 +46,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
     "z_s": 2.0,
     "albedo": 0.33,
     "emissivity": 0.99,
-    "model": 1,
+    "model": "most",
     "psi_stable": "beljaars-holtslag",
     "zeta_max": 0.5,
     "gustiness": 0.5,
@@ -54,10 +54,10 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
   },
   "soil": {
     "properties": "rawls-brakensiek",
-    "model": 2
+    "model": "campbell"
   },
   "radiation": {
-    "model": 0,
+    "model": "forcing",
     "latitude": 51.9711,
     "longitude": -4.9267
   },
@@ -135,7 +135,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 ### `surface`
 
 `model`
-: Currently only `1`, which selects `SurfaceMOST`.
+: Currently only `"most"`, which selects `SurfaceMOST`.
 
 `z_o`, `z_t`
 : Momentum and thermal roughness lengths in meters.
@@ -155,19 +155,21 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 ### `soil`
 
 `properties`
-: Name of the bundled soil property table. The repository currently ships `cabauw-heinen`, `clapp-hornberger`, `cosby`, and `rawls-brakensiek`.
+: Name of the bundled soil property table, or a path to a custom JSON file. Bundled mineral-only datasets: `clapp-hornberger`, `cosby`, `rawls-brakensiek`, `cabauw-heinen`. Bundled organic peat dataset: `letts2000` (fibric/hemic/sapric tiers from Letts et al. 2000). Bundled composites that combine a mineral set with `letts2000`: `clapp-hornberger-letts`, `cosby-letts`, `rawls-brakensiek-letts`. The mineral datasets do not contain a `peat` entry — use a `*-letts` composite (or a custom dataset that includes `letts2000`) when the column has organic horizons.
+
+A dataset JSON may declare `"includes": ["a", "b", ...]` to merge soil types from other datasets (bundled names or paths). The current dataset's own `soil_types` are merged last and take precedence. Conflicts are governed by `"on_conflict"`: `"error"` (default), `"prefer_first"`, or `"prefer_last"`.
 
 `model`
-: Integer selector for the constitutive soil model:
+: Constitutive soil model selector:
 
-- `1`: `BrooksCorey`
-- `2`: `Campbell`
-- `3`: `VanGenuchten`
+- `"brooks-corey"`: Brooks-Corey hydraulics
+- `"campbell"`: Campbell hydraulics
+- `"van-genuchten"`: van Genuchten hydraulics
 
 ### `radiation`
 
 `model`
-: `0` disables online radiation and expects net radiation from forcing. `1` selects `RadBasic`.
+: `"forcing"` passes through radiation components from the forcing file. `"basic"` computes clear-sky radiation from site coordinates.
 
 `latitude`, `longitude`
 : Site coordinates in degrees.

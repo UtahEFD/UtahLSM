@@ -76,7 +76,7 @@
                 "z_s": { "type": "number", "minimum": 0 },
                 "albedo": { "type": "number", "minimum": 0, "maximum": 1 },
                 "emissivity": { "type": "number", "minimum": 0, "maximum": 1 },
-                "model": { "type": "integer", "enum": [1] },
+                "model": { "type": "string", "enum": ["most"] },
                 "psi_stable": { "type": "string" },
                 "zeta_max": { "type": "number", "exclusiveMinimum": 0 },
                 "gustiness": { "type": "number", "minimum": 0 },
@@ -90,7 +90,7 @@
             "type": "object",
             "properties": {
                 "properties": { "type": "string", "minLength": 1 },
-                "model": { "type": "integer", "enum": [1, 2, 3] }
+                "model": { "type": "string", "enum": ["brooks-corey", "campbell", "van-genuchten"] }
             },
             "required": ["properties", "model"],
             "additionalProperties": false
@@ -98,7 +98,7 @@
         "radiation": {
             "type": "object",
             "properties": {
-                "model": { "type": "integer", "enum": [0, 1] },
+                "model": { "type": "string", "enum": ["forcing", "basic"] },
                 "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
                 "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
             },

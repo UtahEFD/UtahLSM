@@ -17,6 +17,7 @@ This module serves as the entry point for the radiation physics component
 of the land-surface model. It imports and exposes the main `Radiation`
 abstract base class, making it accessible to the rest of the model.
 """
+from .rad_forcing import RadForcing
 from .radiation import Radiation
 
-__all__ = ['Radiation']
+__all__ = ['Radiation', 'RadForcing']

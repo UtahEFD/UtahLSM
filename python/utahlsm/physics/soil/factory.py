@@ -23,10 +23,10 @@ from .soil_brookscorey import BrooksCorey
 from .soil_campbell import Campbell
 from .soil_vangenuchten import VanGenuchten
 
-logger = logging_helper.get_logger('SOIL')
+logger = logging_helper.get_logger('Soil')
 
 def get_soil_model(
-    key: int,
+    key: str,
     properties_dict: dict[str, dict[str, Any]],
     soil_type_names: list[str],
     dataset_name: str = 'custom'
@@ -34,7 +34,7 @@ def get_soil_model(
     """Factory function to select and instantiate a soil model.
 
     Args:
-        key: An integer ID for the soil model to use.
+        key: Model name ('brooks-corey', 'campbell', or 'van-genuchten').
         properties_dict: Dictionary mapping soil type names to property dicts.
         soil_type_names: List of soil type names for each layer.
         dataset_name: Human-readable name of the dataset being used.
@@ -43,23 +43,20 @@ def get_soil_model(
         An instance of a concrete `Soil` subclass.
 
     Raises:
-        NamelistError: If the provided `key` is not a valid model ID.
+        NamelistError: If the provided `key` is not a valid model name.
     """
-    # Dictionary to map keys to classes
-    soil_models: dict[int, type[Soil]] = {
-        1: BrooksCorey,
-        2: Campbell,
-        3: VanGenuchten,
+    soil_models: dict[str, type[Soil]] = {
+        'brooks-corey': BrooksCorey,
+        'campbell': Campbell,
+        'van-genuchten': VanGenuchten,
     }
 
     try:
         return soil_models[key](properties_dict, soil_type_names, dataset_name)
     except KeyError as e:
-        error_msg = f'{key} is an invalid soil model.'
+        error_msg = f"'{key}' is an invalid soil model."
         logger.error('x' * 62)
         logger.error('Namelist Error: %s', error_msg)
-        logger.error('Valid options are:')
-        for k, v in soil_models.items():
-            logger.error('\t%d (%s)', k, v.__name__)
+        logger.error('Valid options are: %s', ', '.join(soil_models))
         logger.error('x' * 62)
         raise NamelistError(error_msg) from e

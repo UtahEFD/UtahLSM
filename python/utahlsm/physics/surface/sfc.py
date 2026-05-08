@@ -27,7 +27,7 @@ from ..._types import FloatOrArray
 from ...util.io import logging_helper
 
 ST = TypeVar('ST', bound='Surface')
-logger = logging_helper.get_logger('SFC')
+logger = logging_helper.get_logger('Surface')
 
 class Surface(ABC):
     """Abstract base class for surface layer models.

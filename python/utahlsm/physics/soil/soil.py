@@ -96,7 +96,7 @@ class Soil(ABC):
         Raises:
             NamelistError: If a soil type is not found in properties_dict.
         """
-        self.logger: logging.Logger = logging_helper.get_logger('SOIL')
+        self.logger: logging.Logger = logging_helper.get_logger('Soil')
 
         self.logger.info('Using soil property dataset: %s', dataset_name)
 

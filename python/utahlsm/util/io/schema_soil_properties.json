@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Soil Properties Dataset",
-  "description": "Schema for soil property datasets containing hydraulic and thermal parameters for various soil types",
+  "description": "Schema for soil property datasets containing hydraulic and thermal parameters for various soil types. A dataset may define soil types directly, include other datasets, or both.",
   "type": "object",
   "properties": {
     "metadata": {
@@ -23,6 +23,17 @@
       },
       "required": ["dataset_name"],
       "additionalProperties": false
+    },
+    "includes": {
+      "type": "array",
+      "description": "List of other datasets to merge into this one (bundled names or file paths). Resolved in order; the current dataset's own soil_types are merged last.",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "on_conflict": {
+      "type": "string",
+      "description": "Policy when a soil type appears in more than one source: 'error' (default), 'prefer_first', or 'prefer_last'.",
+      "enum": ["error", "prefer_first", "prefer_last"]
     },
     "soil_types": {
       "type": "object",
@@ -64,6 +75,10 @@
       "minProperties": 1
     }
   },
-  "required": ["metadata", "soil_types"],
+  "required": ["metadata"],
+  "anyOf": [
+    {"required": ["soil_types"]},
+    {"required": ["includes"]}
+  ],
   "additionalProperties": false
 }
