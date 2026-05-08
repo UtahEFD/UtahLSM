@@ -1070,8 +1070,7 @@ class UtahLSM:
             rad_net: np.ndarray = np.asarray(self.atm_state.radiation_net)[cols]
             storage_all = np.asarray(self.atm_state.seb_storage)
             storage: np.ndarray = (
-                np.full_like(rad_net, float(storage_all))
-                if storage_all.ndim == 0 else storage_all[cols]
+                storage_all if storage_all.ndim == 0 else storage_all[cols]
             )
         else:
             sfc_q = np.asarray(self.sfc_state.moisture)
