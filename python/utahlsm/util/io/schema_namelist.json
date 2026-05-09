@@ -90,7 +90,8 @@
             "type": "object",
             "properties": {
                 "properties": { "type": "string", "minLength": 1 },
-                "model": { "type": "string", "enum": ["brooks-corey", "campbell", "van-genuchten"] }
+                "model": { "type": "string", "enum": ["brooks-corey", "campbell", "van-genuchten"] },
+                "thermal_conductivity_model": { "type": "string", "enum": ["mccumber-pielke", "johansen"] }
             },
             "required": ["properties", "model"],
             "additionalProperties": false

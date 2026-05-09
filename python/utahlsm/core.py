@@ -395,7 +395,8 @@ class UtahLSM:
                 self.input.soil.model,
                 self.input.soil_properties,
                 self.input.soil_type_names,
-                self.input.soil_properties_name
+                self.input.soil_properties_name,
+                self.input.soil.thermal_conductivity_model,
             )
             self.sfc: Surface = get_surface_model(self.input.surface)
             self.canopy = get_canopy_model(

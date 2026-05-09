@@ -66,6 +66,12 @@
             "ci": {
               "type": "number",
               "description": "Volumetric heat capacity of dry soil [J/m³-K]"
+            },
+            "quartz_fraction": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Quartz volume fraction of the solid matrix (0–1). Required for the Johansen thermal conductivity model; omit for organic (peat) soil types."
             }
           },
           "required": ["b", "psi_sat", "porosity", "residual", "K_sat", "ci"],

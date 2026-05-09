@@ -38,17 +38,21 @@ class BrooksCorey(Soil):
     """
     def __init__(self, properties_dict: dict[str, dict[str, Any]],
                  soil_type_names: list[str],
-                 dataset_name: str = 'custom'):
+                 dataset_name: str = 'custom',
+                 thermal_conductivity_model: str = 'mccumber-pielke'):
         """Initializes the BrooksCorey soil model.
 
         Args:
             properties_dict: Dictionary mapping soil type names to properties.
             soil_type_names: List of soil type names for each layer.
             dataset_name: Human-readable name of the dataset being used.
+            thermal_conductivity_model: Thermal conductivity parameterization
+                ('mccumber-pielke' or 'johansen').
         """
         self.logger: logging.Logger = logging_helper.get_logger('Soil')
         self.logger.info('--- Using the Brooks-Corey model')
-        super().__init__(properties_dict, soil_type_names, dataset_name)
+        super().__init__(properties_dict, soil_type_names, dataset_name,
+                         thermal_conductivity_model)
 
     def water_potential(
         self, soil_q: FloatOrArray, level: int | None = None

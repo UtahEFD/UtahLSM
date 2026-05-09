@@ -297,6 +297,9 @@ namelist['surface']['gustiness_stable_only'] = True
 # defensible parameters for the moderately decomposed Cabauw subsoil peat.
 namelist['soil']['properties'] = "cosby-letts"
 namelist['soil']['model'] = "van-genuchten"
+# Johansen (1975) / Peters-Lidard et al. (1998) Kersten-number method.
+# Replaces McCumber-Pielke, which over-predicts λ by 4-7x for wet clay.
+namelist['soil']['thermal_conductivity_model'] = "johansen"
 
 # These Jarvis parameters remain a UtahLSM-specific canopy choice. Only LAI and
 # vegetation fraction come directly from the published GABLS3 specification.
@@ -309,19 +312,19 @@ namelist['canopy']['veg_fraction'] = float(1.0)
 # extending into peat.
 namelist['canopy']['rooting_depth'] = float(0.4)
 namelist['canopy']['beta'] = float(0.943)
-namelist['canopy']['rs_min'] = float(75.0)
+namelist['canopy']['rs_min'] = float(100.0)
 namelist['canopy']['rs_max'] = float(5000.0)
-namelist['canopy']['rg_half'] = float(30.0)
+namelist['canopy']['rg_half'] = float(50.0)
 namelist['canopy']['vpd_coef'] = float(1.0e-4)
 namelist['canopy']['t_opt'] = float(298.0)
 namelist['canopy']['t_coef'] = float(1.6e-3)
 # In-canopy aerodynamic resistance for ground heat transport [s/m].
-# Used in series with the top-cell soil conductive resistance and
-# scaled by veg_fraction. Tuned against the Cabauw eddy-covariance
-# day-2 fluxes: r_ground=300 s/m matches the observed H/LE/G partition
-# and the TS00 surface temperature evolution to within ~0.1 K. Lies
-# in the upper end of the Choudhury & Monteith (1988) range for a
-# closed-canopy grassland.
+# Used in series with the top-cell soil conductive resistance and scaled by
+# veg_fraction. With Johansen conductivity, clay r_soil ≈ 0.008 K·m²/W and
+# r_canopy_thermal dominates r_total. Choudhury & Monteith (1988) give
+# r_ground ≈ 100–300 s/m for h_c ≈ 0.15 m grass at low nocturnal wind speeds;
+# 200 s/m places r_total ≈ 0.174 K·m²/W, consistent with observed G.
+# (Dropping to 50 s/m collapsed r_total by 3.4× and tripled G.)
 namelist['canopy']['r_ground'] = float(200.0)
 
 namelist['radiation']['model'] = "forcing"

@@ -403,9 +403,12 @@ class SoilConfig:
         properties: Name of soil property dataset (e.g., 'cosby-1984') or path
             to custom JSON file.
         model: Soil model selector ('brooks-corey', 'campbell', 'van-genuchten').
+        thermal_conductivity_model: Thermal conductivity parameterization.
+            Options: 'mccumber-pielke' (default) or 'johansen'.
     """
     properties: str
     model: str
+    thermal_conductivity_model: str = 'mccumber-pielke'
 
 @dataclass(frozen=True)
 class RadiationConfig:

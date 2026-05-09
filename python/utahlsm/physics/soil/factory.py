@@ -29,7 +29,8 @@ def get_soil_model(
     key: str,
     properties_dict: dict[str, dict[str, Any]],
     soil_type_names: list[str],
-    dataset_name: str = 'custom'
+    dataset_name: str = 'custom',
+    thermal_conductivity_model: str = 'mccumber-pielke',
 ) -> Soil:
     """Factory function to select and instantiate a soil model.
 
@@ -38,6 +39,8 @@ def get_soil_model(
         properties_dict: Dictionary mapping soil type names to property dicts.
         soil_type_names: List of soil type names for each layer.
         dataset_name: Human-readable name of the dataset being used.
+        thermal_conductivity_model: Thermal conductivity parameterization
+            ('mccumber-pielke' or 'johansen').
 
     Returns:
         An instance of a concrete `Soil` subclass.
@@ -52,7 +55,10 @@ def get_soil_model(
     }
 
     try:
-        return soil_models[key](properties_dict, soil_type_names, dataset_name)
+        return soil_models[key](
+            properties_dict, soil_type_names, dataset_name,
+            thermal_conductivity_model
+        )
     except KeyError as e:
         error_msg = f"'{key}' is an invalid soil model."
         logger.error('x' * 62)

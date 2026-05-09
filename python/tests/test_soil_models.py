@@ -501,3 +501,172 @@ class TestNumericalStability:
             if theta > residual:  # Only test above residual
                 psi = model.water_potential(theta, level=layer)
                 assert np.isfinite(psi), "Inf/NaN in water potential near residual"
+
+
+# ============================================================================
+# Tests: Johansen (1975) Thermal Conductivity Model
+# ============================================================================
+
+def _make_johansen_clay_props() -> dict[str, dict[str, float]]:
+    """Return a minimal single-texture properties dict for Johansen tests.
+
+    Uses Cosby clay parameters with the Peters-Lidard quartz fraction.
+    """
+    return {
+        'clay': {
+            'b': 10.55,
+            'psi_sat': -0.053,
+            'porosity': 0.468,
+            'residual': 0.0,
+            'K_sat': 2.99e-6,
+            'ci': 1.09e6,
+            'quartz_fraction': 0.25,
+        }
+    }
+
+
+def _make_johansen_mixed_props() -> dict[str, dict[str, float | None]]:
+    """Properties dict mixing mineral clay and organic peat (no quartz_fraction)."""
+    return {
+        'clay': {
+            'b': 10.55,
+            'psi_sat': -0.053,
+            'porosity': 0.468,
+            'residual': 0.0,
+            'K_sat': 2.99e-6,
+            'ci': 1.09e6,
+            'quartz_fraction': 0.25,
+        },
+        'peat_hemic': {
+            'b': 6.1,
+            'psi_sat': -0.0102,
+            'porosity': 0.88,
+            'residual': 0.0,
+            'K_sat': 2.0e-6,
+            'ci': 2.5e6,
+            # no quartz_fraction — treated as organic by Johansen code
+        },
+    }
+
+
+@pytest.mark.soil
+class TestJohansenThermalConductivity:
+    """Tests for the Johansen (1975) thermal conductivity parameterization."""
+
+    def test_johansen_clay_wet_realistic(self) -> None:
+        """Johansen λ for nearly-saturated clay is in a physically realistic range.
+
+        McCumber-Pielke gives ~11 W/m/K at θ=0.45 for Cosby clay; Johansen
+        should return 1.0–1.8 W/m/K.
+        """
+        props = _make_johansen_clay_props()
+        model = VanGenuchten(props, ['clay'], 'test', 'johansen')
+        theta = np.array([0.45])
+        lam = model.conductivity_thermal(theta)
+        assert 0.5 < float(lam[0]) < 3.0, (
+            f"Johansen λ for wet clay out of range: {lam[0]:.3f} W/m/K"
+        )
+
+    def test_johansen_much_lower_than_mp_wet_clay(self) -> None:
+        """Johansen λ is substantially lower than McCumber-Pielke for wet clay."""
+        props = _make_johansen_clay_props()
+        theta = np.array([0.45])
+        lam_johansen = VanGenuchten(
+            props, ['clay'], 'test', 'johansen'
+        ).conductivity_thermal(theta)
+        lam_mp = VanGenuchten(
+            props, ['clay'], 'test', 'mccumber-pielke'
+        ).conductivity_thermal(theta)
+        assert lam_johansen[0] < lam_mp[0] / 3.0, (
+            f"Johansen ({lam_johansen[0]:.2f}) should be << MP ({lam_mp[0]:.2f}) "
+            "for saturated clay"
+        )
+
+    def test_johansen_dry_approaches_lambda_dry(self) -> None:
+        """At very low saturation, λ should approach the theoretical dry value."""
+        props = _make_johansen_clay_props()
+        model = VanGenuchten(props, ['clay'], 'test', 'johansen')
+        # Use a very dry but physically valid moisture
+        theta_dry = np.array([0.02])
+        lam_dry_calc = model.conductivity_thermal(theta_dry)
+        phi = 0.468
+        rho_d = 2700.0 * (1.0 - phi)
+        lambda_dry_theory = (0.135 * rho_d + 64.7) / (2700.0 - 0.947 * rho_d)
+        assert abs(float(lam_dry_calc[0]) - lambda_dry_theory) < 0.05, (
+            f"Dry-limit λ {lam_dry_calc[0]:.4f} deviates from theoretical "
+            f"λ_dry {lambda_dry_theory:.4f}"
+        )
+
+    def test_johansen_saturated_approaches_lambda_sat(self) -> None:
+        """At full saturation, λ should equal the geometric-mean saturated value."""
+        props = _make_johansen_clay_props()
+        model = VanGenuchten(props, ['clay'], 'test', 'johansen')
+        phi = 0.468
+        q_z = 0.25
+        lambda_o = 2.0  # q_z >= 0.2
+        lambda_s = 7.7 ** q_z * lambda_o ** (1.0 - q_z)
+        lambda_sat_theory = lambda_s ** (1.0 - phi) * 0.57 ** phi
+        theta_sat = np.array([phi])
+        lam_sat_calc = model.conductivity_thermal(theta_sat)
+        assert_allclose(lam_sat_calc[0], lambda_sat_theory, rtol=1e-6)
+
+    def test_johansen_monotonic_with_moisture(self) -> None:
+        """Thermal conductivity must be non-decreasing as moisture increases."""
+        props = _make_johansen_clay_props()
+        model = VanGenuchten(props, ['clay'], 'test', 'johansen')
+        theta = np.linspace(0.02, 0.468, 50)
+        lam = model.conductivity_thermal(theta)
+        assert np.all(np.diff(lam) >= -1e-10), (
+            "Johansen λ is not monotonically non-decreasing with moisture"
+        )
+
+    def test_johansen_positive_and_finite(self) -> None:
+        """Johansen λ must be positive and finite across the full moisture range."""
+        props = _make_johansen_clay_props()
+        model = VanGenuchten(props, ['clay'], 'test', 'johansen')
+        theta = np.linspace(0.0, 0.468, 100)
+        lam = model.conductivity_thermal(theta)
+        assert np.all(lam > 0.0), "Non-positive Johansen λ"
+        assert np.all(np.isfinite(lam)), "Non-finite Johansen λ"
+
+    def test_johansen_organic_layers_reasonable(self) -> None:
+        """Organic (peat) layers without quartz_fraction get a physically sane λ."""
+        props = _make_johansen_mixed_props()
+        model = VanGenuchten(
+            props, ['clay', 'peat_hemic'], 'test', 'johansen'
+        )
+        # peat_hemic at 80 % saturation
+        theta = np.array([0.35, 0.70])
+        lam = model.conductivity_thermal(theta)
+        assert np.all(lam > 0.0), "Non-positive λ for organic layer"
+        assert np.all(np.isfinite(lam)), "Non-finite λ for organic layer"
+        # Organic saturated λ should be ~0.4–0.6 W/m/K; MP gives ~15 W/m/K
+        assert 0.2 < float(lam[1]) < 1.5, (
+            f"Organic Johansen λ out of range: {lam[1]:.3f} W/m/K"
+        )
+
+    def test_johansen_invalid_model_raises(self) -> None:
+        """An unrecognised thermal_conductivity_model should raise NamelistError."""
+        from utahlsm.exceptions import NamelistError
+        props = _make_johansen_clay_props()
+        with pytest.raises(NamelistError):
+            VanGenuchten(props, ['clay'], 'test', 'invalid-model')
+
+    def test_johansen_sand_uses_coarse_kersten(self) -> None:
+        """Sand (q_z=0.92 >= 0.4) uses the coarse Kersten formula: Ke=log10(Sr)+1."""
+        props_sand: dict[str, dict[str, float]] = {
+            'sand': {
+                'b': 2.79,
+                'psi_sat': -0.023,
+                'porosity': 0.339,
+                'residual': 0.0,
+                'K_sat': 1.6e-5,
+                'ci': 1.47e6,
+                'quartz_fraction': 0.92,
+            }
+        }
+        model = VanGenuchten(props_sand, ['sand'], 'test', 'johansen')
+        theta = np.linspace(0.05, 0.339, 30)
+        lam = model.conductivity_thermal(theta)
+        assert np.all(lam > 0.0)
+        assert np.all(np.isfinite(lam))

@@ -37,6 +37,16 @@ from .. import thermo
 ST = TypeVar('ST', bound='Soil')
 logger = logging_helper.get_logger('SOIL')
 
+_OPTIONAL_SOIL_PROPS: frozenset[str] = frozenset({'quartz_fraction'})
+
+# Johansen (1975) / Peters-Lidard et al. (1998) thermal conductivity constants.
+_LAMBDA_Q: float = 7.7        # quartz conductivity [W/m/K]
+_LAMBDA_O_HIGH: float = 2.0   # other minerals when q_z >= 0.2 [W/m/K]
+_LAMBDA_O_LOW: float = 3.0    # other minerals when q_z < 0.2 [W/m/K]
+_LAMBDA_ORGANIC: float = 0.25 # organic matter solid-matrix conductivity [W/m/K]
+_LAMBDA_W: float = 0.57       # liquid water conductivity [W/m/K]
+_RHO_MINERAL: float = 2700.0  # mineral particle density [kg/m³]
+
 @dataclass
 class SoilProperties:
     """A container for soil property arrays.
@@ -51,6 +61,10 @@ class SoilProperties:
         residual: Residual moisture content (volumetric) [m^3/m^3].
         K_sat: Saturated hydraulic conductivity [m/s].
         ci: Volumetric heat capacity [J/m^3-K].
+        quartz_fraction: Quartz volume fraction of the solid matrix (0–1),
+            used by the Johansen thermal conductivity model. NaN for layers
+            where the dataset does not supply a value (e.g. organic peat),
+            which the Johansen code treats as fully organic.
     """
     b: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     psi_sat: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
@@ -58,6 +72,7 @@ class SoilProperties:
     residual: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     K_sat: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     ci: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    quartz_fraction: NDArray[np.float64] = field(default_factory=lambda: np.array([np.nan]))
 
 class Soil(ABC):
     """Abstract base class for soil physics models.
@@ -76,7 +91,8 @@ class Soil(ABC):
         self,
         properties_dict: dict[str, dict[str, Any]],
         soil_type_names: list[str],
-        dataset_name: str = 'custom'
+        dataset_name: str = 'custom',
+        thermal_conductivity_model: str = 'mccumber-pielke',
     ) -> None:
         """Initializes the Soil model.
 
@@ -88,17 +104,39 @@ class Soil(ABC):
             properties_dict: Dictionary mapping soil type names (lowercase strings)
                 to property dicts. Each property dict must contain keys:
                 'b', 'psi_sat', 'porosity', 'residual', 'K_sat', 'ci'.
+                The optional key 'quartz_fraction' is required for the
+                Johansen thermal conductivity model; layers without it are
+                treated as organic.
             soil_type_names: List of soil type names for each layer (e.g.,
                 ['sand', 'loam', 'clay']).
             dataset_name: Human-readable name of the dataset being used
                 (for logging). Defaults to 'custom'.
+            thermal_conductivity_model: Which thermal conductivity
+                parameterization to use. Options:
+                - ``'mccumber-pielke'`` (default): McCumber & Pielke (1981)
+                  pF-based formula.
+                - ``'johansen'``: Johansen (1975) Kersten-number method,
+                  updated by Peters-Lidard et al. (1998).
 
         Raises:
-            NamelistError: If a soil type is not found in properties_dict.
+            NamelistError: If a soil type is not found in properties_dict, or
+                if ``thermal_conductivity_model`` is not a recognised option.
         """
         self.logger: logging.Logger = logging_helper.get_logger('Soil')
 
         self.logger.info('Using soil property dataset: %s', dataset_name)
+
+        _valid_thermal_models = ('mccumber-pielke', 'johansen')
+        if thermal_conductivity_model not in _valid_thermal_models:
+            raise NamelistError(
+                f"Unknown thermal_conductivity_model "
+                f"'{thermal_conductivity_model}'. "
+                f"Valid options: {', '.join(_valid_thermal_models)}"
+            )
+        self._thermal_cond_model: str = thermal_conductivity_model
+        self.logger.info(
+            'Using thermal conductivity model: %s', thermal_conductivity_model
+        )
 
         # Create temporary lists to hold properties for each layer
         prop_lists: dict[str, list[float]] = {
@@ -119,11 +157,15 @@ class Soil(ABC):
             props = properties_dict[soil_type_lower]
             for prop_name in prop_lists.keys():
                 if prop_name not in props:
-                    raise NamelistError(
-                        f"Missing property '{prop_name}' for soil type "
-                        f"'{soil_type_name}' in dataset '{dataset_name}'"
-                    )
-                prop_lists[prop_name].append(props[prop_name])
+                    if prop_name in _OPTIONAL_SOIL_PROPS:
+                        prop_lists[prop_name].append(np.nan)
+                    else:
+                        raise NamelistError(
+                            f"Missing property '{prop_name}' for soil type "
+                            f"'{soil_type_name}' in dataset '{dataset_name}'"
+                        )
+                else:
+                    prop_lists[prop_name].append(props[prop_name])
 
         # Convert lists to arrays and store them in our dataclass
         self.properties = SoilProperties(
@@ -418,12 +460,22 @@ class Soil(ABC):
             self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
         """Computes the soil thermal conductivity.
 
+        Dispatches to the parameterization selected at construction time
+        (``thermal_conductivity_model``).
+
         Args:
             soil_q: The soil moisture content for each layer [m^3/m^3].
 
         Returns:
             The thermal conductivity for each layer [W/m-K].
         """
+        if self._thermal_cond_model == 'johansen':
+            return self._conductivity_thermal_johansen(soil_q)
+        return self._conductivity_thermal_mp(soil_q)
+
+    def _conductivity_thermal_mp(
+            self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
+        """McCumber & Pielke (1981) pF-based thermal conductivity."""
         psi = np.asarray(self.water_potential(soil_q))
         pf = np.log10(np.abs(psi * 100) + 1e-9)
         conductivity: NDArray[np.float64] = np.where(
@@ -432,6 +484,54 @@ class Soil(ABC):
             c.soil.CONDUCTIVITY_MIN
         )
         return conductivity
+
+    def _conductivity_thermal_johansen(
+            self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Johansen (1975) / Peters-Lidard et al. (1998) thermal conductivity.
+
+        Uses a Kersten-number interpolation between dry and saturated
+        conductivities. Solid-matrix conductivity is derived from the
+        quartz fraction via the geometric-mean model of Peters-Lidard et al.
+        (1998). Layers where ``quartz_fraction`` is NaN are treated as fully
+        organic (peat-like) with λ_solid = 0.25 W/m/K.
+        """
+        theta = np.asarray(soil_q, dtype=float)
+        _2d = theta.ndim == 2
+        porosity = self.properties.porosity[:, None] if _2d else self.properties.porosity
+        residual = self.properties.residual[:, None] if _2d else self.properties.residual
+        q_z = self.properties.quartz_fraction[:, None] if _2d else self.properties.quartz_fraction
+
+        is_organic = np.isnan(q_z)
+        q_z_safe = np.where(is_organic, 0.0, q_z)
+
+        # Solid-matrix conductivity [W/m/K]
+        lambda_o = np.where(q_z_safe >= 0.2, _LAMBDA_O_HIGH, _LAMBDA_O_LOW)
+        lambda_s_mineral = _LAMBDA_Q ** q_z_safe * lambda_o ** (1.0 - q_z_safe)
+        lambda_s = np.where(is_organic, _LAMBDA_ORGANIC, lambda_s_mineral)
+
+        # Saturated conductivity (geometric mean of solid and water)
+        lambda_sat = lambda_s ** (1.0 - porosity) * _LAMBDA_W ** porosity
+
+        # Dry conductivity via Johansen empirical formula (bulk density based)
+        rho_d = _RHO_MINERAL * (1.0 - porosity)
+        lambda_dry = (0.135 * rho_d + 64.7) / (_RHO_MINERAL - 0.947 * rho_d)
+
+        # Degree of saturation
+        Sr = np.clip(
+            (theta - residual) / np.maximum(porosity - residual, 1e-12),
+            0.0, 1.0
+        )
+
+        # Kersten number: coarse formula for q_z >= 0.4, fine for the rest
+        # (including organic layers).  Coarse formula requires Sr >= 0.1.
+        is_coarse = (~is_organic) & (q_z_safe >= 0.4)
+        Ke_coarse = np.log10(np.maximum(Sr, 0.1)) + 1.0
+        Ke_fine = 0.7 * np.log10(np.maximum(Sr, 1e-7)) + 1.0
+        Ke: NDArray[np.float64] = np.clip(
+            np.where(is_coarse, Ke_coarse, Ke_fine), 0.0, 1.0
+        )
+
+        return (lambda_sat - lambda_dry) * Ke + lambda_dry
 
     def diffusivity_thermal(
             self, soil_q: NDArray[np.float64]) -> NDArray[np.float64]:
