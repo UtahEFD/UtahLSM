@@ -47,14 +47,16 @@ class AtmosphericState:
         temperature: Air temperature [K] (scalar or per-column array).
         specific_humidity: Specific humidity [kg/kg] (scalar or per-column array).
         pressure: Atmospheric pressure [Pa] (scalar or per-column array).
-        sw_in: Downwelling shortwave radiation [W/m^2].
-        sw_out: Upwelling (reflected) shortwave radiation [W/m^2].
-        lw_in: Downwelling longwave radiation [W/m^2].
-        lw_out: Upwelling (emitted) longwave radiation [W/m^2].
-        radiation_net: Net radiation [W/m^2]. Always equals
-            ``sw_in - sw_out + lw_in - lw_out`` once the radiation
-            components are populated; the field is retained for
-            convenience and is what the SEB residual reads.
+        sw_in: Downwelling shortwave radiation [W/m^2] (forcing input).
+        lw_in: Downwelling longwave radiation [W/m^2] (forcing input).
+        sw_out: Upwelling (reflected) shortwave radiation [W/m^2]
+            (diagnostic; written by the radiation/SEB solvers from T_s
+            and the surface optical properties).
+        lw_out: Upwelling (emitted) longwave radiation [W/m^2]
+            (diagnostic; written by the radiation/SEB solvers from T_s
+            and the surface optical properties).
+        radiation_net: Net radiation [W/m^2] (diagnostic; equals
+            ``sw_in - sw_out + lw_in - lw_out`` from the converged T_s).
         seb_storage: Prescribed surface-energy storage/closure term [W/m^2].
             The SEB is solved as ``radiation_net - H - LE - G
             - seb_storage = 0``. Defaults to zero for energy-conserving
@@ -65,8 +67,8 @@ class AtmosphericState:
     specific_humidity: FloatOrArray = 0.0
     pressure: FloatOrArray = 0.0
     sw_in: FloatOrArray = 0.0
-    sw_out: FloatOrArray = 0.0
     lw_in: FloatOrArray = 0.0
+    sw_out: FloatOrArray = 0.0
     lw_out: FloatOrArray = 0.0
     radiation_net: FloatOrArray = 0.0
     seb_storage: FloatOrArray = 0.0

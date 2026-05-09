@@ -13,9 +13,10 @@
 #
 """A basic radiation model for UtahLSM.
 
-This module provides a simple, clear-sky radiation parameterization. It includes
-methods for calculating incoming and outgoing shortwave and longwave radiation
-based on fundamental physical principles and empirical relationships.
+This module provides a simple, clear-sky radiation parameterization for the
+incoming components. The outgoing components are produced by the default
+:meth:`Radiation.compute_outgoing` from the trial surface temperature, the
+incoming fluxes, and the surface albedo/emissivity.
 """
 import logging
 
@@ -31,8 +32,9 @@ from .radiation import Radiation
 class RadBasic(Radiation):
     """A basic clear-sky radiation model.
 
-    This class implements the `Radiation` interface and provides simple
-    calculations for the four components of the surface radiation budget.
+    Provides parameterized downwelling shortwave (clear-sky geometric
+    optics) and longwave (Brutsaert 1975 effective emissivity).
+    Outgoing components fall through to the base class.
     """
 
     def __init__(
@@ -55,30 +57,28 @@ class RadBasic(Radiation):
         self.albedo: float = albedo
         self.emissivity: float = emissivity
 
-    def compute_components(
+    def compute_incoming(
         self,
         julian_day: int,
         time_utc: float,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> tuple[FloatOrArray, FloatOrArray,
-               FloatOrArray, FloatOrArray]:
-        """Computes the four surface radiation components.
+    ) -> tuple[FloatOrArray, FloatOrArray]:
+        """Computes the downwelling shortwave and longwave components.
 
         Args:
             julian_day: Current Julian day of the year.
             time_utc: Current time in UTC seconds from midnight.
             atm_state: Current state of the atmosphere.
-            sfc_state: Current state of the surface.
+            sfc_state: Current state of the surface (unused).
 
         Returns:
-            Tuple ``(sw_in, sw_out, lw_in, lw_out)`` in W/m^2.
+            Tuple ``(sw_in, lw_in)`` in W/m^2.
         """
+        del sfc_state
         sw_in = self._shortwave_in(julian_day, time_utc)
-        sw_out = self._shortwave_out(sw_in)
-        lw_in = self._longwave_in(atm_state, sfc_state)
-        lw_out = self._longwave_out(sfc_state)
-        return sw_in, sw_out, lw_in, lw_out
+        lw_in = self._longwave_in(atm_state)
+        return sw_in, lw_in
 
     def _shortwave_in(self, julian_day: int, time_utc: float) -> FloatOrArray:
         """Computes downward shortwave radiation for clear-sky conditions.
@@ -109,27 +109,13 @@ class RadBasic(Radiation):
         )
         return sw_in
 
-    def _shortwave_out(self, sw_in: FloatOrArray) -> FloatOrArray:
-        """Computes upward shortwave radiation based on surface albedo.
-
-        Args:
-            sw_in: The incoming shortwave radiation in W/m^2.
-
-        Returns:
-            The outgoing shortwave radiation in W/m^2.
-        """
-        return self.albedo*sw_in
-
-    def _longwave_in(
-        self, atm_state: AtmosphericState, sfc_state: SurfaceState
-    ) -> FloatOrArray:
+    def _longwave_in(self, atm_state: AtmosphericState) -> FloatOrArray:
         """Computes clear-sky downwelling longwave radiation.
 
         Uses the Brutsaert (1975) emissivity relation.
 
         Args:
             atm_state: The current state of the atmosphere.
-            sfc_state: The current state of the surface.
 
         Returns:
             The incoming longwave radiation in W/m^2.
@@ -148,20 +134,3 @@ class RadBasic(Radiation):
         emissivity_eff = 1.24 * (vapor_pressure / Ta) ** (1 / 7.0)
 
         return emissivity_eff * SB * (Ta ** 4)
-
-    def _longwave_out(self, sfc_state: SurfaceState) -> FloatOrArray:
-        """Computes upward longwave radiation using the Stefan-Boltzmann law.
-
-        Args:
-            sfc_state: The current state of the surface.
-
-        Returns:
-            The outgoing longwave radiation in W/m^2.
-        """
-        # local constants
-        SB = c.radiation.STEFAN_BOLTZMANN
-
-        # local references to surface state
-        Ts = sfc_state.temperature
-
-        return self.emissivity * SB * (Ts ** 4)

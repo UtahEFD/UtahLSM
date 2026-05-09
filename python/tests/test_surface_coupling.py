@@ -63,13 +63,22 @@ def test_compute_seb_vec_is_deterministic_and_pure() -> None:
     model.ncol = 1
 
     # Provide minimal atmosphere and state containers as arrays.
+    # sw_in / lw_in produce a 100 W/m^2 net forcing; compute_outgoing
+    # is stubbed to return zero so the residual remains a clean
+    # function of fluxes vs. 100 W/m^2.
     model.atm_state = AtmosphericState(
         wind_speed=np.array([3.0]),
         temperature=np.array([290.0]),
         specific_humidity=np.array([0.01]),
         pressure=np.array([101000.0]),
-        radiation_net=np.array([100.0]),
+        sw_in=np.array([100.0]),
+        lw_in=np.array([0.0]),
         seb_storage=np.array([0.0]),
+    )
+    model.rad = SimpleNamespace(
+        compute_outgoing=lambda _T, _swi, _lwi, _atm, _sfc: (
+            np.zeros_like(_T), np.zeros_like(_T)
+        ),
     )
     model.soil_state = SoilState(
         temperature=np.array([[280.0], [285.0]]),
@@ -135,6 +144,78 @@ def test_compute_seb_vec_is_deterministic_and_pure() -> None:
         float(model.sfc_state.fluxes.kinematic_moisture[0]),
     )
     assert restored == saved
+
+
+def test_compute_seb_vec_includes_lw_emission_feedback() -> None:
+    """Residual sensitivity to T_s must include the -ε σ T_s^4 term.
+
+    Regression for the GABLS3 daytime over-warming audit: previously the
+    SEB read a frozen ``radiation_net`` from forcing, so the ~4 ε σ T_s^3
+    longwave restoring was missing during root-finding. With the radiation
+    model owning a trial-T outgoing computation, the residual must now
+    decrease by approximately ε σ ((T+ΔT)^4 - T^4) plus the H/G change
+    when T_s is perturbed upward.
+    """
+    model = _make_minimal_model()
+    model.ncol = 1
+    emissivity = 0.98
+    sigma = 5.670374419e-8
+
+    model.atm_state = AtmosphericState(
+        wind_speed=np.array([3.0]),
+        temperature=np.array([290.0]),
+        specific_humidity=np.array([0.01]),
+        pressure=np.array([101000.0]),
+        sw_in=np.array([0.0]),
+        lw_in=np.array([350.0]),
+        seb_storage=np.array([0.0]),
+    )
+    # RadBasic-style outgoing: sw_out = α sw_in, lw_out = ε σ T^4.
+    model.rad = SimpleNamespace(
+        compute_outgoing=lambda T, swi, _lwi, _atm, _sfc: (
+            np.zeros_like(T), emissivity * sigma * np.asarray(T) ** 4
+        ),
+    )
+    model.soil_state = SoilState(
+        temperature=np.array([[295.0], [295.0]]),
+        moisture=np.array([[0.25], [0.25]]),
+        type=np.array(["clay", "clay"], dtype=object),
+    )
+    model.sfc_state = SurfaceState(
+        temperature=np.array([295.0]),
+        moisture=np.array([0.25]),
+        air_density=np.array([1.206]),
+    )
+    model.sfc_state.turbulence.obukhov_length[0] = 1e6
+    model.sfc_state.turbulence.friction_velocity[0] = 0.3
+
+    model.solver_state = SimpleNamespace(conductivity_thermal_mid=np.array([1.0]))
+    model.soil = SimpleNamespace(
+        surface_specific_humidity=lambda _T, _q, _p: np.zeros_like(_T)
+    )
+    model.sfc = SimpleNamespace(
+        fm=lambda _z1, _z0, _L: np.full_like(_L, 0.1),
+        fh=lambda _z1, _z0h, _L: np.full_like(_L, 0.1),
+    )
+    model.input.surface = SimpleNamespace(
+        z_m=10.0, z_o=0.1, z_s=2.0, z_t=0.01, zeta_max=5.0,
+        gustiness=0.0, gustiness_stable_only=True,
+    )
+    model.input.grid = SimpleNamespace(z=np.array([0.0, 0.05]), nz=2, nx=1, ny=1)
+
+    initial_L = np.array([1e6])
+    T0 = np.array([295.0])
+    dT = 1.0
+    r0 = model._compute_seb_vec(T0, initial_L)
+    r1 = model._compute_seb_vec(T0 + dT, initial_L)
+
+    # Residual must drop by *at least* the LW emission contribution
+    # (other -dT terms from H and G only add to the negative slope).
+    lw_drop = emissivity * sigma * ((T0[0] + dT) ** 4 - T0[0] ** 4)
+    assert (r0 - r1)[0] >= lw_drop - 1e-6, (
+        f"Residual change {(r0 - r1)[0]:.3f} W/m^2 should include the "
+        f"~{lw_drop:.3f} W/m^2 LW emission feedback."
+    )
 
 
 def test_solve_seb_left_bracket_respects_temperature_floor() -> None:

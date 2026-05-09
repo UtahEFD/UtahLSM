@@ -40,7 +40,10 @@ def get_radiation_model(
         NamelistError: If ``radiation.model`` is not a recognised option.
     """
     if radiation.model == 'forcing':
-        return RadForcing()
+        return RadForcing(
+            surface.albedo,
+            surface.emissivity,
+        )
 
     if radiation.model == 'basic':
         return RadBasic(

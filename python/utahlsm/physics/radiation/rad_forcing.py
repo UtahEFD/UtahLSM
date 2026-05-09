@@ -20,42 +20,47 @@ from .radiation import Radiation
 
 
 class RadForcing(Radiation):
-    """Radiation model that passes through components from atmospheric forcing.
+    """Radiation model that passes incoming components through from forcing.
 
-    Used when radiation fields are provided externally (e.g. from a coupled
-    model or observation-based forcing file) rather than computed online.
-    ``compute_components`` simply returns the four component fields already
-    loaded onto ``atm_state``.
+    Used when downwelling fluxes are provided externally (observation-based
+    forcing or a coupled atmospheric model). Outgoing components are still
+    treated as a response to surface state and are produced by the base
+    class :meth:`compute_outgoing` from the trial T_s, the incoming
+    fluxes, and the surface albedo/emissivity. Forcing files therefore
+    only need to supply ``sw_in`` and ``lw_in``.
     """
 
-    def __init__(self) -> None:
-        """Initializes the RadForcing model."""
+    def __init__(self, albedo: float, emissivity: float) -> None:
+        """Initializes the RadForcing model.
+
+        Args:
+            albedo: The surface albedo (dimensionless), used for sw_out.
+            emissivity: The surface emissivity (dimensionless), used for
+                lw_out.
+        """
         logger = logging_helper.get_logger('Radiation')
         logger.info('Using forcing radiation data')
+        self.albedo: float = albedo
+        self.emissivity: float = emissivity
 
-    def compute_components(
+    def compute_incoming(
         self,
         julian_day: int,
         time_utc: float,
         atm_state: AtmosphericState,
         sfc_state: SurfaceState,
-    ) -> tuple[FloatOrArray, FloatOrArray, FloatOrArray, FloatOrArray]:
-        """Returns the four radiation components from atmospheric forcing.
+    ) -> tuple[FloatOrArray, FloatOrArray]:
+        """Returns the downwelling components from atmospheric forcing.
 
         Args:
             julian_day: Unused; present for interface compatibility.
             time_utc: Unused; present for interface compatibility.
-            atm_state: Current atmospheric state carrying sw_in, sw_out,
-                lw_in, lw_out from the forcing file.
+            atm_state: Current atmospheric state carrying ``sw_in`` and
+                ``lw_in`` from the forcing file.
             sfc_state: Unused; present for interface compatibility.
 
         Returns:
-            Tuple ``(sw_in, sw_out, lw_in, lw_out)`` taken directly from
-            ``atm_state``.
+            Tuple ``(sw_in, lw_in)`` taken directly from ``atm_state``.
         """
-        return (
-            atm_state.sw_in,
-            atm_state.sw_out,
-            atm_state.lw_in,
-            atm_state.lw_out,
-        )
+        del julian_day, time_utc, sfc_state
+        return atm_state.sw_in, atm_state.lw_in

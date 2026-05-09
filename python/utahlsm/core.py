@@ -120,10 +120,12 @@ class UtahLSM:
         self.sfc_state.moisture = sfc_theta
         self.sfc_state.specific_humidity = sfc_q
 
-        # Compute the four radiation components. RadForcing passes through
-        # forcing values; RadBasic computes from first principles. Either way
-        # radiation_net is derived here so the SEB and any consumers of the
-        # components remain mutually consistent.
+        # Compute the downwelling radiation components. Outgoing
+        # components are evaluated as a function of trial T_s inside the
+        # SEB iterator (see _compute_seb_vec) so the longwave emission
+        # feedback is captured during root-finding. After SEB converges,
+        # _solve_seb writes the final sw_out, lw_out, and radiation_net
+        # back to atm_state for downstream consumers and output.
         total_seconds = self.input.time.utc_start + runtime
         days_passed = int(total_seconds // 86400)
         current_utc = total_seconds % 86400
@@ -131,17 +133,14 @@ class UtahLSM:
             self.input.time.utc_year) else 365)
         julian_day = ((self.input.time.julian_day
             + days_passed - 1) % days_per_year) + 1
-        sw_in, sw_out, lw_in, lw_out = self.rad.compute_components(
+        sw_in, lw_in = self.rad.compute_incoming(
             julian_day, current_utc, self.atm_state, self.sfc_state
         )
         self.atm_state.sw_in = self._as_column_vector(sw_in, "sw_in")
-        self.atm_state.sw_out = self._as_column_vector(sw_out, "sw_out")
         self.atm_state.lw_in = self._as_column_vector(lw_in, "lw_in")
-        self.atm_state.lw_out = self._as_column_vector(lw_out, "lw_out")
-        self.atm_state.radiation_net = (
-            self.atm_state.sw_in - self.atm_state.sw_out
-            + self.atm_state.lw_in - self.atm_state.lw_out
-        )
+        # Provisional outgoing diagnostics from current T_s; refreshed
+        # after the SEB solve.
+        self._refresh_radiation_diagnostics(self.sfc_state.temperature)
 
     def run(self) -> None:
         """Runs the core model physics for a single time step.
@@ -330,11 +329,11 @@ class UtahLSM:
     def _load_atm_state(self, atm_state: AtmosphericState) -> None:
         """Loads atmospheric state data into column vectors.
 
-        Forcing-driven runs supply the four radiation components; the
-        net is derived here so SEB residuals stay consistent with
-        component-level diagnostics (e.g. Jarvis f1 reading sw_in).
-        Built-in radiation runs overwrite all five fields in
-        :meth:`update` after this method returns.
+        Forcing-driven runs supply the downwelling radiation components
+        (``sw_in``, ``lw_in``); the upwelling components and net
+        radiation are derived as functions of T_s by the radiation
+        model and refreshed by the SEB solver, so they are not read
+        from forcing here.
         """
         self.atm_state.wind_speed = self._as_column_vector(
             atm_state.wind_speed, "wind_speed")
@@ -346,27 +345,43 @@ class UtahLSM:
             atm_state.pressure, "pressure")
         self.atm_state.sw_in = self._as_column_vector(
             atm_state.sw_in, "sw_in")
-        self.atm_state.sw_out = self._as_column_vector(
-            atm_state.sw_out, "sw_out")
         self.atm_state.lw_in = self._as_column_vector(
             atm_state.lw_in, "lw_in")
-        self.atm_state.lw_out = self._as_column_vector(
-            atm_state.lw_out, "lw_out")
         seb_storage = self._as_column_vector(
             atm_state.seb_storage, "seb_storage")
         if isinstance(self.atm_state.seb_storage, np.ndarray):
             self.atm_state.seb_storage[:] = seb_storage
         else:
             self.atm_state.seb_storage = seb_storage
-        self.atm_state.radiation_net = (
-            self.atm_state.sw_in - self.atm_state.sw_out
-            + self.atm_state.lw_in - self.atm_state.lw_out
-        )
         RD = c.thermodynamic.GAS_CONSTANT_DRY
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         Tv = self.atm_state.temperature * (
             1.0 + EVT * self.atm_state.specific_humidity)
         self.sfc_state.air_density = self.atm_state.pressure / (RD * Tv)
+
+    def _refresh_radiation_diagnostics(self, sfc_T: np.ndarray) -> None:
+        """Updates outgoing radiation and net radiation on atm_state.
+
+        Outgoing components are responses to T_s, so they are derived
+        from the radiation model whenever T_s changes (after forcing
+        load and after each SEB solve). Stored on ``atm_state`` for
+        downstream consumers (output, diagnostics).
+
+        Args:
+            sfc_T: Surface temperature [K], shape (ncol,).
+        """
+        sw_in = np.asarray(self.atm_state.sw_in)
+        lw_in = np.asarray(self.atm_state.lw_in)
+        sw_out, lw_out = self.rad.compute_outgoing(
+            np.asarray(sfc_T), sw_in, lw_in,
+            self.atm_state, self.sfc_state,
+        )
+        self.atm_state.sw_out = np.asarray(sw_out)
+        self.atm_state.lw_out = np.asarray(lw_out)
+        self.atm_state.radiation_net = (
+            sw_in - self.atm_state.sw_out
+            + lw_in - self.atm_state.lw_out
+        )
 
     def _setup_physics(self) -> None:
         """Initializes the physics modules based on user configuration."""
@@ -857,6 +872,11 @@ class UtahLSM:
         self.sfc_state.turbulence.friction_velocity[:] = ustar
         self.sfc_state.soil_top_temperature = np.asarray(soil_top_T)
 
+        # Refresh outgoing radiation diagnostics from the converged T_s
+        # so atm_state.sw_out / lw_out / radiation_net reflect the SEB
+        # solution that downstream consumers and output will see.
+        self._refresh_radiation_diagnostics(self.sfc_state.temperature)
+
         # Diagnostic SEB residual. Should be ~ tol_root in magnitude;
         # sustained drift indicates a tolerance or coupling problem.
         self.sfc_state.seb_residual[:] = (
@@ -1035,15 +1055,24 @@ class UtahLSM:
         sfc_T = np.asarray(sfc_T)
         if cols is not None:
             sfc_q: np.ndarray = np.asarray(self.sfc_state.moisture)[cols]
-            rad_net: np.ndarray = np.asarray(self.atm_state.radiation_net)[cols]
+            sw_in: np.ndarray = np.asarray(self.atm_state.sw_in)[cols]
+            lw_in: np.ndarray = np.asarray(self.atm_state.lw_in)[cols]
             storage_all = np.asarray(self.atm_state.seb_storage)
             storage: np.ndarray = (
                 storage_all if storage_all.ndim == 0 else storage_all[cols]
             )
         else:
             sfc_q = np.asarray(self.sfc_state.moisture)
-            rad_net = np.asarray(self.atm_state.radiation_net)
+            sw_in = np.asarray(self.atm_state.sw_in)
+            lw_in = np.asarray(self.atm_state.lw_in)
             storage = np.asarray(self.atm_state.seb_storage)
+
+        # Outgoing components respond to the trial T_s; this is what
+        # supplies the ~4εσT^3 longwave restoring inside Brent.
+        sw_out, lw_out = self.rad.compute_outgoing(
+            sfc_T, sw_in, lw_in, self.atm_state, self.sfc_state
+        )
+        rad_net = sw_in - np.asarray(sw_out) + lw_in - np.asarray(lw_out)
 
         _, _, _, ground_heat, _, _, sensible, latent, _ = self._solve_most(
             sfc_T, sfc_q, initial_L, max_iter=1, cols=cols

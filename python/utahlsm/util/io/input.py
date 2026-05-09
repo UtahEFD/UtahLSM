@@ -424,9 +424,7 @@ class Input:
                 atm_q = metfile.variables['atm_q'][:]
                 atm_p = metfile.variables['atm_p'][:]
                 sw_in = metfile.variables['sw_in'][:]
-                sw_out = metfile.variables['sw_out'][:]
                 lw_in = metfile.variables['lw_in'][:]
-                lw_out = metfile.variables['lw_out'][:]
                 seb_storage_var = metfile.variables.get('seb_storage')
                 seb_storage = (
                     seb_storage_var[:]
@@ -474,20 +472,12 @@ class Input:
                 atm_q = _reshape_forcing(atm_q, "atm_q")
                 atm_p = _reshape_forcing(atm_p, "atm_p")
                 sw_in = _reshape_forcing(sw_in, "sw_in")
-                sw_out = _reshape_forcing(sw_out, "sw_out")
                 lw_in = _reshape_forcing(lw_in, "lw_in")
-                lw_out = _reshape_forcing(lw_out, "lw_out")
                 seb_storage = _reshape_forcing(seb_storage, "seb_storage")
-
-                # Net radiation is derived from the four components so the
-                # SEB residual and any component-level consumers (e.g. the
-                # Jarvis f1 stress factor reading sw_in) stay consistent.
-                r_net = sw_in - sw_out + lw_in - lw_out
 
                 # Validate forcing data and clip only minor boundary excursions.
                 self._validate_forcing_data(atm_U, atm_T, atm_q, atm_p,
-                                            sw_in, sw_out, lw_in, lw_out,
-                                            r_net, ntime)
+                                            sw_in, lw_in, ntime)
                 if not np.all(np.isfinite(seb_storage)):
                     raise ValueError(
                         "Offline forcing seb_storage must contain only "
@@ -498,9 +488,7 @@ class Input:
                     AtmosphericState(
                         wind_speed=atm_U[i], temperature=atm_T[i],
                         specific_humidity=atm_q[i], pressure=atm_p[i],
-                        sw_in=sw_in[i], sw_out=sw_out[i],
-                        lw_in=lw_in[i], lw_out=lw_out[i],
-                        radiation_net=r_net[i],
+                        sw_in=sw_in[i], lw_in=lw_in[i],
                         seb_storage=seb_storage[i])
                     for i in range(ntime)
                 ]
@@ -515,9 +503,9 @@ class Input:
 
     def _validate_forcing_data(self, atm_U: NDArray[np.float64], atm_T: NDArray[np.float64],
                                atm_q: NDArray[np.float64], atm_p: NDArray[np.float64],
-                               sw_in: NDArray[np.float64], sw_out: NDArray[np.float64],
-                               lw_in: NDArray[np.float64], lw_out: NDArray[np.float64],
-                               r_net: NDArray[np.float64], _ntime: int) -> None:
+                               sw_in: NDArray[np.float64],
+                               lw_in: NDArray[np.float64],
+                               _ntime: int) -> None:
         """Validates atmospheric forcing data for physical consistency.
 
         Slight excursions beyond the supported forcing bounds are clipped to
@@ -531,10 +519,7 @@ class Input:
             atm_q: Specific humidity array with one value per time step [kg/kg].
             atm_p: Pressure array with one value per time step [Pa].
             sw_in: Downwelling shortwave radiation [W/m²].
-            sw_out: Upwelling (reflected) shortwave radiation [W/m²].
             lw_in: Downwelling longwave radiation [W/m²].
-            lw_out: Upwelling (emitted) longwave radiation [W/m²].
-            r_net: Derived net radiation [W/m²].
             _ntime: Number of time steps in forcing arrays (unused but kept for
                 API compatibility with other validation functions).
 
@@ -594,17 +579,8 @@ class Input:
             sw_in, name='SW_in', lower=0.0, upper=1400.0,
             lower_tol=5.0, upper_tol=25.0, units='W/m^2')
         issues_found |= _clip_or_raise(
-            sw_out, name='SW_out', lower=0.0, upper=1400.0,
-            lower_tol=5.0, upper_tol=25.0, units='W/m^2')
-        issues_found |= _clip_or_raise(
             lw_in, name='LW_in', lower=100.0, upper=600.0,
             lower_tol=10.0, upper_tol=10.0, units='W/m^2')
-        issues_found |= _clip_or_raise(
-            lw_out, name='LW_out', lower=100.0, upper=700.0,
-            lower_tol=10.0, upper_tol=10.0, units='W/m^2')
-        issues_found |= _clip_or_raise(
-            r_net, name='net radiation', lower=-200.0, upper=1200.0,
-            lower_tol=25.0, upper_tol=25.0, units='W/m^2')
 
         if issues_found:
             self.logger.info(

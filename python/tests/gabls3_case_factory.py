@@ -58,7 +58,7 @@ def write_2x2_case(single_case: Path, multi_case: Path) -> None:
         dst.createVariable("tstep", "f8", ("scalar",))[:] = [tstep]
 
         for name in ("atm_U", "atm_T", "atm_q", "atm_p",
-                     "sw_in", "sw_out", "lw_in", "lw_out"):
+                     "sw_in", "lw_in"):
             data = np.asarray(src.variables[name][:], dtype=float)
             tiled = np.broadcast_to(data[:, None, None], (ntime, 2, 2))
             dst.createVariable(name, "f8", ("t", "y", "x"))[:] = tiled
