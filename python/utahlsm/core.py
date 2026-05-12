@@ -76,7 +76,7 @@ class UtahLSM:
     # Class-level annotation for attributes set inside helper methods
     # called from __init__; lets mypy resolve the type when this attribute
     # is read in update()/save() before mypy has traced the helper.
-    output_fields: dict[str, np.ndarray]
+    output_fields: dict[str, np.ndarray | list[str]]
 
     def __init__(self, input_lsm: Input, output_lsm: Output) -> None:
         """Initializes the UtahLSM model.
@@ -462,7 +462,7 @@ class UtahLSM:
                     "SEB+SMB coupling using forcing[0]",
                 )
 
-        self.full_output_fields = {
+        self.full_output_fields: dict[str, np.ndarray | list[str]] = {
             'ust': self.sfc_state.turbulence.friction_velocity,
             'obl': self.sfc_state.turbulence.obukhov_length,
             'shf': self.sfc_state.fluxes.sensible_heat,
@@ -489,7 +489,9 @@ class UtahLSM:
         self.output.save(self.output_fields, 0, 0, initial=True)
 
     def _select_output_fields(
-            self, available_fields: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+            self,
+            available_fields: dict[str, np.ndarray | list[str]],
+    ) -> dict[str, np.ndarray | list[str]]:
         """Selects the configured subset of output fields for this run.
 
         Args:
@@ -730,7 +732,6 @@ class UtahLSM:
 
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
-        atm_T = self.atm_state.temperature
         sfc_T = self.sfc_state.temperature
         sfc_q = self.sfc_state.moisture
         rho_a = self.sfc_state.air_density

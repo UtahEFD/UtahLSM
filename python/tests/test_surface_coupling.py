@@ -147,13 +147,13 @@ def test_compute_seb_vec_is_deterministic_and_pure() -> None:
 
 
 def test_compute_seb_vec_includes_lw_emission_feedback() -> None:
-    """Residual sensitivity to T_s must include the -ε σ T_s^4 term.
+    """Residual sensitivity to T_s must include the -epsilon * sigma * T_s^4 term.
 
     Regression for the GABLS3 daytime over-warming audit: previously the
-    SEB read a frozen ``radiation_net`` from forcing, so the ~4 ε σ T_s^3
+    SEB read a frozen ``radiation_net`` from forcing, so the ~4 * epsilon * sigma T_s^3
     longwave restoring was missing during root-finding. With the radiation
     model owning a trial-T outgoing computation, the residual must now
-    decrease by approximately ε σ ((T+ΔT)^4 - T^4) plus the H/G change
+    decrease by approximately epsilon * sigma * ((T+ΔT)^4 - T^4) plus the H/G change
     when T_s is perturbed upward.
     """
     model = _make_minimal_model()

@@ -20,4 +20,4 @@ abstract base class, making it accessible to the rest of the model.
 from .rad_forcing import RadForcing
 from .radiation import Radiation
 
-__all__ = ['Radiation', 'RadForcing']
+__all__ = ['RadForcing', 'Radiation']

@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "dataset_name": "clapp-hornberger-letts",
+    "dataset_name": "clapp-hornberger_letts",
     "citation": "Clapp & Hornberger (1974) for mineral textures + Letts et al. (2000) for organic peat tiers.",
     "description": "Composite dataset combining Clapp-Hornberger (1974) mineral USDA textures with Letts (2000) fibric/hemic/sapric peat."
   },
-  "includes": ["clapp-hornberger", "letts2000"],
+  "includes": ["clapp-hornberger", "letts"],
   "on_conflict": "error"
 }

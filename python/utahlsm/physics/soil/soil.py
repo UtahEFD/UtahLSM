@@ -61,7 +61,7 @@ class SoilProperties:
         residual: Residual moisture content (volumetric) [m^3/m^3].
         K_sat: Saturated hydraulic conductivity [m/s].
         ci: Volumetric heat capacity [J/m^3-K].
-        quartz_fraction: Quartz volume fraction of the solid matrix (0–1),
+        quartz_fraction: Quartz volume fraction of the solid matrix (0-1),
             used by the Johansen thermal conductivity model. NaN for layers
             where the dataset does not supply a value (e.g. organic peat),
             which the Johansen code treats as fully organic.

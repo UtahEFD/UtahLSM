@@ -13,6 +13,8 @@
 # See accompanying LICENSE file or visit https://opensource.org/licenses/MIT.
 #
 
+"""Generates NetCDF initial condition and namelist input for the GABLS3 case."""
+
 from __future__ import annotations
 
 import json
@@ -23,7 +25,6 @@ import netCDF4 as nc
 import numpy as np
 from numpy.typing import NDArray
 
-
 ####################################################
 # GABLS3 stable subset (2006-07-02 00 UTC -> 09 UTC)
 ####################################################
@@ -31,7 +32,7 @@ from numpy.typing import NDArray
 # Soil column: 61 uniform layers from 0 to 0.6 m.
 dz: float = 0.01
 soil_depth: float = 0.6
-soil_zlev_int: NDArray[np.float64] = np.linspace(0.0, soil_depth, int(round(soil_depth / dz)) + 1)
+soil_zlev_int: NDArray[np.float64] = np.linspace(0.0, soil_depth, round(soil_depth / dz) + 1)
 nsoil: int = len(soil_zlev_int)
 
 ##########################################
@@ -40,8 +41,8 @@ nsoil: int = len(soil_zlev_int)
 
 # Cabauw soil-heat observations at 0, 2, 4, 6, 8, 12, 20, 30, 50 cm.
 soil_temp_dat: nc.Dataset = nc.Dataset('observations/gabls3_soil_heat.nc')
-soil_temp_lev: NDArray[np.float64] = np.array([0.00, 0.02, 0.04, 0.06, 0.08, 0.12, 0.20, 0.30, 0.50])
-soil_temp_var: list[str] = ['TS00', 'TS02', 'TS04', 'TS06', 'TS08', 'TS12', 'TS20', 'TS30', 'TS50']
+soil_temp_lev: NDArray[np.float64] = np.array([0.00,0.02,0.04,0.06,0.08,0.12,0.20,0.30,0.50])
+soil_temp_var: list[str] = ['TS00','TS02','TS04','TS06','TS08','TS12','TS20','TS30','TS50']
 
 # Skip any masked sensors before interpolating.
 soil_temp_obs = np.ma.stack(
@@ -53,30 +54,25 @@ if not np.any(valid_T):
     raise RuntimeError(
         "All soil-temperature sensors are masked; cannot build an initial profile."
     )
-soil_temp_lev: NDArray[np.float64] = soil_temp_lev[valid_T]
-soil_temp_obs: NDArray[np.float64] = (
-    np.asarray(soil_temp_obs[valid_T], dtype=float) + 273.15
-)
+soil_temp_lev = soil_temp_lev[valid_T]
+soil_temp_obs = (np.asarray(soil_temp_obs[valid_T], dtype=float) + 273.15)
 soil_temp_ini: NDArray[np.float64] = np.interp(soil_zlev_int, soil_temp_lev, soil_temp_obs)
 
-##########################################
+#######################################
 # Soil moisture from CESAR observations
-##########################################
+#######################################
 
-# Anchor the upper column with the 10-minute Campbell-calibrated TH probes
-# (TH03/TH08/TH20) since they capture the actual start-time state, not the
-# slowly-varying daily mean. The EB-field probes (TH05/TH19/TH33/...) are
-# all flagged -9999 at this time so we cannot use them. Below the deepest
-# valid TH probe (0.20 m) we splice in the previous-day TDR daily-mean
-# profile to fill the deeper column. The TDR network shows large day-to-day
-# swings, so it is treated as a fallback below the start-state TH probes
-# rather than the primary anchor.
+# TH Campbell probes: TR-384 Section 20 validates 3 cm and 8 cm as reliable, but 20 cm is flagged
+#   unreliable (can read above clay porosity).
+#   see: https://cdn.knmi.nl/knmi/pdf/bibliotheek/knmipubTR/TR384.pdf
 soil_mois_thc: nc.Dataset = nc.Dataset('observations/gabls3_soil_mois_thc.nc')
-soil_mois_z03: float = float(soil_mois_thc.variables['TH03'][0])
-soil_mois_z08: float = float(soil_mois_thc.variables['TH08'][0])
-soil_mois_z20: float = float(soil_mois_thc.variables['TH20'][0])
+soil_mois_z03: float = soil_mois_thc.variables['TH03'][0]
+soil_mois_z08: float = soil_mois_thc.variables['TH08'][0]
 soil_mois_thc.close()
 
+# TDR network (previous-day daily means) anchors the profile from 30 cm down. The 15 cm TDR knot
+#   is omitted: its value would create an artificial decrease below TH08 due to inter-instrument
+#   calibration offsets. Linear interpolation fills the 8–30 cm gap.
 soil_mois_tdr: nc.Dataset = nc.Dataset('observations/gabls3_soil_mois_tdr.nc')
 soil_mois_z30: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (3,9,15,21)]))
 soil_mois_z45: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (4,10,16,22)]))
@@ -84,26 +80,22 @@ soil_mois_z60: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i
 soil_mois_z73: float = float(np.mean([soil_mois_tdr.variables[f'SM{i}'][0] for i in (6,12,18,24)]))
 soil_mois_tdr.close()
 
-# Duplicate TH03 at z=0 so the surface knot reflects the start-time state.
-soil_mois_lev: NDArray[np.float64] = np.array([0.00, 0.03, 0.08, 0.20, 0.30, 0.45, 0.60, 0.725])
-soil_mois_obs: NDArray[np.float64] = np.array([soil_mois_z03, soil_mois_z03, soil_mois_z08, 
-    soil_mois_z20, soil_mois_z30, soil_mois_z45, soil_mois_z60, soil_mois_z73])
+# Surface pinned to TH03; TH08 anchors shallow clay; TDR from 30 cm down.
+soil_mois_lev: NDArray[np.float64] = np.array([0.00, 0.03, 0.08, 0.30, 0.45, 0.60, 0.725])
+soil_mois_obs: NDArray[np.float64] = np.array([soil_mois_z03, soil_mois_z03, soil_mois_z08,
+    soil_mois_z30, soil_mois_z45, soil_mois_z60, soil_mois_z73])
 soil_mois_ini: NDArray[np.float64] = np.interp(soil_zlev_int, soil_mois_lev, soil_mois_obs)
 
-# Soil type: clay over peat. TH20=0.55 already exceeds cosby clay porosity
-# (0.468), so the clay/peat boundary must sit above 0.20 m. We put it at
-# 0.15 m: clay holds the upper column where θ <= 0.43, peat absorbs the
-# wetter 0.20 m+ values. The Jarvis canopy roots span both layers (the
-# upper clay has cosby wilt=0.220, the deeper peat has wilt=0.396); the
-# wet TH20 anchor keeps the root-weighted moisture comfortably above the
-# root-weighted wilting so f4 stays positive.
-# Cabauw subsoil is moderately decomposed Holocene peat -> Letts hemic tier.
-clay_peat_boundary: float = 0.15
-stype: NDArray[np.str_] = np.where(soil_zlev_int <= clay_peat_boundary, 'clay', 'peat_hemic').astype('U16')
+# Soil type: Cabauw places clay in 0–18 cm, a clay-peat mix from 18–60 cm, and heavier peat below.
+#   Boundary at 0.18 m. Cabauw subsoil is moderately decomposed Holocene peat -> Letts hemic.
+clay_peat_boundary: float = 0.18
+stype: NDArray[np.str_] = np.where(soil_zlev_int <= clay_peat_boundary,
+                                   'clay',
+                                   'peat_hemic').astype('U16')
 
-#######################
-# Initialization file #
-#######################
+#####################
+# Initialization file
+#####################
 
 init = nc.Dataset('lsm_init.nc', 'w')
 init.description = (
@@ -135,13 +127,11 @@ init_q[:] = soil_mois_ini
 init_i[:] = stype
 init.close()
 
-###################################
-# Read met tower data for offline #
-###################################
+#################################
+# Read met tower data for offline
+#################################
 
-# UtahLSM offline mode expects near-surface forcing and net radiation, so we
-# retain the Cabauw observation time series over the official 24 h GABLS3
-# window even though the parent SCM case is forced geostrophically.
+# UtahLSM offline mode expects near-surface forcing and net radiation.
 met: nc.MFDataset = nc.MFDataset('observations/gabls3_surf_metr.nc')
 tm: NDArray[np.float64] = np.asarray(met.variables['time'][:], dtype=float) * 3600.0
 ws: NDArray[np.float64] = np.asarray(met.variables['F010'][:], dtype=float)
@@ -150,11 +140,7 @@ pa: NDArray[np.float64] = np.asarray(met.variables['P0'][:], dtype=float) * 100.
 qs: NDArray[np.float64] = np.asarray(met.variables['Q002'][:], dtype=float) / 1000.0
 met.close()
 
-# CESAR's time variable is stored as float32, so tm[1]-tm[0] comes out
-# as 599.9977 s instead of an exact 600 s. Round to the nearest integer
-# second so the model's runtime accumulator stays on round-number times
-# (32400 s, not 32399.9 s).
-dt: float = float(round(tm[1] - tm[0]))
+dt: float = round(tm[1] - tm[0])
 ntime: int = len(tm)
 t_utc: NDArray[np.float64] = (np.round(tm) % 86400).astype(float)
 
@@ -174,16 +160,14 @@ soil_heat: nc.MFDataset = nc.MFDataset('observations/gabls3_soil_heat.nc')
 ghf_obs: NDArray[np.float64] = np.asarray(soil_heat.variables['FG0'][:], dtype=float)
 soil_heat.close()
 
-# Prescribed unresolved SEB storage/closure term. Positive values remove
-# energy from the modeled H/LE/G partition:
-#   Rn - H - LE - G - seb_storage = 0
-# Here Rn comes from the independent radiation components and G is the
-# Fourier-extrapolated 0 cm soil heat flux.
+# Prescribed unresolved SEB storage/closure term: Rn - H - LE - G - seb_storage = 0
+#   Rn comes from the independent radiation components and G is the Fourier-extrapolated
+#   0-cm soil heat flux.
 seb_storage: NDArray[np.float64] = lwd - lwu + swd - swu - shf_obs - lhf_obs - ghf_obs
 
-##############################
-# Write all time-series data #
-##############################
+############################
+# Write all time-series data
+############################
 
 metr = nc.Dataset('lsm_offline.nc', 'w')
 metr.description = "UtahLSM input file for offline run"
@@ -228,10 +212,9 @@ metr_lwd[:] = lwd
 metr_sto[:] = seb_storage
 metr.close()
 
-
-########################
-# Settings for UtahLSM #
-########################
+######################
+# Settings for UtahLSM
+######################
 
 namelist: dict[str, Any] = {}
 namelist['general'] = {}
@@ -246,9 +229,11 @@ namelist['canopy'] = {}
 namelist['radiation'] = {}
 namelist['output'] = {}
 
+# general settings
 namelist['general']['log_level'] = "info"
 
-namelist['numerics']['heat_diffusion_back_weight'] = float(0.5)
+# numerics settings
+namelist['numerics']['heat_diffusion_back_weight'] = 0.5
 namelist['numerics']['iterations']['sfc_flux'] = 100
 namelist['numerics']['iterations']['seb_bracket'] = 100
 namelist['numerics']['iterations']['seb_root'] = 100
@@ -263,76 +248,57 @@ namelist['numerics']['tolerances']['moisture_bounds'] = 1e-3
 namelist['numerics']['tolerances']['coupling_temp'] = 1e-2
 namelist['numerics']['tolerances']['coupling_mois'] = 1e-5
 
-namelist['time']['utc_start'] = int(round(t_utc[0]))
+# time settings
+namelist['time']['utc_start'] = round(t_utc[0])
 namelist['time']['utc_year'] = 2006
 namelist['time']['julian_day'] = 183
 
+# grid settings
 namelist['grid']['nx'] = 1
 namelist['grid']['ny'] = 1
 namelist['grid']['nz'] = nsoil
 
-# z_o = 0.03 m is the *local* roughness length for Cabauw grass. The 0.15 m
-# value sometimes used in mesoscale / SCM setups represents an effective
-# fetch-aware roughness for the surrounding terrain, not the local patch.
-# We are running locally, so use the local value.
-namelist['surface']['z_o'] = float(0.03)
-namelist['surface']['z_t'] = float(0.003)
-namelist['surface']['z_m'] = float(10.0)
-namelist['surface']['z_s'] = float(2.0)
-namelist['surface']['albedo'] = float(0.23)
-namelist['surface']['emissivity'] = float(0.99)
+# surface settings
+namelist['surface']['z_o'] = 0.03
+namelist['surface']['z_t'] = 0.003
+namelist['surface']['z_m'] = 10.0
+namelist['surface']['z_s'] = 2.0
+namelist['surface']['albedo'] = 0.23
+namelist['surface']['emissivity'] = 0.99
 namelist['surface']['model'] = "most"
 namelist['surface']['psi_stable'] = "beljaars-holtslag"
-namelist['surface']['zeta_max'] = float(1.0)
-# Beljaars (1995) recommends 0.5-1.0 m/s gustiness under stable conditions;
-# 2.0 m/s overdrives u* and prevents nocturnal decoupling. We apply it only
-# under stable stratification so it doesn't double-count daytime convective
-# wind variance, which is already handled by mean wind.
-namelist['surface']['gustiness'] = float(1.0)
+namelist['surface']['zeta_max'] = 1.0
+namelist['surface']['gustiness'] = 1.0
 namelist['surface']['gustiness_stable_only'] = True
 
-# Cosby et al. (1984) gives lower θ_wilt for clay (0.220 vs Clapp-Hornberger
-# 0.287) which is closer to the observed Cabauw root-zone moisture and lets
-# the Jarvis canopy actually transpire. The Letts (2000) hemic tier supplies
-# defensible parameters for the moderately decomposed Cabauw subsoil peat.
-namelist['soil']['properties'] = "cosby-letts"
+# soil settings
+namelist['soil']['properties'] = "cosby_letts"
 namelist['soil']['model'] = "van-genuchten"
-# Johansen (1975) / Peters-Lidard et al. (1998) Kersten-number method.
-# Replaces McCumber-Pielke, which over-predicts λ by 4-7x for wet clay.
 namelist['soil']['thermal_conductivity_model'] = "johansen"
 
-# These Jarvis parameters remain a UtahLSM-specific canopy choice. Only LAI and
-# vegetation fraction come directly from the published GABLS3 specification.
+# canopy settings
 namelist['canopy']['model'] = "jarvis"
-namelist['canopy']['lai'] = float(2.0)
-namelist['canopy']['veg_fraction'] = float(1.0)
-# Cabauw grass roots are concentrated in the upper 0.4 m of clay. The clay
-# layer is now thick enough (0-0.4 m) to fully contain the root profile, so
-# we use the original Jackson β=0.943 (typical for grasslands) without
-# extending into peat.
-namelist['canopy']['rooting_depth'] = float(0.4)
-namelist['canopy']['beta'] = float(0.943)
-namelist['canopy']['rs_min'] = float(100.0)
-namelist['canopy']['rs_max'] = float(5000.0)
-namelist['canopy']['rg_half'] = float(50.0)
-namelist['canopy']['vpd_coef'] = float(1.0e-4)
-namelist['canopy']['t_opt'] = float(298.0)
-namelist['canopy']['t_coef'] = float(1.6e-3)
-# In-canopy aerodynamic resistance for ground heat transport [s/m].
-# Used in series with the top-cell soil conductive resistance and scaled by
-# veg_fraction. With Johansen conductivity, clay r_soil ≈ 0.008 K·m²/W and
-# r_canopy_thermal dominates r_total. Choudhury & Monteith (1988) give
-# r_ground ≈ 100–300 s/m for h_c ≈ 0.15 m grass at low nocturnal wind speeds;
-# 200 s/m places r_total ≈ 0.174 K·m²/W, consistent with observed G.
-# (Dropping to 50 s/m collapsed r_total by 3.4× and tripled G.)
-namelist['canopy']['r_ground'] = float(200.0)
+namelist['canopy']['lai'] = 2.0
+namelist['canopy']['veg_fraction'] = 1.0
+namelist['canopy']['rooting_depth'] = 0.4
+namelist['canopy']['beta'] = 0.943
+namelist['canopy']['rs_min'] = 100.0
+namelist['canopy']['rs_max'] = 5000.0
+namelist['canopy']['rg_half'] = 50.0
+namelist['canopy']['vpd_coef'] = 1.0e-4
+namelist['canopy']['t_opt'] = 298.0
+namelist['canopy']['t_coef'] = 1.6e-3
+namelist['canopy']['r_ground'] = 200.0
 
+# radiation settings
 namelist['radiation']['model'] = "forcing"
-namelist['radiation']['latitude'] = float(51.9711)
-namelist['radiation']['longitude'] = float(4.9267)
+namelist['radiation']['latitude'] = 51.9711
+namelist['radiation']['longitude'] = 4.9267
 
+# output settings
 namelist['output']['save'] = True
 namelist['output']['fields'] = ['all']
 
+# write the namelist
 with open('lsm_namelist.json', 'w', encoding='utf-8') as outfile:
     json.dump(namelist, outfile, indent=4)

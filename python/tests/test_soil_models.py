@@ -52,17 +52,16 @@ SOIL_MODEL_CLASSES: tuple[SoilModelClass, ...] = (
 # ============================================================================
 
 @pytest.fixture(
-    params=['clapp-hornberger', 'cosby', 'rawls-brakensiek', 'cabauw-heinen']
+    params=['clapp-hornberger', 'cosby', 'rawls-brakensiek']
 )
 def soil_props(request: pytest.FixtureRequest) -> SoilProps:
     """Load bundled soil properties dataset.
 
     Parametrized fixture that yields a tuple of (properties_dict, dataset_name)
-    for all available bundled datasets:
+    for the standard bundled datasets:
     - clapp-hornberger: Clapp & Hornberger model parameters
     - cosby: Cosby et al. pedotransfer functions
     - rawls-brakensiek: Rawls-Brakensiek parameterization
-    - cabauw-heinen: Cabauw experimental site data
 
     Each test using this fixture will run once per dataset.
     """
@@ -72,22 +71,7 @@ def soil_props(request: pytest.FixtureRequest) -> SoilProps:
 
 @pytest.fixture
 def soil_types_to_test(soil_props: SoilProps) -> list[str]:
-    """Soil type names appropriate for the current soil_props dataset.
-
-    Returns common soil types for most datasets, or site-specific types
-    for cabauw-heinen. This fixture is coupled to soil_props and will
-    automatically select the right types.
-    """
-    properties_dict, dataset_name = soil_props
-
-    # cabauw-heinen uses site-specific soil names
-    if dataset_name == 'cabauw-heinen':
-        # Return some available types from the cabauw dataset
-        available = list(properties_dict.keys())
-        # Return up to 3 types
-        return available[:3]
-
-    # Standard USDA soil type names
+    """Standard USDA soil type names used across all bundled datasets."""
     return ['sand', 'loam', 'clay']
 
 
@@ -557,7 +541,7 @@ class TestJohansenThermalConductivity:
         """Johansen λ for nearly-saturated clay is in a physically realistic range.
 
         McCumber-Pielke gives ~11 W/m/K at θ=0.45 for Cosby clay; Johansen
-        should return 1.0–1.8 W/m/K.
+        should return 1.0-1.8 W/m/K.
         """
         props = _make_johansen_clay_props()
         model = VanGenuchten(props, ['clay'], 'test', 'johansen')

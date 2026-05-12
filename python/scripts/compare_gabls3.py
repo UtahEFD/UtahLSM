@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -59,10 +60,11 @@ TEMP_DEPTHS: dict[str, float] = {
     "TS50": 0.50,
 }
 
-MOIS_DEPTHS_TDR: dict[str, float] = {
+# THC Campbell probes: TR-384 Section 20 endorses 3 cm and 8 cm as reliable;
+# TH20 is flagged unreliable and excluded. TH03 and TH08 are used for validation.
+MOIS_DEPTHS_THC: dict[str, float] = {
     "TH03": 0.03,
     "TH08": 0.08,
-    "TH20": 0.20,
 }
 MOIS_DEPTHS_EB: dict[str, float] = {
     "TH05": 0.05,
@@ -70,6 +72,23 @@ MOIS_DEPTHS_EB: dict[str, float] = {
     "TH33": 0.33,
     "TH40": 0.40,
     "TH56": 0.56,
+}
+
+# TDR array (previous-day daily means) — used for validation.
+# Four sensors per depth are averaged; indices follow the CESAR naming convention.
+MOIS_DEPTHS_TDR: dict[str, float] = {
+    "SM_05cm": 0.05,
+    "SM_15cm": 0.15,
+    "SM_30cm": 0.30,
+    "SM_45cm": 0.45,
+    "SM_60cm": 0.60,
+}
+TDR_SENSORS: dict[str, tuple[int, ...]] = {
+    "SM_05cm": (1, 7, 13, 19),
+    "SM_15cm": (2, 8, 14, 20),
+    "SM_30cm": (3, 9, 15, 21),
+    "SM_45cm": (4, 10, 16, 22),
+    "SM_60cm": (5, 11, 17, 23),
 }
 
 TEMP_MIN_SPAN_K = 2.0
@@ -245,7 +264,7 @@ def _format_time_axis(
     t_end: np.datetime64,
 ) -> None:
     """Apply compact UTC date ticks to a timeseries axis."""
-    locator = cast(Any, mdates.AutoDateLocator)(minticks=4, maxticks=7)
+    locator = cast(Any, mdates.HourLocator)(interval=3)
     x_start = float(
         cast(Any, mdates.date2num)(t_start.astype("datetime64[ms]").astype(object))
     )
@@ -357,8 +376,9 @@ def compare_fluxes(
     )
 
     axes[-1].set_xlabel("Time (UTC)")
-    axes[-1].xaxis.set_major_locator(cast(Any, mdates.HourLocator)(interval=1))
-    axes[-1].xaxis.set_major_formatter(cast(Any, mdates.DateFormatter)("%m-%d %H%M"))
+    t_ax_end = max(t_obs_sl[-1] if t_obs_sl.size > 0 else model.time[0],
+                   t_soil_sl[-1] if t_soil_sl.size > 0 else model.time[0])
+    _format_time_axis(axes[-1], model.time[0], t_ax_end)
     fig.suptitle(
         "GABLS3: UtahLSM vs Cabauw observations\n"
         f"model: {model.path.name}   flux obs: {surface_flux_obs_path.name}   "
@@ -439,6 +459,35 @@ def _load_obs_series(
         if label not in ds.variables:
             continue
         values = _nan_fill(ds.variables[label][obs_slice]) + offset
+        if np.isfinite(values).any():
+            obs_vals[label] = values
+        else:
+            empty_labels.append(label)
+    return obs_vals, empty_labels
+
+
+def _load_tdr_series(
+    ds: nc.Dataset,
+    labels: dict[str, float],
+    obs_slice: slice,
+    offset: float = 0.0,
+) -> tuple[dict[str, np.ndarray], list[str]]:
+    """Load TDR observations by averaging sensor groups at each depth."""
+    obs_vals: dict[str, np.ndarray] = {}
+    empty_labels: list[str] = []
+    for label in labels:
+        indices = TDR_SENSORS.get(label)
+        if indices is None:
+            continue
+        arrays = [
+            _nan_fill(ds.variables[f"SM{i}"][obs_slice])
+            for i in indices
+            if f"SM{i}" in ds.variables
+        ]
+        if not arrays:
+            empty_labels.append(label)
+            continue
+        values = np.nanmean(np.stack(arrays, axis=0), axis=0) + offset
         if np.isfinite(values).any():
             obs_vals[label] = values
         else:
@@ -570,6 +619,10 @@ def compare_soil_quantity(
     min_span: float,
     stats_fmt: str,
     summary_label: str,
+    series_loader: Callable[
+        [nc.Dataset, dict[str, float], slice, float],
+        tuple[dict[str, np.ndarray], list[str]],
+    ] = _load_obs_series,
 ) -> None:
     """Create a soil profile and timeseries comparison figure."""
     if model_profile is None or model.soil_z.size == 0:
@@ -583,7 +636,7 @@ def compare_soil_quantity(
         if t_obs_sl.size == 0:
             print(f"No overlapping {summary_label} samples in {obs_path}")
             return
-        obs_vals, empty_labels = _load_obs_series(ods, depth_map, obs_slice, obs_offset)
+        obs_vals, empty_labels = series_loader(ods, depth_map, obs_slice, obs_offset)
 
     if empty_labels:
         print(f"Skipping empty {summary_label} obs series: " + ", ".join(empty_labels))
@@ -612,7 +665,7 @@ def compare_soil_quantity(
         stats_fmt,
     )
     for i, ax in enumerate(axes_ts):
-        _format_time_axis(ax, model.time[0], model.time[-1])
+        _format_time_axis(ax, model.time[0], t_obs_sl[-1])
         if _is_bottom_row(i, total_panels, ncols):
             ax.set_xlabel("Time (UTC)")
 
@@ -694,7 +747,7 @@ def compare_soil_moisture(
         out_path=out_path,
         show=show,
         model_profile=model.soil_q,
-        depth_map={**MOIS_DEPTHS_TDR, **MOIS_DEPTHS_EB},
+        depth_map=MOIS_DEPTHS_THC,
         obs_offset=0.0,
         ylabel=r"$\theta$ [m$^3$/m$^3$]",
         title_prefix="Soil moisture",

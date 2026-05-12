@@ -23,10 +23,10 @@ Radiation models are split into two halves:
   fluxes as a function of the *trial* surface temperature, surface
   optical properties, and the incoming components. It is evaluated every
   Brent iteration inside the surface energy budget so the
-  4 ε σ T_s^3 longwave restoring is correctly expressed.
+  4 * episilon * sigma * T_s^3 longwave restoring is correctly expressed.
 
 The default :meth:`compute_outgoing` implements the standard one-source
-model ``sw_out = α sw_in`` and ``lw_out = ε σ T_s^4 + (1 - ε) lw_in``.
+model ``sw_out = alpha* sw_in`` and ``lw_out = epsilon * sigma * T_s^4 + (1 - epsilon) * lw_in``.
 Subclasses need only override it for richer schemes (e.g. two-source
 canopy/ground or two-stream multiple scattering).
 """
@@ -94,10 +94,10 @@ class Radiation(ABC):
         the surface optical properties, so the SEB iterator can capture
         the longwave emission feedback during root-finding.
 
-        ``sw_out = α sw_in`` (single broadband albedo).
+        ``sw_out = alpha * sw_in`` (single broadband albedo).
 
-        ``lw_out = ε σ T_s^4`` (Stefan-Boltzmann emission only;
-        ε ≈ 1 assumed for the reflected-LW component, which is the
+        ``lw_out = epsilon * sigma * T_s^4`` (Stefan-Boltzmann emission only;
+        epsilon ≈ 1 assumed for the reflected-LW component, which is the
         standard simplification for natural land surfaces).
 
         Args:

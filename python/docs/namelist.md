@@ -155,7 +155,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 ### `soil`
 
 `properties`
-: Name of the bundled soil property table, or a path to a custom JSON file. Bundled mineral-only datasets: `clapp-hornberger`, `cosby`, `rawls-brakensiek`, `cabauw-heinen`. Bundled organic peat dataset: `letts2000` (fibric/hemic/sapric tiers from Letts et al. 2000). Bundled composites that combine a mineral set with `letts2000`: `clapp-hornberger-letts`, `cosby-letts`, `rawls-brakensiek-letts`. The mineral datasets do not contain a `peat` entry — use a `*-letts` composite (or a custom dataset that includes `letts2000`) when the column has organic horizons.
+: Name of the bundled soil property table, or a path to a custom JSON file. Bundled mineral-only datasets: `clapp-hornberger`, `cosby`, `rawls-brakensiek`. Bundled organic peat dataset: `letts` (fibric/hemic/sapric tiers from Letts et al. 2000). Bundled composites that join a mineral set with `letts`: `clapp-hornberger_letts`, `cosby_letts`, `rawls-brakensiek_letts`. The mineral datasets do not contain a `peat` entry — use a `*_letts` composite (or a custom dataset that includes `letts`) when the column has organic horizons.
 
 A dataset JSON may declare `"includes": ["a", "b", ...]` to merge soil types from other datasets (bundled names or paths). The current dataset's own `soil_types` are merged last and take precedence. Conflicts are governed by `"on_conflict"`: `"error"` (default), `"prefer_first"`, or `"prefer_last"`.
 

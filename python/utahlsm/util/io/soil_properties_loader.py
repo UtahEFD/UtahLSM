@@ -63,13 +63,12 @@ class SoilPropertiesLoader:
     # Bundled dataset names (must match filenames in utahlsm/data/soil/)
     BUNDLED_DATASETS = [
         'clapp-hornberger',
-        'clapp-hornberger-letts',
+        'clapp-hornberger_letts',
         'cosby',
-        'cosby-letts',
+        'cosby_letts',
         'rawls-brakensiek',
-        'rawls-brakensiek-letts',
-        'cabauw-heinen',
-        'letts2000',
+        'rawls-brakensiek_letts',
+        'letts',
     ]
 
     @staticmethod

@@ -12,8 +12,8 @@ from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
 
 
 def test_cosby_letts_resolves_mineral_and_peat() -> None:
-    """cosby-letts should expose Cosby mineral classes plus Letts peat tiers."""
-    types = SoilPropertiesLoader.load('cosby-letts')
+    """cosby_letts should expose Cosby mineral classes plus Letts peat tiers."""
+    types = SoilPropertiesLoader.load('cosby_letts')
 
     for mineral in ('sand', 'loam', 'clay'):
         assert mineral in types
@@ -26,7 +26,7 @@ def test_cosby_letts_resolves_mineral_and_peat() -> None:
 
 def test_clapp_hornberger_and_rawls_composites_resolve() -> None:
     """The other shipped composites must also resolve cleanly."""
-    for composite in ('clapp-hornberger-letts', 'rawls-brakensiek-letts'):
+    for composite in ('clapp-hornberger_letts', 'rawls-brakensiek_letts'):
         types = SoilPropertiesLoader.load(composite)
         assert 'clay' in types
         assert 'peat_sapric' in types
@@ -103,5 +103,5 @@ def test_circular_include_detected(tmp_path: Path) -> None:
 
 def test_dataset_with_only_includes_has_no_own_types() -> None:
     """A pure manifest (includes only, no soil_types) is valid."""
-    types = SoilPropertiesLoader.load('cosby-letts')
+    types = SoilPropertiesLoader.load('cosby_letts')
     assert len(types) > 0
