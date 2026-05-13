@@ -212,6 +212,8 @@ class UtahLSM:
         self.atm_state.lw_out = np.zeros(self.ncol)
         self.atm_state.radiation_net = np.zeros(self.ncol)
         self.atm_state.seb_storage = np.zeros(self.ncol)
+        self.atm_state.precipitation = np.zeros(self.ncol)
+        self.sfc_state.fluxes.runoff = np.zeros(self.ncol)
 
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
@@ -353,6 +355,12 @@ class UtahLSM:
             self.atm_state.seb_storage[:] = seb_storage
         else:
             self.atm_state.seb_storage = seb_storage
+        precipitation = self._as_column_vector(
+            atm_state.precipitation, "precipitation")
+        if isinstance(self.atm_state.precipitation, np.ndarray):
+            self.atm_state.precipitation[:] = precipitation
+        else:
+            self.atm_state.precipitation = precipitation
         RD = c.thermodynamic.GAS_CONSTANT_DRY
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         Tv = self.atm_state.temperature * (
@@ -470,6 +478,8 @@ class UtahLSM:
             'ghf': self.sfc_state.fluxes.ground_heat,
             'seb_res': self.sfc_state.seb_residual,
             'seb_storage': np.asarray(self.atm_state.seb_storage),
+            'precip': np.asarray(self.atm_state.precipitation),
+            'runoff': self.sfc_state.fluxes.runoff,
             'soil_z': self.input.grid.z,
             'soil_type': self.input.soil_type_names,
             'soil_T': self.soil_state.temperature,
@@ -1085,15 +1095,34 @@ class UtahLSM:
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB) for surface moisture.
 
-        Finds θ_sfc that balances the evaporative demand against the
-        Darcy flux from the subsurface via bracketed Brent root-finding
-        on θ_sfc ∈ [θ_residual, θ_porosity]. The residual is
+        Finds θ_sfc that balances evaporative demand and precipitation
+        infiltration against the Darcy flux from the subsurface via
+        bracketed Brent root-finding on θ_sfc ∈ [θ_residual, θ_porosity].
+        The residual is
 
             R(θ_sfc) = E(θ_sfc, T_sfc)
                        + rho_w K_mid (θ_sfc) [ (ψ(θ_sfc) - ψ_1) / Δz + 1 ]
+                       - P_eff
+
+        Sign convention: E > 0 is upward (loss to atmosphere); the Darcy
+        term > 0 is downward gravity drainage; P_eff > 0 is downward
+        mass input that infiltrates into the soil. P_eff enters with a
+        minus sign because it opposes E in the surface mass balance.
+
+        Runoff (saturation excess) is computed before Brent as
+        ``runoff = max(0, P - rho_w * K_sat_top)``. The soil cannot
+        infiltrate water faster than its saturated drainage capacity
+        ``rho_w * K_sat_top`` (kg/m^2/s); any precipitation in excess of
+        that bound becomes surface runoff and is excluded from the SMB
+        residual. ``P_eff = P - runoff`` is what the SMB sees.
+
+        ``P_eff`` is the canopy-throughfall hook: when canopy
+        interception is reintroduced, this becomes
+        ``P - dW_c/dt - runoff`` -- the residual structure is unchanged.
 
         At θ_sfc = θ_residual: K → 0, ψ → -∞, gnd_q → 0, so
-        R ≈ -rho_a atm_q u* f_h ≤ 0.
+        R ≈ -rho_a atm_q u* f_h ≤ 0 (before the residual-endpoint
+        regularization).
         At θ_sfc = θ_porosity: K → K_sat, ψ → 0, gnd_q is saturated, so
         R > 0. The monotonic sign change guarantees a bracketed root,
         which Brent's method finds robustly - including the dry-soil
@@ -1112,6 +1141,16 @@ class UtahLSM:
         ust = self.sfc_state.turbulence.friction_velocity
         rho_a = self.sfc_state.air_density
         fh = self.sfc.fh(z_s, z_t, obukhov_l)
+
+        # Saturation-excess runoff: rain in excess of the soil's
+        # saturated drainage capacity at the top layer is shed as
+        # runoff and not seen by the SMB. The drainage capacity is the
+        # gravity-driven Darcy flux at saturation, rho_w * K_sat.
+        P_total = np.asarray(self.atm_state.precipitation, dtype=float)
+        K_sat_top = float(np.asarray(self.soil.properties.K_sat)[0])
+        infil_cap = RHO_W * K_sat_top
+        runoff = np.maximum(P_total - infil_cap, 0.0)
+        P_eff = P_total - runoff
 
         residual_q = float(self.soil.properties.residual[0])
         porosity = float(self.soil.properties.porosity[0])
@@ -1139,7 +1178,8 @@ class UtahLSM:
             # removed from the root-zone moisture budget (diffusion RHS),
             # not the surface flux residual.
             E_soil = (1.0 - f_veg) * rho_a * (gnd_q - atm_q) * ust * fh
-            return np.asarray(E_soil + RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0))
+            darcy = RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
+            return np.asarray(E_soil + darcy - P_eff)
 
         # Shrink the bracket slightly off the physical bounds to keep
         # ψ(θ) and K(θ) finite and well-defined at the endpoints.
@@ -1162,6 +1202,7 @@ class UtahLSM:
             )
 
         self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)
+        self.sfc_state.fluxes.runoff[:] = runoff
 
     def _compute_fluxes(self, sfc_T: FloatOrArray, sfc_q: FloatOrArray) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.

@@ -136,6 +136,16 @@ class Output:
             'long_name': 'canopy intercepted/dew water storage',
             'units': 'kg m-2'
         },
+        'precip': {
+            'dimension': ('t',),
+            'long_name': 'liquid precipitation rate',
+            'units': 'kg m-2 s-1'
+        },
+        'runoff': {
+            'dimension': ('t',),
+            'long_name': 'saturation-excess surface runoff',
+            'units': 'kg m-2 s-1'
+        },
     }
 
     def __init__(

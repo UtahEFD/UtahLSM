@@ -61,6 +61,13 @@ class AtmosphericState:
             The SEB is solved as ``radiation_net - H - LE - G
             - seb_storage = 0``. Defaults to zero for energy-conserving
             model runs.
+        precipitation: Liquid precipitation rate [kg/m^2/s] (equivalently
+            mm/s of water). Liquid-phase only; frozen precipitation is
+            out of scope and will trigger a load-time warning if any
+            sample has ``temperature < 273.15 K`` while ``precipitation
+            > 0``. The SMB consumes this as ``P_infil`` -- the future
+            canopy-throughfall hook will substitute ``P - dW_c/dt`` for
+            this value when canopy interception is reintroduced.
     """
     wind_speed: FloatOrArray = 0.0
     temperature: FloatOrArray = 0.0
@@ -72,6 +79,7 @@ class AtmosphericState:
     lw_out: FloatOrArray = 0.0
     radiation_net: FloatOrArray = 0.0
     seb_storage: FloatOrArray = 0.0
+    precipitation: FloatOrArray = 0.0
 
 @dataclass
 class SoilState:
@@ -104,6 +112,10 @@ class SurfaceFluxes:
         sensible_heat: Sensible heat flux [W/m^2].
         latent_heat: Latent heat flux [W/m^2].
         ground_heat: Ground heat flux [W/m^2].
+        runoff: Saturation-excess surface runoff [kg/m^2/s]. Positive
+            values are water lost from the column when precipitation
+            exceeds the soil's ability to absorb water at saturation
+            (drainage + evaporation). Zero otherwise.
     """
     kinematic_heat: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
@@ -114,6 +126,8 @@ class SurfaceFluxes:
     latent_heat: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
     ground_heat: NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(1))
+    runoff: NDArray[np.float64] = field(
         default_factory=lambda: np.zeros(1))
 
 @dataclass

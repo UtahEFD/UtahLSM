@@ -105,10 +105,11 @@ def test_validate_forcing_data_clips_small_boundary_excursions() -> None:
     atm_p = np.array([[49950.0, 110050.0]])
     sw_in = np.array([[-2.0, 1410.0]])
     lw_in = np.array([[95.0, 605.0]])
+    precip = np.array([[0.0, 0.0]])
 
     input_obj._validate_forcing_data(
         atm_U, atm_T, atm_q, atm_p,
-        sw_in, lw_in, _ntime=1)
+        sw_in, lw_in, precip, _ntime=1)
 
     assert_allclose(atm_U, np.array([[1e-4, 50.0]]))
     assert_allclose(atm_T, np.array([[200.0, 350.0]]))
@@ -130,6 +131,7 @@ def test_validate_forcing_data_raises_on_large_violation() -> None:
             atm_p=np.array([[101325.0]]),
             sw_in=np.array([[300.0]]),
             lw_in=np.array([[350.0]]),
+            precip=np.array([[0.0]]),
             _ntime=1,
         )
 

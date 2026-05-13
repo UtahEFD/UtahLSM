@@ -431,6 +431,13 @@ class Input:
                     if seb_storage_var is not None
                     else np.zeros_like(sw_in, dtype=float)
                 )
+                precip_var = metfile.variables.get('precip')
+                if precip_var is not None:
+                    precip = precip_var[:]
+                else:
+                    precip = np.zeros_like(sw_in, dtype=float)
+                    self.logger.info(
+                        '--- precip not in forcing; defaulting to zero')
 
                 ncol = self.grid.nx * self.grid.ny
                 ny = self.grid.ny
@@ -474,10 +481,11 @@ class Input:
                 sw_in = _reshape_forcing(sw_in, "sw_in")
                 lw_in = _reshape_forcing(lw_in, "lw_in")
                 seb_storage = _reshape_forcing(seb_storage, "seb_storage")
+                precip = _reshape_forcing(precip, "precip")
 
                 # Validate forcing data and clip only minor boundary excursions.
                 self._validate_forcing_data(atm_U, atm_T, atm_q, atm_p,
-                                            sw_in, lw_in, ntime)
+                                            sw_in, lw_in, precip, ntime)
                 if not np.all(np.isfinite(seb_storage)):
                     raise ValueError(
                         "Offline forcing seb_storage must contain only "
@@ -489,7 +497,8 @@ class Input:
                         wind_speed=atm_U[i], temperature=atm_T[i],
                         specific_humidity=atm_q[i], pressure=atm_p[i],
                         sw_in=sw_in[i], lw_in=lw_in[i],
-                        seb_storage=seb_storage[i])
+                        seb_storage=seb_storage[i],
+                        precipitation=precip[i])
                     for i in range(ntime)
                 ]
 
@@ -505,6 +514,7 @@ class Input:
                                atm_q: NDArray[np.float64], atm_p: NDArray[np.float64],
                                sw_in: NDArray[np.float64],
                                lw_in: NDArray[np.float64],
+                               precip: NDArray[np.float64],
                                _ntime: int) -> None:
         """Validates atmospheric forcing data for physical consistency.
 
@@ -520,6 +530,7 @@ class Input:
             atm_p: Pressure array with one value per time step [Pa].
             sw_in: Downwelling shortwave radiation [W/m²].
             lw_in: Downwelling longwave radiation [W/m²].
+            precip: Liquid precipitation rate [kg/m^2/s].
             _ntime: Number of time steps in forcing arrays (unused but kept for
                 API compatibility with other validation functions).
 
@@ -581,6 +592,24 @@ class Input:
         issues_found |= _clip_or_raise(
             lw_in, name='LW_in', lower=100.0, upper=600.0,
             lower_tol=10.0, upper_tol=10.0, units='W/m^2')
+        issues_found |= _clip_or_raise(
+            precip, name='precip', lower=0.0, upper=0.05,
+            lower_tol=1e-6, upper_tol=1e-3, units='kg/m^2/s')
+
+        if not np.all(np.isfinite(precip)):
+            raise ValueError(
+                "Offline forcing precip must contain only finite values.")
+
+        cold_precip = (atm_T < 273.15) & (precip > 0.0)
+        if np.any(cold_precip):
+            count = int(np.count_nonzero(cold_precip))
+            first_idx = int(np.flatnonzero(cold_precip.ravel())[0])
+            self.logger.warning(
+                'Cold-temperature precipitation detected in %d sample(s) '
+                '(first at flat index %d): atm_T < 273.15 K while '
+                'precip > 0. UtahLSM treats all precipitation as liquid; '
+                'frozen precipitation is not supported.',
+                count, first_idx)
 
         if issues_found:
             self.logger.info(
