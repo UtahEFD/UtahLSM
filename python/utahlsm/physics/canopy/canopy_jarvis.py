@@ -196,13 +196,27 @@ class CanopyJarvis(Canopy):
     ) -> NDArray[np.float64]:
         """f4(θ_root) — root-zone moisture stress.
 
-        Linear ramp from 0 at θ_wilt to 1 at θ_fc, computed from the
-        root-fraction-weighted moisture, wilting point, and field
-        capacity. Broadcasting handles both (nz,) and (nz, ncol)
-        soil-property arrays.
+        Linear ramp from 0 at θ_wilt to 1 at θ_fc, computed per layer and
+        then integrated over the root distribution. Evaluating the stress
+        before root averaging preserves wet-layer availability across
+        mixed-texture columns where θ_wilt and θ_fc vary strongly with depth.
         """
-        theta_r = self.root_zone_mean(soil_moisture)
-        theta_wilt_r = self.root_zone_mean(theta_wilt)
-        theta_fc_r = self.root_zone_mean(theta_fc)
-        denom = np.maximum(theta_fc_r - theta_wilt_r, 1e-6)
-        return np.clip((theta_r - theta_wilt_r) / denom, 0.0, 1.0)
+        theta = np.asarray(soil_moisture, dtype=float)
+        if theta.ndim == 1:
+            theta = theta[:, None]
+        wilt = np.asarray(theta_wilt, dtype=float)
+        if wilt.ndim == 1:
+            wilt = wilt[:, None]
+        fc = np.asarray(theta_fc, dtype=float)
+        if fc.ndim == 1:
+            fc = fc[:, None]
+
+        layer_stress = np.clip(
+            (theta - wilt) / np.maximum(fc - wilt, 1e-6),
+            0.0,
+            1.0,
+        )
+        return cast(
+            NDArray[np.float64],
+            np.sum(self.root_fraction * layer_stress, axis=0),
+        )

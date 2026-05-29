@@ -156,6 +156,8 @@ class UtahLSM:
         self.sfc_state.moisture = np.array(
             self.soil_state.moisture[0], copy=True)
 
+        self._prepare_precipitation_for_timestep()
+
         # Solve surface energy and moisture budgets
         self._solve_surface_coupling()
 
@@ -214,6 +216,11 @@ class UtahLSM:
         self.atm_state.seb_storage = np.zeros(self.ncol)
         self.atm_state.precipitation = np.zeros(self.ncol)
         self.sfc_state.fluxes.runoff = np.zeros(self.ncol)
+        self._soil_precipitation = np.zeros(self.ncol)
+        self._precipitation_prepared = False
+        # Infiltrated water flux [kg/m^2/s] (post-interception, post-runoff),
+        # set by the SMB and consumed by the rain heat-advection source.
+        self._infiltration_flux = np.zeros(self.ncol)
 
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
@@ -361,11 +368,44 @@ class UtahLSM:
             self.atm_state.precipitation[:] = precipitation
         else:
             self.atm_state.precipitation = precipitation
+        self._precipitation_prepared = False
         RD = c.thermodynamic.GAS_CONSTANT_DRY
         EVT = c.thermodynamic.EPSILON_VIRTUAL_TEMPERATURE
         Tv = self.atm_state.temperature * (
             1.0 + EVT * self.atm_state.specific_humidity)
         self.sfc_state.air_density = self.atm_state.pressure / (RD * Tv)
+
+    def _prepare_precipitation_for_timestep(self) -> None:
+        """Routes liquid precipitation through canopy storage once per step.
+
+        The raw forcing remains on ``atm_state.precipitation`` for output.
+        The cached ``_soil_precipitation`` is throughfall plus bare-ground
+        precipitation, and is what the SMB consumes during Picard coupling.
+        """
+        P_total = np.asarray(self.atm_state.precipitation, dtype=float)
+        soil_precip = np.array(P_total, copy=True)
+
+        canopy = getattr(self, 'canopy', None)
+        dt = float(getattr(self, 'tstep', 0.0))
+        if canopy is not None and dt > 0.0:
+            storage = np.asarray(self.canopy_state.water_storage, dtype=float)
+            capacity = np.asarray(self.canopy_state.water_capacity, dtype=float)
+            room = np.maximum(capacity - storage, 0.0)
+            interception_potential = np.maximum(P_total, 0.0) * canopy.veg_fraction
+            interception = np.minimum(interception_potential, room / dt)
+            self.canopy_state.water_storage[:] = np.clip(
+                storage + interception * dt,
+                0.0,
+                capacity,
+            )
+            soil_precip = P_total - interception
+
+        cached_precip = getattr(self, '_soil_precipitation', None)
+        if cached_precip is None or np.asarray(cached_precip).shape != soil_precip.shape:
+            self._soil_precipitation = np.array(soil_precip, copy=True)
+        else:
+            self._soil_precipitation[:] = soil_precip
+        self._precipitation_prepared = True
 
     def _refresh_radiation_diagnostics(self, sfc_T: np.ndarray) -> None:
         """Updates outgoing radiation and net radiation on atm_state.
@@ -1092,6 +1132,25 @@ class UtahLSM:
 
         return np.asarray(rad_net - storage - ground_heat - sensible - latent)
 
+    @staticmethod
+    def _moisture_face_conductivity(
+        K_upper: np.ndarray,
+        K_lower: np.ndarray,
+        psi_upper: np.ndarray,
+        psi_lower: np.ndarray,
+        dz: float,
+    ) -> np.ndarray:
+        """Lagged hydraulic conductivity at a vertical soil interface.
+
+        The high-conductivity wetting-front branch is selected from the
+        Darcy driving term, not from volumetric moisture ordering. That
+        matters at texture breaks where clay can hold a larger θ than
+        silty loam at the same or lower matric potential.
+        """
+        K_geom = np.sqrt(np.maximum(K_upper * K_lower, 0.0))
+        darcy_drive = 1.0 - (psi_lower - psi_upper) / dz
+        return np.where(darcy_drive > 0.0, K_upper, K_geom)
+
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB) for surface moisture.
 
@@ -1103,36 +1162,45 @@ class UtahLSM:
             R(θ_sfc) = E(θ_sfc, T_sfc)
                        + rho_w K_mid (θ_sfc) [ (ψ(θ_sfc) - ψ_1) / Δz + 1 ]
                        - P_eff
+                       + rho_w Δz (θ_sfc - θ_old,0) / Δt
 
         Sign convention: E > 0 is upward (loss to atmosphere); the Darcy
         term > 0 is downward gravity drainage; P_eff > 0 is downward
-        mass input that infiltrates into the soil. P_eff enters with a
-        minus sign because it opposes E in the surface mass balance.
+        mass input that infiltrates into the soil. Positive storage is
+        water retained in the top soil control volume. P_eff enters with
+        a minus sign because it opposes E, drainage, and storage in the
+        surface mass balance.
 
-        Runoff (saturation excess) is computed before Brent as
-        ``runoff = max(0, P - rho_w * K_sat_top)``. The soil cannot
-        infiltrate water faster than its saturated drainage capacity
-        ``rho_w * K_sat_top`` (kg/m^2/s); any precipitation in excess of
-        that bound becomes surface runoff and is excluded from the SMB
-        residual. ``P_eff = P - runoff`` is what the SMB sees.
+        Runoff has two components. Infiltration-excess (Hortonian) runoff
+        removes any rain rate exceeding the gravity-limited saturated
+        infiltration capacity ``rho_w * K_sat`` of the surface soil, so an
+        intense burst cannot be buffered as storage in the thin top cell.
+        The remaining rate enters the residual; saturation-excess runoff
+        is then diagnosed from the SMB transport limit if the wet endpoint
+        still cannot carry it. Both excesses are accumulated into
+        ``runoff`` and removed from the effective input ``P_eff``.
 
-        ``P_eff`` is the canopy-throughfall hook: when canopy
-        interception is reintroduced, this becomes
-        ``P - dW_c/dt - runoff`` -- the residual structure is unchanged.
+        In canopy mode, the precipitation entering this residual is
+        throughfall after filling the intercepted-water store. In bare-soil
+        mode, it is the raw precipitation forcing.
 
         At θ_sfc = θ_residual: K → 0, ψ → -∞, gnd_q → 0, so
         R ≈ -rho_a atm_q u* f_h ≤ 0 (before the residual-endpoint
         regularization).
-        At θ_sfc = θ_porosity: K → K_sat, ψ → 0, gnd_q is saturated, so
-        R > 0. The monotonic sign change guarantees a bracketed root,
-        which Brent's method finds robustly - including the dry-soil
-        regime where the previous ψ-inversion approach was ill-conditioned.
+        At θ_sfc = θ_porosity, after any runoff adjustment: K → K_sat,
+        ψ → 0, gnd_q is saturated, so R ≥ 0. The sign change guarantees
+        a bracketed root, which Brent's method finds robustly - including
+        the dry-soil regime where the previous ψ-inversion approach was
+        ill-conditioned.
         """
         RHO_W = c.water.DENSITY
 
         z_s = self.input.surface.z_s
         z_t = self.input.surface.z_t
-        dz = self.input.grid.z[0] - self.input.grid.z[1]
+        dz = abs(self.input.grid.z[0] - self.input.grid.z[1])
+        dt = float(self.tstep)
+        if dt <= 0.0:
+            raise ValueError('SMB solve requires a positive timestep.')
 
         atm_p = self.atm_state.pressure
         atm_q = self.atm_state.specific_humidity
@@ -1142,20 +1210,23 @@ class UtahLSM:
         rho_a = self.sfc_state.air_density
         fh = self.sfc.fh(z_s, z_t, obukhov_l)
 
-        # Saturation-excess runoff: rain in excess of the soil's
-        # saturated drainage capacity at the top layer is shed as
-        # runoff and not seen by the SMB. The drainage capacity is the
-        # gravity-driven Darcy flux at saturation, rho_w * K_sat.
-        P_total = np.asarray(self.atm_state.precipitation, dtype=float)
-        K_sat_top = float(np.asarray(self.soil.properties.K_sat)[0])
-        infil_cap = RHO_W * K_sat_top
-        runoff = np.maximum(P_total - infil_cap, 0.0)
-        P_eff = P_total - runoff
+        # Use canopy throughfall when the timestep has been prepared by
+        # run(); direct unit tests and partial callers fall back to raw
+        # precipitation.
+        precip_source = (
+            self._soil_precipitation
+            if getattr(self, '_precipitation_prepared', False)
+            else self.atm_state.precipitation
+        )
+        P_total = np.asarray(precip_source, dtype=float)
+        runoff = np.zeros_like(P_total, dtype=float)
+        P_eff = np.array(P_total, copy=True)
 
         residual_q = float(self.soil.properties.residual[0])
         porosity = float(self.soil.properties.porosity[0])
 
         # Subsurface properties (fixed during SMB solve)
+        theta_old0: np.ndarray = np.asarray(self.soil_state.moisture)[0]
         psi1: np.ndarray = np.asarray(self.soil.water_potential(self.soil_state.moisture))[1]
         K1: np.ndarray = np.asarray(self.soil.conductivity_moisture(self.soil_state.moisture))[1]
 
@@ -1165,21 +1236,29 @@ class UtahLSM:
         else:
             f_veg = np.zeros_like(sfc_T)
 
-        def smb_residual(theta: np.ndarray) -> np.ndarray:
+        def smb_capacity(theta: np.ndarray) -> np.ndarray:
             theta_c = np.clip(theta, residual_q, porosity)
-            psi0 = self.soil.water_potential(theta_c, level=0)
-            K0 = self.soil.conductivity_moisture(theta_c, level=0)
-            # Geometric mean: K_h spans many orders of magnitude with
-            # moisture, so arithmetic/harmonic means are dominated by the
-            # wetter node. Geometric is the standard LSM pragmatic choice.
-            K_mid = np.maximum(np.sqrt(K0 * K1), 1e-14)
+            psi0 = np.asarray(
+                self.soil.water_potential(theta_c, level=0), dtype=float
+            )
+            K0 = np.asarray(
+                self.soil.conductivity_moisture(theta_c, level=0), dtype=float
+            )
+            K_mid = np.maximum(
+                self._moisture_face_conductivity(K0, K1, psi0, psi1, dz),
+                1e-14,
+            )
             gnd_q = self.soil.surface_specific_humidity(sfc_T, theta_c, atm_p)
             # SMB is a bare-soil top-layer balance; transpiration is
             # removed from the root-zone moisture budget (diffusion RHS),
             # not the surface flux residual.
             E_soil = (1.0 - f_veg) * rho_a * (gnd_q - atm_q) * ust * fh
             darcy = RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
-            return np.asarray(E_soil + darcy - P_eff)
+            return np.asarray(E_soil + darcy)
+
+        def smb_residual(theta: np.ndarray) -> np.ndarray:
+            storage = RHO_W * dz * (theta - theta_old0) / dt
+            return np.asarray(smb_capacity(theta) - P_eff + storage)
 
         # Shrink the bracket slightly off the physical bounds to keep
         # ψ(θ) and K(θ) finite and well-defined at the endpoints.
@@ -1187,6 +1266,39 @@ class UtahLSM:
         span = porosity - residual_q
         a = np.full_like(sfc_T, residual_q + eps * span)
         b = np.full_like(sfc_T, porosity - eps * span)
+
+        # Infiltration-excess (Hortonian) runoff. Rain in excess of the
+        # surface's saturated infiltration capacity ``I_max`` cannot enter
+        # the column and is shed as runoff. ``I_max`` is the
+        # gravity-limited (unit-gradient) Darcy flux at a saturated
+        # surface, ``rho_w * K_sat``. This represents the sealed/saturated
+        # surface limit under intense rain: raindrop-impact surface
+        # sealing and sub-grid saturation heterogeneity hold grid-scale
+        # infiltration near K_sat. The capillary-suction enhancement is
+        # deliberately excluded - it is transient, and on a fine near-
+        # surface grid the discrete suction gradient against a dry
+        # subsurface is enormous and would defeat the cap entirely.
+        # Evaluating conductivity at the wet endpoint also avoids the
+        # singular dry-end ψ/K that made an earlier K_sat pre-cap
+        # ill-conditioned. The remainder feeds the saturation-excess
+        # balance below.
+        K0_sat = np.asarray(
+            self.soil.conductivity_moisture(b, level=0), dtype=float
+        )
+        infil_capacity = RHO_W * K0_sat
+        infil_excess = np.where(
+            P_eff > 0.0, np.maximum(P_eff - infil_capacity, 0.0), 0.0
+        )
+        runoff = runoff + infil_excess
+        P_eff = P_eff - infil_excess
+
+        res_a = smb_residual(a)
+        res_b = smb_residual(b)
+        too_much_rain = (res_a * res_b > 0.0) & (res_b < 0.0) & (P_eff > 0.0)
+        if np.any(too_much_rain):
+            extra_runoff = np.minimum(P_eff, -res_b)
+            runoff = np.where(too_much_rain, runoff + extra_runoff, runoff)
+            P_eff = np.where(too_much_rain, P_eff - extra_runoff, P_eff)
 
         iter_max = self.input.numerics.iterations.smb_flux
         tol = self.input.numerics.tolerances.smb_flux
@@ -1203,6 +1315,10 @@ class UtahLSM:
 
         self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)
         self.sfc_state.fluxes.runoff[:] = runoff
+        # Water that actually entered the column this step (rain minus
+        # interception minus runoff). Consumed by the rain heat-advection
+        # source in the soil heat solve.
+        self._infiltration_flux = np.maximum(P_eff, 0.0)
 
     def _compute_fluxes(self, sfc_T: FloatOrArray, sfc_q: FloatOrArray) -> None:
         """Computes surface fluxes using Monin-Obukhov Similarity Theory.
@@ -1473,6 +1589,54 @@ class UtahLSM:
         else:
             state_field[:] = field
 
+    def _rain_advection_source(self) -> Optional[np.ndarray]:
+        """Sensible-heat source from infiltrating rain, per soil layer.
+
+        Liquid precipitation enters the soil near the near-surface air
+        temperature, which during convective rain is several K cooler than
+        the warm daytime soil. The infiltrated water (post-interception,
+        post-runoff) carries that enthalpy deficit into the column. Soil
+        heat is otherwise pure conduction, so without this term the model
+        under-cools during and after rain.
+
+        The enthalpy flux ``c_w * P_infil * (T_rain - T)`` [W/m^2] is
+        deposited in the top prognostic layer (index 1; layer 0 is the
+        Dirichlet skin BC) and converted to a temperature tendency [K/s]
+        with that layer's volumetric heat capacity. This is the
+        surface-input ("term 1") advection only; it does not advect heat
+        between layers along the water flux, so its reach below the top
+        layer is limited to conduction.
+
+        Returns:
+            A (nz, ncol) temperature tendency [K/s], or None when there is
+            no infiltration this step.
+        """
+        P_infil = np.asarray(
+            getattr(self, '_infiltration_flux', 0.0), dtype=float
+        )
+        if not np.any(P_infil > 0.0):
+            return None
+
+        # Specific heat of liquid water [J/kg/K], consistent with the
+        # volumetric value used for the soil heat capacity.
+        c_w = c.water.VOLUMETRIC_HEAT_CAPACITY / c.water.DENSITY
+        nz = self.input.grid.nz
+        dz = abs(self.input.grid.z[0] - self.input.grid.z[1])
+
+        T_rain = np.asarray(self.atm_state.temperature, dtype=float)
+        T_layer = np.asarray(self.soil_state.temperature)[1]
+        c_vol = np.asarray(
+            self.soil.heat_capacity(self.soil_state.moisture), dtype=float
+        )[1]
+
+        q_rain = c_w * P_infil * (T_rain - T_layer)          # [W/m^2]
+        source = np.zeros((nz, self.ncol))
+        source[1] = np.divide(
+            q_rain, c_vol * dz,
+            out=np.zeros_like(q_rain), where=c_vol > 0.0,
+        )
+        return source
+
     def _solve_diffusion_heat(self) -> None:
         """Solves the soil heat diffusion equation using a theta scheme.
 
@@ -1481,13 +1645,18 @@ class UtahLSM:
         two differ by ``G * r_canopy_thermal``. With no canopy
         resistance the two are identical, recovering the original
         bare-skin behaviour.
+
+        Infiltrating rain advects sensible heat into the top soil layer
+        (see ``_rain_advection_source``); with no precipitation the source
+        is omitted and the solve is pure conduction.
         """
         self._ensure_writable_soil_field("temperature")
         self._solve_diffusion(
             state_field=self.soil_state.temperature,
             get_diffusivity=self.soil.diffusivity_thermal,
             sfc_boundary=self.sfc_state.soil_top_temperature,
-            field_name='temperature'
+            field_name='temperature',
+            source_term=self._rain_advection_source(),
         )
 
     def _solve_mixed_moisture(
@@ -1599,7 +1768,9 @@ class UtahLSM:
             K_node = np.asarray(
                 self.soil.conductivity_moisture(theta_iter), dtype=float
             )
-            K_face = np.sqrt(np.maximum(K_node[:-1] * K_node[1:], 0.0))
+            K_face = self._moisture_face_conductivity(
+                K_node[:-1], K_node[1:], psi_iter[:-1], psi_iter[1:], dx
+            )
 
             q_up = K_face * (1.0 - (psi_iter[1:] - psi_iter[:-1]) / dx)
             q_dn = np.zeros_like(q_up)

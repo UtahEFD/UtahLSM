@@ -155,9 +155,11 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 ### `soil`
 
 `properties`
-: Name of the bundled soil property table, or a path to a custom JSON file. Bundled mineral-only datasets: `clapp-hornberger`, `cosby`, `rawls-brakensiek`. Bundled organic peat dataset: `letts` (fibric/hemic/sapric tiers from Letts et al. 2000). Bundled composites that join a mineral set with `letts`: `clapp-hornberger_letts`, `cosby_letts`, `rawls-brakensiek_letts`. The mineral datasets do not contain a `peat` entry — use a `*_letts` composite (or a custom dataset that includes `letts`) when the column has organic horizons.
+: Name of the bundled soil property table, or a path to a custom JSON file. Public bundled datasets are `clapp-hornberger`, `cosby`, and `rawls-brakensiek`. These are the base hydraulic-property tables exposed in the namelist; internally, each bundled dataset is supplemented with Peters-Lidard et al. (1998) texture-class quartz fractions for Johansen thermal conductivity and Letts et al. (2000) peat tiers (`peat_fibric`, `peat_hemic`, `peat_sapric`) for organic layers.
 
-A dataset JSON may declare `"includes": ["a", "b", ...]` to merge soil types from other datasets (bundled names or paths). The current dataset's own `soil_types` are merged last and take precedence. Conflicts are governed by `"on_conflict"`: `"error"` (default), `"prefer_first"`, or `"prefer_last"`.
+When `thermal_conductivity_model` is `"johansen"`, custom mineral soil types must provide `quartz_fraction`. Missing quartz is allowed only for named `peat_*` organic layers; otherwise the model raises a namelist error instead of guessing.
+
+A dataset JSON may declare `"includes": ["a", "b", ...]` to merge soil types from other public bundled datasets or file paths. The current dataset's own `soil_types` are merged last and take precedence. Conflicts are governed by `"on_conflict"`: `"error"` (default), `"prefer_first"`, or `"prefer_last"`.
 
 `model`
 : Constitutive soil model selector:

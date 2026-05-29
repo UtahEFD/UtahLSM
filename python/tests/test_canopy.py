@@ -264,6 +264,23 @@ class TestJarvisStressFunctions:
         f = jarvis_single._f_moisture(theta, wilt, fc)
         assert np.isclose(f, 1.0)
 
+    def test_f_moisture_mixed_texture_uses_layer_availability(
+        self,
+        jarvis_single: CanopyJarvis,
+    ) -> None:
+        nz = 11
+        theta = np.full(nz, 0.1)
+        wilt = np.full(nz, 0.1)
+        fc = np.full(nz, 0.3)
+        theta[3:6] = 0.35
+        wilt[3:6] = 0.30
+        fc[3:6] = 0.40
+
+        f = jarvis_single._f_moisture(theta, wilt, fc)
+
+        expected = 0.5 * np.sum(jarvis_single.root_fraction[3:6, 0])
+        assert np.isclose(f, expected)
+
 
 # ---------------------------------------------------------------------------
 # Compute_resistance end-to-end

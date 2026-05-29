@@ -391,13 +391,13 @@ class TestRootBrent:
     def test_bracket_with_root_at_endpoint(self) -> None:
         """Test when root is exactly at bracket endpoint.
 
-        f(a) = 0 should be detected (though not ideal for numerical methods).
+        f(a) = 0 should be detected as an already-converged root.
         """
         f: Callable[[float], float] = lambda x: x - 2
-        # Bracket with root at left endpoint
-        with pytest.raises(ValueError, match="Root not bracketed"):
-            # f(2) = 0, f(3) > 0, so f(a)*f(b) = 0 (triggers error)
-            root_brent(f, 2.0, 3.0, tol=1e-6)
+        root, converged = root_brent(f, 2.0, 3.0, tol=1e-6)
+
+        assert converged
+        assert root == 2.0
 
     def test_near_vertical_function(self) -> None:
         """Test with function that has steep derivative near root.
@@ -535,7 +535,7 @@ class TestRootBrentVec:
 
     def test_unbracketed_root_error(self) -> None:
         """Raise immediately when any entry is not properly bracketed."""
-        roots = np.array([1.5, 2.0, -0.75])
+        roots = np.array([1.5, 4.0, -0.75])
         a = np.array([0.0, 2.0, -1.75])
         b = np.array([3.0, 3.0, 0.25])
 
@@ -544,3 +544,17 @@ class TestRootBrentVec:
 
         with pytest.raises(ValueError, match="Root not bracketed"):
             root_brent_vec(f, a, b, tol=1e-8)
+
+    def test_endpoint_roots_converge(self) -> None:
+        """Endpoint roots are valid brackets in vector Brent solves."""
+        roots = np.array([1.5, 2.0, -0.75])
+        a = np.array([0.0, 2.0, -1.75])
+        b = np.array([3.0, 3.0, -0.75])
+
+        def f(x: NDArray[Any]) -> NDArray[Any]:
+            return np.asarray(x - roots)
+
+        root, converged = root_brent_vec(f, a, b, tol=1e-8)
+
+        assert np.all(converged)
+        assert_allclose(root, roots, rtol=1e-6, atol=1e-8)

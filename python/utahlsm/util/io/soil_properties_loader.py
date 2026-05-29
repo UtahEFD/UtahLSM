@@ -14,7 +14,7 @@
 """Loader for externalized soil property datasets.
 
 This module provides functionality to load soil property datasets from JSON files.
-Properties can be loaded from bundled default datasets (referenced by name) or
+Properties can be loaded from public bundled datasets (referenced by name) or
 from custom files specified by file path.
 
 A dataset may also reference other datasets via an ``includes`` field; the
@@ -55,21 +55,40 @@ class SoilPropertiesLoader:
     """Loads and validates soil property datasets from JSON files.
 
     Supports loading from:
-    - Bundled datasets referenced by name (e.g., 'cosby')
+    - Public bundled hydraulic datasets referenced by name (e.g., 'cosby')
     - Custom files specified by absolute or relative path
-    - Composite datasets that ``include`` other datasets
+    - Composite custom datasets that ``include`` other datasets
     """
 
-    # Bundled dataset names (must match filenames in utahlsm/data/soil/)
-    BUNDLED_DATASETS = [
-        'clapp-hornberger',
-        'clapp-hornberger_letts',
-        'cosby',
-        'cosby_letts',
-        'rawls-brakensiek',
-        'rawls-brakensiek_letts',
-        'letts',
-    ]
+    # User-facing bundled dataset names (must match filenames in
+    # utahlsm/data/soil/). Internal supplements such as Letts peat properties
+    # are intentionally omitted from this public list.
+    PUBLIC_BUNDLED_DATASETS = (
+        "clapp-hornberger",
+        "cosby",
+        "rawls-brakensiek",
+    )
+    BUNDLED_DATASETS = list(PUBLIC_BUNDLED_DATASETS)
+    _INTERNAL_BUNDLED_DATASETS = (
+        *PUBLIC_BUNDLED_DATASETS,
+        "letts",
+    )
+    MINERAL_BASE_DATASETS = set(PUBLIC_BUNDLED_DATASETS)
+    # Peters-Lidard et al. (1998) texture-class quartz fractions used by
+    # the Noah/Peters-Lidard Johansen thermal-conductivity implementation.
+    PETERS_LIDARD_QUARTZ_FRACTIONS = {
+        "sand": 0.92,
+        "loamy_sand": 0.82,
+        "sandy_loam": 0.60,
+        "silty_loam": 0.25,
+        "loam": 0.40,
+        "sandy_clay_loam": 0.60,
+        "silty_clay_loam": 0.10,
+        "clay_loam": 0.35,
+        "sandy_clay": 0.52,
+        "silty_clay": 0.10,
+        "clay": 0.25,
+    }
 
     @staticmethod
     def load(properties_spec: str) -> dict[str, dict[str, float]]:
@@ -90,7 +109,9 @@ class SoilPropertiesLoader:
                 a soil-type conflict cannot be resolved by the on_conflict
                 policy.
         """
-        merged, _ = SoilPropertiesLoader._resolve(properties_spec, _seen=set())
+        merged, _ = SoilPropertiesLoader._resolve(
+            properties_spec, _seen=set(), _allow_internal=False
+        )
         return merged
 
     @staticmethod
@@ -102,6 +123,7 @@ class SoilPropertiesLoader:
     def _resolve(
         spec: str,
         _seen: set[str],
+        _allow_internal: bool = False,
     ) -> tuple[dict[str, dict[str, float]], str]:
         """Recursively resolve a dataset spec to merged soil_types.
 
@@ -110,32 +132,36 @@ class SoilPropertiesLoader:
         """
         canonical = SoilPropertiesLoader._canonical_key(spec)
         if canonical in _seen:
-            chain = ' -> '.join([*_seen, canonical])
+            chain = " -> ".join([*_seen, canonical])
             raise NamelistError(
-                f'Circular include detected in soil property datasets: {chain}'
+                f"Circular include detected in soil property datasets: {chain}"
             )
         _seen = _seen | {canonical}
 
-        data, source = SoilPropertiesLoader._load_raw(spec)
+        data, source = SoilPropertiesLoader._load_raw(spec, _allow_internal)
         SoilPropertiesLoader._validate(data, source)
 
-        on_conflict = data.get('on_conflict', 'error')
+        on_conflict = data.get("on_conflict", "error")
         merged: dict[str, dict[str, float]] = {}
 
-        for include_spec in data.get('includes', []):
-            child_types, _ = SoilPropertiesLoader._resolve(include_spec, _seen)
+        for include_spec in data.get("includes", []):
+            child_types, _ = SoilPropertiesLoader._resolve(
+                include_spec, _seen, _allow_internal=_allow_internal
+            )
             SoilPropertiesLoader._merge(
-                merged, child_types, on_conflict, source, include_spec)
+                merged, child_types, on_conflict, source, include_spec
+            )
 
-        own_types = cast(
-            dict[str, dict[str, float]], data.get('soil_types', {}))
+        own_types = cast(dict[str, dict[str, float]], data.get("soil_types", {}))
         if own_types:
-            SoilPropertiesLoader._merge(
-                merged, own_types, on_conflict, source, source)
+            SoilPropertiesLoader._merge(merged, own_types, on_conflict, source, source)
+
+        if not _is_file_path(spec):
+            SoilPropertiesLoader._apply_bundled_supplements(spec, merged, _seen)
 
         if not merged:
             raise NamelistError(
-                f'Soil property dataset {source} resolved to no soil types'
+                f"Soil property dataset {source} resolved to no soil types"
             )
 
         return merged, canonical
@@ -153,9 +179,9 @@ class SoilPropertiesLoader:
             if soil_type not in target:
                 target[soil_type] = props
                 continue
-            if policy == 'prefer_first':
+            if policy == "prefer_first":
                 continue
-            if policy == 'prefer_last':
+            if policy == "prefer_last":
                 target[soil_type] = props
                 continue
             raise NamelistError(
@@ -166,40 +192,81 @@ class SoilPropertiesLoader:
             )
 
     @staticmethod
-    def _load_raw(spec: str) -> tuple[dict[str, Any], str]:
+    def _apply_bundled_supplements(
+        dataset_name: str,
+        soil_types: dict[str, dict[str, float]],
+        seen: set[str],
+    ) -> None:
+        """Attach bundled thermal/organic data to mineral base datasets.
+
+        The user-facing bundled choices stay as the three mineral hydraulic
+        datasets. Internally they carry the extra data required by supported
+        thermal and organic soil options:
+
+        * Peters-Lidard texture-class quartz fractions for Johansen thermal
+          conductivity.
+        * Letts peat tiers for organic layers.
+        """
+        if dataset_name not in SoilPropertiesLoader.MINERAL_BASE_DATASETS:
+            return
+
+        for (
+            soil_type,
+            quartz_fraction,
+        ) in SoilPropertiesLoader.PETERS_LIDARD_QUARTZ_FRACTIONS.items():
+            if soil_type in soil_types:
+                soil_types[soil_type].setdefault("quartz_fraction", quartz_fraction)
+
+        letts_types, _ = SoilPropertiesLoader._resolve(
+            "letts", seen, _allow_internal=True
+        )
+        for soil_type, props in letts_types.items():
+            soil_types.setdefault(soil_type, props)
+
+    @staticmethod
+    def _load_raw(
+        spec: str, _allow_internal: bool = False
+    ) -> tuple[dict[str, Any], str]:
         """Load and JSON-parse a dataset spec without validation or merging."""
         if _is_file_path(spec):
             return SoilPropertiesLoader._load_file_raw(spec)
-        return SoilPropertiesLoader._load_bundled_raw(spec)
+        return SoilPropertiesLoader._load_bundled_raw(spec, _allow_internal)
 
     @staticmethod
-    def _load_bundled_raw(dataset_name: str) -> tuple[dict[str, Any], str]:
+    def _load_bundled_raw(
+        dataset_name: str, _allow_internal: bool = False
+    ) -> tuple[dict[str, Any], str]:
         """Load a bundled dataset by name (no validation)."""
-        if dataset_name not in SoilPropertiesLoader.BUNDLED_DATASETS:
-            available = ', '.join(SoilPropertiesLoader.BUNDLED_DATASETS)
+        allowed_datasets = (
+            SoilPropertiesLoader._INTERNAL_BUNDLED_DATASETS
+            if _allow_internal
+            else SoilPropertiesLoader.PUBLIC_BUNDLED_DATASETS
+        )
+        if dataset_name not in allowed_datasets:
+            available = ", ".join(SoilPropertiesLoader.PUBLIC_BUNDLED_DATASETS)
             raise NamelistError(
-                f'Soil property dataset {dataset_name} not found. '
-                f'Available bundled datasets: {available}'
+                f"Soil property dataset {dataset_name} not found. "
+                f"Available bundled datasets: {available}"
             )
 
         bundled_path = SoilPropertiesLoader._get_bundled_path(dataset_name)
-        source = f'utahlsm/data/soil/{dataset_name}.json'
+        source = f"utahlsm/data/soil/{dataset_name}.json"
 
         if not bundled_path.is_file():
             raise NamelistError(
-                f'Bundled soil property file not found: {bundled_path}\n'
-                f'Expected location: {source}'
+                f"Bundled soil property file not found: {bundled_path}\n"
+                f"Expected location: {source}"
             )
 
         try:
-            data = json.loads(bundled_path.read_text(encoding='utf-8'))
+            data = json.loads(bundled_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
             raise NamelistError(
-                f'Invalid JSON in soil property resource {source}: {e}'
+                f"Invalid JSON in soil property resource {source}: {e}"
             ) from e
         except OSError as e:
             raise NamelistError(
-                f'Error reading soil property resource {source}: {e}'
+                f"Error reading soil property resource {source}: {e}"
             ) from e
         return data, source
 
@@ -210,66 +277,62 @@ class SoilPropertiesLoader:
 
         if not path.exists():
             raise NamelistError(
-                f'Soil property file not found: {file_path}\n'
-                f'Resolved to: {path}'
+                f"Soil property file not found: {file_path}\nResolved to: {path}"
             )
         if not path.is_file():
-            raise NamelistError(f'Path is not a file: {path}')
+            raise NamelistError(f"Path is not a file: {path}")
 
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
             raise NamelistError(
-                f'Invalid JSON in soil property file {path}: {e}'
+                f"Invalid JSON in soil property file {path}: {e}"
             ) from e
         except OSError as e:
-            raise NamelistError(
-                f'Error reading soil property file {path}: {e}'
-            ) from e
+            raise NamelistError(f"Error reading soil property file {path}: {e}") from e
         return data, str(path)
 
     @staticmethod
-    def _validate(data: dict[str, Any], source: str = 'properties') -> None:
+    def _validate(data: dict[str, Any], source: str = "properties") -> None:
         """Validate loaded properties against schema."""
         try:
-            schema_resource = resources.files('utahlsm.util.io').joinpath(
-                'schema_soil_properties.json')
-            schema = json.loads(schema_resource.read_text(encoding='utf-8'))
+            schema_resource = resources.files("utahlsm.util.io").joinpath(
+                "schema_soil_properties.json"
+            )
+            schema = json.loads(schema_resource.read_text(encoding="utf-8"))
         except Exception as e:
-            raise NamelistError(
-                f'Failed to load soil properties schema: {e}'
-            ) from e
+            raise NamelistError(f"Failed to load soil properties schema: {e}") from e
 
         try:
             jsonschema.validate(instance=data, schema=schema)
         except jsonschema.ValidationError as e:
             raise NamelistError(
-                f'Soil properties validation failed for {source}:\n'
-                f'  Path: {list(e.path)}\n'
-                f'  Message: {e.message}'
+                f"Soil properties validation failed for {source}:\n"
+                f"  Path: {list(e.path)}\n"
+                f"  Message: {e.message}"
             ) from e
         except jsonschema.SchemaError as e:
             raise NamelistError(
-                f'Internal error: soil properties schema is invalid: {e}'
+                f"Internal error: soil properties schema is invalid: {e}"
             ) from e
 
     @staticmethod
     def _get_bundled_path(dataset_name: str) -> ResourcePath:
         """Get the packaged resource for a bundled dataset file."""
         return (
-            resources.files('utahlsm')
-            .joinpath('data')
-            .joinpath('soil')
-            .joinpath(f'{dataset_name}.json')
+            resources.files("utahlsm")
+            .joinpath("data")
+            .joinpath("soil")
+            .joinpath(f"{dataset_name}.json")
         )
 
     @staticmethod
     def _canonical_key(spec: str) -> str:
         """Return a canonical key for cycle detection."""
         if _is_file_path(spec):
-            return f'file:{Path(spec).expanduser().resolve()}'
-        return f'bundled:{spec}'
+            return f"file:{Path(spec).expanduser().resolve()}"
+        return f"bundled:{spec}"
 
 
 def _is_file_path(spec: str) -> bool:
@@ -278,4 +341,4 @@ def _is_file_path(spec: str) -> bool:
     A spec is considered a file path if it contains path separators or
     if it ends with '.json'.
     """
-    return '/' in spec or '\\' in spec or spec.endswith('.json')
+    return "/" in spec or "\\" in spec or spec.endswith(".json")

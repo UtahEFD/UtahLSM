@@ -169,7 +169,7 @@ seb_storage: NDArray[np.float64] = lwd - lwu + swd - swu - shf_obs - lhf_obs - g
 # Write all time-series data
 ############################
 
-metr = nc.Dataset('lsm_offline.nc', 'w')
+metr: nc.Dataset = nc.Dataset('lsm_offline.nc', 'w')
 metr.description = "UtahLSM input file for offline run"
 metr.source = "Jeremy A. Gibbs"
 metr.history = "Created " + time.ctime(time.time())
@@ -272,7 +272,7 @@ namelist['surface']['gustiness'] = 1.0
 namelist['surface']['gustiness_stable_only'] = True
 
 # soil settings
-namelist['soil']['properties'] = "cosby_letts"
+namelist['soil']['properties'] = "cosby"
 namelist['soil']['model'] = "van-genuchten"
 namelist['soil']['thermal_conductivity_model'] = "johansen"
 

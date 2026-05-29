@@ -1,9 +1,0 @@
-{
-  "metadata": {
-    "dataset_name": "rawls-brakensiek_letts",
-    "citation": "Rawls & Brakensiek (1982) for mineral textures + Letts et al. (2000) for organic peat tiers.",
-    "description": "Composite dataset combining Rawls-Brakensiek (1982) mineral USDA textures with Letts (2000) fibric/hemic/sapric peat."
-  },
-  "includes": ["rawls-brakensiek", "letts"],
-  "on_conflict": "error"
-}

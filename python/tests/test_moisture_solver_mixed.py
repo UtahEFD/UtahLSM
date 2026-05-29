@@ -74,3 +74,27 @@ def test_mixed_moisture_solver_applies_sink_term() -> None:
     model._solve_mixed_moisture(source_term=source)
 
     assert np.all(model.soil_state.moisture[1:] < initial[1:])
+
+
+def test_face_conductivity_uses_darcy_direction_at_texture_break() -> None:
+    """Texture jumps must not infer flow direction from θ ordering."""
+    K_upper = np.array([2.0e-6])
+    K_lower = np.array([1.0e-8])
+
+    downward = UtahLSM._moisture_face_conductivity(
+        K_upper,
+        K_lower,
+        psi_upper=np.array([-0.50]),
+        psi_lower=np.array([-0.55]),
+        dz=0.10,
+    )
+    upward = UtahLSM._moisture_face_conductivity(
+        K_upper,
+        K_lower,
+        psi_upper=np.array([-0.70]),
+        psi_lower=np.array([-0.50]),
+        dz=0.10,
+    )
+
+    assert downward[0] == K_upper[0]
+    assert upward[0] == np.sqrt(K_upper[0] * K_lower[0])

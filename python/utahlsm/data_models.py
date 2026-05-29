@@ -34,6 +34,7 @@ from ._types import FloatOrArray, FloatOrArrayLike
 
 # --- State Data Models ---
 
+
 @dataclass
 class AtmosphericState:
     """Holds the state of the atmosphere at a given time step.
@@ -65,10 +66,11 @@ class AtmosphericState:
             mm/s of water). Liquid-phase only; frozen precipitation is
             out of scope and will trigger a load-time warning if any
             sample has ``temperature < 273.15 K`` while ``precipitation
-            > 0``. The SMB consumes this as ``P_infil`` -- the future
-            canopy-throughfall hook will substitute ``P - dW_c/dt`` for
-            this value when canopy interception is reintroduced.
+            > 0``. In canopy mode, this raw forcing first fills the canopy
+            intercepted-water store; the SMB consumes the resulting
+            throughfall. In bare-soil mode, the SMB consumes this directly.
     """
+
     wind_speed: FloatOrArray = 0.0
     temperature: FloatOrArray = 0.0
     specific_humidity: FloatOrArray = 0.0
@@ -80,6 +82,7 @@ class AtmosphericState:
     radiation_net: FloatOrArray = 0.0
     seb_storage: FloatOrArray = 0.0
     precipitation: FloatOrArray = 0.0
+
 
 @dataclass
 class SoilState:
@@ -95,12 +98,13 @@ class SoilState:
             'b11'). Names are lowercase and must match keys in the loaded
             soil properties dataset.
     """
-    temperature: NDArray[np.float64] = field(
-        default_factory=lambda: np.array([]))
-    moisture: NDArray[np.float64] = field(
-        default_factory=lambda: np.array([]))
+
+    temperature: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
+    moisture: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
     type: NDArray[np.object_] = field(
-        default_factory=lambda: np.array([], dtype=object))
+        default_factory=lambda: np.array([], dtype=object)
+    )
+
 
 @dataclass
 class SurfaceFluxes:
@@ -117,18 +121,14 @@ class SurfaceFluxes:
             exceeds the soil's ability to absorb water at saturation
             (drainage + evaporation). Zero otherwise.
     """
-    kinematic_heat: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    kinematic_moisture: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    sensible_heat: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    latent_heat: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    ground_heat: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    runoff: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
+
+    kinematic_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    kinematic_moisture: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    sensible_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    latent_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    ground_heat: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    runoff: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+
 
 @dataclass
 class TurbulenceScales:
@@ -138,10 +138,10 @@ class TurbulenceScales:
         friction_velocity: Friction velocity (u*) [m/s].
         obukhov_length: Obukhov length (L) [m].
     """
-    friction_velocity: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    obukhov_length: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
+
+    friction_velocity: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    obukhov_length: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+
 
 @dataclass
 class SurfaceState:
@@ -172,15 +172,16 @@ class SurfaceState:
         air_density: Moist-air density [kg/m^3] cached once per timestep in
             ``_load_atm_state`` from the atmospheric state.
     """
+
     temperature: FloatOrArray = 0.0
     soil_top_temperature: FloatOrArray = 0.0
     moisture: FloatOrArray = 0.0
     specific_humidity: FloatOrArray = 0.0
     fluxes: SurfaceFluxes = field(default_factory=SurfaceFluxes)
     turbulence: TurbulenceScales = field(default_factory=TurbulenceScales)
-    seb_residual: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
+    seb_residual: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
     air_density: FloatOrArray = 0.0
+
 
 @dataclass
 class CanopyState:
@@ -209,28 +210,19 @@ class CanopyState:
             m^3 soil / s], shape (nz, ncol). Negative sign in the
             moisture budget (sink from soil to canopy).
     """
-    resistance: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    theta_root: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    transpiration: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    wet_evaporation: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    evap_soil: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    water_storage: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    water_capacity: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    latent_veg: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    latent_wet: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    latent_soil: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(1))
-    root_uptake: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros((1, 1)))
+
+    resistance: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    theta_root: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    transpiration: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    wet_evaporation: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    evap_soil: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    water_storage: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    water_capacity: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    latent_veg: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    latent_wet: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    latent_soil: NDArray[np.float64] = field(default_factory=lambda: np.zeros(1))
+    root_uptake: NDArray[np.float64] = field(default_factory=lambda: np.zeros((1, 1)))
+
 
 @dataclass
 class SolverState:
@@ -250,15 +242,13 @@ class SolverState:
         diffusion_g: Super-diagonal buffer, shape (nz - 1, ncol).
         diffusion_r: Right-hand-side buffer, shape (nz - 1, ncol).
     """
+
     conductivity_thermal_mid: FloatOrArray = 0.0
-    diffusion_e: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(0))
-    diffusion_f: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(0))
-    diffusion_g: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(0))
-    diffusion_r: NDArray[np.float64] = field(
-        default_factory=lambda: np.zeros(0))
+    diffusion_e: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
+    diffusion_f: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
+    diffusion_g: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
+    diffusion_r: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
+
 
 @dataclass(frozen=True)
 class ForcingData:
@@ -272,12 +262,15 @@ class ForcingData:
         tstep: The time step interval [s].
         atmos: A list of `AtmosphericState` objects, one for each time step.
     """
+
     ntime: int
     tstep: float
     # A list of atmospheric states, one for each timestep
     atmos: list[AtmosphericState]
 
+
 # --- Configuration Data Models ---
+
 
 @dataclass(frozen=True)
 class GeneralConfig:
@@ -286,7 +279,9 @@ class GeneralConfig:
     Attributes:
         log_level: Logging level for the simulation (e.g., 'info', 'debug').
     """
+
     log_level: str
+
 
 @dataclass(frozen=True)
 class IterationsConfig:
@@ -304,12 +299,14 @@ class IterationsConfig:
             solve.
         coupling: iterations to solve coupled system.
     """
+
     sfc_flux: int
     seb_bracket: int
     seb_root: int
     smb_flux: int
     moisture_picard: int
     coupling: int
+
 
 @dataclass(frozen=True)
 class TolerancesConfig:
@@ -329,6 +326,7 @@ class TolerancesConfig:
         coupling_temp: tolerance for soil temperature in coupling.
         coupling_mois: tolerance for soil moisture in coupling.
     """
+
     sfc_flux: float
     seb_root: float
     smb_flux: float
@@ -336,6 +334,7 @@ class TolerancesConfig:
     moisture_bounds: float
     coupling_temp: float
     coupling_mois: float
+
 
 @dataclass(frozen=True)
 class NumericsConfig:
@@ -347,9 +346,11 @@ class NumericsConfig:
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
+
     heat_diffusion_back_weight: float
     iterations: IterationsConfig
     tolerances: TolerancesConfig
+
 
 @dataclass(frozen=True)
 class TimeConfig:
@@ -361,9 +362,11 @@ class TimeConfig:
         utc_year: The year (UTC) at the start of the simulation.
         julian_day: The starting Julian day of the year.
     """
+
     utc_start: int
     utc_year: int
     julian_day: int
+
 
 @dataclass(frozen=True)
 class GridConfig:
@@ -375,10 +378,12 @@ class GridConfig:
         nz: Number of soil layers (grid points in the z-direction).
         z: Soil layer depths [m].
     """
+
     nx: int
     ny: int
     nz: int
-    z : NDArray[np.float64]
+    z: NDArray[np.float64]
+
 
 @dataclass(frozen=True)
 class SurfaceConfig:
@@ -397,6 +402,7 @@ class SurfaceConfig:
         gustiness: Additional wind-speed magnitude [m/s] added in quadrature.
         gustiness_stable_only: Apply gustiness only when L>=0 if True.
     """
+
     z_o: float
     z_t: float
     z_m: float
@@ -409,20 +415,24 @@ class SurfaceConfig:
     gustiness: float = 0.0
     gustiness_stable_only: bool = True
 
+
 @dataclass(frozen=True)
 class SoilConfig:
     """Soil model configuration.
 
     Attributes:
-        properties: Name of soil property dataset (e.g., 'cosby-1984') or path
-            to custom JSON file.
+        properties: Name of public bundled soil property dataset
+            ('clapp-hornberger', 'cosby', or 'rawls-brakensiek') or path to
+            a custom JSON file.
         model: Soil model selector ('brooks-corey', 'campbell', 'van-genuchten').
         thermal_conductivity_model: Thermal conductivity parameterization.
             Options: 'mccumber-pielke' (default) or 'johansen'.
     """
+
     properties: str
     model: str
-    thermal_conductivity_model: str = 'mccumber-pielke'
+    thermal_conductivity_model: str = "mccumber-pielke"
+
 
 @dataclass(frozen=True)
 class RadiationConfig:
@@ -433,9 +443,11 @@ class RadiationConfig:
         latitude: Site latitude [degrees].
         longitude: Site longitude [degrees].
     """
+
     model: str
     latitude: float
     longitude: float
+
 
 @dataclass(frozen=True)
 class CanopyConfig:
@@ -470,7 +482,8 @@ class CanopyConfig:
         wet_cooling_max: Maximum diagnostic nighttime wet-canopy cooling
             below the soil/radiative skin used for dewfall [K].
     """
-    model: str = 'none'
+
+    model: str = "none"
     lai: FloatOrArrayLike = 0.0
     veg_fraction: FloatOrArrayLike = 0.0
     rooting_depth: FloatOrArrayLike = 0.0
@@ -485,6 +498,7 @@ class CanopyConfig:
     water_capacity_lai: FloatOrArrayLike = 0.2
     wet_cooling_max: FloatOrArrayLike = 3.0
 
+
 @dataclass(frozen=True)
 class OutputConfig:
     """Output file configuration.
@@ -493,5 +507,6 @@ class OutputConfig:
         save: Boolean flag to enable or disable saving output.
         fields: A list of strings specifying which variables to save.
     """
+
     save: bool
     fields: list[str]

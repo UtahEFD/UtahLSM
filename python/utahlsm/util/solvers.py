@@ -153,9 +153,14 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
     fa: float = float(f(a))
     fb: float = float(f(b))
 
-    if fa * fb >= 0:
+    if abs(fa) <= tol:
+        return a, True
+    if abs(fb) <= tol:
+        return b, True
+
+    if fa * fb > 0:
         raise ValueError(
-            'Root not bracketed in solve_root_brent (f(a) * f(b) >= 0).')
+            'Root not bracketed in solve_root_brent (f(a) * f(b) > 0).')
 
     # Ensure 'b' is the best current guess (the one with the function
     # value closer to zero)
@@ -279,8 +284,10 @@ def root_brent_vec(
     fa = f(a)
     fb = f(b)
 
-    # Check bracketing
-    invalid = fa * fb >= 0
+    # Check bracketing. A root exactly at either endpoint is a valid
+    # bracketed solve and should return that endpoint as converged.
+    endpoint_root = (np.abs(fa) <= tol) | (np.abs(fb) <= tol)
+    invalid = (fa * fb > 0) & ~endpoint_root
     if np.any(invalid):
         invalid_idx = np.where(invalid)[0]
         raise ValueError(
@@ -288,6 +295,13 @@ def root_brent_vec(
             f'{invalid_idx.size} of {n} problems at indices '
             f'{invalid_idx.tolist()}.'
         )
+
+    root_at_a = np.abs(fa) <= tol
+    endpoint_value = np.where(root_at_a, a, b)
+    a = np.where(endpoint_root, endpoint_value, a)
+    b = np.where(endpoint_root, endpoint_value, b)
+    fa = np.where(endpoint_root, 0.0, fa)
+    fb = np.where(endpoint_root, 0.0, fb)
 
     # Ensure b has the smaller function value (best guess)
     swap = np.abs(fa) < np.abs(fb)
@@ -299,7 +313,7 @@ def root_brent_vec(
     d = a.copy()
 
     mflag: np.ndarray = np.ones(n, dtype=bool)
-    converged = np.abs(b - a) < tol
+    converged = endpoint_root | (np.abs(b - a) < tol)
 
     for _ in range(iter_max):
         if converged.all():

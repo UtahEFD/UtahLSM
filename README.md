@@ -129,7 +129,7 @@ The `lsm_namelist.json` file controls all simulation settings. Key sections:
 
 **Soil:**
 - `model`: 1 (Brooks-Corey), 2 (Campbell), or 3 (Van Genuchten)
-- `properties`: Soil database name ("rawls-brakensiek", "cosby", "clapp-hornberger"); composite with Letts peat: "rawls-brakensiek_letts", "cosby_letts", "clapp-hornberger_letts"
+- `properties`: Public bundled soil database name ("rawls-brakensiek", "cosby", "clapp-hornberger") or a custom JSON path. Bundled datasets include Peters-Lidard quartz fractions and Letts peat tiers internally.
 
 **Surface:**
 - `z_o`: Roughness length [m] (0.01-0.1 m typical for grass)
