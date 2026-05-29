@@ -96,9 +96,13 @@ class Radiation(ABC):
 
         ``sw_out = alpha * sw_in`` (single broadband albedo).
 
-        ``lw_out = epsilon * sigma * T_s^4`` (Stefan-Boltzmann emission only;
-        epsilon ≈ 1 assumed for the reflected-LW component, which is the
-        standard simplification for natural land surfaces).
+        ``lw_out = epsilon * sigma * T_s^4 + (1 - epsilon) * lw_in``
+        (Stefan-Boltzmann emission plus reflection of the downwelling
+        longwave). Keeping the reflected term makes the surface
+        Kirchhoff-consistent: absorptivity equals emissivity, so the net
+        longwave reduces to ``epsilon * (lw_in - sigma * T_s^4)`` rather
+        than spuriously absorbing 100% of ``lw_in`` while emitting at
+        ``epsilon < 1``.
 
         Args:
             sfc_T: Trial surface temperature [K].
@@ -112,8 +116,11 @@ class Radiation(ABC):
         Returns:
             Tuple ``(sw_out, lw_out)`` in W/m^2.
         """
-        del atm_state, sfc_state, lw_in  # unused in the one-source default
+        del atm_state, sfc_state  # unused in the one-source default
         SB = c.radiation.STEFAN_BOLTZMANN
         sw_out = self.albedo * np.asarray(sw_in)
-        lw_out = self.emissivity * SB * np.asarray(sfc_T) ** 4
+        lw_out = (
+            self.emissivity * SB * np.asarray(sfc_T) ** 4
+            + (1.0 - self.emissivity) * np.asarray(lw_in)
+        )
         return sw_out, lw_out
