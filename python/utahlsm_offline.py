@@ -98,19 +98,30 @@ def main() -> None:
         # --- Main Time-Stepping Loop ---
         assert input_lsm.forcing is not None
         tstep: float = input_lsm.forcing.tstep
+        atmos = input_lsm.forcing.atmos
+        ntime: int = len(atmos)
         step_count = 0
-        for step_count, atm_state in enumerate(input_lsm.forcing.atmos):
-            # Update the model with the latest atmospheric forcing.
-            # runtime = step_count * tstep so forcing[i] drives the correct
-            # simulation time (forcing[0] → t=0, forcing[1] → t=tstep, …).
-            lsm.update(tstep, runtime, atm_state)
 
-            # Run the core physics solvers
+        # Record 0 (t=0) was already written during model setup using
+        # forcing[0] as the consistent initial state. The forcing series has
+        # ntime inclusive samples at times t_k = k*tstep, so there are
+        # ntime-1 intervals to integrate. We use the right-endpoint
+        # convention: the step landing at t_k is driven by forcing[k], and
+        # record k reports forcing[k] at time t_k. This keeps the output
+        # record, forcing sample, and time label aligned (no overshoot past
+        # the forcing window, no double-counting of forcing diagnostics such
+        # as precip). forcing[0] therefore serves only as the t=0 state.
+        for step_count in range(1, ntime):
+            runtime = step_count * tstep
+
+            # Load the atmospheric forcing valid at this output time.
+            lsm.update(tstep, runtime, atmos[step_count])
+
+            # Run the core physics solvers, advancing the state to t = runtime.
             lsm.run()
 
-            # Advance time to the end of this step, then save.
-            runtime += tstep
-            lsm.save(step_count+1, runtime)
+            # Save the state and forcing under their shared time label.
+            lsm.save(step_count, runtime)
     except SolverError as e:
         print('\n!!! NUMERICAL SOLVER FAILURE !!!')
         print(f'Error details: {e}')
