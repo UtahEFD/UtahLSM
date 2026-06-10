@@ -66,6 +66,22 @@ SOIL_MOIS_VARS = (
 )
 TEMP_MIN_SPAN_K = 2.0
 MOIS_MIN_SPAN = 0.05
+FLUX_MIN_SPAN_W = 20.0
+
+# Soil volumetric heat-capacity parameters for the calorimetric G0 estimate,
+# matching the clapp-hornberger database the model uses
+# (utahlsm/data/soil/clapp-hornberger.json); _C_WATER is the model constant
+# c.water.VOLUMETRIC_HEAT_CAPACITY.
+_C_WATER = 4.184e6
+_SILTY_LOAM = (0.485, 1.27e6)   # (porosity [-], c_mineral [J/m^3/K])
+_CLAY = (0.482, 1.09e6)
+# (layer top [m], layer bottom [m], STAMP sensor depth [cm], (porosity, c_mineral))
+_CALOR_LAYERS = (
+    (0.000, 0.075, 5.0, _SILTY_LOAM),
+    (0.075, 0.150, 10.0, _SILTY_LOAM),
+    (0.150, 0.350, 20.0, _CLAY),
+    (0.350, 0.500, 50.0, _CLAY),
+)
 
 
 @dataclass(frozen=True)
@@ -82,6 +98,7 @@ class ModelData:
     ghf: np.ndarray | None
     lhf_soil: np.ndarray | None
     lhf_veg: np.ndarray | None
+    t_skin: np.ndarray | None
 
 
 @dataclass(frozen=True)
@@ -224,6 +241,7 @@ def load_model(model_path: Path) -> ModelData:
             ghf=_model_var(ds, "ghf"),
             lhf_soil=_model_var(ds, "lhf_soil"),
             lhf_veg=_model_var(ds, "lhf_veg"),
+            t_skin=_model_var(ds, "T_skin"),
         )
 
 
@@ -341,6 +359,70 @@ def _print_stats(
     )
 
 
+def _site_mean_soil(
+    ds: nc.Dataset,
+    prefix: str,
+    obs_slice: slice,
+    *,
+    min_value: float | None = None,
+    max_value: float | None = None,
+) -> np.ndarray:
+    """Return the site-mean (time, depth) ARM soil field after QC filtering."""
+    stack = np.stack([
+        _clean_variable(
+            ds, f"{prefix}_{site}", obs_slice,
+            min_value=min_value, max_value=max_value,
+        )
+        for site in ("west", "east", "south")
+    ])
+    counts = np.sum(np.isfinite(stack), axis=0)
+    totals = np.nansum(stack, axis=0)
+    mean = np.divide(
+        totals, counts,
+        out=np.full(stack.shape[1:], np.nan), where=counts > 0,
+    )
+    return np.asarray(mean)
+
+
+def _calorimetric_g0(soil_obs_path: Path) -> tuple[np.ndarray, np.ndarray]:
+    """Calorimetric surface ground heat flux G0 from the STAMP soil profile.
+
+    Integrates the soil heat-storage rate over 0-50 cm (positive downward),
+    using only measured temperature change and soil heat capacity (no
+    heat-flux plate). This is the physically self-consistent surface flux;
+    the SEBS heat-flux-plate product under-reads badly in this clay soil.
+    See cases/arm/make_input.py for the full rationale.
+
+    Returns:
+        (obs_times, G0) on the soil-observation time grid [W/m^2].
+    """
+    with nc.Dataset(soil_obs_path) as ds:
+        times = _obs_times(ds)
+        full = slice(0, len(times))
+        depths_cm = np.asarray(ds.variables["depth"][:], dtype=float)
+        temp = _site_mean_soil(
+            ds, "soil_temperature", full, min_value=-50.0, max_value=80.0
+        ) + 273.15
+        mois = _site_mean_soil(
+            ds, "soil_specific_water_content", full, min_value=0.0, max_value=100.0
+        ) / 100.0
+    dt = float((times[1] - times[0]) / np.timedelta64(1, "s"))
+    g0 = np.zeros(len(times))
+    for k in range(1, len(times)):
+        storage = 0.0
+        for top, bottom, depth_cm, (porosity, c_mineral) in _CALOR_LAYERS:
+            j = int(np.argmin(np.abs(depths_cm - depth_cm)))
+            theta = 0.5 * (mois[k, j] + mois[k - 1, j])
+            if not np.isfinite(theta):
+                theta = 0.2
+            c_vol = (1.0 - porosity) * c_mineral + theta * _C_WATER
+            d_temp_dt = (temp[k, j] - temp[k - 1, j]) / dt
+            storage += c_vol * d_temp_dt * (bottom - top)
+        g0[k] = storage
+    g0[0] = g0[1]
+    return times, np.convolve(g0, np.ones(5) / 5.0, mode="same")
+
+
 def _plot_flux_panel(
     ax: matplotlib.axes.Axes,
     t_model: np.ndarray,
@@ -351,13 +433,20 @@ def _plot_flux_panel(
     title: str,
     model_label: str,
     partition: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None,
+    obs_label: str = "ARM obs",
+    reference: tuple[np.ndarray, np.ndarray, str] | None = None,
+    min_span: float = FLUX_MIN_SPAN_W,
+    zero_line: bool = True,
 ) -> None:
     """Plot one surface-flux panel."""
     if y_model is None:
         ax.set_visible(False)
         return
     ax.plot(t_model, y_model, color="#d62728", lw=1.5, label=model_label)
-    ax.plot(t_obs, y_obs, color="k", marker="o", ms=3, lw=0, label="ARM obs")
+    ax.plot(t_obs, y_obs, color="k", marker="o", ms=3, lw=0, label=obs_label)
+    if reference is not None:
+        t_ref, y_ref, ref_label = reference
+        ax.plot(t_ref, y_ref, color="gray", lw=1.0, ls=":", label=ref_label)
     if partition is not None:
         t_part, y_soil, y_veg = partition
         ax.plot(
@@ -366,8 +455,17 @@ def _plot_flux_panel(
         ax.plot(t_part, y_veg, color="#2ca02c", lw=1.0, ls="--", label="transpiration")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
+    series = [np.asarray(y_model, dtype=float), np.asarray(y_obs, dtype=float)]
+    if reference is not None:
+        series.append(np.asarray(reference[1], dtype=float))
+    if partition is not None:
+        series.extend(
+            np.asarray(part, dtype=float) for part in partition[1:]
+        )
+    _set_axis_limits(ax, "y", _finite_values(*series), min_span)
     ax.grid(True, which="both", alpha=0.5)
-    ax.axhline(0.0, color="gray", lw=0.5)
+    if zero_line:
+        ax.axhline(0.0, color="gray", lw=0.5)
     ax.legend(loc="best", fontsize=8)
 
 
@@ -375,6 +473,7 @@ def compare_fluxes(
     model: ModelData,
     surface_flux_obs_path: Path,
     surface_radn_obs_path: Path,
+    soil_obs_path: Path,
     out_path: Path | None,
     show: bool,
 ) -> None:
@@ -393,10 +492,30 @@ def compare_fluxes(
         lhf_obs = _clean_variable(fds, "corrected_latent_heat_flux", flux_slice)
         # ARM surface_soil_heat_flux_avg is positive upward. UtahLSM ghf is positive downward.
         ghf_obs = -_clean_variable(rds, "surface_soil_heat_flux_avg", radn_slice)
+        # Radiometric skin temperature from the upwelling longwave (ARM has no
+        # buried skin sensor). T_skin = ((LW_up - (1-eps)*LW_down)/(eps*sigma))^0.25.
+        lw_up = _clean_variable(rds, "up_long", radn_slice, min_value=1.0)
+        lw_dn = _clean_variable(rds, "down_long", radn_slice, min_value=1.0)
+        eps, sigma = 0.96, 5.670374419e-8
+        tskin_obs = ((lw_up - (1.0 - eps) * lw_dn) / (eps * sigma)) ** 0.25
 
+    # Calorimetric G0 from the STAMP soil-T profile: the validation target,
+    # since the heat-flux-plate product (ghf_obs) under-reads in this clay.
+    g0_cal: np.ndarray | None = None
+    t_g0_sl: np.ndarray = np.empty(0, dtype="datetime64[ms]")
+    if soil_obs_path.exists():
+        g0_times, g0_full = _calorimetric_g0(soil_obs_path)
+        g0_slice = _overlap_slice(model.time, g0_times)
+        t_g0_sl = g0_times[g0_slice]
+        g0_cal = g0_full[g0_slice]
+
+    show_skin = model.t_skin is not None
+    n_panels = 4 if show_skin else 3
     fig, axes = cast(
         tuple[matplotlib.figure.Figure, np.ndarray],
-        cast(Any, plt.subplots)(3, 1, figsize=(10, 8.5), sharex=True, squeeze=True),
+        cast(Any, plt.subplots)(
+            n_panels, 1, figsize=(10, 2.85 * n_panels), sharex=True, squeeze=True
+        ),
     )
     axes = np.asarray(axes, dtype=object)
 
@@ -425,16 +544,47 @@ def compare_fluxes(
         "UtahLSM LE",
         partition=partition,
     )
-    _plot_flux_panel(
-        axes[2],
-        model.time,
-        model.ghf,
-        t_radn_sl,
-        ghf_obs,
-        "W m$^{-2}$",
-        "Ground heat flux",
-        "UtahLSM G0",
-    )
+    if g0_cal is not None:
+        # Primary target = calorimetric G0; plate product shown as reference.
+        _plot_flux_panel(
+            axes[2],
+            model.time,
+            model.ghf,
+            t_g0_sl,
+            g0_cal,
+            "W m$^{-2}$",
+            "Ground heat flux G0",
+            "UtahLSM G0",
+            obs_label="ARM calorimetric G0",
+            reference=(t_radn_sl, ghf_obs, "ARM plate G0 (under-reads)"),
+        )
+    else:
+        _plot_flux_panel(
+            axes[2],
+            model.time,
+            model.ghf,
+            t_radn_sl,
+            ghf_obs,
+            "W m$^{-2}$",
+            "Ground heat flux G0",
+            "UtahLSM G0",
+            obs_label="ARM plate G0",
+        )
+
+    if show_skin:
+        _plot_flux_panel(
+            axes[3],
+            model.time,
+            model.t_skin,
+            t_radn_sl,
+            tskin_obs,
+            "K",
+            "Radiative skin temperature",
+            "UtahLSM T_skin",
+            obs_label="ARM radiometric (from LW up)",
+            min_span=TEMP_MIN_SPAN_K,
+            zero_line=False,
+        )
 
     axes[-1].set_xlabel("Time (UTC)")
     t_ax_end = max(
@@ -461,7 +611,13 @@ def compare_fluxes(
     print("\nSurface-flux summary (overlap window only):")
     _print_stats("H", model.shf, shf_obs, model.time, t_flux_sl)
     _print_stats("LE", model.lhf, lhf_obs, model.time, t_flux_sl)
-    _print_stats("G0", model.ghf, ghf_obs, model.time, t_radn_sl)
+    if g0_cal is not None:
+        _print_stats("G0 vs calorimetric", model.ghf, g0_cal, model.time, t_g0_sl)
+    _print_stats("G0 vs plate product", model.ghf, ghf_obs, model.time, t_radn_sl)
+    if show_skin:
+        _print_stats(
+            "T_skin vs radiometric", model.t_skin, tskin_obs, model.time, t_radn_sl
+        )
 
 
 def _interp_model_to_depth(
@@ -885,6 +1041,7 @@ def main() -> None:
             model,
             args.surface_flux_obs,
             args.surface_radn_obs,
+            args.soil_obs,
             outputs.flux,
             args.show,
         )

@@ -427,11 +427,28 @@ class SoilConfig:
         model: Soil model selector ('brooks-corey', 'campbell', 'van-genuchten').
         thermal_conductivity_model: Thermal conductivity parameterization.
             Options: 'mccumber-pielke' (default) or 'johansen'.
+        macropore_fraction: Fraction of throughfall captured by macropores
+            (shrinkage cracks, root channels) and routed directly into the
+            deposition zone, bypassing the matrix surface. ``0.0``
+            (default) disables bypass flow entirely.
+        macropore_z_top: Top of the macropore deposition zone
+            [m, positive down]. Site parameter: the top of the cracked
+            horizon.
+        macropore_z_bottom: Bottom of the macropore deposition zone
+            [m, positive down]. Site parameter: the crack termination
+            depth.
+        macropore_e_folding: E-folding depth [m] of crack-wall absorption
+            within the deposition zone; bypass water is deposited with
+            weight ``exp(-(z - z_top) / e_folding)``.
     """
 
     properties: str
     model: str
     thermal_conductivity_model: str = "mccumber-pielke"
+    macropore_fraction: float = 0.0
+    macropore_z_top: float = 0.0
+    macropore_z_bottom: float = 0.0
+    macropore_e_folding: float = 0.2
 
 
 @dataclass(frozen=True)

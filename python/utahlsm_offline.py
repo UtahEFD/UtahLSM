@@ -28,6 +28,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
+
 import utahlsm
 from utahlsm.exceptions import SolverError, UtahLSMError
 
@@ -51,9 +53,15 @@ def main() -> None:
                         action="store", type=str, help="Case name")
     parser.add_argument("-o", "--output", dest="outfile", action="store",
                         type=str, help="Output file name")
+    parser.add_argument("-s", "--spinup", dest="spinup", action="store",
+                        type=int, default=0,
+                        help="Number of diurnal cycles to spin up the soil "
+                             "temperature before the scored run (precip off, "
+                             "moisture held at the initial condition).")
     args: argparse.Namespace = parser.parse_args()
     case: str = args.case
     outf: Optional[str] = args.outfile
+    spinup: int = max(0, args.spinup)
 
     # Define file paths based on the case name with path traversal protection
     base_path: Path = Path("../cases").resolve()
@@ -101,6 +109,26 @@ def main() -> None:
         atmos = input_lsm.forcing.atmos
         ntime: int = len(atmos)
         step_count = 0
+
+        # Optional soil-temperature spin-up. The deep soil equilibrates to the
+        # mean surface forcing, but the initial condition is a single-time
+        # snapshot, so a cold (or non-equilibrium) start drifts over the scored
+        # day. Cycle the diurnal forcing `spinup` times to settle the soil
+        # temperature, with precipitation disabled and soil moisture held at its
+        # initial condition (the episodic rain cannot be spun up, and we do not
+        # want spin-up to alter the moisture profile). Only the soil temperature
+        # carries into the scored run; record 0 is then rewritten to reflect the
+        # spun-up state so the saved series starts consistently.
+        if spinup > 0:
+            print(f'Spinning up soil temperature: {spinup} diurnal cycle(s)...')
+            moisture_ic = np.array(lsm.soil_state.moisture, copy=True)
+            for _ in range(spinup):
+                for k in range(1, ntime):
+                    lsm.update(tstep, k * tstep, atmos[k])
+                    np.asarray(lsm.atm_state.precipitation)[...] = 0.0
+                    lsm.run()
+                    np.asarray(lsm.soil_state.moisture)[...] = moisture_ic
+            lsm.save(0, 0.0)
 
         # Record 0 (t=0) was already written during model setup using
         # forcing[0] as the consistent initial state. The forcing series has

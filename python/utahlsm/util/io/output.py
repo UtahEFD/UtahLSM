@@ -96,6 +96,16 @@ class Output:
             'long_name': 'ground heat flux',
             'units': 'W m-2'
         },
+        'T_skin': {
+            'dimension': ('t',),
+            'long_name': 'radiative skin temperature (SEB surface, emits longwave)',
+            'units': 'K'
+        },
+        'lw_out': {
+            'dimension': ('t',),
+            'long_name': 'outgoing longwave radiation',
+            'units': 'W m-2'
+        },
         'seb_res': {
             'dimension': ('t',),
             'long_name': 'surface energy budget residual (Rn-H-LE-G-storage)',
@@ -143,7 +153,12 @@ class Output:
         },
         'runoff': {
             'dimension': ('t',),
-            'long_name': 'saturation-excess surface runoff',
+            'long_name': 'surface runoff (infiltration- and saturation-excess)',
+            'units': 'kg m-2 s-1'
+        },
+        'bypass': {
+            'dimension': ('t',),
+            'long_name': 'macropore bypass infiltration deposited at depth',
             'units': 'kg m-2 s-1'
         },
     }
@@ -204,7 +219,7 @@ class Output:
             self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
             self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
             for field in ('ust', 'obl', 'shf', 'lhf', 'ghf', 'seb_res',
-                          'seb_storage', 'precip', 'runoff', 'r_s',
+                          'seb_storage', 'precip', 'runoff', 'bypass', 'r_s',
                           'theta_root', 'lhf_soil', 'lhf_veg', 'lhf_wet',
                           'canopy_water'):
                 self.attributes[field]['dimension'] = ('t', 'y', 'x')

@@ -91,7 +91,11 @@
             "properties": {
                 "properties": { "type": "string", "minLength": 1 },
                 "model": { "type": "string", "enum": ["brooks-corey", "campbell", "van-genuchten"] },
-                "thermal_conductivity_model": { "type": "string", "enum": ["mccumber-pielke", "johansen"] }
+                "thermal_conductivity_model": { "type": "string", "enum": ["mccumber-pielke", "johansen"] },
+                "macropore_fraction": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "macropore_z_top": { "type": "number", "minimum": 0.0 },
+                "macropore_z_bottom": { "type": "number", "minimum": 0.0 },
+                "macropore_e_folding": { "type": "number", "exclusiveMinimum": 0.0 }
             },
             "required": ["properties", "model"],
             "additionalProperties": false

@@ -115,6 +115,35 @@ def _initial_depth_mean(
     )
 
 
+def _site_mean_series(
+    dataset: nc.Dataset,
+    variable_prefix: str,
+    sites: tuple[str, ...],
+    *,
+    min_value: float | None = None,
+    max_value: float | None = None,
+) -> NDArray[np.float64]:
+    """Return the full (time, depth) site-mean field after QC filtering."""
+    stack = np.stack([
+        _clean_variable(
+            dataset,
+            f"{variable_prefix}_{site}",
+            min_value=min_value,
+            max_value=max_value,
+        )
+        for site in sites
+    ])
+    valid = np.isfinite(stack)
+    counts = np.sum(valid, axis=0)
+    totals = np.nansum(stack, axis=0)
+    return np.divide(
+        totals,
+        counts,
+        out=np.full(stack.shape[1:], np.nan),
+        where=counts > 0,
+    )
+
+
 ##########################################################################
 # ARM SGP site in Lamont, Oklahoma (2017-06-17 18 UTC -> 2017-06-18 18 UTC
 ##########################################################################
@@ -281,7 +310,12 @@ lwd: NDArray[np.float64] = _read_interp(radn, 'down_long', tm, min_value=0.0)
 lwu: NDArray[np.float64] = _read_interp(radn, 'up_long', tm, min_value=0.0)
 
 # ARM surface_soil_heat_flux_avg is positive upward. UtahLSM's SEB closure term
-# below uses G positive into the ground.
+# below uses G positive into the ground. This heat-flux-plate product is kept as
+# `G_obs` for reference, but it is NOT used as the closure flux: in this clay
+# soil the plate under-reads badly (its diurnal range is only ~5% of Rnet vs the
+# textbook 10-20%) and is inconsistent by ~3.5x with the surface flux implied by
+# the STAMP soil-temperature profile itself. The calorimetric G0 below is used
+# instead.
 ghf_up: NDArray[np.float64] = _read_interp(radn, 'surface_soil_heat_flux_avg', tm)
 ghf_obs: NDArray[np.float64] = -ghf_up
 radn.close()
@@ -291,12 +325,67 @@ shf_obs: NDArray[np.float64] = _read_interp(flux, 'corrected_sensible_heat_flux'
 lhf_obs: NDArray[np.float64] = _read_interp(flux, 'corrected_latent_heat_flux', tm)
 flux.close()
 
+###########################################################################
+# Calorimetric (heat-storage) surface ground heat flux G0.
+#
+# Derived from the STAMP soil-temperature profile by integrating the soil
+# heat-storage rate over 0-50 cm; uses only temperature change and the soil
+# volumetric heat capacity (no heat-flux plate). This is the validation
+# target and the closure flux, because it is the physically self-consistent
+# estimate (peak ~17% of Rnet) whereas the plate product (`G_obs`) is ~3.5x
+# smaller.
+#
+#   G0(t) = sum_layers C(theta) * dT/dt * dz       (flux at 50 cm ~ 0)
+#   C(theta) = (1 - porosity) * c_mineral + theta * c_water   [J/m^3/K]
+#
+# Heat-capacity parameters match the clapp-hornberger soil database the model
+# uses (utahlsm/data/soil/clapp-hornberger.json); c_water equals the model
+# constant c.water.VOLUMETRIC_HEAT_CAPACITY.
+c_water: float = 4.184e6
+_silty_loam: tuple[float, float] = (0.485, 1.27e6)   # (porosity, c_mineral)
+_clay: tuple[float, float] = (0.482, 1.09e6)
+# (layer top [m], layer bottom [m], STAMP sensor index, (porosity, c_mineral))
+calor_layers: list[tuple[float, float, int, tuple[float, float]]] = [
+    (0.000, 0.075, 0, _silty_loam),   # 5 cm sensor  (SiL)
+    (0.075, 0.150, 1, _silty_loam),   # 10 cm sensor (SiL)
+    (0.150, 0.350, 2, _clay),         # 20 cm sensor (C)
+    (0.350, 0.500, 3, _clay),         # 50 cm sensor (C); storage ~ 0
+]
+soil_time: NDArray[np.float64] = np.asarray(
+    soil_data.variables['time'][:], dtype=float
+)
+soil_T_series: NDArray[np.float64] = _site_mean_series(
+    soil_data, "soil_temperature", sites, min_value=-50.0, max_value=80.0
+) + 273.15
+soil_q_series: NDArray[np.float64] = _site_mean_series(
+    soil_data, "soil_specific_water_content", sites, min_value=0.0, max_value=100.0
+) / 100.0
+dt_soil: float = float(soil_time[1] - soil_time[0])
+g_calor_soil: NDArray[np.float64] = np.zeros(len(soil_time))
+for k in range(1, len(soil_time)):
+    storage = 0.0
+    for top, bottom, sensor, (porosity, c_mineral) in calor_layers:
+        theta = 0.5 * (soil_q_series[k, sensor] + soil_q_series[k - 1, sensor])
+        if not np.isfinite(theta):
+            theta = 0.2
+        c_vol = (1.0 - porosity) * c_mineral + theta * c_water
+        d_temp_dt = (
+            soil_T_series[k, sensor] - soil_T_series[k - 1, sensor]
+        ) / dt_soil
+        storage += c_vol * d_temp_dt * (bottom - top)
+    g_calor_soil[k] = storage
+g_calor_soil[0] = g_calor_soil[1]
+# Light smoothing to suppress finite-difference noise from the 30-min data.
+g_calor_soil = np.convolve(g_calor_soil, np.ones(5) / 5.0, mode='same')
+g_calor: NDArray[np.float64] = np.interp(tm, soil_time, g_calor_soil)
+
 # Prescribed unresolved SEB storage/closure term:
 #   Rn - H - LE - G - seb_storage = 0
 # where Rn = SWD - SWU + LWD - LWU, H and LE are positive upward, and G is
-# positive downward into the ground.
+# positive downward into the ground. G is the calorimetric G0 so the closure
+# residual is consistent with the soil-temperature-implied surface flux.
 rnet_obs: NDArray[np.float64] = swd - swu + lwd - lwu
-seb_storage: NDArray[np.float64] = rnet_obs - shf_obs - lhf_obs - ghf_obs
+seb_storage: NDArray[np.float64] = rnet_obs - shf_obs - lhf_obs - g_calor
 
 ##############################
 # Write all time-series data #
@@ -355,9 +444,17 @@ metr_lhf.long_name = "observed latent heat flux"
 metr_lhf.units = "W m-2"
 metr_lhf.positive = "up"
 metr_ghf = metr.createVariable("G_obs", "f8", ("t"))
-metr_ghf.long_name = "observed ground heat flux"
+metr_ghf.long_name = "ground heat flux, SEBS heat-flux-plate product (reference)"
 metr_ghf.units = "W m-2"
 metr_ghf.positive = "down"
+metr_gcal = metr.createVariable("G_calorimetric", "f8", ("t"))
+metr_gcal.long_name = "ground heat flux, calorimetric from STAMP soil-T (target)"
+metr_gcal.units = "W m-2"
+metr_gcal.positive = "down"
+metr_gcal.comment = (
+    "Surface G0 from integrating soil heat-storage rate over 0-50 cm; "
+    "validation target and SEB closure flux."
+)
 
 # write time-series data
 metr_step[:] = float(dt)
@@ -373,6 +470,7 @@ metr_rnet[:] = rnet_obs
 metr_shf[:] = shf_obs
 metr_lhf[:] = lhf_obs
 metr_ghf[:] = ghf_obs
+metr_gcal[:] = g_calor
 
 # close file
 metr.close()
@@ -440,6 +538,16 @@ namelist['surface']['gustiness_stable_only'] = True
 namelist['soil']['properties'] = "clapp-hornberger"
 namelist['soil']['model'] = "van-genuchten"
 namelist['soil']['thermal_conductivity_model'] = "johansen"
+# Macropore bypass flow: SGP clay below ~15 cm is desiccation-cracked at
+# these moistures, and the observed storm response (most of the 15 mm
+# event absorbed below 15 cm within hours) is preferential flow that
+# matrix Richards cannot carry. Half the throughfall is captured by the
+# crack network and deposited over the cracked clay horizon (15-50 cm)
+# with a 0.2 m e-folding, capped at field capacity per layer.
+namelist['soil']['macropore_fraction'] = 0.5
+namelist['soil']['macropore_z_top'] = 0.15
+namelist['soil']['macropore_z_bottom'] = 0.5
+namelist['soil']['macropore_e_folding'] = 0.2
 
 # canopy settings: ARM SGP C1 in late June. Observed albedo of ~0.19
 # indicates active green pasture rather than wheat stubble, so values
@@ -457,10 +565,12 @@ namelist['canopy']['rg_half'] = 50.0
 namelist['canopy']['vpd_coef'] = 1.0e-4
 namelist['canopy']['t_opt'] = 300.0
 namelist['canopy']['t_coef'] = 1.6e-3
-# ARM flux partitioning with this canopy is over-coupled thermally at the
-# soil surface: G is too large and H is too small. A stronger in-canopy
-# ground resistance keeps the soil heat exchange closer to observed G0.
-namelist['canopy']['r_ground'] = 400.0
+# In-canopy aerodynamic resistance between the radiative skin and the soil
+# top. It sets the diurnal soil-temperature amplitude: too large (the old 400
+# value, tuned to the under-reading heat-flux-plate G0) decouples the soil and
+# damps its swing to ~half observed. 100 brings the model surface flux onto the
+# calorimetric G0 and centres the 5-cm temperature amplitude on the STAMP obs.
+namelist['canopy']['r_ground'] = 100.0
 
 # radiation section
 namelist['radiation']['model']     = "forcing"

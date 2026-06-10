@@ -161,6 +161,12 @@ class UtahLSM:
         # Solve surface energy and moisture budgets
         self._solve_surface_coupling()
 
+        # Post-coupling precipitation bookkeeping: advance the Green-Ampt
+        # event state and build the macropore deposition profile before
+        # the heat and moisture solves consume them.
+        self._update_infiltration_history()
+        self._distribute_bypass()
+
         # Solve diffusion equations for heat and moisture
         self._solve_diffusion_heat()
         self._solve_diffusion_mois()
@@ -173,7 +179,22 @@ class UtahLSM:
             runtime: The total elapsed simulation time [s].
         """
         self.logger.info('Saving data to file\n-------------------')
+        self._refresh_reassigned_outputs()
         self.output.save(self.output_fields, step_count, runtime)
+
+    def _refresh_reassigned_outputs(self) -> None:
+        """Re-point output_fields at fields that are reassigned each step.
+
+        Most outputs are updated in place, but the radiative skin temperature
+        and outgoing longwave are reassigned (``self.x = np.array(...)``) by
+        the SEB solve, so a reference captured once would go stale.
+        """
+        for name, value in (
+            ('T_skin', self.sfc_state.temperature),
+            ('lw_out', self.atm_state.lw_out),
+        ):
+            if name in self.output_fields:
+                self.output_fields[name] = np.asarray(value)
 
     # --- Internal Methods ---
 
@@ -218,9 +239,17 @@ class UtahLSM:
         self.sfc_state.fluxes.runoff = np.zeros(self.ncol)
         self._soil_precipitation = np.zeros(self.ncol)
         self._precipitation_prepared = False
-        # Infiltrated water flux [kg/m^2/s] (post-interception, post-runoff),
-        # set by the SMB and consumed by the rain heat-advection source.
+        # Infiltrated water flux [kg/m^2/s] (post-interception, post-bypass,
+        # post-runoff), set by the SMB and consumed by the rain
+        # heat-advection source.
         self._infiltration_flux = np.zeros(self.ncol)
+        # Macropore bypass: throughfall captured by cracks [kg/m^2/s] and
+        # its per-layer deposition profile [kg/m^2/s], rebuilt each step.
+        self._bypass_flux = np.zeros(self.ncol)
+        self._bypass_deposit: Optional[np.ndarray] = None
+        # Green-Ampt event state: cumulative matrix-infiltrated depth [m]
+        # since the start of the current rain event (decays between events).
+        self._ga_cum_infil = np.zeros(self.ncol)
 
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
@@ -516,10 +545,20 @@ class UtahLSM:
             'shf': self.sfc_state.fluxes.sensible_heat,
             'lhf': self.sfc_state.fluxes.latent_heat,
             'ghf': self.sfc_state.fluxes.ground_heat,
+            # Radiative skin temperature and emitted longwave. Unlike the soil
+            # top node (soil_T[0] = soil-top temperature, below the in-canopy
+            # resistance), these are the surface the radiometer sees. Both are
+            # reassigned each step, so save() re-points the dict before writing.
+            'T_skin': np.asarray(self.sfc_state.temperature),
+            'lw_out': np.asarray(self.atm_state.lw_out),
             'seb_res': self.sfc_state.seb_residual,
             'seb_storage': np.asarray(self.atm_state.seb_storage),
             'precip': np.asarray(self.atm_state.precipitation),
             'runoff': self.sfc_state.fluxes.runoff,
+            'bypass': getattr(
+                self, '_bypass_flux',
+                np.zeros_like(np.asarray(self.sfc_state.fluxes.runoff)),
+            ),
             'soil_z': self.input.grid.z,
             'soil_type': self.input.soil_type_names,
             'soil_T': self.soil_state.temperature,
@@ -1151,6 +1190,185 @@ class UtahLSM:
         darcy_drive = 1.0 - (psi_lower - psi_upper) / dz
         return np.where(darcy_drive > 0.0, K_upper, K_geom)
 
+    # Green-Ampt event-state constants: floor on cumulative infiltration
+    # (caps the early-storm capacity enhancement) and the e-folding time
+    # over which the event memory relaxes after rain stops, representing
+    # post-storm redistribution of the wetting front.
+    _GA_MIN_CUM_INFIL = 1.0e-4   # [m]
+    _GA_REDIST_TAU = 6.0 * 3600.0  # [s]
+
+    def _macropore_config(self) -> tuple[float, float, float, float]:
+        """Returns (fraction, z_top, z_bottom, e_folding) for bypass flow.
+
+        Reads the soil namelist section with inert defaults so partial
+        test rigs (and namelists without macropore keys) run bare-matrix.
+        """
+        soil_cfg = getattr(self.input, 'soil', None)
+        fraction = float(getattr(soil_cfg, 'macropore_fraction', 0.0))
+        z_top = float(getattr(soil_cfg, 'macropore_z_top', 0.0))
+        z_bottom = float(getattr(soil_cfg, 'macropore_z_bottom', 0.0))
+        e_folding = float(getattr(soil_cfg, 'macropore_e_folding', 0.2))
+        return min(max(fraction, 0.0), 1.0), z_top, z_bottom, e_folding
+
+    def _wetting_front_suction(self, theta_i: np.ndarray) -> np.ndarray:
+        """Green-Ampt effective wetting-front suction [m, >= 0].
+
+        Uses the Neuman (1976) definition psi_f = (1/K_sat) * int K dpsi
+        from the antecedent moisture theta_i to saturation, evaluated by
+        midpoint quadrature on the surface layer's own retention and
+        conductivity curves - so the suction is consistent with whichever
+        soil model is configured rather than a tabulated approximation.
+
+        Args:
+            theta_i: Antecedent surface moisture [m^3/m^3], shape (ncol,).
+
+        Returns:
+            Wetting-front suction head per column [m], shape (ncol,).
+        """
+        residual = float(self.soil.properties.residual[0])
+        porosity = float(self.soil.properties.porosity[0])
+        span = max(porosity - residual, 1e-12)
+        theta_lo = np.clip(
+            np.asarray(theta_i, dtype=float),
+            residual + 1e-6 * span,
+            porosity - 2e-6 * span,
+        )
+        theta_hi = np.full_like(theta_lo, porosity - 1e-6 * span)
+
+        n_seg = 24
+        psi_prev = np.asarray(
+            self.soil.water_potential(theta_lo, level=0), dtype=float
+        )
+        total = np.zeros_like(theta_lo)
+        for j in range(1, n_seg + 1):
+            theta_j = theta_lo + (theta_hi - theta_lo) * (j / n_seg)
+            theta_mid = theta_lo + (theta_hi - theta_lo) * ((j - 0.5) / n_seg)
+            psi_j = np.asarray(
+                self.soil.water_potential(theta_j, level=0), dtype=float
+            )
+            K_mid = np.asarray(
+                self.soil.conductivity_moisture(theta_mid, level=0),
+                dtype=float,
+            )
+            total += K_mid * (psi_j - psi_prev)
+            psi_prev = psi_j
+
+        K_sat = np.asarray(
+            self.soil.conductivity_moisture(theta_hi, level=0), dtype=float
+        )
+        return np.asarray(
+            np.maximum(
+                np.divide(total, K_sat, out=np.zeros_like(total),
+                          where=K_sat > 0.0),
+                0.0,
+            ),
+            dtype=float,
+        )
+
+    def _update_infiltration_history(self) -> None:
+        """Advances the Green-Ampt cumulative-infiltration event state.
+
+        While raining, the matrix-infiltrated depth accumulates and the
+        suction enhancement of the infiltration capacity decays toward
+        the sealed K_sat limit. After rain stops, the wetting front
+        redistributes, so the event memory relaxes exponentially with
+        ``_GA_REDIST_TAU`` and a later storm again sees dry-soil capacity.
+        Called once per timestep (after surface coupling) so the repeated
+        SMB calls inside the Picard loop do not multi-count.
+        """
+        precip = np.asarray(
+            self.atm_state.precipitation, dtype=float).reshape(-1)
+        infil_depth = (
+            np.asarray(self._infiltration_flux, dtype=float).reshape(-1)
+            * self.tstep / c.water.DENSITY
+        )
+        decayed = self._ga_cum_infil * np.exp(
+            -self.tstep / self._GA_REDIST_TAU)
+        self._ga_cum_infil[:] = np.where(
+            precip > 0.0, self._ga_cum_infil + infil_depth, decayed
+        )
+
+    def _distribute_bypass(self) -> None:
+        """Deposits captured macropore water into the crack-zone layers.
+
+        Bypass water descends the macropore network quickly and is
+        absorbed by the crack walls, so deposition is weighted
+        ``exp(-(z - z_top)/e_folding)`` within [z_top, z_bottom] and
+        capped per layer by the rate that fills the layer to field
+        capacity this step (crack-wall uptake stalls once the matrix
+        near the wall saturates). Water the zone cannot absorb ponds
+        and overflows to runoff. The resulting (nz, ncol) mass-rate
+        profile [kg/m^2/s] is consumed by both the moisture solve (as a
+        volumetric source) and the rain heat-advection source (deposited
+        at rain temperature).
+        """
+        self._bypass_deposit = None
+        M = np.asarray(
+            getattr(self, '_bypass_flux', 0.0), dtype=float).reshape(-1)
+        if not np.any(M > 0.0):
+            return
+
+        _, z_top, z_bottom, e_fold = self._macropore_config()
+        nz = self.input.grid.nz
+        dz = abs(self.input.grid.z[1] - self.input.grid.z[0])
+        depth = np.abs(np.asarray(self.input.grid.z, dtype=float))
+
+        theta = np.asarray(self.soil_state.moisture, dtype=float)
+        if theta.ndim == 1:
+            theta = theta[:, None]
+        ncol = theta.shape[1]
+        runoff_extra = np.zeros(ncol)
+
+        zone = (depth >= z_top) & (depth <= z_bottom)
+        zone[0] = False  # layer 0 is the Dirichlet surface BC
+        if not zone.any():
+            runoff_extra = M.copy()
+            deposit = np.zeros((nz, ncol))
+        else:
+            theta_fc = np.asarray(self.soil.theta_fc, dtype=float)[:, None]
+            headroom = np.where(
+                zone[:, None],
+                np.maximum(theta_fc - theta, 0.0)
+                * dz * c.water.DENSITY / self.tstep,
+                0.0,
+            )
+            weight = np.where(
+                zone, np.exp(-(depth - z_top) / max(e_fold, 1e-6)), 0.0
+            )[:, None] * np.ones((1, ncol))
+
+            deposit = np.zeros((nz, ncol))
+            remaining = M.astype(float).copy()
+            # Proportional fill with per-layer caps; a few passes route
+            # any capped layer's share to the rest of the zone.
+            for _ in range(4):
+                room = headroom - deposit
+                active = (room > 1e-15) & (weight > 0.0)
+                w_act = np.where(active, weight, 0.0)
+                w_sum = w_act.sum(axis=0)
+                cols = (remaining > 1e-15) & (w_sum > 0.0)
+                if not cols.any():
+                    break
+                alloc = np.where(
+                    cols[None, :],
+                    w_act * np.divide(
+                        remaining, w_sum,
+                        out=np.zeros_like(remaining), where=w_sum > 0.0,
+                    )[None, :],
+                    0.0,
+                )
+                alloc = np.minimum(alloc, np.maximum(room, 0.0))
+                deposit += alloc
+                remaining = np.maximum(remaining - alloc.sum(axis=0), 0.0)
+            runoff_extra = remaining
+
+        if np.any(runoff_extra > 0.0):
+            self.sfc_state.fluxes.runoff[:] = (
+                np.asarray(self.sfc_state.fluxes.runoff) + runoff_extra
+            )
+            self._bypass_flux[:] = M - runoff_extra
+        if np.any(deposit > 0.0):
+            self._bypass_deposit = deposit
+
     def _solve_smb(self) -> None:
         """Solves the Surface Moisture Budget (SMB) for surface moisture.
 
@@ -1171,14 +1389,21 @@ class UtahLSM:
         a minus sign because it opposes E, drainage, and storage in the
         surface mass balance.
 
+        Before any runoff, a configurable macropore fraction of the
+        throughfall is captured by the crack network (bypass flow) and
+        removed from the matrix input; it is deposited at depth once per
+        step by ``_distribute_bypass``.
+
         Runoff has two components. Infiltration-excess (Hortonian) runoff
-        removes any rain rate exceeding the gravity-limited saturated
-        infiltration capacity ``rho_w * K_sat`` of the surface soil, so an
-        intense burst cannot be buffered as storage in the thin top cell.
-        The remaining rate enters the residual; saturation-excess runoff
-        is then diagnosed from the SMB transport limit if the wet endpoint
-        still cannot carry it. Both excesses are accumulated into
-        ``runoff`` and removed from the effective input ``P_eff``.
+        removes any rain rate exceeding the transient Green-Ampt
+        infiltration capacity ``rho_w * K_sat * (1 + Δθ ψ_f / F)`` of the
+        surface soil, so an intense burst late in a storm cannot be
+        buffered as storage in the thin top cell while a dry antecedent
+        surface still absorbs it. The remaining rate enters the residual;
+        saturation-excess runoff is then diagnosed from the SMB transport
+        limit if the wet endpoint still cannot carry it. Both excesses are
+        accumulated into ``runoff`` and removed from the effective input
+        ``P_eff``.
 
         In canopy mode, the precipitation entering this residual is
         throughfall after filling the intercepted-water store. In bare-soil
@@ -1221,6 +1446,21 @@ class UtahLSM:
         P_total = np.asarray(precip_source, dtype=float)
         runoff = np.zeros_like(P_total, dtype=float)
         P_eff = np.array(P_total, copy=True)
+
+        # Macropore bypass capture: a fixed fraction of throughfall runs
+        # into the crack network at the surface and never enters the
+        # matrix surface balance. Deposition into the crack zone happens
+        # once per step in _distribute_bypass(); here it is only removed
+        # from the matrix input. Stored in place so the output reference
+        # and the per-step distribution see the final coupling iterate.
+        f_mac, _, _, _ = self._macropore_config()
+        bypass = np.where(P_eff > 0.0, f_mac * P_eff, 0.0)
+        P_eff = P_eff - bypass
+        bypass_store = getattr(self, '_bypass_flux', None)
+        if bypass_store is None or np.shape(bypass_store) != np.shape(bypass):
+            self._bypass_flux = np.array(bypass, dtype=float)
+        else:
+            bypass_store[:] = bypass
 
         residual_q = float(self.soil.properties.residual[0])
         porosity = float(self.soil.properties.porosity[0])
@@ -1268,29 +1508,40 @@ class UtahLSM:
         b = np.full_like(sfc_T, porosity - eps * span)
 
         # Infiltration-excess (Hortonian) runoff. Rain in excess of the
-        # surface's saturated infiltration capacity ``I_max`` cannot enter
-        # the column and is shed as runoff. ``I_max`` is the
-        # gravity-limited (unit-gradient) Darcy flux at a saturated
-        # surface, ``rho_w * K_sat``. This represents the sealed/saturated
-        # surface limit under intense rain: raindrop-impact surface
-        # sealing and sub-grid saturation heterogeneity hold grid-scale
-        # infiltration near K_sat. The capillary-suction enhancement is
-        # deliberately excluded - it is transient, and on a fine near-
-        # surface grid the discrete suction gradient against a dry
-        # subsurface is enormous and would defeat the cap entirely.
-        # Evaluating conductivity at the wet endpoint also avoids the
-        # singular dry-end ψ/K that made an earlier K_sat pre-cap
-        # ill-conditioned. The remainder feeds the saturation-excess
-        # balance below.
-        K0_sat = np.asarray(
-            self.soil.conductivity_moisture(b, level=0), dtype=float
-        )
-        infil_capacity = RHO_W * K0_sat
-        infil_excess = np.where(
-            P_eff > 0.0, np.maximum(P_eff - infil_capacity, 0.0), 0.0
-        )
-        runoff = runoff + infil_excess
-        P_eff = P_eff - infil_excess
+        # surface's transient infiltration capacity ``I_max`` cannot enter
+        # the column and is shed as runoff. ``I_max`` is the Green-Ampt
+        # capacity ``rho_w * K_sat * (1 + delta_theta * psi_f / F)``: the
+        # gravity-limited saturated Darcy flux enhanced by wetting-front
+        # suction. Early in a storm on dry soil (cumulative infiltration
+        # F small, antecedent deficit delta_theta large) the suction term
+        # dominates and the surface swallows intense bursts; as F grows
+        # the capacity decays toward the sealed/saturated K_sat limit
+        # (raindrop-impact sealing, sub-grid saturation heterogeneity).
+        # The suction psi_f is derived from the configured retention
+        # model in _wetting_front_suction; F is per-event state advanced
+        # in _update_infiltration_history. Evaluating conductivity at the
+        # wet endpoint avoids the singular dry-end ψ/K that made an
+        # earlier K_sat pre-cap ill-conditioned. The remainder feeds the
+        # saturation-excess balance below.
+        if np.any(P_eff > 0.0):
+            K0_sat = np.asarray(
+                self.soil.conductivity_moisture(b, level=0), dtype=float
+            )
+            F_cum = np.maximum(
+                np.asarray(getattr(self, '_ga_cum_infil', 0.0), dtype=float),
+                self._GA_MIN_CUM_INFIL,
+            )
+            theta_ante = np.asarray(theta_old0, dtype=float)
+            psi_f = self._wetting_front_suction(theta_ante)
+            delta_theta = np.maximum(porosity - theta_ante, 0.0)
+            infil_capacity = RHO_W * K0_sat * (
+                1.0 + delta_theta * psi_f / F_cum
+            )
+            infil_excess = np.where(
+                P_eff > 0.0, np.maximum(P_eff - infil_capacity, 0.0), 0.0
+            )
+            runoff = runoff + infil_excess
+            P_eff = P_eff - infil_excess
 
         res_a = smb_residual(a)
         res_b = smb_residual(b)
@@ -1590,22 +1841,43 @@ class UtahLSM:
             state_field[:] = field
 
     def _rain_advection_source(self) -> Optional[np.ndarray]:
-        """Sensible-heat source from infiltrating rain, per soil layer.
+        """Sensible-heat source from rain advected through the soil column.
 
         Liquid precipitation enters the soil near the near-surface air
         temperature, which during convective rain is several K cooler than
         the warm daytime soil. The infiltrated water (post-interception,
-        post-runoff) carries that enthalpy deficit into the column. Soil
-        heat is otherwise pure conduction, so without this term the model
-        under-cools during and after rain.
+        post-runoff) carries that enthalpy deficit into the column, then
+        drains downward along the Richards water flux, advecting it deeper.
+        Soil heat is otherwise pure conduction, so without this term the
+        model under-cools during and after rain - and the conduction-only
+        reach previously limited the cooling to the top layer.
 
-        The enthalpy flux ``c_w * P_infil * (T_rain - T)`` [W/m^2] is
-        deposited in the top prognostic layer (index 1; layer 0 is the
-        Dirichlet skin BC) and converted to a temperature tendency [K/s]
-        with that layer's volumetric heat capacity. This is the
-        surface-input ("term 1") advection only; it does not advect heat
-        between layers along the water flux, so its reach below the top
-        layer is limited to conduction.
+        Writing the per-layer enthalpy balance with mass conservation, the
+        outgoing advective flux cancels against the heat-capacity-storage
+        change, leaving a storage-safe form in which each layer is heated
+        only by *incoming* water carrying its upwind source temperature
+        relative to the layer's own temperature::
+
+            C_vol_k dT_k/dt = conduction + c_w * sum_in m_in (T_src - T_k)
+
+        The surface-input ("term 1") contribution is layer 1's top-face
+        inflow ``c_w * P_infil * (T_rain - T_1)``. The interior
+        ("term 2") contributions advect heat between prognostic layers
+        along the lagged Darcy mass flux ``rho_w * q_face`` (downward
+        positive), with the upwind neighbour supplying ``T_src``. Free
+        drainage leaves the bottom layer at its own temperature, so it
+        contributes nothing. Because every contribution is relative to the
+        layer temperature, the source vanishes identically when the soil
+        column is isothermal (no spurious heating from net mass storage).
+
+        The Darcy flux is evaluated from the start-of-step soil state
+        (the moisture solve runs after the heat solve), so the interior
+        advection is explicit/lagged by one step.
+
+        Macropore bypass water descends the crack network with little
+        thermal equilibration, so its per-layer deposition profile also
+        deposits enthalpy at the rain temperature:
+        ``c_w * m_bypass_k * (T_rain - T_k)``.
 
         Returns:
             A (nz, ncol) temperature tendency [K/s], or None when there is
@@ -1613,28 +1885,80 @@ class UtahLSM:
         """
         P_infil = np.asarray(
             getattr(self, '_infiltration_flux', 0.0), dtype=float
-        )
-        if not np.any(P_infil > 0.0):
+        ).reshape(-1)
+        bypass_deposit = getattr(self, '_bypass_deposit', None)
+        if not np.any(P_infil > 0.0) and bypass_deposit is None:
             return None
 
         # Specific heat of liquid water [J/kg/K], consistent with the
         # volumetric value used for the soil heat capacity.
         c_w = c.water.VOLUMETRIC_HEAT_CAPACITY / c.water.DENSITY
+        rho_w = c.water.DENSITY
         nz = self.input.grid.nz
-        dz = abs(self.input.grid.z[0] - self.input.grid.z[1])
+        dz = abs(self.input.grid.z[1] - self.input.grid.z[0])
 
-        T_rain = np.asarray(self.atm_state.temperature, dtype=float)
-        T_layer = np.asarray(self.soil_state.temperature)[1]
-        c_vol = np.asarray(
-            self.soil.heat_capacity(self.soil_state.moisture), dtype=float
-        )[1]
-
-        q_rain = c_w * P_infil * (T_rain - T_layer)          # [W/m^2]
-        source = np.zeros((nz, self.ncol))
-        source[1] = np.divide(
-            q_rain, c_vol * dz,
-            out=np.zeros_like(q_rain), where=c_vol > 0.0,
+        T = np.asarray(self.soil_state.temperature, dtype=float)
+        theta = np.asarray(self.soil_state.moisture, dtype=float)
+        if T.ndim == 1:
+            T = T[:, None]
+        if theta.ndim == 1:
+            theta = theta[:, None]
+        ncol = T.shape[1]
+        T_rain = np.broadcast_to(
+            np.asarray(self.atm_state.temperature, dtype=float).reshape(-1),
+            (ncol,),
         )
+        P_infil = np.broadcast_to(np.maximum(P_infil, 0.0), (ncol,))
+        c_vol = np.asarray(self.soil.heat_capacity(theta), dtype=float)
+
+        # Lagged downward Darcy mass flux at interior faces [kg/m^2/s].
+        # Face j sits between nodes j and j+1; face 0 (surface -> layer 1)
+        # is intentionally unused, as layer 1's top-face inflow is the
+        # actual infiltration P_infil rather than the internal Darcy flux.
+        psi = np.asarray(self.soil.water_potential(theta), dtype=float)
+        K_node = np.asarray(
+            self.soil.conductivity_moisture(theta), dtype=float)
+        K_face = self._moisture_face_conductivity(
+            K_node[:-1], K_node[1:], psi[:-1], psi[1:], dz)
+        m_face = rho_w * K_face * (1.0 - (psi[1:] - psi[:-1]) / dz)
+
+        # Incoming water flux into each prognostic layer (1..nz-1) and the
+        # temperature of its upwind source layer.
+        inflow_above = np.zeros((nz, ncol))
+        Tsrc_above = np.zeros((nz, ncol))
+        inflow_above[1] = P_infil
+        Tsrc_above[1] = T_rain
+
+        inflow_below = np.zeros((nz, ncol))
+        Tsrc_below = np.zeros((nz, ncol))
+        if nz >= 3:
+            # Layers 2..nz-1 receive downward flow across faces 1..nz-2.
+            inflow_above[2:] = np.maximum(m_face[1:], 0.0)
+            Tsrc_above[2:] = T[1:nz - 1]
+            # Layers 1..nz-2 receive upward flow across the same faces.
+            inflow_below[1:nz - 1] = np.maximum(-m_face[1:], 0.0)
+            Tsrc_below[1:nz - 1] = T[2:nz]
+        # The bottom layer's lower face is free drainage (downward only),
+        # so it contributes no incoming flux.
+
+        heating = c_w * (
+            inflow_above * (Tsrc_above - T) + inflow_below * (Tsrc_below - T)
+        )                                                    # [W/m^2]
+        if bypass_deposit is not None:
+            dep = np.asarray(bypass_deposit, dtype=float)
+            if dep.ndim == 1:
+                dep = dep[:, None]
+            heating = np.asarray(
+                heating + c_w * dep * (T_rain[None, :] - T), dtype=float
+            )
+        denom = c_vol * dz
+        source = np.asarray(
+            np.divide(
+                heating, denom, out=np.zeros((nz, ncol)), where=denom > 0.0
+            ),
+            dtype=float,
+        )
+        source[0] = 0.0
         return source
 
     def _solve_diffusion_heat(self) -> None:
@@ -1841,11 +2165,27 @@ class UtahLSM:
         volumetric sink in [m^3/m^3/s]) is injected explicitly into the
         moisture tendency so transpiration removes water distributively
         from the root zone rather than from the bare-soil top-layer
-        balance.
+        balance. Macropore bypass water enters the same way: its
+        deposition profile [kg/m^2/s] becomes a volumetric source in the
+        crack zone, adding the water the matrix surface never saw.
         """
         source = None
         if getattr(self, 'canopy', None) is not None:
             source = -self.canopy_state.root_uptake
+        bypass_deposit = getattr(self, '_bypass_deposit', None)
+        if bypass_deposit is not None:
+            dz = abs(self.input.grid.z[1] - self.input.grid.z[0])
+            bypass_source = (
+                np.asarray(bypass_deposit, dtype=float)
+                / (c.water.DENSITY * dz)
+            )
+            if source is None:
+                source = bypass_source
+            else:
+                src_arr = np.asarray(source, dtype=float)
+                if src_arr.ndim == 1:
+                    src_arr = src_arr[:, None]
+                source = src_arr + bypass_source
         self._solve_mixed_moisture(source_term=source)
         tol = max(float(self.input.numerics.tolerances.moisture_bounds), 1e-8)
         self.soil.enforce_moisture_bounds(self.soil_state.moisture, tol)
