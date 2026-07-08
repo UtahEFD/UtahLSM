@@ -11,7 +11,12 @@ from utahlsm.exceptions import NamelistError
 from utahlsm.util.io.soil_properties_loader import SoilPropertiesLoader
 
 
-PUBLIC_DATASETS = ["clapp-hornberger", "cosby", "rawls-brakensiek"]
+PUBLIC_DATASETS = [
+    "clapp-hornberger",
+    "cosby",
+    "rawls-brakensiek",
+    "carsel-parrish",
+]
 
 
 def _base_props(**overrides: float) -> dict[str, float]:

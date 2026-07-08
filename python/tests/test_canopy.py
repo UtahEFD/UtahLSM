@@ -543,6 +543,8 @@ def test_supersaturated_air_does_not_create_negative_root_uptake(
     )
     model.soil = SimpleNamespace(
         surface_specific_humidity=lambda _T, _q, _p: atm_q,
+        theta_wilt=np.full(z_layers.size, 0.10),
+        theta_fc=np.full(z_layers.size, 0.30),
     )
 
     flux = model._partition_flux_wq(

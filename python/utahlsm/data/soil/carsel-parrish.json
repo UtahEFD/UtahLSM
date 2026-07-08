@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "dataset_name": "carsel-parrish",
+    "citation": "Carsel, R. F., and R. S. Parrish (1988), Developing joint probability distributions of soil water retention characteristics, Water Resour. Res., 24(5), 755-769",
+    "description": "Native van Genuchten retention parameters (alpha [1/m], n) and saturated hydraulic conductivity for the 12 USDA texture classes, from Carsel and Parrish (1988) Table 3 (alpha converted from 1/cm, K_sat from cm/h). Dry volumetric heat capacities (ci) are texture-class values carried over from the bundled clapp-hornberger dataset ('silt' uses the silty_loam value). Intended for the 'van-genuchten' soil model; the Campbell and Brooks-Corey models reject these types because no measured 'b' exponent exists."
+  },
+  "soil_types": {
+    "sand": {
+      "alpha": 14.5,
+      "n": 2.68,
+      "porosity": 0.43,
+      "residual": 0.045,
+      "K_sat": 8.25e-05,
+      "ci": 1470000.0
+    },
+    "loamy_sand": {
+      "alpha": 12.4,
+      "n": 2.28,
+      "porosity": 0.41,
+      "residual": 0.057,
+      "K_sat": 4.0528e-05,
+      "ci": 1410000.0
+    },
+    "sandy_loam": {
+      "alpha": 7.5,
+      "n": 1.89,
+      "porosity": 0.41,
+      "residual": 0.065,
+      "K_sat": 1.2278e-05,
+      "ci": 1340000.0
+    },
+    "loam": {
+      "alpha": 3.6,
+      "n": 1.56,
+      "porosity": 0.43,
+      "residual": 0.078,
+      "K_sat": 2.8889e-06,
+      "ci": 1210000.0
+    },
+    "silt": {
+      "alpha": 1.6,
+      "n": 1.37,
+      "porosity": 0.46,
+      "residual": 0.034,
+      "K_sat": 6.9444e-07,
+      "ci": 1270000.0
+    },
+    "silty_loam": {
+      "alpha": 2.0,
+      "n": 1.41,
+      "porosity": 0.45,
+      "residual": 0.067,
+      "K_sat": 1.25e-06,
+      "ci": 1270000.0
+    },
+    "sandy_clay_loam": {
+      "alpha": 5.9,
+      "n": 1.48,
+      "porosity": 0.39,
+      "residual": 0.1,
+      "K_sat": 3.6389e-06,
+      "ci": 1180000.0
+    },
+    "clay_loam": {
+      "alpha": 1.9,
+      "n": 1.31,
+      "porosity": 0.41,
+      "residual": 0.095,
+      "K_sat": 7.2222e-07,
+      "ci": 1230000.0
+    },
+    "silty_clay_loam": {
+      "alpha": 1.0,
+      "n": 1.23,
+      "porosity": 0.43,
+      "residual": 0.089,
+      "K_sat": 1.9444e-07,
+      "ci": 1320000.0
+    },
+    "sandy_clay": {
+      "alpha": 2.7,
+      "n": 1.23,
+      "porosity": 0.38,
+      "residual": 0.1,
+      "K_sat": 3.3333e-07,
+      "ci": 1180000.0
+    },
+    "silty_clay": {
+      "alpha": 0.5,
+      "n": 1.09,
+      "porosity": 0.36,
+      "residual": 0.07,
+      "K_sat": 5.5556e-08,
+      "ci": 1150000.0
+    },
+    "clay": {
+      "alpha": 0.8,
+      "n": 1.09,
+      "porosity": 0.38,
+      "residual": 0.068,
+      "K_sat": 5.5556e-07,
+      "ci": 1090000.0
+    }
+  }
+}

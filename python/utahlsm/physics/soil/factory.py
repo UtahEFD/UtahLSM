@@ -54,6 +54,28 @@ def get_soil_model(
         'van-genuchten': VanGenuchten,
     }
 
+    # Soil types defined with native van Genuchten retention parameters
+    # (alpha/n) carry only a derived 'b' (= 1/(n-1)), not a measured
+    # Campbell pore-size index, so they are valid only for the
+    # van-genuchten model.
+    if key in ('brooks-corey', 'campbell'):
+        vg_native = sorted({
+            name.lower() for name in soil_type_names
+            if properties_dict.get(name.lower(), {}).get('parameterization')
+            == 'van-genuchten'
+        })
+        if vg_native:
+            error_msg = (
+                f"Soil model '{key}' cannot use soil types defined with "
+                f"native van Genuchten parameters (alpha/n): "
+                f"{', '.join(vg_native)}. Use the 'van-genuchten' model or "
+                f"a dataset providing measured 'b'/'psi_sat' for these types."
+            )
+            logger.error('x' * 62)
+            logger.error('Namelist Error: %s', error_msg)
+            logger.error('x' * 62)
+            raise NamelistError(error_msg)
+
     try:
         return soil_models[key](
             properties_dict, soil_type_names, dataset_name,

@@ -129,7 +129,7 @@ The `lsm_namelist.json` file controls all simulation settings. Key sections:
 
 **Soil:**
 - `model`: 1 (Brooks-Corey), 2 (Campbell), or 3 (Van Genuchten)
-- `properties`: Public bundled soil database name ("rawls-brakensiek", "cosby", "clapp-hornberger") or a custom JSON path. Bundled datasets include Peters-Lidard quartz fractions and Letts peat tiers internally.
+- `properties`: Public bundled soil database name ("rawls-brakensiek", "cosby", "clapp-hornberger", "carsel-parrish") or a custom JSON path. Bundled datasets include Peters-Lidard quartz fractions and Letts peat tiers internally. "carsel-parrish" provides native van Genuchten parameters (alpha/n) and is valid only with the Van Genuchten soil model.
 
 **Surface:**
 - `z_o`: Roughness length [m] (0.01-0.1 m typical for grass)

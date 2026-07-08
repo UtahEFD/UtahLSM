@@ -422,8 +422,11 @@ class SoilConfig:
 
     Attributes:
         properties: Name of public bundled soil property dataset
-            ('clapp-hornberger', 'cosby', or 'rawls-brakensiek') or path to
-            a custom JSON file.
+            ('clapp-hornberger', 'cosby', 'rawls-brakensiek', or
+            'carsel-parrish') or path to a custom JSON file. Paths may be
+            relative to the namelist's directory. 'carsel-parrish' carries
+            native van Genuchten parameters and requires the
+            'van-genuchten' soil model.
         model: Soil model selector ('brooks-corey', 'campbell', 'van-genuchten').
         thermal_conductivity_model: Thermal conductivity parameterization.
             Options: 'mccumber-pielke' (default) or 'johansen'.

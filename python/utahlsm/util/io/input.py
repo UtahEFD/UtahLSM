@@ -22,6 +22,7 @@ access all setup information.
 import json
 import logging
 from importlib import resources
+from pathlib import Path
 from typing import Any, Optional, cast
 
 import jsonschema
@@ -94,6 +95,7 @@ class Input:
         """
         self.logger: logging.Logger = logging_helper.get_logger('Input')
         self.logger.info('Reading %s', namelist_path)
+        self._namelist_dir: Path = Path(namelist_path).expanduser().resolve().parent
         namelist_data = self._load_and_validate_namelist(namelist_path)
         log_level = namelist_data['general']['log_level']
         logging_helper.finalize_logging(log_level)
@@ -375,6 +377,11 @@ class Input:
         """
         try:
             properties_spec = soil_config['properties']
+            # Custom dataset files given as relative paths resolve against
+            # the namelist's directory, so case folders stay portable.
+            if (SoilPropertiesLoader.is_file_spec(properties_spec)
+                    and not Path(properties_spec).expanduser().is_absolute()):
+                properties_spec = str(self._namelist_dir / properties_spec)
             self.soil_properties = SoilPropertiesLoader.load(properties_spec)
             self.soil_properties_name: str = properties_spec
 

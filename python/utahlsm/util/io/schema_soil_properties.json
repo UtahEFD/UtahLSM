@@ -41,7 +41,7 @@
       "patternProperties": {
         "^[a-z_]+$": {
           "type": "object",
-          "description": "Properties for a specific soil type",
+          "description": "Properties for a specific soil type. Retention parameters are given either as Campbell-style ('b', 'psi_sat') or as native van Genuchten ('alpha', 'n') — exactly one of the two pairs.",
           "properties": {
             "b": {
               "type": "number",
@@ -50,6 +50,16 @@
             "psi_sat": {
               "type": "number",
               "description": "Saturation moisture potential [m]"
+            },
+            "alpha": {
+              "type": "number",
+              "exclusiveMinimum": 0.0,
+              "description": "van Genuchten air-entry parameter [1/m]"
+            },
+            "n": {
+              "type": "number",
+              "exclusiveMinimum": 1.0,
+              "description": "van Genuchten pore-size distribution exponent (unitless, > 1)"
             },
             "porosity": {
               "type": "number",
@@ -74,7 +84,21 @@
               "description": "Quartz volume fraction of the solid matrix (0–1). Bundled mineral datasets are supplemented internally. Custom mineral datasets must provide this for the Johansen thermal conductivity model; omit only for named organic peat soil types."
             }
           },
-          "required": ["b", "psi_sat", "porosity", "residual", "K_sat", "ci"],
+          "required": ["porosity", "residual", "K_sat", "ci"],
+          "oneOf": [
+            {
+              "required": ["b", "psi_sat"],
+              "not": {
+                "anyOf": [{"required": ["alpha"]}, {"required": ["n"]}]
+              }
+            },
+            {
+              "required": ["alpha", "n"],
+              "not": {
+                "anyOf": [{"required": ["b"]}, {"required": ["psi_sat"]}]
+              }
+            }
+          ],
           "additionalProperties": false
         }
       },

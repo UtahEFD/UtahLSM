@@ -861,10 +861,34 @@ class UtahLSM:
         if nz > 1:
             root_frac[1] += root_frac[0]
             root_frac[0] = 0.0
+        # Extraction is availability-weighted (compensatory uptake): each
+        # layer's share is root density times the same wilting-to-field-
+        # capacity ramp that feeds the f4 stress, renormalized per column.
+        # Without the ramp, transpiration sustained by moist deep layers
+        # is withdrawn from layers already at or below wilting, drying
+        # them indefinitely. When the whole root zone is stressed the
+        # plain root profile is used so the column sink still matches the
+        # (small, rs_max-limited) surface transpiration flux.
+        theta = np.asarray(self.soil_state.moisture, dtype=float)
+        if theta.ndim == 1:
+            theta = theta[:, None]
+        wilt = self.soil.theta_wilt[:, None]
+        fc = self.soil.theta_fc[:, None]
+        availability = np.clip(
+            (theta - wilt) / np.maximum(fc - wilt, 1e-6), 0.0, 1.0
+        )
+        weights = root_frac * availability
+        w_sum = np.sum(weights, axis=0, keepdims=True)
+        weights = np.where(
+            w_sum > 1e-12,
+            np.divide(weights, w_sum, out=np.zeros_like(weights),
+                      where=w_sum > 1e-12),
+            root_frac,
+        )
         dz = self.input.grid.z[0] - self.input.grid.z[1]
-        # T_veg_mass broadcast over layers times root fraction / (rho_w dz).
+        # T_veg_mass broadcast over layers times extraction weight / (rho_w dz).
         self.canopy_state.root_uptake[:] = (
-            root_frac * T_veg_mass[None, :] / (RHO_W * dz)
+            weights * T_veg_mass[None, :] / (RHO_W * dz)
         )
 
     def _solve_seb(self) -> None:

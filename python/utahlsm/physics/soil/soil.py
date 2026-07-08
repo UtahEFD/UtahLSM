@@ -564,11 +564,14 @@ class Soil(ABC):
             (theta - residual) / np.maximum(porosity - residual, 1e-12), 0.0, 1.0
         )
 
-        # Kersten number: coarse formula for q_z >= 0.4, fine for the rest
-        # (including organic layers).  Coarse formula requires Sr >= 0.1.
+        # Kersten number (Johansen 1975, unfrozen): coarse soils
+        # (q_z >= 0.4) use Ke = 0.7·log10(Sr) + 1, which reaches zero at
+        # Sr ≈ 0.037; fine soils and organic layers use Ke = log10(Sr) + 1,
+        # which reaches zero at Sr = 0.1. The [0, 1] clip supplies the
+        # dry-end cutoff to λ_dry below those saturations.
         is_coarse = (~is_organic) & (q_z_safe >= 0.4)
-        Ke_coarse = np.log10(np.maximum(Sr, 0.1)) + 1.0
-        Ke_fine = 0.7 * np.log10(np.maximum(Sr, 1e-7)) + 1.0
+        Ke_coarse = 0.7 * np.log10(np.maximum(Sr, 1e-7)) + 1.0
+        Ke_fine = np.log10(np.maximum(Sr, 1e-7)) + 1.0
         Ke: NDArray[np.float64] = np.clip(
             np.where(is_coarse, Ke_coarse, Ke_fine), 0.0, 1.0
         )

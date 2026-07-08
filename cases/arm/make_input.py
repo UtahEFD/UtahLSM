@@ -164,12 +164,17 @@ nsoil: int = len(soil_zlev_int)
 ############################################################################
 
 # soil levels are 5cm, 10cm, 20cm, 50cm, 75cm, 100cm
-# soil types are SiL, SiL, C, CL, CL, CL. The 75/100-cm data are excluded
-# because they are frequently flagged and are not representative enough for
-# this one-day initialization. The texture break is represented halfway
-# between the 10-cm silty-loam and 20-cm clay sensors; the moisture profile
-# keeps the observed 10-cm and 20-cm values as separate layer plateaus instead
-# of linearly smearing the sharp textural storage jump.
+# soil types are SiL, SiL, C, CL, CL, CL. The 75/100-cm MOISTURE data are
+# excluded (frequently flagged, not representative enough for this one-day
+# initialization). TEMPERATURE keeps the deep sensors: without them the IC
+# held T(50cm) constant below 0.5 m, placing a -10 K/m gradient kink exactly
+# at the 50-cm validation node, whose relaxation alone produced a spurious
+# ~+0.7 K/day warm drift there. The observed profile in fact keeps cooling
+# at ~-9 K/m to ~294.7 K at 75-100 cm, so the 50-cm node carries almost no
+# curvature at t=0. The texture break is represented halfway between the
+# 10-cm silty-loam and 20-cm clay sensors; the moisture profile keeps the
+# observed 10-cm and 20-cm values as separate layer plateaus instead of
+# linearly smearing the sharp textural storage jump.
 soil_texture_break: float = 0.15
 
 soil_data: nc.Dataset = nc.Dataset('observations/arm_soil_data.nc')
@@ -181,11 +186,11 @@ sites = ("west", "east", "south")
 # Average temperature across the three measurement sites
 soil_temp_obs_raw: NDArray[np.float64] = _initial_depth_mean(
     soil_data, "soil_temperature", sites, min_value=-50.0, max_value=80.0
-)[:-2] + 273.15
+) + 273.15
 valid_temp = np.isfinite(soil_temp_obs_raw)
 if np.count_nonzero(valid_temp) < 2:
     raise RuntimeError("ARM soil temperature profile has fewer than two valid depths.")
-soil_temp_lev = np.insert(soil_data_lev_raw[:-2][valid_temp], 0, 0.0)
+soil_temp_lev = np.insert(soil_data_lev_raw[valid_temp], 0, 0.0)
 soil_temp_obs = np.insert(
     soil_temp_obs_raw[valid_temp], 0, soil_temp_obs_raw[valid_temp][0]
 )
@@ -534,7 +539,19 @@ namelist['surface']['zeta_max'] = 1.0
 namelist['surface']['gustiness'] = 1.0
 namelist['surface']['gustiness_stable_only'] = True
 
-# soil section
+# soil section. Clapp-Hornberger retention is kept deliberately. A site
+# refit of the silty-loam topsoil to the observed retention anchors (field
+# capacity 0.165) was tried to speed the post-storm 5 cm wetting front, but
+# the same curve change moves the canopy moisture-stress endpoints
+# (theta_wilt/theta_fc feed Jarvis f4): it dropped the topsoil wilting point
+# 0.180 -> 0.085, unleashing transpiration (LE +58 W/m^2 bias) and degrading
+# every soil-temperature trace. The retention curve cannot be both flat (the
+# wide fc-wilt span the canopy was calibrated to) and steep (the high
+# intermediate K the 5 cm redistribution needs), so the two are irreconcilable
+# in one curve. The residual 5 cm under-response is largely sensor
+# representativeness (the obs probe is preferentially wetted). The native van
+# Genuchten dataset support and the bundled carsel-parrish table remain
+# available for sites where a measured retention curve is the right choice.
 namelist['soil']['properties'] = "clapp-hornberger"
 namelist['soil']['model'] = "van-genuchten"
 namelist['soil']['thermal_conductivity_model'] = "johansen"
@@ -568,9 +585,12 @@ namelist['canopy']['t_coef'] = 1.6e-3
 # In-canopy aerodynamic resistance between the radiative skin and the soil
 # top. It sets the diurnal soil-temperature amplitude: too large (the old 400
 # value, tuned to the under-reading heat-flux-plate G0) decouples the soil and
-# damps its swing to ~half observed. 100 brings the model surface flux onto the
-# calorimetric G0 and centres the 5-cm temperature amplitude on the STAMP obs.
-namelist['canopy']['r_ground'] = 100.0
+# damps its swing to ~half observed. The value brings the model surface flux
+# onto the calorimetric G0 and centres the soil-temperature amplitudes on the
+# STAMP obs. Retuned 100 -> 125 after fixing the swapped Johansen Kersten
+# formulas (the old 100 partially compensated the inflated thermal
+# conductivity); 125 minimizes T rmse at every STAMP depth simultaneously.
+namelist['canopy']['r_ground'] = 125.0
 
 # radiation section
 namelist['radiation']['model']     = "forcing"

@@ -67,8 +67,9 @@ class SoilPropertiesLoader:
         "clapp-hornberger",
         "cosby",
         "rawls-brakensiek",
+        "carsel-parrish",
     )
-    BUNDLED_DATASETS = list(PUBLIC_BUNDLED_DATASETS)
+    BUNDLED_DATASETS: list[str] = list(PUBLIC_BUNDLED_DATASETS)
     _INTERNAL_BUNDLED_DATASETS = (
         *PUBLIC_BUNDLED_DATASETS,
         "letts",
@@ -81,6 +82,7 @@ class SoilPropertiesLoader:
         "loamy_sand": 0.82,
         "sandy_loam": 0.60,
         "silty_loam": 0.25,
+        "silt": 0.10,
         "loam": 0.40,
         "sandy_clay_loam": 0.60,
         "silty_clay_loam": 0.10,
@@ -91,7 +93,7 @@ class SoilPropertiesLoader:
     }
 
     @staticmethod
-    def load(properties_spec: str) -> dict[str, dict[str, float]]:
+    def load(properties_spec: str) -> dict[str, dict[str, Any]]:
         """Load soil properties from a bundled dataset, file, or composite.
 
         Args:
@@ -120,11 +122,16 @@ class SoilPropertiesLoader:
         return SoilPropertiesLoader.BUNDLED_DATASETS.copy()
 
     @staticmethod
+    def is_file_spec(spec: str) -> bool:
+        """Return True when ``spec`` denotes a file path, not a bundled name."""
+        return _is_file_path(spec)
+
+    @staticmethod
     def _resolve(
         spec: str,
         _seen: set[str],
         _allow_internal: bool = False,
-    ) -> tuple[dict[str, dict[str, float]], str]:
+    ) -> tuple[dict[str, dict[str, Any]], str]:
         """Recursively resolve a dataset spec to merged soil_types.
 
         Returns the merged ``soil_types`` table and a canonical key used for
@@ -142,7 +149,7 @@ class SoilPropertiesLoader:
         SoilPropertiesLoader._validate(data, source)
 
         on_conflict = data.get("on_conflict", "error")
-        merged: dict[str, dict[str, float]] = {}
+        merged: dict[str, dict[str, Any]] = {}
 
         for include_spec in data.get("includes", []):
             child_types, _ = SoilPropertiesLoader._resolve(
@@ -152,8 +159,9 @@ class SoilPropertiesLoader:
                 merged, child_types, on_conflict, source, include_spec
             )
 
-        own_types = cast(dict[str, dict[str, float]], data.get("soil_types", {}))
+        own_types = cast(dict[str, dict[str, Any]], data.get("soil_types", {}))
         if own_types:
+            SoilPropertiesLoader._normalize_retention(own_types)
             SoilPropertiesLoader._merge(merged, own_types, on_conflict, source, source)
 
         if not _is_file_path(spec):
@@ -167,9 +175,33 @@ class SoilPropertiesLoader:
         return merged, canonical
 
     @staticmethod
+    def _normalize_retention(soil_types: dict[str, dict[str, Any]]) -> None:
+        """Derive Campbell-style fields for native van Genuchten entries.
+
+        Dataset entries may specify retention either as ('b', 'psi_sat') or
+        as native van Genuchten ('alpha' [1/m], 'n'); the schema enforces
+        exactly one pair. For native entries the internal equivalents are
+        exact under the model's Mualem-constrained parameterization
+        (m = 1/(1+b) = 1-1/n and air entry psi_sat = -1/alpha):
+
+            b = 1/(n-1),    psi_sat = -1/alpha
+
+        The entry is tagged with ``parameterization: 'van-genuchten'`` so the
+        soil-model factory can reject these types for Campbell/Brooks-Corey,
+        where the derived 'b' is not a measured pore-size index.
+        """
+        for props in soil_types.values():
+            if "alpha" in props:
+                alpha = float(props["alpha"])
+                n = float(props["n"])
+                props["b"] = 1.0 / (n - 1.0)
+                props["psi_sat"] = -1.0 / alpha
+                props["parameterization"] = "van-genuchten"
+
+    @staticmethod
     def _merge(
-        target: dict[str, dict[str, float]],
-        incoming: dict[str, dict[str, float]],
+        target: dict[str, dict[str, Any]],
+        incoming: dict[str, dict[str, Any]],
         policy: str,
         owner: str,
         source: str,
@@ -194,7 +226,7 @@ class SoilPropertiesLoader:
     @staticmethod
     def _apply_bundled_supplements(
         dataset_name: str,
-        soil_types: dict[str, dict[str, float]],
+        soil_types: dict[str, dict[str, Any]],
         seen: set[str],
     ) -> None:
         """Attach bundled thermal/organic data to mineral base datasets.

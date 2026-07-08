@@ -701,7 +701,7 @@ class TestJohansenThermalConductivity:
             VanGenuchten(props, ["clay"], "custom", "johansen")
 
     def test_johansen_sand_uses_coarse_kersten(self) -> None:
-        """Sand (q_z=0.92 >= 0.4) uses the coarse Kersten formula: Ke=log10(Sr)+1."""
+        """Sand (q_z=0.92 >= 0.4) uses the coarse Kersten formula: Ke=0.7·log10(Sr)+1."""
         props_sand: dict[str, dict[str, float]] = {
             "sand": {
                 "b": 2.79,
@@ -718,3 +718,47 @@ class TestJohansenThermalConductivity:
         lam = model.conductivity_thermal(theta)
         assert np.all(lam > 0.0)
         assert np.all(np.isfinite(lam))
+
+    def test_johansen_kersten_formula_assignment(self) -> None:
+        """Fine soils use Ke=log10(Sr)+1; coarse soils use Ke=0.7·log10(Sr)+1.
+
+        Johansen (1975) / Peters-Lidard et al. (1998), unfrozen. Regression
+        test for a bug where the two formulas were swapped, inflating λ in
+        dry fine-textured soil by ~60 %.
+        """
+
+        def lam_expected(porosity: float, q_z: float, Ke: float) -> float:
+            lambda_o = 2.0 if q_z >= 0.2 else 3.0
+            lambda_s = 7.7**q_z * lambda_o ** (1.0 - q_z)
+            lambda_sat = lambda_s ** (1.0 - porosity) * 0.57**porosity
+            rho_d = 2700.0 * (1.0 - porosity)
+            lambda_dry = (0.135 * rho_d + 64.7) / (2700.0 - 0.947 * rho_d)
+            return (lambda_sat - lambda_dry) * Ke + lambda_dry
+
+        # Fine: clay, q_z = 0.25 < 0.4, at Sr = 0.5.
+        props_clay = _make_johansen_clay_props()
+        model_fine = VanGenuchten(props_clay, ["clay"], "test", "johansen")
+        phi_c = props_clay["clay"]["porosity"]
+        lam_fine = model_fine.conductivity_thermal(np.array([0.5 * phi_c]))
+        Ke_fine = np.log10(0.5) + 1.0
+        assert_allclose(lam_fine[0], lam_expected(phi_c, 0.25, Ke_fine),
+                        rtol=1e-6)
+
+        # Coarse: sand, q_z = 0.92 >= 0.4, at Sr = 0.5.
+        props_sand: dict[str, dict[str, float]] = {
+            "sand": {
+                "b": 2.79,
+                "psi_sat": -0.023,
+                "porosity": 0.339,
+                "residual": 0.0,
+                "K_sat": 1.6e-5,
+                "ci": 1.47e6,
+                "quartz_fraction": 0.92,
+            }
+        }
+        model_coarse = VanGenuchten(props_sand, ["sand"], "test", "johansen")
+        phi_s = props_sand["sand"]["porosity"]
+        lam_coarse = model_coarse.conductivity_thermal(np.array([0.5 * phi_s]))
+        Ke_coarse = 0.7 * np.log10(0.5) + 1.0
+        assert_allclose(lam_coarse[0], lam_expected(phi_s, 0.92, Ke_coarse),
+                        rtol=1e-6)

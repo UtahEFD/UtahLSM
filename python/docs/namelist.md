@@ -155,9 +155,11 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 ### `soil`
 
 `properties`
-: Name of the bundled soil property table, or a path to a custom JSON file. Public bundled datasets are `clapp-hornberger`, `cosby`, and `rawls-brakensiek`. These are the base hydraulic-property tables exposed in the namelist; internally, each bundled dataset is supplemented with Peters-Lidard et al. (1998) texture-class quartz fractions for Johansen thermal conductivity and Letts et al. (2000) peat tiers (`peat_fibric`, `peat_hemic`, `peat_sapric`) for organic layers.
+: Name of the bundled soil property table, or a path to a custom JSON file. Public bundled datasets are `clapp-hornberger`, `cosby`, `rawls-brakensiek`, and `carsel-parrish`. These are the base hydraulic-property tables exposed in the namelist; internally, each bundled dataset is supplemented with Peters-Lidard et al. (1998) texture-class quartz fractions for Johansen thermal conductivity and Letts et al. (2000) peat tiers (`peat_fibric`, `peat_hemic`, `peat_sapric`) for organic layers.
 
 When `thermal_conductivity_model` is `"johansen"`, custom mineral soil types must provide `quartz_fraction`. Missing quartz is allowed only for named `peat_*` organic layers; otherwise the model raises a namelist error instead of guessing.
+
+Soil-type entries define the retention curve either with Campbell-style `b`/`psi_sat` or with native van Genuchten `alpha` [1/m] and `n` — exactly one of the two pairs. Native van Genuchten entries (including all of `carsel-parrish`, from Carsel & Parrish 1988) are valid only with the `van-genuchten` soil model; `campbell` and `brooks-corey` reject them because no measured `b` exponent exists.
 
 A dataset JSON may declare `"includes": ["a", "b", ...]` to merge soil types from other public bundled datasets or file paths. The current dataset's own `soil_types` are merged last and take precedence. Conflicts are governed by `"on_conflict"`: `"error"` (default), `"prefer_first"`, or `"prefer_last"`.
 
