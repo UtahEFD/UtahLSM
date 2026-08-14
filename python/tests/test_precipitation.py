@@ -644,12 +644,13 @@ def test_rain_advection_cools_warm_soil() -> None:
     """Cold infiltrating rain deposits a cooling tendency in the top layer.
 
     The source goes only into layer 1 (layer 0 is the Dirichlet skin BC),
-    and its magnitude is c_w*P*(T_rain-T)/(C_vol*dz).
+    and its magnitude is c_w*m_top*(T_rain-T)/(C_vol*dz).
     """
     model = _make_smb_model(theta_profile=0.30)
     model.soil_state.temperature[:] = 303.0
     model.atm_state.temperature = np.array([290.0])
     model._infiltration_flux = np.array([1.0e-3])
+    model._matrix_top_flux = np.array([2.5e-4])
 
     source = model._rain_advection_source()
 
@@ -664,7 +665,7 @@ def test_rain_advection_cools_warm_soil() -> None:
     c_vol = float(
         np.asarray(model.soil.heat_capacity(model.soil_state.moisture))[1, 0]
     )
-    expected = c_w * 1.0e-3 * (290.0 - 303.0) / (c_vol * dz)
+    expected = c_w * 2.5e-4 * (290.0 - 303.0) / (c_vol * dz)
     assert source[1, 0] == pytest.approx(expected, rel=1e-6)
 
 
@@ -675,6 +676,7 @@ def test_rain_advection_sign_tracks_temperature_difference() -> None:
     model = _make_smb_model(theta_profile=0.30)
     model.soil_state.temperature[:] = 290.0
     model._infiltration_flux = np.array([1.0e-3])
+    model._matrix_top_flux = np.array([2.5e-4])
 
     model.atm_state.temperature = np.array([295.0])
     warm = model._rain_advection_source()
@@ -687,10 +689,21 @@ def test_rain_advection_sign_tracks_temperature_difference() -> None:
 
 @pytest.mark.precip
 @pytest.mark.soil
-def test_no_infiltration_no_rain_source() -> None:
-    """With no infiltration the rain heat source is omitted entirely."""
+def test_no_matrix_transfer_no_rain_source() -> None:
+    """Rain retained in surface storage does not heat layer 1 prematurely."""
+    model = _make_smb_model(theta_profile=0.30)
+    model._infiltration_flux = np.array([1.0e-3])
+    model._matrix_top_flux = np.zeros(1)
+    assert model._rain_advection_source() is None
+
+
+@pytest.mark.precip
+@pytest.mark.soil
+def test_dry_matrix_drainage_is_not_assigned_rain_temperature() -> None:
+    """Without active precipitation, top drainage is not rain enthalpy."""
     model = _make_smb_model(theta_profile=0.30)
     model._infiltration_flux = np.zeros(1)
+    model._matrix_top_flux = np.array([2.5e-4])
     assert model._rain_advection_source() is None
 
 
@@ -710,6 +723,7 @@ def test_interior_advection_cools_layer_below_top() -> None:
     model.soil_state.temperature[:] = np.array([[300.0], [290.0], [303.0]])
     model.atm_state.temperature = np.array([290.0])
     model._infiltration_flux = np.array([1.0e-3])
+    model._matrix_top_flux = np.array([2.5e-4])
 
     source = model._rain_advection_source()
 

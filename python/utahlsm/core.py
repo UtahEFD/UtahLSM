@@ -239,9 +239,10 @@ class UtahLSM:
         self.sfc_state.fluxes.runoff = np.zeros(self.ncol)
         self._soil_precipitation = np.zeros(self.ncol)
         self._precipitation_prepared = False
-        # Infiltrated water flux [kg/m^2/s] (post-interception, post-bypass,
-        # post-runoff), set by the SMB and consumed by the rain
-        # heat-advection source.
+        # Matrix precipitation admitted to the surface reservoir [kg/m^2/s]
+        # (post-interception, post-bypass, post-runoff). The rain heat source
+        # uses this to identify active precipitation, while the actual
+        # layer-1 transfer comes from _matrix_top_flux.
         self._infiltration_flux = np.zeros(self.ncol)
         # Matrix water flux across the surface-to-layer-1 interface
         # [kg/m^2/s], set by the SMB and imposed as the upper Richards flux.
@@ -1606,9 +1607,9 @@ class UtahLSM:
         _, matrix_top_flux = smb_fluxes(self.sfc_state.moisture)
         self._matrix_top_flux = matrix_top_flux
         self.sfc_state.fluxes.runoff[:] = runoff
-        # Water that actually entered the column this step (rain minus
-        # interception minus runoff). Consumed by the rain heat-advection
-        # source in the soil heat solve.
+        # Matrix precipitation admitted to the surface reservoir this step.
+        # Some may remain there; _matrix_top_flux is the amount transferred
+        # onward to layer 1.
         self._infiltration_flux = np.maximum(P_eff, 0.0)
 
     def _compute_fluxes(self, sfc_T: FloatOrArray, sfc_q: FloatOrArray) -> None:
@@ -1900,8 +1901,11 @@ class UtahLSM:
 
             C_vol_k dT_k/dt = conduction + c_w * sum_in m_in (T_src - T_k)
 
-        The surface-input ("term 1") contribution is layer 1's top-face
-        inflow ``c_w * P_infil * (T_rain - T_1)``. The interior
+        The surface-input ("term 1") contribution is layer 1's accepted
+        matrix top-face inflow ``c_w * m_top * (T_rain - T_1)`` while
+        precipitation is active. Using the SMB/Richards interface flux keeps
+        water retained in the surface reservoir from depositing heat in layer
+        1 before it actually crosses that face. The interior
         ("term 2") contributions advect heat between prognostic layers
         along the lagged Darcy mass flux ``rho_w * q_face`` (downward
         positive), with the upwind neighbour supplying ``T_src``. Free
@@ -1923,11 +1927,17 @@ class UtahLSM:
             A (nz, ncol) temperature tendency [K/s], or None when there is
             no infiltration this step.
         """
-        P_infil = np.asarray(
+        matrix_input = np.asarray(
             getattr(self, '_infiltration_flux', 0.0), dtype=float
         ).reshape(-1)
+        matrix_top_flux = np.asarray(
+            getattr(self, '_matrix_top_flux', 0.0), dtype=float
+        ).reshape(-1)
+        matrix_rain_flux = np.where(
+            matrix_input > 0.0, np.maximum(matrix_top_flux, 0.0), 0.0
+        )
         bypass_deposit = getattr(self, '_bypass_deposit', None)
-        if not np.any(P_infil > 0.0) and bypass_deposit is None:
+        if not np.any(matrix_rain_flux > 0.0) and bypass_deposit is None:
             return None
 
         # Specific heat of liquid water [J/kg/K], consistent with the
@@ -1948,13 +1958,13 @@ class UtahLSM:
             np.asarray(self.atm_state.temperature, dtype=float).reshape(-1),
             (ncol,),
         )
-        P_infil = np.broadcast_to(np.maximum(P_infil, 0.0), (ncol,))
+        matrix_rain_flux = np.broadcast_to(matrix_rain_flux, (ncol,))
         c_vol = np.asarray(self.soil.heat_capacity(theta), dtype=float)
 
         # Lagged downward Darcy mass flux at interior faces [kg/m^2/s].
         # Face j sits between nodes j and j+1; face 0 (surface -> layer 1)
         # is intentionally unused, as layer 1's top-face inflow is the
-        # actual infiltration P_infil rather than the internal Darcy flux.
+        # accepted SMB/Richards matrix flux rather than a recomputed flux.
         psi = np.asarray(self.soil.water_potential(theta), dtype=float)
         K_node = np.asarray(
             self.soil.conductivity_moisture(theta), dtype=float)
@@ -1966,7 +1976,7 @@ class UtahLSM:
         # temperature of its upwind source layer.
         inflow_above = np.zeros((nz, ncol))
         Tsrc_above = np.zeros((nz, ncol))
-        inflow_above[1] = P_infil
+        inflow_above[1] = matrix_rain_flux
         Tsrc_above[1] = T_rain
 
         inflow_below = np.zeros((nz, ncol))
