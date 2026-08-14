@@ -1366,24 +1366,26 @@ class UtahLSM:
     def _update_infiltration_history(self) -> None:
         """Advances the Green-Ampt cumulative-infiltration event state.
 
-        While raining, the matrix-infiltrated depth accumulates and the
-        suction enhancement of the infiltration capacity decays toward
-        the sealed K_sat limit. After rain stops, the wetting front
-        redistributes, so the event memory relaxes exponentially with
-        ``_GA_REDIST_TAU`` and a later storm again sees dry-soil capacity.
-        Called once per timestep (after surface coupling) so the repeated
-        SMB calls inside the Picard loop do not multi-count.
+        While water is admitted to the matrix surface, its depth accumulates
+        and the suction enhancement of the infiltration capacity decays
+        toward the sealed K_sat limit. When raw rain is intercepted, routed
+        entirely through macropores, or rejected as runoff, the matrix
+        wetting front instead redistributes and the event memory relaxes
+        exponentially with ``_GA_REDIST_TAU``. Called once per timestep
+        (after surface coupling) so repeated SMB calls inside the Picard loop
+        do not multi-count.
         """
-        precip = np.asarray(
-            self.atm_state.precipitation, dtype=float).reshape(-1)
+        matrix_input = np.maximum(
+            np.asarray(self._infiltration_flux, dtype=float).reshape(-1),
+            0.0,
+        )
         infil_depth = (
-            np.asarray(self._infiltration_flux, dtype=float).reshape(-1)
-            * self.tstep / c.water.DENSITY
+            matrix_input * self.tstep / c.water.DENSITY
         )
         decayed = self._ga_cum_infil * np.exp(
             -self.tstep / self._GA_REDIST_TAU)
         self._ga_cum_infil[:] = np.where(
-            precip > 0.0, self._ga_cum_infil + infil_depth, decayed
+            matrix_input > 0.0, self._ga_cum_infil + infil_depth, decayed
         )
 
     def _distribute_bypass(self) -> None:

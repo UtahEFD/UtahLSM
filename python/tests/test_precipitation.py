@@ -363,7 +363,7 @@ def test_capacity_decays_with_cumulative_infiltration() -> None:
 @pytest.mark.precip
 @pytest.mark.smb
 def test_infiltration_history_accumulates_and_decays() -> None:
-    """The event state grows while raining and relaxes after rain stops."""
+    """The event state grows with matrix input and relaxes without it."""
     RHO_W = 1000.0
     model = _make_smb_model(theta_profile=0.30, tstep=60.0)
     model._ga_cum_infil = np.array([0.01])
@@ -375,9 +375,30 @@ def test_infiltration_history_accumulates_and_decays() -> None:
     assert model._ga_cum_infil[0] == pytest.approx(expected)
 
     model.atm_state.precipitation = np.array([0.0])
+    model._infiltration_flux = np.zeros(1)
     model._update_infiltration_history()
     decayed = expected * np.exp(-60.0 / UtahLSM._GA_REDIST_TAU)
     assert model._ga_cum_infil[0] == pytest.approx(decayed)
+
+
+@pytest.mark.precip
+@pytest.mark.smb
+def test_infiltration_history_ignores_rain_excluded_from_matrix() -> None:
+    """Raw rain alone cannot preserve matrix wetting-front memory."""
+    model = _make_smb_model(
+        theta_profile=0.30,
+        precipitation=2.0e-3,
+        tstep=60.0,
+    )
+    model._ga_cum_infil = np.array([0.01])
+    # Represents rain intercepted by the canopy or wholly routed away from
+    # the matrix after the SMB has partitioned the forcing.
+    model._infiltration_flux = np.zeros(1)
+
+    model._update_infiltration_history()
+
+    expected = 0.01 * np.exp(-60.0 / UtahLSM._GA_REDIST_TAU)
+    assert model._ga_cum_infil[0] == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
