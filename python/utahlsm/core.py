@@ -23,7 +23,7 @@ through the simulation in time.
 
 import logging
 from dataclasses import replace
-from typing import Callable, Literal, Optional, cast
+from typing import Literal, Optional, cast
 
 import numpy as np
 
@@ -1701,58 +1701,49 @@ class UtahLSM:
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
         self._finalize_canopy_partition()
 
-    def _solve_diffusion(self,state_field: np.ndarray,
-                         get_diffusivity: Callable[[np.ndarray], np.ndarray],
-                         sfc_boundary: FloatOrArray,field_name: str = 'field',
-                         source_term: Optional[np.ndarray] = None,
-                         avg_diffusivity: str = 'arithmetic') -> None:
-        """Solves a generic 1D diffusion equation using a theta scheme.
+    def _solve_soil_heat(
+        self,
+        source_term: Optional[np.ndarray] = None,
+    ) -> None:
+        """Solves conservative soil heat conduction with a theta scheme.
 
-        This helper serves the soil heat solve. The moisture equation
-        uses a dedicated mixed-form Richards implementation.
+        A single harmonic thermal conductivity is evaluated at every face.
+        Its Fourier flux is shared by the adjacent full-depth control volumes,
+        so conductivity and heat-capacity discontinuities cannot create or
+        destroy column energy. The surface temperature is Dirichlet and the
+        lower boundary has zero heat flux.
 
         Args:
-            state_field: Reference to the field to update (temperature) [NDArray].
-            get_diffusivity: Callable that computes diffusivity profile from
-                soil moisture [Callable[[NDArray[np.float64]], NDArray[np.float64]]].
-            sfc_boundary: Surface boundary value for Dirichlet BC.
-            field_name: Name of the field for logging/documentation.
-            source_term: Optional per-layer source (or sink, if negative)
-                with units of the state field per second, shape (nz, ncol).
-                Applied as ``dt · source`` to the RHS for layers 1..nz-1.
-            avg_diffusivity: Averaging rule for interface diffusivity. Use
-                ``"arithmetic"`` for simple means or ``"geometric"`` for
-                multiplicative averaging.
-
-        Physics:
-            - Diffusivity always depends on soil moisture
-            - Dirichlet BC at top (surface): uses sfc_boundary
-            - Neumann BC at bottom: assumes zero gradient
-            - Theta scheme parameterization:
-              theta = 0.0 -> FTCS (explicit)
-              theta = 0.5 -> Crank-Nicolson
-              theta = 1.0 -> BTCS (implicit)
+            source_term: Optional temperature tendency [K/s], shape
+                ``(nz, ncol)``. Layer 0 is the prescribed surface boundary.
         """
-        self.logger.debug('Solving %s diffusion', field_name)
+        self.logger.debug('Solving conservative soil heat diffusion')
         theta_b = self.input.numerics.heat_diffusion_back_weight
         theta_f = 1.0 - theta_b
         nz = self.input.grid.nz
-        dz = self.input.grid.z[0] - self.input.grid.z[1]
+        if nz < 2:
+            raise ValueError('Soil heat solve requires nz >= 2.')
+
+        dz = abs(self.input.grid.z[1] - self.input.grid.z[0])
+        if dz <= 0.0:
+            raise ValueError(f'Expected non-zero soil spacing, got dz={dz}.')
         dz2 = dz**2
         dt = self.tstep
-        field = np.asarray(state_field, dtype=float)
+        field = np.asarray(self.soil_state.temperature, dtype=float)
+        squeeze = False
         if field.ndim == 1:
             field = field[:, None]
+            squeeze = True
         if field.ndim != 2 or field.shape[0] != nz:
             raise ValueError(
-                f"{field_name} has unexpected shape {field.shape}."
+                f"temperature has unexpected shape {field.shape}."
             )
         ncol = field.shape[1]
         sfc_boundary_vec = self._as_column_vector(
-            sfc_boundary, f"{field_name} boundary")
+            self.sfc_state.soil_top_temperature, 'temperature boundary')
         if sfc_boundary_vec.size != ncol:
             raise ValueError(
-                f"{field_name} boundary size {sfc_boundary_vec.size} does not "
+                f"temperature boundary size {sfc_boundary_vec.size} does not "
                 f"match ncol={ncol}."
             )
 
@@ -1771,96 +1762,54 @@ class UtahLSM:
             g.fill(0.0)
             r.fill(0.0)
 
-        # Compute diffusivity using soil moisture
-        D = get_diffusivity(self.soil_state.moisture)
-        if avg_diffusivity == 'geometric':
-            D_mid = np.sqrt(np.maximum(D[:-1] * D[1:], 0.0))
-        else:
-            D_mid = 0.5 * (D[:-1] + D[1:])
+        moisture = np.asarray(self.soil_state.moisture, dtype=float)
+        conductivity = np.asarray(
+            self.soil.conductivity_thermal(moisture), dtype=float)
+        capacity = np.asarray(self.soil.heat_capacity(moisture), dtype=float)
+        if conductivity.ndim == 1:
+            conductivity = conductivity[:, None]
+        if capacity.ndim == 1:
+            capacity = capacity[:, None]
+        expected_shape = (nz, ncol)
+        if conductivity.shape != expected_shape or capacity.shape != expected_shape:
+            raise ValueError(
+                'Thermal property shape mismatch: expected '
+                f'{expected_shape}, got conductivity={conductivity.shape}, '
+                f'capacity={capacity.shape}.'
+            )
+        if np.any(capacity <= 0.0):
+            raise ValueError('Soil heat capacity must be positive.')
 
-        # === First soil level below surface (i=0) ===
-        cp = dt * D_mid[0] / dz2
-        cm = dt * D_mid[1] / dz2
+        denom = conductivity[:-1] + conductivity[1:]
+        lambda_face = np.divide(
+            2.0 * conductivity[:-1] * conductivity[1:],
+            denom,
+            out=np.zeros_like(denom),
+            where=denom > 0.0,
+        )
 
-        # Backward (implicit) coefficients
-        cb_p = -theta_b * cp
-        cb_m = -theta_b * cm
-        cb = 1.0 - cb_p - cb_m
+        # Rows correspond to full-depth prognostic volumes at layers 1..nz-1.
+        lambda_up = lambda_face
+        lambda_dn = np.zeros_like(lambda_up)
+        lambda_dn[:-1] = lambda_face[1:]
+        alpha_up = dt * lambda_up / (capacity[1:] * dz2)
+        alpha_dn = dt * lambda_dn / (capacity[1:] * dz2)
 
-        # Forward (explicit) coefficients
-        cf_p = theta_f * cp
-        cf_m = theta_f * cm
-        cf = 1.0 - cf_p - cf_m
+        e[1:] = -theta_b * alpha_up[1:]
+        f[:] = 1.0 + theta_b * (alpha_up + alpha_dn)
+        g[:-1] = -theta_b * alpha_dn[:-1]
 
-        f[0] = cb
-        g[0] = cb_m
-        r[0] = (cf_p * field[0] + cf * field[1] +
-                cf_m * field[2] - cb_p * sfc_boundary_vec)
+        lower_old = np.empty_like(field[1:])
+        lower_old[:-1] = field[2:]
+        lower_old[-1] = field[-1]
+        r[:] = field[1:] + theta_f * (
+            alpha_up * (field[:-1] - field[1:])
+            + alpha_dn * (lower_old - field[1:])
+        )
+        r[0] += theta_b * alpha_up[0] * sfc_boundary_vec
 
-        # === Interior soil levels (Vectorized) ===
-        # Define slices to represent indices i, i+1, and i+2
-        # Original loop: for i in range(1, nz - 2)
-        # indices: 1, 2, ..., nz-3
-        idx     = slice(1, nz - 2)  # corresponds to i
-        idx_p1  = slice(2, nz - 1)  # corresponds to i+1
-        idx_p2  = slice(3, nz)      # corresponds to i+2
-
-        # Compute diffusion coefficients for all interior points
-        # D_mid is size (nz-1), so we slice up to nz-2
-        cp = dt * D_mid[idx] / dz2
-        cm = dt * D_mid[idx_p1] / dz2
-
-        # Backward (implicit) coefficients
-        cb_p = -theta_b * cp
-        cb_m = -theta_b * cm
-        cb   = 1.0 - cb_p - cb_m
-
-        # Forward (explicit) coefficients
-        cf_p = theta_f * cp
-        cf_m = theta_f * cm
-        cf   = 1.0 - cf_p - cf_m
-
-        # Assign coefficients to tridiagonal matrix arrays
-        e[idx] = cb_p
-        f[idx] = cb
-        g[idx] = cb_m
-
-        # Compute the Right Hand Side (RHS) vector r
-        # state_field is size (nz)
-        r[idx] = (cf_p * field[idx] +
-                  cf   * field[idx_p1] +
-                  cf_m * field[idx_p2])
-
-        # === Bottom level (Neumann BC: zero gradient) ===
-        j = nz - 2
-        cp = dt * D_mid[j] / dz2
-        cm = dt * D_mid[j] / dz2
-
-        # Backward (implicit) coefficients
-        cb_p = -theta_b * cp
-        cb_m = -theta_b * cm
-        cb = 1.0 - cb_p - cb_m
-
-        # Forward (explicit) coefficients
-        cf_p = theta_f * cp
-        cf_m = theta_f * cm
-        cf = 1.0 - cf_p - cf_m
-
-        # Assign coefficients to tridiagonal matrix arrays.  The bottom
-        # Neumann condition uses the symmetric ghost node
-        # field[nz] = field[nz - 2], so the missing lower coefficient folds
-        # into the sub-diagonal coupling to the layer above.
-        e[j] = cb_p + cb_m
-        f[j] = cb
-
-        # Compute the Right Hand Side (RHS) vector r
-        # state_field is size (nz)
-        r[j] = ((cf_p + cf_m) * field[j] +
-                cf * field[j + 1])
-
-        # Apply optional per-layer source (e.g. root-uptake sink) for
-        # layers 1..nz-1. source_term has shape (nz, ncol); r is
-        # (nz-1, ncol), indexed so r[j] ↔ layer (j+1).
+        # Apply an optional per-layer temperature tendency (for example,
+        # rain enthalpy) to layers 1..nz-1.
         if source_term is not None:
             src = np.asarray(source_term, dtype=float)
             if src.ndim == 1:
@@ -1872,14 +1821,15 @@ class UtahLSM:
                 )
             r += dt * src[1:]
 
-        # Solve and update
+        # Solve and update. The bottom row has lambda_dn=0, which is the
+        # zero-flux lower boundary for a full-depth final control volume.
         field[0] = sfc_boundary_vec
         field[1:] = solvers.tridiagonal(e, f, g, r)
 
-        if state_field.ndim == 1:
-            state_field[:] = field[:, 0]
+        if squeeze:
+            self.soil_state.temperature[:] = field[:, 0]
         else:
-            state_field[:] = field
+            self.soil_state.temperature[:] = field
 
     def _rain_advection_source(self) -> Optional[np.ndarray]:
         """Sensible-heat source from rain advected through the soil column.
@@ -2025,13 +1975,7 @@ class UtahLSM:
         is omitted and the solve is pure conduction.
         """
         self._ensure_writable_soil_field("temperature")
-        self._solve_diffusion(
-            state_field=self.soil_state.temperature,
-            get_diffusivity=self.soil.diffusivity_thermal,
-            sfc_boundary=self.sfc_state.soil_top_temperature,
-            field_name='temperature',
-            source_term=self._rain_advection_source(),
-        )
+        self._solve_soil_heat(source_term=self._rain_advection_source())
 
     def _solve_mixed_moisture(
         self,
