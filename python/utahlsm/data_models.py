@@ -432,10 +432,11 @@ class SoilConfig:
         model: Soil model selector ('brooks-corey', 'campbell', 'van-genuchten').
         thermal_conductivity_model: Thermal conductivity parameterization.
             Options: 'mccumber-pielke' (default) or 'johansen'.
-        macropore_fraction: Fraction of throughfall captured by macropores
-            (shrinkage cracks, root channels) and routed directly into the
-            deposition zone, bypassing the matrix surface. ``0.0``
-            (default) disables bypass flow entirely.
+        macropore_fraction: Maximum fraction of throughfall captured by
+            macropores (shrinkage cracks, root channels) and routed directly
+            into the deposition zone, bypassing the matrix surface. Actual
+            capture decreases for light rain and as the deposition zone wets.
+            ``0.0`` (default) disables bypass flow entirely.
         macropore_z_top: Top of the macropore deposition zone
             [m, positive down]. Site parameter: the top of the cracked
             horizon.

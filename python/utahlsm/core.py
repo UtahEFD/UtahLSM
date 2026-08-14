@@ -1226,7 +1226,7 @@ class UtahLSM:
     _GA_REDIST_TAU = 6.0 * 3600.0  # [s]
 
     def _macropore_config(self) -> tuple[float, float, float, float]:
-        """Returns (fraction, z_top, z_bottom, e_folding) for bypass flow.
+        """Returns (maximum fraction, z_top, z_bottom, e_folding).
 
         Reads the soil namelist section with inert defaults so partial
         test rigs (and namelists without macropore keys) run bare-matrix.
@@ -1237,6 +1237,76 @@ class UtahLSM:
         z_bottom = float(getattr(soil_cfg, 'macropore_z_bottom', 0.0))
         e_folding = float(getattr(soil_cfg, 'macropore_e_folding', 0.2))
         return min(max(fraction, 0.0), 1.0), z_top, z_bottom, e_folding
+
+    def _macropore_capture(self, throughfall: np.ndarray) -> np.ndarray:
+        """Computes state-dependent macropore capture [kg/m^2/s].
+
+        Preferential flow strengthens when throughfall exceeds the matrix
+        conductivity scale and weakens as the crack-zone matrix wets. The
+        captured fraction is
+
+            f_max * O_crack * I / (I + rho_w K(theta_surface)),
+
+        where ``O_crack`` is the deposition-profile-weighted moisture
+        deficit between field capacity and wilting point. Capture is also
+        capped by the water required to fill the configured zone to field
+        capacity during this timestep.
+        """
+        rain: np.ndarray = np.asarray(
+            np.maximum(
+                np.asarray(throughfall, dtype=float).reshape(-1), 0.0
+            ),
+            dtype=float,
+        )
+        capture: np.ndarray = np.zeros_like(rain)
+        f_max, z_top, z_bottom, e_fold = self._macropore_config()
+        if f_max <= 0.0 or not np.any(rain > 0.0):
+            return capture
+
+        depth = np.abs(np.asarray(self.input.grid.z, dtype=float))
+        zone = (depth >= z_top) & (depth <= z_bottom)
+        zone[0] = False  # layer 0 is the Dirichlet surface BC
+        if not zone.any():
+            return capture
+
+        theta = np.asarray(self.soil_state.moisture, dtype=float)
+        if theta.ndim == 1:
+            theta = theta[:, None]
+        theta_fc = np.asarray(self.soil.theta_fc, dtype=float)[:, None]
+        theta_wilt = np.asarray(self.soil.theta_wilt, dtype=float)[:, None]
+        available_span = np.maximum(theta_fc - theta_wilt, 1e-12)
+        layer_openness = np.clip(
+            (theta_fc - theta) / available_span, 0.0, 1.0
+        )
+
+        weight = np.where(
+            zone, np.exp(-(depth - z_top) / max(e_fold, 1e-6)), 0.0
+        )[:, None]
+        openness = np.sum(weight * layer_openness, axis=0) / np.sum(weight)
+
+        surface_K = np.asarray(
+            self.soil.conductivity_moisture(theta[0], level=0), dtype=float
+        ).reshape(-1)
+        matrix_rate = c.water.DENSITY * np.maximum(surface_K, 0.0)
+        intensity_factor = np.divide(
+            rain,
+            rain + matrix_rate,
+            out=np.zeros_like(rain),
+            where=rain > 0.0,
+        )
+        capture = f_max * openness * intensity_factor * rain
+
+        dz = abs(self.input.grid.z[1] - self.input.grid.z[0])
+        uptake_capacity = np.sum(
+            np.where(
+                zone[:, None],
+                np.maximum(theta_fc - theta, 0.0)
+                * dz * c.water.DENSITY / self.tstep,
+                0.0,
+            ),
+            axis=0,
+        )
+        return np.asarray(np.minimum(capture, uptake_capacity), dtype=float)
 
     def _wetting_front_suction(self, theta_i: np.ndarray) -> np.ndarray:
         """Green-Ampt effective wetting-front suction [m, >= 0].
@@ -1366,9 +1436,9 @@ class UtahLSM:
 
             deposit = np.zeros((nz, ncol))
             remaining = M.astype(float).copy()
-            # Proportional fill with per-layer caps; a few passes route
-            # any capped layer's share to the rest of the zone.
-            for _ in range(4):
+            # Proportional fill with per-layer caps. Each incomplete pass
+            # fills at least one layer and routes its share to the rest.
+            for _ in range(nz):
                 room = headroom - deposit
                 active = (room > 1e-15) & (weight > 0.0)
                 w_act = np.where(active, weight, 0.0)
@@ -1417,10 +1487,13 @@ class UtahLSM:
         a minus sign because it opposes E, drainage, and storage in the
         surface mass balance.
 
-        Before any runoff, a configurable macropore fraction of the
-        throughfall is captured by the crack network (bypass flow) and
-        removed from the matrix input; it is deposited at depth once per
-        step by ``_distribute_bypass``.
+        Before any runoff, the crack network captures a state-dependent
+        fraction of throughfall. ``macropore_fraction`` is its upper bound;
+        actual bypass increases with rain intensity relative to the
+        antecedent surface matrix conductivity and decreases as the
+        crack-zone matrix wets.
+        Captured water is removed from the matrix input and deposited at
+        depth once per step by ``_distribute_bypass``.
 
         Runoff has two components. Infiltration-excess (Hortonian) runoff
         removes any rain rate exceeding the transient Green-Ampt
@@ -1475,14 +1548,12 @@ class UtahLSM:
         runoff = np.zeros_like(P_total, dtype=float)
         P_eff = np.array(P_total, copy=True)
 
-        # Macropore bypass capture: a fixed fraction of throughfall runs
-        # into the crack network at the surface and never enters the
-        # matrix surface balance. Deposition into the crack zone happens
-        # once per step in _distribute_bypass(); here it is only removed
-        # from the matrix input. Stored in place so the output reference
-        # and the per-step distribution see the final coupling iterate.
-        f_mac, _, _, _ = self._macropore_config()
-        bypass = np.where(P_eff > 0.0, f_mac * P_eff, 0.0)
+        # Macropore capture responds to both rain intensity and crack-zone
+        # moisture. Deposition happens once per step in
+        # _distribute_bypass(); here captured water is only removed from
+        # the matrix input. Stored in place so the output reference and
+        # the per-step distribution see the final coupling iterate.
+        bypass = self._macropore_capture(P_eff)
         P_eff = P_eff - bypass
         bypass_store = getattr(self, '_bypass_flux', None)
         if bypass_store is None or np.shape(bypass_store) != np.shape(bypass):

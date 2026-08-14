@@ -404,17 +404,60 @@ def _enable_macropores(
 
 @pytest.mark.precip
 @pytest.mark.smb
-def test_bypass_capture_diverts_throughfall_fraction() -> None:
-    """The macropore fraction of rain skips the matrix surface balance."""
+def test_bypass_capture_is_bounded_and_conserves_throughfall() -> None:
+    """Dynamic bypass stays below its maximum and conserves throughfall."""
     P_rain = 1.0e-3
-    model = _make_smb_model(theta_profile=0.30, precipitation=P_rain)
+    model = _make_smb_model(theta_profile=0.10, precipitation=P_rain)
     _enable_macropores(model, fraction=0.4)
 
     model._solve_smb()
 
-    assert float(model._bypass_flux[0]) == pytest.approx(0.4 * P_rain)
-    # The matrix only ever sees the non-bypass remainder.
-    assert float(model._infiltration_flux[0]) <= 0.6 * P_rain + 1e-12
+    bypass = float(model._bypass_flux[0])
+    matrix = float(model._infiltration_flux[0])
+    runoff = float(model.sfc_state.fluxes.runoff[0])
+    assert 0.0 < bypass < 0.4 * P_rain
+    assert bypass + matrix + runoff == pytest.approx(P_rain)
+
+
+@pytest.mark.precip
+@pytest.mark.smb
+def test_bypass_fraction_increases_with_rain_intensity() -> None:
+    """More intense rain activates a larger share of preferential flow."""
+    model = _make_smb_model(theta_profile=0.10)
+    _enable_macropores(model, fraction=0.5)
+    low_rain = 1.0e-4
+    dry_surface_fraction = (
+        float(model._macropore_capture(np.array([low_rain]))[0]) / low_rain
+    )
+
+    # A wet surface provides a finite competing matrix conductivity while
+    # the crack-zone layer remains dry and able to absorb bypass water.
+    model.soil_state.moisture[0, 0] = 0.40
+
+    high_rain = 1.0e-2
+    low_fraction = float(model._macropore_capture(np.array([low_rain]))[0]) / low_rain
+    high_fraction = (
+        float(model._macropore_capture(np.array([high_rain]))[0]) / high_rain
+    )
+
+    assert 0.0 < low_fraction < high_fraction < 0.5
+    assert low_fraction < dry_surface_fraction < 0.5
+
+
+@pytest.mark.precip
+@pytest.mark.smb
+def test_wet_crack_zone_closes_bypass_capture() -> None:
+    """A crack-zone matrix at field capacity cannot absorb bypass rain."""
+    model = _make_smb_model(theta_profile=0.10)
+    _enable_macropores(model, fraction=0.5)
+    rain = np.array([1.0e-2])
+    dry_capture = float(model._macropore_capture(rain)[0])
+
+    model.soil_state.moisture[1, 0] = float(model.soil.theta_fc[1])
+    wet_capture = float(model._macropore_capture(rain)[0])
+
+    assert dry_capture > 0.0
+    assert wet_capture == pytest.approx(0.0)
 
 
 @pytest.mark.precip
