@@ -41,6 +41,7 @@ def _make_smb_model(
     soil_type: str = "loam",
     tstep: float = 60.0,
     z: np.ndarray | None = None,
+    smb_coordinate_tol: float = 1e-10,
 ) -> Any:
     """Build a minimal UtahLSM with the dependencies needed by _solve_smb."""
     model: Any = UtahLSM.__new__(UtahLSM)
@@ -66,7 +67,7 @@ def _make_smb_model(
             tolerances=TolerancesConfig(
                 sfc_flux=1e-3,
                 seb_root=1e-6,
-                smb_flux=1e-10,
+                smb_flux=smb_coordinate_tol,
                 moisture_picard=1e-8,
                 moisture_bounds=1e-6,
                 coupling_temp=1e-3,
@@ -553,6 +554,47 @@ def test_smb_storage_tendency_limits_short_step_wetting() -> None:
     assert float(short.sfc_state.fluxes.runoff[0]) == 0.0
     assert float(long.sfc_state.fluxes.runoff[0]) == 0.0
     assert theta_initial < theta_short < theta_long
+
+
+@pytest.mark.precip
+@pytest.mark.smb
+def test_smb_flux_residual_closes_with_loose_coordinate_tolerance() -> None:
+    """Surface storage closes in flux units independently of theta tolerance."""
+    model = _make_smb_model(
+        theta_profile=0.10,
+        precipitation=1.0e-3,
+        tstep=60.0,
+        smb_coordinate_tol=1.0e-3,
+    )
+    theta_old = float(model.soil_state.moisture[0, 0])
+
+    model._solve_smb()
+
+    theta = float(model.sfc_state.moisture[0])
+    dz = abs(model.input.grid.z[1] - model.input.grid.z[0])
+    storage = 1000.0 * dz * (theta - theta_old) / model.tstep
+    gnd_q = float(
+        np.asarray(
+            model.soil.surface_specific_humidity(
+                model.sfc_state.temperature,
+                model.sfc_state.moisture,
+                model.atm_state.pressure,
+            )
+        )[0]
+    )
+    evaporation = (
+        float(model.sfc_state.air_density[0])
+        * (gnd_q - float(model.atm_state.specific_humidity[0]))
+        * float(model.sfc_state.turbulence.friction_velocity[0])
+        * 0.1
+    )
+    residual = (
+        evaporation
+        + float(model._matrix_top_flux[0])
+        - float(model._infiltration_flux[0])
+        + storage
+    )
+    assert abs(residual) <= model.input.numerics.tolerances.smb_residual
 
 
 @pytest.mark.precip

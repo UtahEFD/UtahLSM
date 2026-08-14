@@ -1581,15 +1581,25 @@ class UtahLSM:
 
         iter_max = self.input.numerics.iterations.smb_flux
         tol = self.input.numerics.tolerances.smb_flux
+        residual_tol = self.input.numerics.tolerances.smb_residual
 
         theta_sfc, converged = solvers.root_brent_vec(
-            smb_residual, a, b, iter_max=iter_max, tol=tol
+            smb_residual,
+            a,
+            b,
+            iter_max=iter_max,
+            tol=tol,
+            ftol=residual_tol,
         )
 
         if not converged.all():
-            self.logger.warning(
-                'SMB root-finding did not converge for %d of %d columns.',
-                int(np.sum(~converged)), self.ncol,
+            final_residual = np.abs(smb_residual(theta_sfc))
+            bad_cols = np.where(~converged)[0]
+            raise SolverError(
+                'SMB root-finding failed to close the physical water-flux '
+                f'residual to {residual_tol:.1e} kg/m2/s at cols='
+                f'{bad_cols.tolist()}. Residuals: '
+                f'{final_residual[~converged]}'
             )
 
         self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)

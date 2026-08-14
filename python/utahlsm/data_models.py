@@ -325,6 +325,7 @@ class TolerancesConfig:
             clipping or failure [m3/m3].
         coupling_temp: tolerance for soil temperature in coupling.
         coupling_mois: tolerance for soil moisture in coupling.
+        smb_residual: physical SMB flux-residual tolerance [kg/m2/s].
     """
 
     sfc_flux: float
@@ -334,6 +335,7 @@ class TolerancesConfig:
     moisture_bounds: float
     coupling_temp: float
     coupling_mois: float
+    smb_residual: float = 1e-10
 
 
 @dataclass(frozen=True)

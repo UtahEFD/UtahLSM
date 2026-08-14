@@ -38,7 +38,8 @@
                         "moisture_picard": { "type": "number" },
                         "moisture_bounds": { "type": "number" },
                         "coupling_temp": { "type": "number" },
-                        "coupling_mois": { "type": "number" }
+                        "coupling_mois": { "type": "number" },
+                        "smb_residual": { "type": "number", "exclusiveMinimum": 0 }
                     },
                     "required": ["sfc_flux", "seb_root", "smb_flux", "moisture_picard", "moisture_bounds", "coupling_temp", "coupling_mois"],
                     "additionalProperties": false

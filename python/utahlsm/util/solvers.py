@@ -127,8 +127,14 @@ def tridiagonal(
         return u[:, 0]
     return u
 
-def root_brent(f: Callable[[float], float], a: float, b: float,
-    iter_max: int = 100, tol: float = 1e-6) -> tuple[float, bool]:
+def root_brent(
+    f: Callable[[float], float],
+    a: float,
+    b: float,
+    iter_max: int = 100,
+    tol: float = 1e-6,
+    ftol: float | None = None,
+) -> tuple[float, bool]:
     """Finds the root of a function using Brent's method.
 
     This is a robust and fast root-finding algorithm that combines bisection,
@@ -140,7 +146,9 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
         a: The lower bound of the bracket [a, b].
         b: The upper bound of the bracket [a, b].
         iter_max: The maximum number of iterations. Defaults to 100.
-        tol: The desired tolerance for the root. Defaults to 1e-6.
+        tol: Coordinate/bracket tolerance. Defaults to 1e-6.
+        ftol: Optional function-residual tolerance. When provided, convergence
+            requires ``abs(f(root)) <= ftol`` instead of only a small bracket.
 
     Returns:
         A tuple containing:
@@ -150,12 +158,15 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
     Raises:
         ValueError: If the root is not bracketed (i.e., f(a) * f(b) >= 0).
     """
+    residual_tol = tol if ftol is None else ftol
+    require_residual = ftol is not None
+
     fa: float = float(f(a))
     fb: float = float(f(b))
 
-    if abs(fa) <= tol:
+    if abs(fa) <= residual_tol:
         return a, True
-    if abs(fb) <= tol:
+    if abs(fb) <= residual_tol:
         return b, True
 
     if fa * fb > 0:
@@ -173,13 +184,15 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
     mflag = True   # mflag is true if the last step was a bisection
 
     for _ in range(iter_max):
-        # Check for convergence: if the bracket is smaller than the tolerance
-        if abs(b - a) < tol:
+        if require_residual and abs(fb) <= residual_tol:
+            return b, True
+        if not require_residual and abs(b - a) < tol:
             return b, True
 
         # Use fast inverse quadratic interpolation if the three points
         # are distinct
-        if (abs(fa) > tol and abs(fb) > tol and abs(fc) > tol and
+        if (abs(fa) > residual_tol and abs(fb) > residual_tol
+                and abs(fc) > residual_tol and
                 fa != fc and fb != fc):
             s = float(a * fb * fc / ((fa - fb) * (fa - fc)) +
                  b * fa * fc / ((fb - fa) * (fb - fc)) +
@@ -225,8 +238,9 @@ def root_brent(f: Callable[[float], float], a: float, b: float,
             a, b = float(b), float(a)
             fa, fb = fb, fa
 
-        # Check for convergence
-        if abs(b - a) < tol:
+        if require_residual and abs(fb) <= residual_tol:
+            return float(b), True
+        if not require_residual and abs(b - a) < tol:
             return float(b), True
 
     return float(b), False
@@ -237,7 +251,8 @@ def root_brent_vec(
     a: NDArray[np.float64],
     b: NDArray[np.float64],
     iter_max: int = 100,
-    tol: float = 1e-6
+    tol: float = 1e-6,
+    ftol: float | None = None,
 ) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
     """Vectorized Brent's method for finding roots of multiple functions.
 
@@ -253,7 +268,9 @@ def root_brent_vec(
         a: Array of lower bracket bounds (size n).
         b: Array of upper bracket bounds (size n).
         iter_max: Maximum number of iterations. Defaults to 100.
-        tol: Desired tolerance for convergence. Defaults to 1e-6.
+        tol: Coordinate/bracket tolerance. Defaults to 1e-6.
+        ftol: Optional function-residual tolerance. When provided, convergence
+            requires ``abs(f(root)) <= ftol`` instead of only a small bracket.
 
     Returns:
         A tuple containing:
@@ -280,13 +297,17 @@ def root_brent_vec(
         scalar_input = False
 
     n = len(a)
+    residual_tol = tol if ftol is None else ftol
+    require_residual = ftol is not None
 
     fa = f(a)
     fb = f(b)
 
     # Check bracketing. A root exactly at either endpoint is a valid
     # bracketed solve and should return that endpoint as converged.
-    endpoint_root = (np.abs(fa) <= tol) | (np.abs(fb) <= tol)
+    endpoint_root = (
+        (np.abs(fa) <= residual_tol) | (np.abs(fb) <= residual_tol)
+    )
     invalid = (fa * fb > 0) & ~endpoint_root
     if np.any(invalid):
         invalid_idx = np.where(invalid)[0]
@@ -296,7 +317,7 @@ def root_brent_vec(
             f'{invalid_idx.tolist()}.'
         )
 
-    root_at_a = np.abs(fa) <= tol
+    root_at_a = np.abs(fa) <= residual_tol
     endpoint_value = np.where(root_at_a, a, b)
     a = np.where(endpoint_root, endpoint_value, a)
     b = np.where(endpoint_root, endpoint_value, b)
@@ -313,7 +334,9 @@ def root_brent_vec(
     d = a.copy()
 
     mflag: np.ndarray = np.ones(n, dtype=bool)
-    converged = endpoint_root | (np.abs(b - a) < tol)
+    converged = endpoint_root.copy()
+    if not require_residual:
+        converged |= np.abs(b - a) < tol
 
     for _ in range(iter_max):
         if converged.all():
@@ -321,7 +344,9 @@ def root_brent_vec(
 
         # Inverse quadratic interpolation conditions
         use_iqi = (
-            (np.abs(fa) > tol) & (np.abs(fb) > tol) & (np.abs(fc) > tol)
+            (np.abs(fa) > residual_tol)
+            & (np.abs(fb) > residual_tol)
+            & (np.abs(fc) > residual_tol)
             & (fa != fc) & (fb != fc) & ~converged
         )
 
@@ -391,8 +416,10 @@ def root_brent_vec(
         a, b = np.where(swap, b, a), np.where(swap, a, b)
         fa, fb = np.where(swap, fb, fa), np.where(swap, fa, fb)
 
-        # Check convergence
-        converged |= np.abs(b - a) < tol
+        if require_residual:
+            converged |= np.abs(fb) <= residual_tol
+        else:
+            converged |= np.abs(b - a) < tol
 
     result = b
     if scalar_input:

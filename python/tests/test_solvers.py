@@ -366,6 +366,17 @@ class TestRootBrent:
             # Tolerance should roughly translate to solution accuracy
             assert abs(root - expected) < 10 * tol
 
+    def test_function_tolerance_is_independent_of_coordinate_tolerance(self) -> None:
+        """A loose coordinate tolerance cannot accept a large residual."""
+        f: Callable[[float], float] = lambda x: x - 1.0e-4
+
+        root, converged = root_brent(
+            f, 0.0, 1.0, tol=1.0e-3, ftol=1.0e-12
+        )
+
+        assert converged
+        assert abs(f(root)) <= 1.0e-12
+
     def test_max_iterations(self) -> None:
         """Test behavior when max iterations is reached.
 
@@ -558,3 +569,19 @@ class TestRootBrentVec:
 
         assert np.all(converged)
         assert_allclose(root, roots, rtol=1e-6, atol=1e-8)
+
+    def test_function_tolerance_is_independent_of_coordinate_tolerance(self) -> None:
+        """Vector roots close in function units despite a loose x tolerance."""
+        roots = np.array([1.0e-4, 1.0001])
+        a = np.array([0.0, 1.0])
+        b = np.array([1.0, 2.0])
+
+        def f(x: NDArray[Any]) -> NDArray[Any]:
+            return np.asarray(x - roots)
+
+        root, converged = root_brent_vec(
+            f, a, b, tol=1.0e-3, ftol=1.0e-12
+        )
+
+        assert np.all(converged)
+        assert np.all(np.abs(f(root)) <= 1.0e-12)
