@@ -243,6 +243,9 @@ class UtahLSM:
         # post-runoff), set by the SMB and consumed by the rain
         # heat-advection source.
         self._infiltration_flux = np.zeros(self.ncol)
+        # Matrix water flux across the surface-to-layer-1 interface
+        # [kg/m^2/s], set by the SMB and imposed as the upper Richards flux.
+        self._matrix_top_flux = np.zeros(self.ncol)
         # Macropore bypass: throughfall captured by cracks [kg/m^2/s] and
         # its per-layer deposition profile [kg/m^2/s], rebuilt each step.
         self._bypass_flux = np.zeros(self.ncol)
@@ -1500,7 +1503,7 @@ class UtahLSM:
         else:
             f_veg = np.zeros_like(sfc_T)
 
-        def smb_capacity(theta: np.ndarray) -> np.ndarray:
+        def smb_fluxes(theta: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
             theta_c = np.clip(theta, residual_q, porosity)
             psi0 = np.asarray(
                 self.soil.water_potential(theta_c, level=0), dtype=float
@@ -1518,11 +1521,12 @@ class UtahLSM:
             # not the surface flux residual.
             E_soil = (1.0 - f_veg) * rho_a * (gnd_q - atm_q) * ust * fh
             darcy = RHO_W * K_mid * ((psi0 - psi1) / dz + 1.0)
-            return np.asarray(E_soil + darcy)
+            return np.asarray(E_soil), np.asarray(darcy)
 
         def smb_residual(theta: np.ndarray) -> np.ndarray:
             storage = RHO_W * dz * (theta - theta_old0) / dt
-            return np.asarray(smb_capacity(theta) - P_eff + storage)
+            E_soil, darcy = smb_fluxes(theta)
+            return np.asarray(E_soil + darcy - P_eff + storage)
 
         # Shrink the bracket slightly off the physical bounds to keep
         # ψ(θ) and K(θ) finite and well-defined at the endpoints.
@@ -1589,6 +1593,8 @@ class UtahLSM:
             )
 
         self.sfc_state.moisture = np.clip(theta_sfc, residual_q, porosity)
+        _, matrix_top_flux = smb_fluxes(self.sfc_state.moisture)
+        self._matrix_top_flux = matrix_top_flux
         self.sfc_state.fluxes.runoff[:] = runoff
         # Water that actually entered the column this step (rain minus
         # interception minus runoff). Consumed by the rain heat-advection
@@ -2010,13 +2016,20 @@ class UtahLSM:
     def _solve_mixed_moisture(
         self,
         source_term: Optional[np.ndarray] = None,
+        top_flux: Optional[np.ndarray] = None,
     ) -> None:
         """Solves soil moisture with a mixed-form Richards Picard iteration.
 
         The nonlinear solve iterates in pressure head while the prognostic
         state remains volumetric moisture content. Darcy fluxes are assembled
         at faces using a positive-downward depth coordinate and a lagged
-        conductivity from the current Picard iterate.
+        conductivity from the current Picard iterate. When ``top_flux`` is
+        provided, it is imposed at the surface-to-layer-1 face so Richards
+        transports exactly the flux accepted by the surface moisture budget.
+
+        Args:
+            source_term: Volumetric moisture source [m^3/m^3/s].
+            top_flux: Prescribed downward upper-boundary flux [m/s].
         """
         nz = self.input.grid.nz
         dt = self.tstep
@@ -2099,6 +2112,15 @@ class UtahLSM:
                     f"(nz, ncol)=({nz}, {ncol})."
                 )
 
+        q_top = None
+        if top_flux is not None:
+            q_top = self._as_column_vector(top_flux, 'top moisture flux')
+            if q_top.size != ncol:
+                raise ValueError(
+                    f'top moisture flux size {q_top.size} does not match '
+                    f'ncol={ncol}.'
+                )
+
         iter_max = self.input.numerics.iterations.moisture_picard
         tol = max(float(self.input.numerics.tolerances.moisture_picard), 1e-8)
         converged = np.zeros(ncol, dtype=bool)
@@ -2121,6 +2143,8 @@ class UtahLSM:
             )
 
             q_up = K_face * (1.0 - (psi_iter[1:] - psi_iter[:-1]) / dx)
+            if q_top is not None:
+                q_up[0] = q_top
             q_dn = np.zeros_like(q_up)
             q_dn[:-1] = (
                 K_face[1:]
@@ -2130,6 +2154,9 @@ class UtahLSM:
             # free drainage: q = K.
             q_dn[-1] = K_node[-1]
 
+            # Keep the lagged top-face conductance in the Picard Jacobian as
+            # dry-soil stabilization. The converged residual still contains
+            # q_top, so this coefficient cannot change the accepted flux.
             K_up = K_face
             K_dn = np.zeros_like(K_up)
             K_dn[:-1] = K_face[1:]
@@ -2210,6 +2237,12 @@ class UtahLSM:
                 if src_arr.ndim == 1:
                     src_arr = src_arr[:, None]
                 source = src_arr + bypass_source
-        self._solve_mixed_moisture(source_term=source)
+        matrix_top_flux = getattr(self, '_matrix_top_flux', None)
+        top_flux = None
+        if matrix_top_flux is not None:
+            top_flux = (
+                np.asarray(matrix_top_flux, dtype=float) / c.water.DENSITY
+            )
+        self._solve_mixed_moisture(source_term=source, top_flux=top_flux)
         tol = max(float(self.input.numerics.tolerances.moisture_bounds), 1e-8)
         self.soil.enforce_moisture_bounds(self.soil_state.moisture, tol)

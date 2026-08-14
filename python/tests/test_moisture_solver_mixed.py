@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
+import pytest
 
 from utahlsm.core import UtahLSM
 from utahlsm.data_models import (
@@ -74,6 +75,25 @@ def test_mixed_moisture_solver_applies_sink_term() -> None:
     model._solve_mixed_moisture(source_term=source)
 
     assert np.all(model.soil_state.moisture[1:] < initial[1:])
+
+
+def test_mixed_moisture_solver_conserves_prescribed_surface_flux() -> None:
+    """Richards uses the SMB flux without recomputing the upper face."""
+    model = _make_model(theta=0.25)
+    initial = np.array(model.soil_state.moisture, copy=True)
+    top_mass_flux = 3.0e-4
+    model._matrix_top_flux = np.array([top_mass_flux])
+
+    model._solve_diffusion_mois()
+
+    final = np.asarray(model.soil_state.moisture, dtype=float)
+    dz = abs(model.input.grid.z[1] - model.input.grid.z[0])
+    storage_rate = dz * np.sum(final[1:] - initial[1:]) / model.tstep
+    bottom_flux = float(
+        np.asarray(model.soil.conductivity_moisture(final))[-1]
+    )
+    expected_rate = top_mass_flux / 1000.0 - bottom_flux
+    assert storage_rate == pytest.approx(expected_rate, abs=1e-10)
 
 
 def test_face_conductivity_uses_darcy_direction_at_texture_break() -> None:
