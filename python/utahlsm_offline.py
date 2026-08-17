@@ -24,14 +24,110 @@ To run an offline simulation, provide the case name via the command line:
     $ python utahlsm_offline.py -c my_case_name
 """
 import argparse
+import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional, TextIO
 
 import numpy as np
 
 import utahlsm
 from utahlsm.exceptions import SolverError, UtahLSMError
+
+
+class _ProgressReporter:
+    """Reports model progress without adding an external dependency."""
+
+    # ``[`` + 28 cells + ``]`` matches the 30-character timestamp/level
+    # prefix used by the logger.  The following dotted 10-character phase
+    # field likewise aligns its colon with logger-name colons.
+    _BAR_WIDTH = 28
+    _LOG_MILESTONE = 0.25
+
+    def __init__(
+        self,
+        total: int,
+        *,
+        enabled: bool = True,
+        stream: Optional[TextIO] = None,
+        min_interval: float = 0.25,
+        clock: Callable[[], float] = time.perf_counter,
+    ) -> None:
+        """Initializes a terminal bar or sparse redirected-log reporter."""
+        self.total = max(int(total), 0)
+        self.stream = stream if stream is not None else sys.stdout
+        self.enabled = enabled and self.total > 0
+        self.min_interval = max(float(min_interval), 0.0)
+        self._clock = clock
+        self._start = self._clock()
+        self._last_render = self._start
+        self._next_log_fraction = self._LOG_MILESTONE
+        self._last_line_width = 0
+        self._started = False
+        self._is_tty = bool(
+            getattr(self.stream, 'isatty', lambda: False)()
+        )
+
+    @staticmethod
+    def _format_duration(seconds: float) -> str:
+        """Formats a nonnegative duration as MM:SS or H:MM:SS."""
+        total_seconds = max(int(seconds), 0)
+        minutes, secs = divmod(total_seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        if hours > 0:
+            return f'{hours:d}:{minutes:02d}:{secs:02d}'
+        return f'{minutes:02d}:{secs:02d}'
+
+    def update(self, completed: int, *, phase: str = 'Running') -> None:
+        """Updates progress, throttling terminals and sparsifying log output."""
+        if not self.enabled:
+            return
+
+        completed = min(max(int(completed), 0), self.total)
+        fraction = completed / self.total
+        now = self._clock()
+        is_complete = completed >= self.total
+
+        if self._is_tty:
+            if (
+                self._started
+                and not is_complete
+                and now - self._last_render < self.min_interval
+            ):
+                return
+        elif self._started and not is_complete:
+            if fraction < self._next_log_fraction:
+                return
+            while self._next_log_fraction <= fraction:
+                self._next_log_fraction += self._LOG_MILESTONE
+
+        elapsed = max(now - self._start, 0.0)
+        eta = (
+            elapsed * (1.0 - fraction) / fraction
+            if fraction > 0.0
+            else None
+        )
+        eta_text = self._format_duration(eta) if eta is not None else '--:--'
+        metrics = (
+            f'{100.0 * fraction:5.1f}% '
+            f'({completed}/{self.total}) '
+            f'elapsed {self._format_duration(elapsed)} ETA {eta_text}'
+        )
+
+        if self._is_tty:
+            filled = int(self._BAR_WIDTH * fraction)
+            bar = '*' * filled + '-' * (self._BAR_WIDTH - filled)
+            line = f'[{bar}] {phase:.>10s}: {metrics}'
+            padded = line.ljust(self._last_line_width)
+            self.stream.write(f'\r{padded}')
+            self._last_line_width = len(line)
+            if is_complete:
+                self.stream.write('\n')
+        else:
+            self.stream.write(f'Progress {phase}: {metrics}\n')
+        self.stream.flush()
+        self._last_render = now
+        self._started = True
 
 
 def main() -> None:
@@ -58,6 +154,11 @@ def main() -> None:
                         help="Number of diurnal cycles to spin up the soil "
                              "temperature before the scored run (precip off, "
                              "moisture held at the initial condition).")
+    parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="Disable the terminal progress bar and redirected-log milestones.",
+    )
     args: argparse.Namespace = parser.parse_args()
     case: str = args.case
     outf: Optional[str] = args.outfile
@@ -109,6 +210,14 @@ def main() -> None:
         atmos = input_lsm.forcing.atmos
         ntime: int = len(atmos)
         step_count = 0
+        run_steps = max(ntime - 1, 0)
+        total_steps = (spinup + 1) * run_steps
+        completed_steps = 0
+        progress = _ProgressReporter(
+            total_steps, enabled=not args.no_progress
+        )
+        initial_phase = f'Spin-up 1/{spinup}' if spinup > 0 else 'Running'
+        progress.update(0, phase=initial_phase)
 
         # Optional soil-temperature spin-up. The deep soil equilibrates to the
         # mean surface forcing, but the initial condition is a single-time
@@ -122,12 +231,17 @@ def main() -> None:
         if spinup > 0:
             print(f'Spinning up soil temperature: {spinup} diurnal cycle(s)...')
             moisture_ic = np.array(lsm.soil_state.moisture, copy=True)
-            for _ in range(spinup):
+            for cycle in range(spinup):
                 for k in range(1, ntime):
                     lsm.update(tstep, k * tstep, atmos[k])
                     np.asarray(lsm.atm_state.precipitation)[...] = 0.0
                     lsm.run()
                     np.asarray(lsm.soil_state.moisture)[...] = moisture_ic
+                    completed_steps += 1
+                    progress.update(
+                        completed_steps,
+                        phase=f'Spin-up {cycle + 1}/{spinup}',
+                    )
             lsm.save(0, 0.0)
 
         # Record 0 (t=0) was already written during model setup using
@@ -150,6 +264,8 @@ def main() -> None:
 
             # Save the state and forcing under their shared time label.
             lsm.save(step_count, runtime)
+            completed_steps += 1
+            progress.update(completed_steps)
     except SolverError as e:
         print('\n!!! NUMERICAL SOLVER FAILURE !!!')
         print(f'Error details: {e}')

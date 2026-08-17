@@ -362,6 +362,29 @@ def test_capacity_decays_with_cumulative_infiltration() -> None:
 
 @pytest.mark.precip
 @pytest.mark.smb
+def test_wetting_front_suction_cache_tracks_antecedent_moisture() -> None:
+    """Repeated SMB calls reuse suction until the soil moisture changes."""
+    model = _make_smb_model(theta_profile=0.20, precipitation=1.0e-3)
+    original = model._wetting_front_suction
+    calls = 0
+
+    def counted(theta_i: np.ndarray) -> np.ndarray:
+        nonlocal calls
+        calls += 1
+        return original(theta_i)
+
+    model._wetting_front_suction = counted
+    model._solve_smb()
+    model._solve_smb()
+    assert calls == 1
+
+    model.soil_state.moisture[0, 0] += 1.0e-3
+    model._solve_smb()
+    assert calls == 2
+
+
+@pytest.mark.precip
+@pytest.mark.smb
 def test_infiltration_history_accumulates_and_decays() -> None:
     """The event state grows with matrix input and relaxes without it."""
     RHO_W = 1000.0
@@ -811,6 +834,23 @@ def test_interior_advection_cools_layer_below_top() -> None:
     c_vol2 = float(np.asarray(model.soil.heat_capacity(theta))[2, 0])
     expected = c_w * m_face1 * (290.0 - 303.0) / (c_vol2 * dz)
     assert source[2, 0] == pytest.approx(expected, rel=1e-6)
+
+
+@pytest.mark.precip
+@pytest.mark.soil
+def test_lagged_hydraulic_cache_tracks_moisture_state() -> None:
+    """Rain hydraulics are reused unchanged and refreshed after state edits."""
+    model = _make_smb_model(theta_profile=0.30)
+    theta = np.asarray(model.soil_state.moisture)
+    dz = 0.15
+
+    first = model._lagged_soil_hydraulics(theta, dz)
+    second = model._lagged_soil_hydraulics(theta, dz)
+    assert all(a is b for a, b in zip(first, second))
+
+    model.soil_state.moisture[1, 0] += 1.0e-3
+    refreshed = model._lagged_soil_hydraulics(theta, dz)
+    assert all(a is not b for a, b in zip(first, refreshed))
 
 
 # ---------------------------------------------------------------------------

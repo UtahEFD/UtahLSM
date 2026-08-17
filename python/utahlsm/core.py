@@ -105,8 +105,8 @@ class UtahLSM:
             runtime: The total elapsed simulation time [s].
             atm_state: The atmospheric state for the current time step.
         """
-        self.logger.info('[time = %7.1f]', runtime)
-        self.logger.info('Updating atmospheric state')
+        self.logger.debug('[time = %7.1f]', runtime)
+        self.logger.debug('Updating atmospheric state')
 
         self.tstep = dt
         self._load_atm_state(atm_state)
@@ -148,7 +148,7 @@ class UtahLSM:
         This includes solving the surface energy and moisture budgets and
         updating the soil profiles via diffusion solvers.
         """
-        self.logger.info('Solving soil state')
+        self.logger.debug('Solving soil state')
 
         # Set initial guesses for new surface temp and moisture
         self.sfc_state.temperature = np.array(
@@ -178,7 +178,7 @@ class UtahLSM:
             step_count: The current time step number.
             runtime: The total elapsed simulation time [s].
         """
-        self.logger.info('Saving data to file\n-------------------')
+        self.logger.debug('Saving data to file\n-------------------')
         self._refresh_reassigned_outputs()
         self.output.save(self.output_fields, step_count, runtime)
 
@@ -254,6 +254,21 @@ class UtahLSM:
         # Green-Ampt event state: cumulative matrix-infiltrated depth [m]
         # since the start of the current rain event (decays between events).
         self._ga_cum_infil = np.zeros(self.ncol)
+        # Green-Ampt wetting-front suction is expensive (24-point quadrature)
+        # and its antecedent moisture is fixed throughout the outer surface
+        # coupling.  Cache it against that moisture so repeated SMB calls in a
+        # timestep reuse the result without risking stale values.
+        self._ga_suction_cache_theta: Optional[np.ndarray] = None
+        self._ga_suction_cache: Optional[np.ndarray] = None
+        # Rain heat advection and the initial Richards iterate use the same
+        # start-of-step hydraulic state.  This cache lets the latter reuse the
+        # former's retention-curve evaluation during rainy timesteps.
+        self._hydraulic_cache_theta: Optional[np.ndarray] = None
+        self._hydraulic_cache_dz: Optional[float] = None
+        self._hydraulic_cache_psi: Optional[np.ndarray] = None
+        self._hydraulic_cache_K: Optional[np.ndarray] = None
+        self._hydraulic_cache_K_face: Optional[np.ndarray] = None
+        self._hydraulic_cache_mass_flux: Optional[np.ndarray] = None
 
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
@@ -1218,6 +1233,62 @@ class UtahLSM:
         darcy_drive = 1.0 - (psi_lower - psi_upper) / dz
         return np.where(darcy_drive > 0.0, K_upper, K_geom)
 
+    def _lagged_soil_hydraulics(
+        self,
+        theta: np.ndarray,
+        dz: float,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Returns and caches start-of-step soil hydraulic quantities.
+
+        Rain heat advection is evaluated immediately before the Richards
+        solve from the same, unchanged moisture profile.  Caching these
+        quantities avoids evaluating the soil retention and conductivity
+        curves twice on rainy timesteps.  The moisture profile and grid
+        spacing form the cache key, so in-place state updates invalidate the
+        entry automatically.
+
+        Returns:
+            Pressure head, node conductivity, face conductivity, and Darcy
+            mass flux (positive downward), with shapes ``(nz, ncol)``,
+            ``(nz, ncol)``, ``(nz - 1, ncol)``, and ``(nz - 1, ncol)``.
+        """
+        theta_arr = np.asarray(theta, dtype=float)
+        cached_theta = getattr(self, '_hydraulic_cache_theta', None)
+        cached_dz = getattr(self, '_hydraulic_cache_dz', None)
+        cached_psi = getattr(self, '_hydraulic_cache_psi', None)
+        cached_K = getattr(self, '_hydraulic_cache_K', None)
+        cached_K_face = getattr(self, '_hydraulic_cache_K_face', None)
+        cached_mass_flux = getattr(self, '_hydraulic_cache_mass_flux', None)
+        if (
+            cached_theta is not None
+            and cached_dz == dz
+            and cached_psi is not None
+            and cached_K is not None
+            and cached_K_face is not None
+            and cached_mass_flux is not None
+            and np.array_equal(theta_arr, cached_theta)
+        ):
+            return cached_psi, cached_K, cached_K_face, cached_mass_flux
+
+        psi = np.asarray(self.soil.water_potential(theta_arr), dtype=float)
+        K_node = np.asarray(
+            self.soil.conductivity_moisture(theta_arr), dtype=float
+        )
+        K_face = self._moisture_face_conductivity(
+            K_node[:-1], K_node[1:], psi[:-1], psi[1:], dz
+        )
+        mass_flux = c.water.DENSITY * K_face * (
+            1.0 - (psi[1:] - psi[:-1]) / dz
+        )
+
+        self._hydraulic_cache_theta = np.array(theta_arr, copy=True)
+        self._hydraulic_cache_dz = dz
+        self._hydraulic_cache_psi = psi
+        self._hydraulic_cache_K = K_node
+        self._hydraulic_cache_K_face = K_face
+        self._hydraulic_cache_mass_flux = mass_flux
+        return psi, K_node, K_face, mass_flux
+
     # Green-Ampt event-state constants: floor on cumulative infiltration
     # (caps the early-storm capacity enhancement) and the e-folding time
     # over which the event memory relaxes after rain stops, representing
@@ -1362,6 +1433,25 @@ class UtahLSM:
             ),
             dtype=float,
         )
+
+    def _cached_wetting_front_suction(
+        self, theta_i: np.ndarray
+    ) -> np.ndarray:
+        """Returns Green-Ampt suction cached by antecedent surface moisture."""
+        theta_arr = np.asarray(theta_i, dtype=float)
+        cached_theta = getattr(self, '_ga_suction_cache_theta', None)
+        cached_suction = getattr(self, '_ga_suction_cache', None)
+        if (
+            cached_theta is not None
+            and cached_suction is not None
+            and np.array_equal(theta_arr, cached_theta)
+        ):
+            return np.asarray(cached_suction, dtype=float)
+
+        suction = self._wetting_front_suction(theta_arr)
+        self._ga_suction_cache_theta = np.array(theta_arr, copy=True)
+        self._ga_suction_cache = suction
+        return suction
 
     def _update_infiltration_history(self) -> None:
         """Advances the Green-Ampt cumulative-infiltration event state.
@@ -1634,7 +1724,7 @@ class UtahLSM:
                 self._GA_MIN_CUM_INFIL,
             )
             theta_ante = np.asarray(theta_old0, dtype=float)
-            psi_f = self._wetting_front_suction(theta_ante)
+            psi_f = self._cached_wetting_front_suction(theta_ante)
             delta_theta = np.maximum(porosity - theta_ante, 0.0)
             infil_capacity = RHO_W * K0_sat * (
                 1.0 + delta_theta * psi_f / F_cum
@@ -1966,7 +2056,6 @@ class UtahLSM:
         # Specific heat of liquid water [J/kg/K], consistent with the
         # volumetric value used for the soil heat capacity.
         c_w = c.water.VOLUMETRIC_HEAT_CAPACITY / c.water.DENSITY
-        rho_w = c.water.DENSITY
         nz = self.input.grid.nz
         dz = abs(self.input.grid.z[1] - self.input.grid.z[0])
 
@@ -1988,35 +2077,25 @@ class UtahLSM:
         # Face j sits between nodes j and j+1; face 0 (surface -> layer 1)
         # is intentionally unused, as layer 1's top-face inflow is the
         # accepted SMB/Richards matrix flux rather than a recomputed flux.
-        psi = np.asarray(self.soil.water_potential(theta), dtype=float)
-        K_node = np.asarray(
-            self.soil.conductivity_moisture(theta), dtype=float)
-        K_face = self._moisture_face_conductivity(
-            K_node[:-1], K_node[1:], psi[:-1], psi[1:], dz)
-        m_face = rho_w * K_face * (1.0 - (psi[1:] - psi[:-1]) / dz)
+        _, _, _, m_face = self._lagged_soil_hydraulics(theta, dz)
 
-        # Incoming water flux into each prognostic layer (1..nz-1) and the
-        # temperature of its upwind source layer.
-        inflow_above = np.zeros((nz, ncol))
-        Tsrc_above = np.zeros((nz, ncol))
-        inflow_above[1] = matrix_rain_flux
-        Tsrc_above[1] = T_rain
-
-        inflow_below = np.zeros((nz, ncol))
-        Tsrc_below = np.zeros((nz, ncol))
+        # Accumulate directly into the receiving layer.  This avoids four
+        # temporary (nz, ncol) inflow/source-temperature arrays.
+        heating = np.zeros((nz, ncol))
+        heating[1] = c_w * matrix_rain_flux * (T_rain - T[1])
         if nz >= 3:
-            # Layers 2..nz-1 receive downward flow across faces 1..nz-2.
-            inflow_above[2:] = np.maximum(m_face[1:], 0.0)
-            Tsrc_above[2:] = T[1:nz - 1]
-            # Layers 1..nz-2 receive upward flow across the same faces.
-            inflow_below[1:nz - 1] = np.maximum(-m_face[1:], 0.0)
-            Tsrc_below[1:nz - 1] = T[2:nz]
+            interior_flux = m_face[1:]
+            temperature_jump = T[1:nz - 1] - T[2:nz]
+            # Layers 2..nz-1 receive downward flow from the layer above.
+            heating[2:] += (
+                c_w * np.maximum(interior_flux, 0.0) * temperature_jump
+            )
+            # Layers 1..nz-2 receive upward flow from the layer below.
+            heating[1:nz - 1] += (
+                c_w * np.maximum(-interior_flux, 0.0) * -temperature_jump
+            )
         # The bottom layer's lower face is free drainage (downward only),
         # so it contributes no incoming flux.
-
-        heating = c_w * (
-            inflow_above * (Tsrc_above - T) + inflow_below * (Tsrc_below - T)
-        )                                                    # [W/m^2]
         if bypass_deposit is not None:
             dep = np.asarray(bypass_deposit, dtype=float)
             if dep.ndim == 1:
@@ -2130,9 +2209,24 @@ class UtahLSM:
             self.soil.water_potential(theta_sfc_head, level=0), dtype=float
         )
 
-        psi_iter = np.asarray(
-            self.soil.water_potential(theta_for_head), dtype=float
+        cached_theta = getattr(self, '_hydraulic_cache_theta', None)
+        cached_psi = getattr(self, '_hydraulic_cache_psi', None)
+        cached_K = getattr(self, '_hydraulic_cache_K', None)
+        cached_K_face = getattr(self, '_hydraulic_cache_K_face', None)
+        reuse_lagged_hydraulics = (
+            cached_theta is not None
+            and cached_psi is not None
+            and cached_K is not None
+            and cached_K_face is not None
+            and getattr(self, '_hydraulic_cache_dz', None) == dx
+            and np.array_equal(theta_for_head, cached_theta)
         )
+        if reuse_lagged_hydraulics:
+            psi_iter = np.array(cached_psi, copy=True)
+        else:
+            psi_iter = np.asarray(
+                self.soil.water_potential(theta_for_head), dtype=float
+            )
         psi_iter[0] = psi_sfc
         theta_iter = np.array(theta_for_head, copy=True)
         theta_iter[0] = theta_sfc
@@ -2163,21 +2257,38 @@ class UtahLSM:
         converged = np.zeros(ncol, dtype=bool)
 
         for i in range(iter_max):
-            theta_iter[:] = np.asarray(
-                self.soil.water_content(psi_iter), dtype=float
-            )
+            if i > 0 or not reuse_lagged_hydraulics:
+                theta_iter[:] = np.asarray(
+                    self.soil.water_content(psi_iter), dtype=float
+                )
             theta_iter[0] = theta_sfc
 
             capacity = np.asarray(
                 self.soil.moisture_capacity(psi_iter), dtype=float
             )
             capacity = np.maximum(capacity, 0.0)
-            K_node = np.asarray(
-                self.soil.conductivity_moisture(theta_iter), dtype=float
-            )
-            K_face = self._moisture_face_conductivity(
-                K_node[:-1], K_node[1:], psi_iter[:-1], psi_iter[1:], dx
-            )
+            if i == 0 and reuse_lagged_hydraulics:
+                # The surface boundary changed during SMB coupling, while all
+                # prognostic layers still match the rain-heat hydraulic state.
+                # Recompute only node 0 and face 0.
+                assert cached_K is not None
+                assert cached_K_face is not None
+                K_node = np.array(cached_K, copy=True)
+                K_node[0] = np.asarray(
+                    self.soil.conductivity_moisture(theta_iter[0], level=0),
+                    dtype=float,
+                )
+                K_face = np.array(cached_K_face, copy=True)
+                K_face[0] = self._moisture_face_conductivity(
+                    K_node[0], K_node[1], psi_iter[0], psi_iter[1], dx
+                )
+            else:
+                K_node = np.asarray(
+                    self.soil.conductivity_moisture(theta_iter), dtype=float
+                )
+                K_face = self._moisture_face_conductivity(
+                    K_node[:-1], K_node[1:], psi_iter[:-1], psi_iter[1:], dx
+                )
 
             q_up = K_face * (1.0 - (psi_iter[1:] - psi_iter[:-1]) / dx)
             if q_top is not None:

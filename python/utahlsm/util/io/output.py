@@ -163,10 +163,16 @@ class Output:
         },
     }
 
+    # NetCDF close() performs a final sync, so routine output can be buffered
+    # without sacrificing a complete file after a normal model run.  A value
+    # of 100 keeps the possible crash-loss window bounded while avoiding a
+    # filesystem flush for every record.
+    DEFAULT_SYNC_INTERVAL = 100
+
     def __init__(
         self,
         outfile: str,
-        sync_interval: int = 1,
+        sync_interval: int = DEFAULT_SYNC_INTERVAL,
         enabled: bool = True,
     ) -> None:
         """Initializes the Output class and creates the NetCDF file.
@@ -174,7 +180,9 @@ class Output:
         Args:
             outfile: The path and name for the output NetCDF file.
             sync_interval: Number of saves between disk syncs. Higher values
-                improve performance but risk data loss on crash. Defaults to 1.
+                improve performance but risk data loss on crash. Defaults to
+                100; zero disables periodic syncs while retaining the final
+                sync during close.
             enabled: Whether to create and write the NetCDF file. Defaults to
                 True.
         """

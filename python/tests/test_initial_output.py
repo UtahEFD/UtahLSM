@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
+import pytest
 
 from utahlsm.core import UtahLSM
 from utahlsm.data_models import (
@@ -19,6 +20,7 @@ from utahlsm.data_models import (
     SurfaceState,
     TolerancesConfig,
 )
+from utahlsm.util.io import output as output_module
 from utahlsm.util.io.output import Output
 
 
@@ -244,3 +246,38 @@ def test_disabled_output_does_not_create_netcdf_file(tmp_path: Path) -> None:
     output.close()
 
     assert not outfile.exists()
+
+
+def test_output_default_buffers_periodic_netcdf_syncs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default flushes every 100 saves and always once more on close."""
+
+    class _FakeDataset:
+        def __init__(self, _outfile: str, _mode: str) -> None:
+            self.sync_calls = 0
+            self._open = True
+
+        def sync(self) -> None:
+            self.sync_calls += 1
+
+        def isopen(self) -> bool:
+            return self._open
+
+        def close(self) -> None:
+            self._open = False
+
+    monkeypatch.setattr(output_module.nc, "Dataset", _FakeDataset)
+    output = Output("buffered.nc")
+    dataset = output.outfile
+    assert isinstance(dataset, _FakeDataset)
+
+    for tidx in range(Output.DEFAULT_SYNC_INTERVAL - 1):
+        output.save({}, tidx, float(tidx))
+    assert dataset.sync_calls == 0
+
+    output.save({}, Output.DEFAULT_SYNC_INTERVAL - 1, 99.0)
+    assert dataset.sync_calls == 1
+
+    output.close()
+    assert dataset.sync_calls == 2

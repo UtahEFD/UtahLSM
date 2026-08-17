@@ -83,6 +83,14 @@ class RadBasic(Radiation):
     def _shortwave_in(self, julian_day: int, time_utc: float) -> FloatOrArray:
         """Computes downward shortwave radiation for clear-sky conditions.
 
+        Longitude is east-positive, so a site further east reaches solar
+        noon earlier in UTC: ``t_noon = 43200 - lon * 86400 / (2 * pi)``
+        seconds. That is produced by the ``+ self.longitude`` term inside
+        the cosine below; the leading minus on the whole cosine term is
+        what places the hour-angle origin at noon rather than midnight.
+        Using ``- self.longitude`` instead shifts the diurnal cycle by
+        ``2 * lon`` and is correct only on the prime meridian.
+
         Args:
             julian_day: The current Julian day of the year.
             time_utc: The current time in UTC seconds from midnight.
@@ -99,7 +107,7 @@ class RadBasic(Radiation):
                    c.radiation.DAYS_PER_YEAR)
         sin_elevation = (np.sin(self.latitude)*np.sin(declination) -
                          np.cos(self.latitude)*np.cos(declination) *
-                         np.cos((2*PI*time_utc/(24.0*3600.0))-
+                         np.cos((2*PI*time_utc/(24.0*3600.0))+
                                 self.longitude))
         transmissivity = 0.6 + 0.2*sin_elevation
         sw_in = np.where(
@@ -112,7 +120,10 @@ class RadBasic(Radiation):
     def _longwave_in(self, atm_state: AtmosphericState) -> FloatOrArray:
         """Computes clear-sky downwelling longwave radiation.
 
-        Uses the Brutsaert (1975) emissivity relation.
+        Uses the Brutsaert (1975) effective emissivity relation
+        ``eps = 1.24 * (e / T)^(1/7)``. The 1.24 coefficient is calibrated
+        for vapor pressure in hPa (mb), so the vapor pressure is converted
+        from Pa before the exponent is applied.
 
         Args:
             atm_state: The current state of the atmosphere.
@@ -123,14 +134,20 @@ class RadBasic(Radiation):
         # local constants
         EPSILON = c.thermodynamic.EPSILON
         SB = c.radiation.STEFAN_BOLTZMANN
+        PA_PER_HPA = 100.0
 
         # local references to atmospheric state
         pa = atm_state.pressure
         qa = atm_state.specific_humidity
         Ta = atm_state.temperature
 
-        # vapor pressure and effective emissivity (Brutsaert 1975)
+        # Vapor pressure [Pa], then converted to hPa for Brutsaert (1975).
+        # Applying the relation to Pa inflates the emissivity by a factor
+        # 100^(1/7) = 1.93, which pushes it above unity and makes lw_in
+        # exceed blackbody emission at the same temperature.
         vapor_pressure = (pa * qa) / (EPSILON + qa)
-        emissivity_eff = 1.24 * (vapor_pressure / Ta) ** (1 / 7.0)
+        emissivity_eff = 1.24 * (
+            vapor_pressure / PA_PER_HPA / Ta
+        ) ** (1 / 7.0)
 
         return emissivity_eff * SB * (Ta ** 4)
