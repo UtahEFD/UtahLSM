@@ -27,7 +27,22 @@ def compare_outputs(
     atol: float = 0.0,
 ) -> list[ComparisonResult]:
     """Compare single-column output with every column in the 2x2 output."""
-    fields = ("soil_T", "soil_q", "ust", "obl", "shf", "lhf", "ghf")
+    fields = (
+        "soil_T",
+        "soil_q",
+        "ust",
+        "obl",
+        "shf",
+        "lhf",
+        "ghf",
+        "T_skin",
+        "sw_in",
+        "sw_out",
+        "lw_in",
+        "lw_out",
+        "rnet",
+        "bottom_drainage",
+    )
     results: list[ComparisonResult] = []
 
     with nc.Dataset(single_path) as single, nc.Dataset(multi_path) as multi:

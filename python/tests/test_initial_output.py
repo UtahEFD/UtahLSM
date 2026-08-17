@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import netCDF4 as nc
 import numpy as np
 import pytest
 
@@ -235,6 +236,29 @@ def test_setup_output_rejects_unknown_requested_field() -> None:
         model._setup_output()
 
 
+def test_refresh_reassigned_outputs_updates_complete_radiation_budget() -> None:
+    """Save references follow every reassigned atmospheric radiation array."""
+    model = _make_model(has_forcing=False)
+    names = ("sw_in", "sw_out", "lw_in", "lw_out", "rnet")
+    model.output_fields = {name: np.array([-1.0]) for name in names}
+    model.output_fields["T_skin"] = np.array([-1.0])
+    model.sfc_state.temperature = np.array([301.0])
+    model.atm_state.sw_in = np.array([500.0])
+    model.atm_state.sw_out = np.array([100.0])
+    model.atm_state.lw_in = np.array([350.0])
+    model.atm_state.lw_out = np.array([450.0])
+    model.atm_state.radiation_net = np.array([300.0])
+
+    model._refresh_reassigned_outputs()
+
+    assert model.output_fields["T_skin"] is model.sfc_state.temperature
+    assert model.output_fields["sw_in"] is model.atm_state.sw_in
+    assert model.output_fields["sw_out"] is model.atm_state.sw_out
+    assert model.output_fields["lw_in"] is model.atm_state.lw_in
+    assert model.output_fields["lw_out"] is model.atm_state.lw_out
+    assert model.output_fields["rnet"] is model.atm_state.radiation_net
+
+
 def test_disabled_output_does_not_create_netcdf_file(tmp_path: Path) -> None:
     """Leaves no NetCDF file behind when output is disabled."""
     outfile = tmp_path / "disabled.nc"
@@ -246,6 +270,44 @@ def test_disabled_output_does_not_create_netcdf_file(tmp_path: Path) -> None:
     output.close()
 
     assert not outfile.exists()
+
+
+def test_budget_fields_write_with_multicolumn_dimensions(tmp_path: Path) -> None:
+    """Radiation and drainage diagnostics retain every horizontal column."""
+    outfile = tmp_path / "budgets.nc"
+    sw_in = np.array([500.0, 510.0, 520.0, 530.0])
+    sw_out = np.array([100.0, 102.0, 104.0, 106.0])
+    lw_in = np.array([350.0, 351.0, 352.0, 353.0])
+    lw_out = np.array([450.0, 451.0, 452.0, 453.0])
+    fields = {
+        "sw_in": sw_in,
+        "sw_out": sw_out,
+        "lw_in": lw_in,
+        "lw_out": lw_out,
+        "rnet": sw_in - sw_out + lw_in - lw_out,
+        "bottom_drainage": np.array([1.0e-5, 2.0e-5, 3.0e-5, 4.0e-5]),
+    }
+
+    output = Output(str(outfile))
+    output.set_dims({"t": 0, "z": 3, "y": 2, "x": 2})
+    output.set_fields(fields)
+    output.save(fields, 0, 0.0)
+    output.close()
+
+    with nc.Dataset(outfile) as dataset:
+        for name in fields:
+            assert dataset.variables[name].dimensions == ("t", "y", "x")
+        reconstructed_rnet = (
+            dataset.variables["sw_in"][:]
+            - dataset.variables["sw_out"][:]
+            + dataset.variables["lw_in"][:]
+            - dataset.variables["lw_out"][:]
+        )
+        np.testing.assert_allclose(
+            dataset.variables["rnet"][:], reconstructed_rnet
+        )
+        assert dataset.variables["rnet"].units == "W m-2"
+        assert dataset.variables["bottom_drainage"].units == "kg m-2 s-1"
 
 
 def test_output_default_buffers_periodic_netcdf_syncs(

@@ -185,13 +185,18 @@ class UtahLSM:
     def _refresh_reassigned_outputs(self) -> None:
         """Re-point output_fields at fields that are reassigned each step.
 
-        Most outputs are updated in place, but the radiative skin temperature
-        and outgoing longwave are reassigned (``self.x = np.array(...)``) by
-        the SEB solve, so a reference captured once would go stale.
+        Most outputs are updated in place, but atmospheric forcing and
+        radiation diagnostics are reassigned (``self.x = np.array(...)``)
+        during update and the SEB solve, so references captured during setup
+        would otherwise go stale.
         """
         for name, value in (
             ('T_skin', self.sfc_state.temperature),
+            ('sw_in', self.atm_state.sw_in),
+            ('sw_out', self.atm_state.sw_out),
+            ('lw_in', self.atm_state.lw_in),
             ('lw_out', self.atm_state.lw_out),
+            ('rnet', self.atm_state.radiation_net),
         ):
             if name in self.output_fields:
                 self.output_fields[name] = np.asarray(value)
@@ -251,6 +256,10 @@ class UtahLSM:
         # its per-layer deposition profile [kg/m^2/s], rebuilt each step.
         self._bypass_flux = np.zeros(self.ncol)
         self._bypass_deposit: Optional[np.ndarray] = None
+        # Free-drainage water mass flux at the lower Richards boundary
+        # [kg/m^2/s], positive downward. Updated in place so output references
+        # remain valid.
+        self._bottom_drainage = np.zeros(self.ncol)
         # Green-Ampt event state: cumulative matrix-infiltrated depth [m]
         # since the start of the current rain event (decays between events).
         self._ga_cum_infil = np.zeros(self.ncol)
@@ -504,6 +513,7 @@ class UtahLSM:
                     * self.canopy.lai
                     * self.canopy.water_capacity_lai
                 )
+            self._diagnose_initial_bottom_drainage()
         except NamelistError as e:
             self.logger.error('Failed to initialize physics modules: %s.', e)
             raise
@@ -564,18 +574,27 @@ class UtahLSM:
             'shf': self.sfc_state.fluxes.sensible_heat,
             'lhf': self.sfc_state.fluxes.latent_heat,
             'ghf': self.sfc_state.fluxes.ground_heat,
-            # Radiative skin temperature and emitted longwave. Unlike the soil
-            # top node (soil_T[0] = soil-top temperature, below the in-canopy
-            # resistance), these are the surface the radiometer sees. Both are
-            # reassigned each step, so save() re-points the dict before writing.
+            # Radiative skin temperature and complete radiation budget. Unlike
+            # the soil top node (soil_T[0] = soil-top temperature, below the
+            # in-canopy resistance), T_skin is the surface the radiometer sees.
+            # These arrays are reassigned each step, so save() re-points the
+            # output dictionary before writing.
             'T_skin': np.asarray(self.sfc_state.temperature),
+            'sw_in': np.asarray(self.atm_state.sw_in),
+            'sw_out': np.asarray(self.atm_state.sw_out),
+            'lw_in': np.asarray(self.atm_state.lw_in),
             'lw_out': np.asarray(self.atm_state.lw_out),
+            'rnet': np.asarray(self.atm_state.radiation_net),
             'seb_res': self.sfc_state.seb_residual,
             'seb_storage': np.asarray(self.atm_state.seb_storage),
             'precip': np.asarray(self.atm_state.precipitation),
             'runoff': self.sfc_state.fluxes.runoff,
             'bypass': getattr(
                 self, '_bypass_flux',
+                np.zeros_like(np.asarray(self.sfc_state.fluxes.runoff)),
+            ),
+            'bottom_drainage': getattr(
+                self, '_bottom_drainage',
                 np.zeros_like(np.asarray(self.sfc_state.fluxes.runoff)),
             ),
             'soil_z': self.input.grid.z,
@@ -595,6 +614,19 @@ class UtahLSM:
         self.output_fields = self._select_output_fields(self.full_output_fields)
         self.output.set_fields(self.output_fields)
         self.output.save(self.output_fields, 0, 0, initial=True)
+
+    def _diagnose_initial_bottom_drainage(self) -> None:
+        """Initializes the instantaneous free-drainage boundary flux."""
+        moisture = np.asarray(self.soil_state.moisture, dtype=float)
+        bottom_K = np.asarray(
+            self.soil.conductivity_moisture(
+                moisture[-1], level=self.input.grid.nz - 1
+            ),
+            dtype=float,
+        ).reshape(-1)
+        self._bottom_drainage[:] = (
+            c.water.DENSITY * np.maximum(bottom_K, 0.0)
+        )
 
     def _select_output_fields(
             self,
@@ -2351,6 +2383,13 @@ class UtahLSM:
                 ncol,
                 iter_max,
             )
+
+        bottom_mass_flux = c.water.DENSITY * np.asarray(q_dn[-1], dtype=float)
+        drainage = getattr(self, '_bottom_drainage', None)
+        if drainage is None or np.shape(drainage) != np.shape(bottom_mass_flux):
+            self._bottom_drainage = np.array(bottom_mass_flux, copy=True)
+        else:
+            drainage[:] = bottom_mass_flux
 
         if squeeze:
             self.soil_state.moisture[:] = theta_iter[:, 0]

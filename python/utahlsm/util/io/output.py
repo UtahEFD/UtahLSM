@@ -101,9 +101,29 @@ class Output:
             'long_name': 'radiative skin temperature (SEB surface, emits longwave)',
             'units': 'K'
         },
+        'sw_in': {
+            'dimension': ('t',),
+            'long_name': 'downwelling shortwave radiation',
+            'units': 'W m-2'
+        },
+        'sw_out': {
+            'dimension': ('t',),
+            'long_name': 'upwelling reflected shortwave radiation',
+            'units': 'W m-2'
+        },
+        'lw_in': {
+            'dimension': ('t',),
+            'long_name': 'downwelling longwave radiation',
+            'units': 'W m-2'
+        },
         'lw_out': {
             'dimension': ('t',),
-            'long_name': 'outgoing longwave radiation',
+            'long_name': 'upwelling emitted and reflected longwave radiation',
+            'units': 'W m-2'
+        },
+        'rnet': {
+            'dimension': ('t',),
+            'long_name': 'net radiation (SW_in-SW_out+LW_in-LW_out)',
             'units': 'W m-2'
         },
         'seb_res': {
@@ -159,6 +179,11 @@ class Output:
         'bypass': {
             'dimension': ('t',),
             'long_name': 'macropore bypass infiltration deposited at depth',
+            'units': 'kg m-2 s-1'
+        },
+        'bottom_drainage': {
+            'dimension': ('t',),
+            'long_name': 'free-drainage water flux at the soil bottom (positive downward)',
             'units': 'kg m-2 s-1'
         },
     }
@@ -226,10 +251,13 @@ class Output:
         if has_xy:
             self.attributes['soil_T']['dimension'] = ('t', 'z', 'y', 'x')
             self.attributes['soil_q']['dimension'] = ('t', 'z', 'y', 'x')
-            for field in ('ust', 'obl', 'shf', 'lhf', 'ghf', 'seb_res',
-                          'seb_storage', 'precip', 'runoff', 'bypass', 'r_s',
-                          'theta_root', 'lhf_soil', 'lhf_veg', 'lhf_wet',
-                          'canopy_water'):
+            for field in (
+                'ust', 'obl', 'shf', 'lhf', 'ghf', 'T_skin', 'sw_in',
+                'sw_out', 'lw_in', 'lw_out', 'rnet', 'seb_res',
+                'seb_storage', 'precip', 'runoff', 'bypass',
+                'bottom_drainage', 'r_s', 'theta_root', 'lhf_soil',
+                'lhf_veg', 'lhf_wet', 'canopy_water',
+            ):
                 self.attributes[field]['dimension'] = ('t', 'y', 'x')
 
         for dim, size in dims.items():
