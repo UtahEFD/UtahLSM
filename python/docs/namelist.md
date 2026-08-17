@@ -111,7 +111,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 : Integer caps for the nonlinear iterations used by surface fluxes, SEB bracketing, SEB root finding, SMB root finding, the mixed-form soil moisture Picard solve, and the outer coupled solve.
 
 `tolerances`
-: Floating-point convergence criteria for the same iteration families, plus the admissible post-solve soil moisture bounds overshoot before clipping or failure.
+: Strictly positive floating-point convergence criteria for the same iteration families, plus the admissible post-solve soil moisture bounds overshoot before clipping or failure.
 
 ### `time`
 
@@ -130,7 +130,7 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 : Horizontal column counts. The model stores runtime state as flattened `ncol = nx × ny`.
 
 `nz`
-: Number of soil layers.
+: Number of soil layers. At least three layers are required by the diffusion solvers.
 
 ### `surface`
 
@@ -138,10 +138,10 @@ UtahLSM uses a schema-validated JSON namelist. The schema lives in `utahlsm/util
 : Currently only `"most"`, which selects `SurfaceMOST`.
 
 `z_o`, `z_t`
-: Momentum and thermal roughness lengths in meters.
+: Positive momentum and thermal roughness lengths in meters.
 
 `z_m`, `z_s`
-: Reference heights for wind and scalar forcing in meters.
+: Positive reference heights for wind and scalar forcing in meters. The wind height must exceed `z_o`, and the scalar height must exceed `z_t`.
 
 `albedo`, `emissivity`
 : Surface radiative properties.
@@ -169,6 +169,8 @@ A dataset JSON may declare `"includes": ["a", "b", ...]` to merge soil types fro
 - `"brooks-corey"`: Brooks-Corey hydraulics
 - `"campbell"`: Campbell hydraulics
 - `"van-genuchten"`: van Genuchten hydraulics
+
+When `macropore_fraction` is greater than zero, both `macropore_z_top` and `macropore_z_bottom` are required. The bottom must be deeper than the top, remain inside the modeled soil domain, and enclose at least one prognostic soil-layer node.
 
 ### `radiation`
 

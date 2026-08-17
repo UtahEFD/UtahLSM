@@ -188,12 +188,35 @@ class Input:
             with open(namelist_path, encoding='utf-8') as f:
                 namelist_data = json.load(f)
             jsonschema.validate(instance=namelist_data, schema=schema)
+            self._validate_finite_namelist_values(namelist_data)
             self.logger.info('--- namelist validation successful')
             return cast(dict[str, Any], namelist_data)
         except (FileNotFoundError, json.JSONDecodeError,
                 jsonschema.ValidationError) as e:
             self.logger.error('--- namelist error: %s', e)
             raise
+
+    @staticmethod
+    def _validate_finite_namelist_values(
+        value: Any,
+        path: tuple[str, ...] = (),
+    ) -> None:
+        """Rejects non-standard JSON NaN and infinity values recursively."""
+        if isinstance(value, float) and not np.isfinite(value):
+            location = '.'.join(path) if path else '<root>'
+            raise jsonschema.ValidationError(
+                f'Namelist value {location} must be finite; got {value}.'
+            )
+        if isinstance(value, dict):
+            for key, item in value.items():
+                Input._validate_finite_namelist_values(
+                    item, (*path, str(key))
+                )
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                Input._validate_finite_namelist_values(
+                    item, (*path, str(index))
+                )
 
     def _load_initial_conditions(
             self, inputfile: str, nx: int, ny: int,
@@ -650,6 +673,7 @@ class Input:
                 f"z_t={self.surface.z_t}.")
 
         self._validate_uniform_soil_z(self.grid.z)
+        self._validate_macropore_configuration()
 
         ncol = self.grid.nx * self.grid.ny
         soil_temp = np.asarray(self.initial.temperature)
@@ -724,3 +748,33 @@ class Input:
                         i, porosity)
 
         self.logger.info('Physical consistency checks passed')
+
+    def _validate_macropore_configuration(self) -> None:
+        """Validates that an enabled bypass-flow zone exists in the grid."""
+        fraction = float(self.soil.macropore_fraction)
+        if fraction <= 0.0:
+            return
+
+        z_top = float(self.soil.macropore_z_top)
+        z_bottom = float(self.soil.macropore_z_bottom)
+        if z_bottom <= z_top:
+            raise ValueError(
+                f'macropore_z_bottom={z_bottom} must be greater than '
+                f'macropore_z_top={z_top} when macropore_fraction={fraction}.'
+            )
+
+        depth = np.abs(np.asarray(self.grid.z, dtype=float))
+        domain_bottom = float(np.max(depth))
+        if z_bottom > domain_bottom:
+            raise ValueError(
+                f'macropore_z_bottom={z_bottom} m exceeds the soil-domain '
+                f'depth of {domain_bottom} m.'
+            )
+
+        in_zone = (depth >= z_top) & (depth <= z_bottom)
+        in_zone[0] = False
+        if not np.any(in_zone):
+            raise ValueError(
+                f'Macropore deposition zone [{z_top}, {z_bottom}] m contains '
+                'no prognostic soil-layer nodes.'
+            )

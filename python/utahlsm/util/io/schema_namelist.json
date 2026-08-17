@@ -32,13 +32,13 @@
                 "tolerances": {
                     "type": "object",
                     "properties": {
-                        "sfc_flux": { "type": "number" },
-                        "seb_root": { "type": "number" },
-                        "smb_flux": { "type": "number" },
-                        "moisture_picard": { "type": "number" },
-                        "moisture_bounds": { "type": "number" },
-                        "coupling_temp": { "type": "number" },
-                        "coupling_mois": { "type": "number" },
+                        "sfc_flux": { "type": "number", "exclusiveMinimum": 0 },
+                        "seb_root": { "type": "number", "exclusiveMinimum": 0 },
+                        "smb_flux": { "type": "number", "exclusiveMinimum": 0 },
+                        "moisture_picard": { "type": "number", "exclusiveMinimum": 0 },
+                        "moisture_bounds": { "type": "number", "exclusiveMinimum": 0 },
+                        "coupling_temp": { "type": "number", "exclusiveMinimum": 0 },
+                        "coupling_mois": { "type": "number", "exclusiveMinimum": 0 },
                         "smb_residual": { "type": "number", "exclusiveMinimum": 0 }
                     },
                     "required": ["sfc_flux", "seb_root", "smb_flux", "moisture_picard", "moisture_bounds", "coupling_temp", "coupling_mois"],
@@ -63,7 +63,7 @@
             "properties": {
                 "nx": { "type": "integer", "minimum": 1 },
                 "ny": { "type": "integer", "minimum": 1 },
-                "nz": { "type": "integer", "minimum": 1 }
+                "nz": { "type": "integer", "minimum": 3 }
             },
             "required": ["nx", "ny", "nz"],
             "additionalProperties": false
@@ -71,14 +71,14 @@
         "surface": {
             "type": "object",
             "properties": {
-                "z_o": { "type": "number", "minimum": 0 },
-                "z_t": { "type": "number", "minimum": 0 },
-                "z_m": { "type": "number", "minimum": 0 },
-                "z_s": { "type": "number", "minimum": 0 },
+                "z_o": { "type": "number", "exclusiveMinimum": 0 },
+                "z_t": { "type": "number", "exclusiveMinimum": 0 },
+                "z_m": { "type": "number", "exclusiveMinimum": 0 },
+                "z_s": { "type": "number", "exclusiveMinimum": 0 },
                 "albedo": { "type": "number", "minimum": 0, "maximum": 1 },
                 "emissivity": { "type": "number", "minimum": 0, "maximum": 1 },
                 "model": { "type": "string", "enum": ["most"] },
-                "psi_stable": { "type": "string" },
+                "psi_stable": { "type": "string", "enum": ["dyer-hicks", "beljaars-holtslag", "cheng-brutsaert"] },
                 "zeta_max": { "type": "number", "exclusiveMinimum": 0 },
                 "gustiness": { "type": "number", "minimum": 0 },
                 "gustiness_stable_only": { "type": "boolean" }
@@ -99,6 +99,19 @@
                 "macropore_e_folding": { "type": "number", "exclusiveMinimum": 0.0 }
             },
             "required": ["properties", "model"],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "macropore_fraction": { "exclusiveMinimum": 0.0 }
+                        },
+                        "required": ["macropore_fraction"]
+                    },
+                    "then": {
+                        "required": ["macropore_z_top", "macropore_z_bottom"]
+                    }
+                }
+            ],
             "additionalProperties": false
         },
         "radiation": {

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import jsonschema
@@ -166,6 +167,112 @@ def test_load_and_validate_namelist_rejects_invalid_canopy_bounds(
 
     with pytest.raises(jsonschema.ValidationError, match="maximum of 1"):
         input_obj._load_and_validate_namelist(str(namelist_path))
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("numerics", "tolerances", "sfc_flux"), 0.0),
+        (("numerics", "tolerances", "seb_root"), -1.0e-6),
+        (("numerics", "tolerances", "smb_flux"), 0.0),
+        (("numerics", "tolerances", "moisture_picard"), 0.0),
+        (("numerics", "tolerances", "moisture_bounds"), -1.0e-6),
+        (("numerics", "tolerances", "coupling_temp"), 0.0),
+        (("numerics", "tolerances", "coupling_mois"), 0.0),
+        (("surface", "z_o"), 0.0),
+        (("surface", "z_t"), 0.0),
+        (("surface", "z_m"), 0.0),
+        (("surface", "z_s"), 0.0),
+        (("grid", "nz"), 2),
+        (("surface", "psi_stable"), "unknown"),
+    ],
+)
+def test_namelist_schema_rejects_invalid_numerical_configuration(
+    tmp_path: Path,
+    path: tuple[str, ...],
+    value: object,
+) -> None:
+    """Rejects solver settings that would make their equations invalid."""
+    namelist = _base_namelist()
+    target: dict[str, Any] = namelist
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    namelist_path = tmp_path / "lsm_namelist.json"
+    namelist_path.write_text(json.dumps(namelist), encoding="utf-8")
+
+    with pytest.raises(jsonschema.ValidationError):
+        _make_input()._load_and_validate_namelist(str(namelist_path))
+
+
+def test_namelist_rejects_nonfinite_numeric_values(tmp_path: Path) -> None:
+    """Rejects Python JSON extensions such as NaN even without range bounds."""
+    namelist = _base_namelist()
+    namelist["numerics"]["heat_diffusion_back_weight"] = float("nan")
+    namelist_path = tmp_path / "lsm_namelist.json"
+    namelist_path.write_text(json.dumps(namelist), encoding="utf-8")
+
+    with pytest.raises(
+        jsonschema.ValidationError,
+        match=r"numerics\.heat_diffusion_back_weight must be finite",
+    ):
+        _make_input()._load_and_validate_namelist(str(namelist_path))
+
+
+def test_enabled_macropores_require_zone_bounds(tmp_path: Path) -> None:
+    """An enabled bypass fraction requires explicit deposition-zone bounds."""
+    namelist = _base_namelist()
+    namelist["soil"]["macropore_fraction"] = 0.5
+    namelist_path = tmp_path / "lsm_namelist.json"
+    namelist_path.write_text(json.dumps(namelist), encoding="utf-8")
+
+    with pytest.raises(jsonschema.ValidationError, match="required property"):
+        _make_input()._load_and_validate_namelist(str(namelist_path))
+
+
+@pytest.mark.parametrize(
+    ("z_top", "z_bottom", "message"),
+    [
+        (0.2, 0.1, "must be greater"),
+        (0.1, 0.4, "exceeds the soil-domain"),
+        (0.11, 0.19, "contains no prognostic"),
+    ],
+)
+def test_enabled_macropores_require_a_valid_grid_zone(
+    z_top: float,
+    z_bottom: float,
+    message: str,
+) -> None:
+    """Rejects reversed, out-of-domain, and empty deposition zones."""
+    input_obj = _make_input()
+    input_obj.grid = SimpleNamespace(z=np.array([0.0, -0.1, -0.2, -0.3]))
+    input_obj.soil = SimpleNamespace(
+        macropore_fraction=0.5,
+        macropore_z_top=z_top,
+        macropore_z_bottom=z_bottom,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        input_obj._validate_macropore_configuration()
+
+
+def test_macropore_grid_validation_accepts_valid_or_disabled_zones() -> None:
+    """Accepts an in-domain zone and ignores bounds when bypass is disabled."""
+    input_obj = _make_input()
+    input_obj.grid = SimpleNamespace(z=np.array([0.0, -0.1, -0.2, -0.3]))
+    input_obj.soil = SimpleNamespace(
+        macropore_fraction=0.5,
+        macropore_z_top=0.1,
+        macropore_z_bottom=0.2,
+    )
+    input_obj._validate_macropore_configuration()
+
+    input_obj.soil = SimpleNamespace(
+        macropore_fraction=0.0,
+        macropore_z_top=1.0,
+        macropore_z_bottom=0.0,
+    )
+    input_obj._validate_macropore_configuration()
 
 
 def test_load_initial_conditions_rejects_nonuniform_soil_z(
