@@ -279,6 +279,12 @@ class UtahLSM:
         self._hydraulic_cache_K_face: Optional[np.ndarray] = None
         self._hydraulic_cache_mass_flux: Optional[np.ndarray] = None
 
+        # Monotonicity floor on the soil-heat theta scheme: the weight the
+        # last solve actually used (None while the configured value stands),
+        # and a latch so the explanatory warning is issued once per run.
+        self._monotone_back_weight_applied: Optional[float] = None
+        self._monotone_warning_issued = False
+
         self.solver_state: SolverState = SolverState()
         self.solver_state.conductivity_thermal_mid = np.zeros(self.ncol)
         nz_diff = self.input.grid.nz - 1
@@ -1896,6 +1902,66 @@ class UtahLSM:
         self._compute_fluxes(self.sfc_state.temperature, self.sfc_state.moisture)
         self._finalize_canopy_partition()
 
+    def _monotone_back_weight(
+        self,
+        theta_b: float,
+        alpha_row_sum: np.ndarray,
+    ) -> float:
+        """Raises the theta-scheme backward weight to its monotone floor.
+
+        The theta scheme's amplification factor for a Fourier mode is
+        ``G = (1 - theta_f * a * s) / (1 + theta_b * a * s)``, with
+        ``s = 4 sin^2(k dz / 2)`` reaching 4 at the grid-scale sawtooth. Any
+        weight ``theta_b >= 0.5`` keeps ``|G| <= 1`` (unconditional
+        stability), but ``G`` turns *negative* once
+        ``theta_f * 4 * alpha > 1``: that mode then decays by flipping sign
+        every step instead of damping monotonically. Crank-Nicolson is
+        therefore non-oscillatory only up to ``alpha = 0.5``.
+
+        With variable coefficients the sawtooth's explicit-half factor is
+        ``1 - 2 * theta_f * (alpha_up + alpha_dn)``, so the floor is
+
+            theta_b >= 1 - 1 / (2 * max_row(alpha_up + alpha_dn)).
+
+        Below that bound the configured weight is returned untouched, so
+        small-timestep coupled runs keep full second-order Crank-Nicolson
+        accuracy and bit-identical results.
+
+        Args:
+            theta_b: Configured backward weight.
+            alpha_row_sum: ``alpha_up + alpha_dn`` per prognostic row,
+                shape ``(nz - 1, ncol)``.
+
+        Returns:
+            The backward weight to use for this solve, in ``[theta_b, 1]``.
+        """
+        if not self.input.numerics.heat_diffusion_monotone:
+            return theta_b
+
+        s_max = float(np.max(alpha_row_sum)) if alpha_row_sum.size else 0.0
+        if not np.isfinite(s_max) or s_max <= 0.0:
+            return theta_b
+
+        floor = 1.0 - 1.0 / (2.0 * s_max)
+        if floor <= theta_b:
+            return theta_b
+
+        theta_b_new = min(floor, 1.0)
+        self._monotone_back_weight_applied = theta_b_new
+        if not self._monotone_warning_issued:
+            self._monotone_warning_issued = True
+            self.logger.warning(
+                'Soil heat solve: configured heat_diffusion_back_weight=%.3f '
+                'would let the grid-scale mode oscillate at this timestep '
+                '(max alpha_up+alpha_dn=%.3f, i.e. alpha=%.3f). Raising the '
+                'backward weight to %.3f for monotonicity. Reduce the '
+                'timestep or set numerics.heat_diffusion_back_weight >= %.3f '
+                'to silence this; set heat_diffusion_monotone=false to '
+                'disable the floor.',
+                theta_b, s_max, 0.5 * s_max, theta_b_new, theta_b_new,
+            )
+        return theta_b_new
+
     def _solve_soil_heat(
         self,
         source_term: Optional[np.ndarray] = None,
@@ -1908,13 +1974,16 @@ class UtahLSM:
         destroy column energy. The surface temperature is Dirichlet and the
         lower boundary has zero heat flux.
 
+        The backward weight is raised to the non-oscillatory floor when the
+        timestep requires it (see ``_monotone_back_weight``), unless
+        ``numerics.heat_diffusion_monotone`` is disabled.
+
         Args:
             source_term: Optional temperature tendency [K/s], shape
                 ``(nz, ncol)``. Layer 0 is the prescribed surface boundary.
         """
         self.logger.debug('Solving conservative soil heat diffusion')
         theta_b = self.input.numerics.heat_diffusion_back_weight
-        theta_f = 1.0 - theta_b
         nz = self.input.grid.nz
         if nz < 2:
             raise ValueError('Soil heat solve requires nz >= 2.')
@@ -1989,6 +2058,9 @@ class UtahLSM:
         lambda_dn[:-1] = lambda_face[1:]
         alpha_up = dt * lambda_up / (capacity[1:] * dz2)
         alpha_dn = dt * lambda_dn / (capacity[1:] * dz2)
+
+        theta_b = self._monotone_back_weight(theta_b, alpha_up + alpha_dn)
+        theta_f = 1.0 - theta_b
 
         e[1:] = -theta_b * alpha_up[1:]
         f[:] = 1.0 + theta_b * (alpha_up + alpha_dn)

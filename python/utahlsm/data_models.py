@@ -343,8 +343,24 @@ class NumericsConfig:
     """Numerical scheme parameters.
 
     Attributes:
-        heat_diffusion_back_weight: Backward weighting factor for the
-            soil heat diffusion solver (0.5 for Crank-Nicolson).
+        heat_diffusion_back_weight: Backward weighting factor theta_b for
+            the soil heat diffusion theta-scheme (0.5 for Crank-Nicolson,
+            1.0 for backward Euler). Values >= 0.5 are unconditionally
+            stable, but stability is not monotonicity - see
+            ``heat_diffusion_monotone``.
+        heat_diffusion_monotone: When True (default), raise theta_b to the
+            non-oscillatory floor whenever the timestep demands it. The
+            theta-scheme's amplification factor for the grid-scale
+            (sawtooth) mode turns negative once
+            ``(1 - theta_b) * 4 * alpha > 1``, where
+            ``alpha = lambda * dt / (C * dz^2)``; that mode then decays by
+            flipping sign each step instead of damping monotonically.
+            Crank-Nicolson is therefore non-oscillatory only for
+            ``alpha <= 0.5``, which a 600 s step on a 1 cm grid exceeds by
+            roughly a factor of 7. Enabling this preserves second-order
+            Crank-Nicolson wherever it is safe and adds implicitness only
+            where it is not. Set False to hold theta_b exactly as
+            configured (for numerical experiments).
         iterations: a dataclass holding numerical iteration limits.
         tolerances: a dataclass holding numerical convergence criteria.
     """
@@ -352,6 +368,7 @@ class NumericsConfig:
     heat_diffusion_back_weight: float
     iterations: IterationsConfig
     tolerances: TolerancesConfig
+    heat_diffusion_monotone: bool = True
 
 
 @dataclass(frozen=True)

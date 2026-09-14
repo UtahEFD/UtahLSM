@@ -117,6 +117,8 @@ class Input:
         self.numerics = NumericsConfig(
             heat_diffusion_back_weight=(
                 numerics_data['heat_diffusion_back_weight']),
+            heat_diffusion_monotone=bool(
+                numerics_data.get('heat_diffusion_monotone', True)),
             iterations=IterationsConfig(**iterations_data),
             tolerances=TolerancesConfig(**tolerances_data)
         )
